@@ -1,0 +1,53 @@
+@baseUrl = http://localhost:8080
+@token = TOKEN_HIER_EINTRAGEN
+
+### Health
+GET {{baseUrl}}/actuator/health
+
+### Systemstatus
+GET {{baseUrl}}/api/system/status
+
+### Startup Check
+GET {{baseUrl}}/api/system/startup-check
+
+### Login - Passwort/2FA je nach Account füllen
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "DEIN_USER",
+  "password": "DEIN_PASSWORT",
+  "totp": "123456"
+}
+
+### Security Status
+GET {{baseUrl}}/api/security/status
+Authorization: Bearer {{token}}
+
+### Module
+GET {{baseUrl}}/api/modules
+Authorization: Bearer {{token}}
+
+### Rechnungen
+GET {{baseUrl}}/api/invoices
+Authorization: Bearer {{token}}
+
+### Nummernkreis
+GET {{baseUrl}}/api/invoices/number-preview
+Authorization: Bearer {{token}}
+
+### LBD Vorschau
+GET {{baseUrl}}/api/invoices/lbd/preview
+Authorization: Bearer {{token}}
+
+### Inventar
+GET {{baseUrl}}/api/inventory/devices
+Authorization: Bearer {{token}}
+
+### Lager
+GET {{baseUrl}}/api/warehouse/items
+Authorization: Bearer {{token}}
+
+### Aufgaben
+GET {{baseUrl}}/api/workflow/tasks
+Authorization: Bearer {{token}}

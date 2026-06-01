@@ -1,182 +1,150 @@
-# GAM 2.0 Standalone v1.0.0
+# GAM Standalone
 
-## Überblick
+Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/TypeScript + MariaDB.
 
-GAM 2.0 Standalone ist die modernisierte Nachfolgeversion des ursprünglichen GAM (Geräte-, Aufgaben-, Material- und Rechnungsmanagement). Ziel ist die Übernahme der bewährten Fachlogik des Originalsystems auf eine moderne technische Basis mit Spring Boot, React, TypeScript und MariaDB.
+## Aktueller Stand
 
-Der Fokus liegt auf langfristiger Wartbarkeit, einfacher Erweiterbarkeit und einer modernen Benutzeroberfläche, ohne die bewährten Arbeitsabläufe des ursprünglichen Systems zu verändern.
+Dieses Paket enthält Phase 1A + Phase 1B/1C sowie Schritt 1–4:
 
----
+- kompatibler Login über bestehende `accounts`-Tabelle
+- vorbereitete Passwort-/2FA-Kompatibilität
+- JWT-Session-Grundlage
+- `.lbd`-Empfängerdatei-Suche und Vorschau
+- Rechnungsübersicht aus Bestandsdaten
+- Produktliste aus `rechnungsdaten`
+- neue Rechnung anlegen
+- Speichern in `rechnungsdetails` und `rechnung`
+- ZUGFeRD/Factur-X-E-Rechnungs-Export als primärer PDF-Export
+- Benutzer-/Rechteverwaltung mit Rollenmenü
+- Inventar-/Gerätemodul aus `geräte` und `geräte_neu`
+- Lager-/Materialmodul aus `lager` und `verbrauchsmaterial`
 
-## Aktueller Funktionsumfang
+Details stehen in:
 
-### Benutzerverwaltung
+- `PHASE_1A_STATUS.md`
+- `PHASE_1B_1C_STATUS.md`
+- `PHASE_1C_ZUGFERD_STATUS.md`
+- `SCHRITT_1_RECHNUNGSMODUL_STATUS.md`
+- `SCHRITT_2_BENUTZER_RECHTE_STATUS.md`
+- `SCHRITT_3_INVENTAR_GERAETE_STATUS.md`
+- `SCHRITT_4_LAGER_MATERIAL_STATUS.md`
 
-* Login mit Benutzername und Passwort
-* JWT-basierte Authentifizierung
-* Rollen- und Rechteverwaltung
-* Kompatibilität zu bestehenden Benutzerdaten
-* Vorbereitung für 2-Faktor-Authentifizierung (TOTP)
+## Backend starten
 
-### Rechnungsmodul
+```bash
+cd backend
+mvn spring-boot:run
+```
 
-* Rechnungserstellung
-* Rechnungsbearbeitung
-* PDF-Erzeugung
-* ZUGFeRD / Factur-X Export
-* Automatische Rechnungsnummernvergabe
-* Unterstützung von LBD-Empfängerdaten
-* Vorschau von LBD-Dateien
-* Gesellschaftsverwaltung
-* Mehrere Rechnungspositionen
-* Automatische Summenberechnung
+Konfiguration über Umgebungsvariablen oder `backend/src/main/resources/application.yml`:
 
-### LBD-Unterstützung
+```bash
+GAM_DB_URL=jdbc:mariadb://localhost:3306/kopfzentruminventardb
+GAM_DB_USER=root
+GAM_DB_PASSWORD=passwort
+GAM_JWT_SECRET=bitte-langes-secret-setzen
+GAM_LBD_FILE=./config/meine-datei.lbd
+```
 
-* Automatische Suche nach LBD-Dateien
-* UTF-8 und Windows-1252 Unterstützung
-* Übernahme von:
+## Frontend starten
 
-  * Anrede
-  * Titel
-  * Vorname
-  * Nachname
-  * Adresse
-  * Versicherungsdaten
-  * Patientennummer
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### System
+## .lbd-Dateien
 
-* Spring Boot Backend
-* React + TypeScript Frontend
-* MariaDB Datenbank
-* Maven Build System
-* REST API
-* JWT Security
-* Rollenbasierte Zugriffskontrolle
+Gesucht wird standardmäßig in:
 
----
+```text
+./config
+./daten/rechnung
+.
+```
 
-## Fachliche Regeln
+Der Pfad kann über `GAM_LBD_FILE` überschrieben werden.
 
-### Rechnungsarten
+## Wichtiger Hinweis
 
-Normale Rechnung:
+Das ist noch nicht das vollständige GAM 2.0. Es ist inzwischen ein breiter Modulrahmen mit Rechnungen, Benutzer/Rechte, Inventar/Geräte und Lager/Material. Das finale Rechnungsformular, Adresslogik, Freigaben, Layouts und Speziallogik werden schrittweise ergänzt. Ab Phase 1C ist `/api/invoices/{number}/pdf` bereits als ZUGFeRD/Factur-X-Pflichtexport vorgesehen; `/pdf-debug` bleibt als Fallback erhalten.
 
-12345
 
-Stornorechnung:
+## Stand Schritt 5
 
-12345S
+GAM 2.0 besitzt jetzt die Gesamtstruktur mit Rechnungen, Benutzer/Rechte, Inventar, Lager sowie Rahmenmodulen fuer Aufgaben, Freigaben, Personal, Kassenbuch, Pruefungen und Reports.
 
-Gutschrift:
+Die neu hinzugefuegten Rahmenmodule sind bewusst zuerst read-only, damit bestehende Fachlogik nicht versehentlich veraendert wird.
 
-12345G
+## Schritt 6 – CRUD/Workflows
 
-Proforma-Rechnung:
+Diese Version erweitert die GAM-2.0-Gesamtstruktur um erste echte Schreibfunktionen:
 
-12346P
+- Aufgaben anlegen/bearbeiten/löschen
+- Freigaben anlegen/bearbeiten/löschen
+- Geräte bearbeiten bzw. neue Geräte anlegen
+- Lagerbestände setzen oder per Bewegung ändern
 
-### Stornorechnung
+Details siehe `SCHRITT_6_CRUD_WORKFLOWS_STATUS.md`.
 
-* basiert auf der Originalrechnung
-* übernimmt alle Positionen
-* dient der vollständigen Stornierung der Ausgangsrechnung
+## Schritt 7 – Startfähigkeit
 
-### Gutschrift
+Diese Version ergänzt Startskripte, lokales Profil, Healthchecks und eine klare Testanleitung.
+Der Einstieg ist jetzt `START-HIER.md`.
 
-* basiert auf der Originalrechnung
-* übernimmt alle Positionen
-* dient der Korrektur oder Rückerstattung
+Wichtige technische Prüfpunkte:
 
-### Proforma-Rechnung
+```text
+http://localhost:8080/actuator/health
+http://localhost:8080/api/system/startup-check
+http://localhost:8080/api/system/status
+```
 
-* besitzt eine eigene Rechnungsnummer
-* endet mit dem Suffix "P"
-* kann mehrere Positionen enthalten
-* Positionen können später auf mehrere echte Rechnungen verteilt werden
-
----
-
-## Geplante Erweiterungen
-
-### Inventar
-
-* Geräteverwaltung
-* Seriennummern
-* Standorte
-* Prüfungen
-* Wartungen
-
-### Lager
-
-* Lagerbestände
-* Wareneingang
-* Warenausgang
-* Mindestbestände
-* QR-Code-Unterstützung
-* Barcode-Unterstützung
-
-### Personal
-
-* Mitarbeiterverwaltung
-* Qualifikationen
-* Schulungen
-* Einweisungen
-
-### Aufgaben und Freigaben
-
-* Aufgabenmanagement
-* Freigabeprozesse
-* Dashboard
-
-### Rechnungen
-
-* Mahnwesen
-* Textbausteine
-* QR-Code auf Rechnungen
-* Patientenportal für digitale Rechnungsbereitstellung
+Details siehe `SCHRITT_7_STARTFAEHIGE_ARBEITSVERSION_STATUS.md`.
 
 ---
 
-## Technischer Stack
+## Schritt 11: erster technischer Gesamttest
 
-Backend
+Für den ersten systematischen Test bitte zuerst `START-HIER.md`, danach `TESTPLAN_GAM_2_0.md` lesen.
 
-* Java 21+
-* Spring Boot
-* Spring Security
-* Maven
-* MariaDB
+Schnellprüfung nach Backend-Start:
 
-Frontend
+```powershell
+scripts\smoke-test.ps1 -BaseUrl http://localhost:8080
+```
 
-* React
-* TypeScript
-* Vite
+oder:
 
-Dokumente
+```bash
+./scripts/smoke-test.sh http://localhost:8080
+```
 
-* PDF
-* ZUGFeRD / Factur-X
-* XML
+Ohne Token sind 401/403 bei geschützten Endpunkten normal. Wichtig sind zunächst:
+
+- `/actuator/health`
+- `/api/system/status`
+- `/api/system/startup-check`
+
+Diese sollten ohne schwerwiegenden Fehler antworten.
 
 ---
 
-## Projektstatus
+## Schritt 12: erster echter Build-Test
 
-Version 1.0.0 stellt die erste vollständig lauffähige Arbeitsversion von GAM 2.0 dar.
+Für den lokalen Test bitte zuerst `START-HIER-SCHRITT12.md` lesen.
 
-Bereits erfolgreich getestet:
+Kurzfassung Windows:
 
-* Backend-Start
-* Datenbankverbindung
-* Benutzeranmeldung
-* Rollenmodell
-* LBD-Verarbeitung
-* Rechnungserstellung
-* PDF-Erzeugung
-* ZUGFeRD-Export
-* React-Frontend
+```bat
+scripts\build-backend.bat
+scripts\run-backend-local.bat
+```
 
-GAM 2.0 befindet sich aktuell in aktiver Weiterentwicklung mit Schwerpunkt auf Rechnungswesen, Inventar, Lagerverwaltung und Benutzerfreundlichkeit.
+Kurzfassung Linux/macOS:
+
+```bash
+./scripts/build-backend.sh
+./scripts/run-backend-local.sh
+```

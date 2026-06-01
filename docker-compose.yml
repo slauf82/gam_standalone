@@ -1,0 +1,17 @@
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: gam-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: gamroot
+      MARIADB_DATABASE: kopfzentruminventardb
+      MARIADB_USER: gam
+      MARIADB_PASSWORD: gam
+    ports:
+      - "3306:3306"
+    volumes:
+      - gam_mariadb:/var/lib/mysql
+      # Optional: SQL-Dump hier als ./db/init.sql ablegen und beim ersten Start automatisch importieren.
+      # - ./db:/docker-entrypoint-initdb.d:ro
+volumes:
+  gam_mariadb:
