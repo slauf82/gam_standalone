@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: gam-standalone-backend
+  datasource:
+    url: ${GAM_DB_URL:jdbc:mariadb://localhost:3306/kopfzentruminventardb}
+    username: ${GAM_DB_USER:root}
+    password: ${GAM_DB_PASSWORD:}
+    driver-class-name: org.mariadb.jdbc.Driver
+server:
+  port: ${GAM_BACKEND_PORT:8080}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+logging:
+  file:
+    name: ${GAM_LOG_FILE:logs/gam-backend.log}
+  level:
+    root: INFO
+    de.kopfzentrum.gam: DEBUG
+gam:
+  jwt:
+    secret: ${GAM_JWT_SECRET:BITTE_IN_PRODUKTION_AENDERN_MINDESTENS_32_ZEICHEN}
+  lbd:
+    file: ${GAM_LBD_FILE:}
+
+app:
+  security:
+    jwt-secret: ${GAM_JWT_SECRET:GAM2-Test-Secret-2026-Bitte-Spaeter-Ersetzen-123456789}
+    jwt-minutes: ${GAM_JWT_MINUTES:480}
+  legacy-login:
+    allow-sha256-password: ${GAM_LEGACY_ALLOW_SHA256:true}
+    allow-totp-only: ${GAM_LEGACY_TOTP_ONLY:false}
+    allow-totp-login: ${GAM_LEGACY_ALLOW_TOTP:true}
+    require-totp-when-secret-exists: ${GAM_REQUIRE_TOTP_WHEN_SECRET_EXISTS:false}
+  invoice:
+    lbd:
+      file: ${GAM_LBD_FILE:}
+      search-folders: ${GAM_LBD_SEARCH_FOLDERS:./config,./daten/rechnung,.}
+      charset: ${GAM_LBD_CHARSET:UTF-8}
+
+zugferd:
+  enabled: ${GAM_ZUGFERD_ENABLED:true}
