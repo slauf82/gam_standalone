@@ -2,6 +2,7 @@ package de.kopfzentrum.gam.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,6 +11,16 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalApiExceptionHandler {
+
+  @ExceptionHandler(LoginRateLimitException.class)
+  ResponseEntity<ApiError> rateLimited(LoginRateLimitException ex, HttpServletRequest request) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Retry-After", Long.toString(ex.retryAfterSeconds()));
+    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+      .headers(headers)
+      .body(ApiError.rateLimited(ex.getMessage(), request.getRequestURI(), ex.retryAfterSeconds()));
+  }
+
   @ExceptionHandler(AccessDeniedException.class)
   ResponseEntity<ApiError> accessDenied(AccessDeniedException ex, HttpServletRequest request) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN)

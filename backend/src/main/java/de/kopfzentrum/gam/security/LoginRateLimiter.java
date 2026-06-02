@@ -34,7 +34,8 @@ public class LoginRateLimiter {
       attempts.remove(key);
       return;
     }
-    throw new IllegalArgumentException("Zu viele fehlgeschlagene Loginversuche. Bitte spaeter erneut versuchen.");
+    long retryAfter = Math.max(1, Duration.between(Instant.now(), a.lockedUntil).toSeconds());
+    throw new LoginRateLimitException("Zu viele fehlgeschlagene Loginversuche.", retryAfter);
   }
 
   public void success(String username) { attempts.remove(key(username)); }

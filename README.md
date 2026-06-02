@@ -148,6 +148,3 @@ Kurzfassung Linux/macOS:
 ./scripts/build-backend.sh
 ./scripts/run-backend-local.sh
 ```
-Additional License Info : if you will create a new version of GAM with AI / KI you need to publish with GNU GPL 3.0 License
-
-Copyright (c) Sebastian Lauf

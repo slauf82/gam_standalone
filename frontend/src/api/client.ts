@@ -22,30 +22,61 @@ const API = import.meta.env.VITE_GAM_API ?? "http://localhost:8080/api";
 export function apiBase() { return API; }
 export function token() { return localStorage.getItem("gam_token") ?? ""; }
 export function setToken(value: string) { localStorage.setItem("gam_token", value); }
-export function logout() { localStorage.removeItem("gam_token"); }
+export function logout() { localStorage.removeItem("gam_token"); localStorage.removeItem("gam_user"); }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     ...options,
     headers: {"Content-Type": "application/json", ...(token() ? {Authorization: `Bearer ${token()}`} : {}), ...(options.headers ?? {})}
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const text = await res.text();
+    let data: any = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+    if ((res.status === 401 || res.status === 403) && !path.startsWith("/auth/login") && !path.startsWith("/auth/totp/")) {
+      logout();
+      window.dispatchEvent(new CustomEvent("gam-auth-expired"));
+      throw new Error("Sitzung abgelaufen. Bitte erneut anmelden.");
+    }
+
+    const err: any = new Error(data?.message || text || `HTTP ${res.status}`);
+    err.status = res.status;
+    const retryAfter =
+      data?.retryAfterSeconds ??
+      Number(res.headers.get("Retry-After") || 0);
+
+    err.retryAfterSeconds = retryAfter || undefined;
+    throw err;
+  }
   return res.json();
 }
 
 export async function login(username: string, password: string, totpCode: string) {
   const data = await request<LoginResponse>("/auth/login", {method: "POST", body: JSON.stringify({username, password, totpCode})});
-  setToken(data.token); return data;
+  setToken(data.token); localStorage.setItem("gam_user", JSON.stringify(data.account)); return data;
+}
+export type TotpSetupResponse = { username:string; secret:string; otpauthUri:string; alreadyConfigured:boolean };
+export const setupTotp = (username:string) => request<TotpSetupResponse>("/auth/totp/setup", {method:"POST", body: JSON.stringify({username})});
+export const confirmTotp = (username:string, secret:string, totpCode:string) => request<AccountDto>("/auth/totp/confirm", {method:"POST", body: JSON.stringify({username,secret,totpCode})});
+export type PasskeyOptionsResponse = { username:string; userId:string; challenge:string; rpId:string; rpName:string; allowCredentialIds:string[] };
+export const loadPasskeyStatus = () => request<Record<string,unknown>>("/auth/passkey/status");
+export const passkeyRegisterOptions = (username:string) => request<PasskeyOptionsResponse>("/auth/passkey/register/options", {method:"POST", body: JSON.stringify({username})});
+export const passkeyRegisterFinish = (username:string, challenge:string, credentialId:string, publicKey:string, deviceName:string) => request<AccountDto>("/auth/passkey/register/finish", {method:"POST", body: JSON.stringify({username, challenge, credentialId, publicKey, deviceName})});
+export const passkeyLoginOptions = (username:string) => request<PasskeyOptionsResponse>("/auth/passkey/login/options", {method:"POST", body: JSON.stringify({username})});
+export async function passkeyLoginFinish(username:string, challenge:string, credentialId:string) {
+  const data = await request<LoginResponse>("/auth/passkey/login/finish", {method:"POST", body: JSON.stringify({username, challenge, credentialId})});
+  setToken(data.token); localStorage.setItem("gam_user", JSON.stringify(data.account)); return data;
 }
 export const me = () => request<AccountDto>("/auth/me");
 export const loadSystemStatus = () => request<SystemStatus>("/system/status");
-export const loadInvoices = (limit = 100, q = "") => request<InvoiceSummary[]>(`/invoices?limit=${limit}&q=${encodeURIComponent(q)}`);
+export const loadInvoices = (limit = 100, q = "", companyId?: number) => request<InvoiceSummary[]>(`/invoices?limit=${limit}&q=${encodeURIComponent(q)}${companyId ? `&companyId=${companyId}` : ""}`);
 export const loadInvoice = (number: string) => request<InvoiceDetail>(`/invoices/${encodeURIComponent(number)}`);
 export const loadLbdPreview = (file = "") => request<LbdRecipient>(`/invoices/lbd/preview${file ? `?file=${encodeURIComponent(file)}` : ""}`);
 export const loadProducts = (q = "", limit = 50) => request<ProductDto[]>(`/invoices/products?q=${encodeURIComponent(q)}&limit=${limit}`);
 export const loadDraft = () => request<InvoiceDraft>("/invoices/draft");
 export const loadCompanies = () => request<InvoiceCompany[]>("/invoices/companies");
-export const loadNextInvoiceNumber = () => request<InvoiceNumberPreview>("/invoices/numbers/next");
+export const loadNextInvoiceNumber = (companyId?: number) => request<InvoiceNumberPreview>(`/invoices/numbers/next${companyId ? `?companyId=${companyId}` : ""}`);
 export const loadExportCheck = (number: string) => request<InvoiceExportCheck>(`/invoices/${encodeURIComponent(number)}/export-check`);
 export const calculateInvoice = (lines: InvoiceCreateLineRequest[]) => request<InvoiceTotals>("/invoices/calculate", {method: "POST", body: JSON.stringify(lines)});
 export const createInvoice = (payload: InvoiceCreateRequest) => request<InvoiceCreateResponse>("/invoices", {method: "POST", body: JSON.stringify(payload)});

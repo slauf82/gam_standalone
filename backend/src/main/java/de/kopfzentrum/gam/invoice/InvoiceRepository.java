@@ -8,9 +8,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -23,7 +23,9 @@ public class InvoiceRepository {
   private final InvoiceCalculator calculator;
 
   public InvoiceRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate named, InvoiceCalculator calculator) {
-    this.jdbc = jdbc; this.named = named; this.calculator = calculator;
+    this.jdbc = jdbc;
+    this.named = named;
+    this.calculator = calculator;
   }
 
   public List<InvoiceSummary> findRecent(int limit) {
@@ -34,26 +36,38 @@ public class InvoiceRepository {
     int limit = Math.min(Math.max(criteria.limit() <= 0 ? 100 : criteria.limit(), 1), 500);
     int offset = Math.max(criteria.offset(), 0);
     MapSqlParameterSource p = new MapSqlParameterSource().addValue("limit", limit).addValue("offset", offset);
+    String q = criteria.q() == null ? "" : criteria.q().trim();
+    p.addValue("q", "%" + q + "%");
+
     StringBuilder sql = new StringBuilder("""
-      SELECT d.ID, d.RNUMMER, d.RDATUM, d.ENDPREIS, d.RGESELLSCHAFTS_ID, g.gesellschaftsname,
-             d.USERNAME, d.GUTSCHRIFT, d.STORNO, d.ZAHLUNGSAVIS
-      FROM rechnungsdetails d
-      LEFT JOIN rechnungsgesellschaft g ON g.id = d.RGESELLSCHAFTS_ID
-      WHERE d.RNUMMER IS NOT NULL
+      SELECT * FROM (
+        SELECT d.ID, d.RNUMMER, d.RDATUM, d.ENDPREIS, d.RGESELLSCHAFTS_ID, g.gesellschaftsname,
+               d.USERNAME, d.GUTSCHRIFT, d.STORNO, d.ZAHLUNGSAVIS, d.GRUND
+        FROM rechnungsdetails d
+        LEFT JOIN rechnungsgesellschaft g ON g.id = d.RGESELLSCHAFTS_ID
+        WHERE d.RNUMMER IS NOT NULL
+
+        UNION ALL
+
+        SELECT pd.ID, CONCAT(pd.ID, 'P') AS RNUMMER, pd.RDATUM, pd.ENDPREIS, pd.RGESELLSCHAFTS_ID, g.gesellschaftsname,
+               pd.USERNAME, pd.GUTSCHRIFT, pd.STORNO, pd.ZAHLUNGSAVIS, pd.GRUND
+        FROM p_rechnungsdetails pd
+        LEFT JOIN rechnungsgesellschaft g ON g.id = pd.RGESELLSCHAFTS_ID
+        WHERE pd.ID IS NOT NULL
+      ) x
+      WHERE 1=1
       """);
-    if (criteria.q() != null && !criteria.q().isBlank()) {
-      sql.append(" AND (d.RNUMMER LIKE :q OR g.gesellschaftsname LIKE :q OR d.USERNAME LIKE :q OR d.GRUND LIKE :q) ");
-      p.addValue("q", "%" + criteria.q().trim() + "%");
-    }
-    if (criteria.companyId() != null) { sql.append(" AND d.RGESELLSCHAFTS_ID = :companyId "); p.addValue("companyId", criteria.companyId()); }
-    if (criteria.creditNote() != null) { sql.append(" AND COALESCE(d.GUTSCHRIFT,0) = :creditNote "); p.addValue("creditNote", criteria.creditNote()); }
-    if (criteria.cancelled() != null) { sql.append(" AND COALESCE(d.STORNO,0) = :cancelled "); p.addValue("cancelled", criteria.cancelled()); }
-    if (criteria.paymentAdvice() != null) { sql.append(" AND COALESCE(d.ZAHLUNGSAVIS,0) = :paymentAdvice "); p.addValue("paymentAdvice", criteria.paymentAdvice()); }
-    sql.append(" ORDER BY d.ID DESC LIMIT :limit OFFSET :offset ");
+    if (!q.isBlank()) sql.append(" AND (x.RNUMMER LIKE :q OR x.gesellschaftsname LIKE :q OR x.USERNAME LIKE :q OR x.GRUND LIKE :q) ");
+    if (criteria.companyId() != null) { sql.append(" AND x.RGESELLSCHAFTS_ID = :companyId "); p.addValue("companyId", criteria.companyId()); }
+    if (criteria.creditNote() != null) { sql.append(" AND COALESCE(x.GUTSCHRIFT,0) = :creditNote "); p.addValue("creditNote", criteria.creditNote()); }
+    if (criteria.cancelled() != null) { sql.append(" AND COALESCE(x.STORNO,0) = :cancelled "); p.addValue("cancelled", criteria.cancelled()); }
+    if (criteria.paymentAdvice() != null) { sql.append(" AND COALESCE(x.ZAHLUNGSAVIS,0) = :paymentAdvice "); p.addValue("paymentAdvice", criteria.paymentAdvice()); }
+    sql.append(" ORDER BY x.ID DESC LIMIT :limit OFFSET :offset ");
     return named.query(sql.toString(), p, (rs, row) -> mapSummary(rs));
   }
 
   public InvoiceSummary findSummary(String number) {
+    if (isProformaNumber(number)) return findProformaSummary(number);
     try {
       return jdbc.queryForObject("""
         SELECT d.ID, d.RNUMMER, d.RDATUM, d.ENDPREIS, d.RGESELLSCHAFTS_ID, g.gesellschaftsname,
@@ -67,18 +81,56 @@ public class InvoiceRepository {
     }
   }
 
+  private InvoiceSummary findProformaSummary(String number) {
+    int id = parseProformaId(number);
+    try {
+      return jdbc.queryForObject("""
+        SELECT pd.ID, CONCAT(pd.ID, 'P') AS RNUMMER, pd.RDATUM, pd.ENDPREIS, pd.RGESELLSCHAFTS_ID, g.gesellschaftsname,
+               pd.USERNAME, pd.GUTSCHRIFT, pd.STORNO, pd.ZAHLUNGSAVIS
+        FROM p_rechnungsdetails pd
+        LEFT JOIN rechnungsgesellschaft g ON g.id = pd.RGESELLSCHAFTS_ID
+        WHERE pd.ID = ? LIMIT 1
+        """, (rs, row) -> mapSummary(rs), id);
+    } catch (EmptyResultDataAccessException ex) {
+      throw new IllegalArgumentException("Proforma-Rechnung nicht gefunden: " + number, ex);
+    }
+  }
+
   public List<InvoiceLine> findLines(String number) {
-    return jdbc.query("""
+    if (isProformaNumber(number)) return findProformaLines(number);
+    if (isStornoNumber(number) && rowsExist("storno", number)) return findLinesFromTable("storno", number);
+    if (isCreditNumber(number) && rowsExist("gutschrift", number)) return findLinesFromTable("gutschrift", number);
+    return findLinesFromTable("rechnung", number);
+  }
+
+  private List<InvoiceLine> findLinesFromTable(String table, String number) {
+    String sql = """
       SELECT r.ID, r.NUMMER, r.MENGE, r.PRODUKT_ID, rd.code, rd.beschreibung, r.MWST, r.PREIS2,
              r.FILIALE_ID, r.AUFTRAGGEBER, r.`DURCHFÜHRENDER`
-      FROM rechnung r
+      FROM %s r
       LEFT JOIN rechnungsdaten rd ON rd.rdaten_id = r.PRODUKT_ID
       WHERE r.NUMMER = ?
       ORDER BY r.ID ASC
+      """.formatted(table);
+    return jdbc.query(sql, (rs, row) -> new InvoiceLine(
+      rs.getInt("ID"), rs.getString("NUMMER"), getDouble(rs, "MENGE"), getInt(rs, "PRODUKT_ID"), rs.getString("code"),
+      rs.getString("beschreibung"), getInt(rs, "MWST"), getDouble(rs, "PREIS2"), getInt(rs, "FILIALE_ID"),
+      rs.getString("AUFTRAGGEBER"), rs.getString("DURCHFÜHRENDER")), number);
+  }
+
+  private List<InvoiceLine> findProformaLines(String number) {
+    int id = parseProformaId(number);
+    return jdbc.query("""
+      SELECT r.ID, CONCAT(r.PSRDID, 'P') AS NUMMER, r.MENGE, r.PRODUKT_ID, rd.code, rd.beschreibung, r.MWST, r.PREIS2,
+             r.FILIALE_ID, r.AUFTRAGGEBER, r.`DURCHFÜHRENDER`
+      FROM p_rechnung r
+      LEFT JOIN rechnungsdaten rd ON rd.rdaten_id = r.PRODUKT_ID
+      WHERE r.PSRDID = ?
+      ORDER BY r.ID ASC
       """, (rs, row) -> new InvoiceLine(
-        rs.getInt("ID"), rs.getString("NUMMER"), getDouble(rs, "MENGE"), getInt(rs, "PRODUKT_ID"), rs.getString("code"),
-        rs.getString("beschreibung"), getInt(rs, "MWST"), getDouble(rs, "PREIS2"), getInt(rs, "FILIALE_ID"),
-        rs.getString("AUFTRAGGEBER"), rs.getString("DURCHFÜHRENDER")), number);
+      rs.getInt("ID"), rs.getString("NUMMER"), getDouble(rs, "MENGE"), getInt(rs, "PRODUKT_ID"), rs.getString("code"),
+      rs.getString("beschreibung"), getInt(rs, "MWST"), getDouble(rs, "PREIS2"), getInt(rs, "FILIALE_ID"),
+      rs.getString("AUFTRAGGEBER"), rs.getString("DURCHFÜHRENDER")), id);
   }
 
   public InvoiceDetail findDetail(String number) {
@@ -121,13 +173,27 @@ public class InvoiceRepository {
     String max = jdbc.queryForObject("SELECT COALESCE(MAX(CAST(RNUMMER AS UNSIGNED)),0) FROM rechnungsdetails WHERE RNUMMER REGEXP '^[0-9]+$'", String.class);
     long current = Long.parseLong(max == null || max.isBlank() ? "0" : max);
     return new InvoiceNumberPreview(Long.toString(current + 1), Long.toString(current), true,
-      "Kompatibler Nummernkreis: liest aktuell die höchste numerische RNUMMER aus rechnungsdetails und zählt +1. Sonderfälle: Storno +S, Gutschrift +G, Proforma +P.");
+      "Normaler Nummernkreis aus rechnungsdetails. Storno = Original+S. Gutschrift aus gutschrift. Proforma aus p_rechnungsdetails.");
   }
 
   public String nextInvoiceNumber() { return nextInvoiceNumberPreview().nextNumber(); }
-  public String nextProformaNumber() { return nextInvoiceNumber() + "P"; }
+
+  public String nextProformaNumber() {
+    Integer max = jdbc.queryForObject("SELECT COALESCE(MAX(ID),0) FROM p_rechnungsdetails", Integer.class);
+    return ((max == null ? 0 : max) + 1) + "P";
+  }
+
+  public String nextCreditNumber() {
+    String max = jdbc.queryForObject("SELECT COALESCE(MAX(CAST(REPLACE(NUMMER,'G','') AS UNSIGNED)),0) FROM gutschrift WHERE NUMMER REGEXP '^[0-9]+G$'", String.class);
+    long current = Long.parseLong(max == null || max.isBlank() ? "0" : max);
+    return (current + 1) + "G";
+  }
 
   public boolean invoiceNumberExists(String number) {
+    if (isProformaNumber(number)) {
+      Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM p_rechnungsdetails WHERE ID = ?", Integer.class, parseProformaId(number));
+      return count != null && count > 0;
+    }
     Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM rechnungsdetails WHERE RNUMMER = ?", Integer.class, number);
     return count != null && count > 0;
   }
@@ -159,7 +225,7 @@ public class InvoiceRepository {
         .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", req.reason()).addValue("branchId", req.branchId())
         .addValue("postal", true).addValue("email", false), keyHolder, new String[]{"ID"});
 
-    insertLines(number, req.lines(), companyId, req.branchId());
+    insertLines("rechnung", number, req.lines(), companyId, req.branchId());
     InvoiceDetail detail = findDetail(number);
     Number key = keyHolder.getKey();
     return new InvoiceCreateResponse(number, key == null ? null : key.intValue(), totals, detail);
@@ -177,6 +243,7 @@ public class InvoiceRepository {
   @Transactional
   public InvoiceCreateResponse updateInvoice(String number, InvoiceUpdateRequest req, String username) {
     if (number == null || number.isBlank()) throw new IllegalArgumentException("Rechnungsnummer fehlt.");
+    if (isProformaNumber(number)) return updateProformaInvoice(number, req, username);
     if (!invoiceNumberExists(number)) throw new IllegalArgumentException("Rechnung nicht gefunden: " + number);
     if (req.lines() == null || req.lines().isEmpty()) throw new IllegalArgumentException("Mindestens eine Rechnungsposition ist erforderlich.");
 
@@ -212,21 +279,39 @@ public class InvoiceRepository {
         .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", req.reason()).addValue("branchId", req.branchId()));
 
     jdbc.update("DELETE FROM rechnung WHERE NUMMER = ?", number);
-    insertLines(number, req.lines(), companyId, req.branchId());
+    insertLines("rechnung", number, req.lines(), companyId, req.branchId());
     return new InvoiceCreateResponse(number, findSummary(number).id(), totals, findDetail(number));
+  }
+
+  private InvoiceCreateResponse updateProformaInvoice(String number, InvoiceUpdateRequest req, String username) {
+    int id = parseProformaId(number);
+    if (!invoiceNumberExists(number)) throw new IllegalArgumentException("Proforma-Rechnung nicht gefunden: " + number);
+    if (req.lines() == null || req.lines().isEmpty()) throw new IllegalArgumentException("Mindestens eine Position ist erforderlich.");
+    Integer companyId = Objects.requireNonNullElse(req.companyId(), findSummary(number).companyId());
+    InvoiceTotals totals = calculator.calculate(req.lines());
+    String invoiceDate = normalizeDate(req.invoiceDate());
+    String treatmentDate = normalizeDate(req.treatmentDate() == null || req.treatmentDate().isBlank() ? req.invoiceDate() : req.treatmentDate());
+    named.update("""
+      UPDATE p_rechnungsdetails
+      SET ADRESSID=:addressId, KINDADRESSID=:childAddressId, FIRMAADRESSID=:firmAddressId,
+          RDATUM=:invoiceDate, BDATUM=:treatmentDate, GBEMERKUNG=:remark,
+          RGESELLSCHAFTS_ID=:companyId, ZAHLUNGSART=:paymentMethod, ENDPREIS=:gross,
+          USERNAME=:username, GRUND=:reason, RFILIALE_ID=:branchId
+      WHERE ID=:id
+      """, new MapSqlParameterSource().addValue("id", id).addValue("addressId", req.addressId()).addValue("childAddressId", req.childAddressId())
+        .addValue("firmAddressId", req.firmAddressId()).addValue("invoiceDate", invoiceDate).addValue("treatmentDate", treatmentDate)
+        .addValue("remark", req.remark()).addValue("companyId", companyId).addValue("paymentMethod", blankToDefault(req.paymentMethod(), "unbekannt"))
+        .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", req.reason()).addValue("branchId", req.branchId()));
+    jdbc.update("DELETE FROM p_rechnung WHERE PSRDID = ?", id);
+    insertProformaLines(id, req.lines(), companyId, req.branchId());
+    return new InvoiceCreateResponse(number, id, totals, findDetail(number));
   }
 
   @Transactional
   public InvoiceDetail updateStatus(String number, InvoiceStatusUpdateRequest req, String username) {
     if (!invoiceNumberExists(number)) throw new IllegalArgumentException("Rechnung nicht gefunden: " + number);
-
-    if (Boolean.TRUE.equals(req.cancelled())) {
-      return createCancellationInvoice(number, username).invoice();
-    }
-    if (Boolean.TRUE.equals(req.creditNote())) {
-      return createCreditNote(number, username).invoice();
-    }
-
+    if (Boolean.TRUE.equals(req.cancelled())) return createCancellationInvoice(number, username).invoice();
+    if (Boolean.TRUE.equals(req.creditNote())) return createCreditNote(number, username).invoice();
     named.update("""
       UPDATE rechnungsdetails
       SET STORNO = COALESCE(:cancelled, STORNO),
@@ -235,48 +320,62 @@ public class InvoiceRepository {
           GRUND = COALESCE(:reason, GRUND),
           USERNAME = :username
       WHERE RNUMMER = :number
-      """, new MapSqlParameterSource()
-        .addValue("number", number)
-        .addValue("cancelled", req.cancelled())
-        .addValue("creditNote", req.creditNote())
-        .addValue("paymentAdvice", req.paymentAdvice())
-        .addValue("reason", req.reason())
-        .addValue("username", username));
+      """, new MapSqlParameterSource().addValue("number", number).addValue("cancelled", req.cancelled()).addValue("creditNote", req.creditNote())
+        .addValue("paymentAdvice", req.paymentAdvice()).addValue("reason", req.reason()).addValue("username", username));
     return findDetail(number);
   }
 
   @Transactional
   public InvoiceCreateResponse createCancellationInvoice(String originalNumber, String username) {
     String original = normalizeBaseInvoiceNumber(originalNumber);
-    return createSpecialInvoiceFromOriginal(original, original + "S", username, true, false, false,
-      "Stornorechnung zu " + original, true);
+    return createSpecialInvoiceFromOriginal(original, original + "S", username, true, false, "Stornorechnung zu " + original, "storno");
   }
 
   @Transactional
   public InvoiceCreateResponse createCreditNote(String originalNumber, String username) {
     String original = normalizeBaseInvoiceNumber(originalNumber);
-    return createSpecialInvoiceFromOriginal(original, original + "G", username, false, true, false,
-      "Gutschrift zu " + original, true);
+    String targetNumber = nextCreditNumber();
+    return createSpecialInvoiceFromOriginal(original, targetNumber, username, false, true, "Gutschrift zu " + original, "gutschrift");
   }
 
   @Transactional
   public InvoiceCreateResponse createProformaInvoice(InvoiceCreateRequest req, String username) {
-    String number = req.number() == null || req.number().isBlank() ? nextProformaNumber() : req.number().trim();
-    if (!number.endsWith("P")) number = number + "P";
-    InvoiceCreateRequest proforma = new InvoiceCreateRequest(number, req.invoiceDate(), req.treatmentDate(), req.companyId(), req.addressId(),
-      req.childAddressId(), req.firmAddressId(), req.branchId(), req.paymentMethod(), req.reason(), req.remark(), false, false, true, req.lbdFile(), req.lines());
-    return createInvoice(proforma, username);
+    if (req.lines() == null || req.lines().isEmpty()) throw new IllegalArgumentException("Mindestens eine Proforma-Position ist erforderlich.");
+    Integer companyId = Objects.requireNonNullElse(req.companyId(), 2);
+    InvoiceTotals totals = calculator.calculate(req.lines());
+    String invoiceDate = normalizeDate(req.invoiceDate());
+    String treatmentDate = normalizeDate(req.treatmentDate() == null || req.treatmentDate().isBlank() ? req.invoiceDate() : req.treatmentDate());
+    KeyHolder keyHolder = new GeneratedKeyHolder();
+    named.update("""
+      INSERT INTO p_rechnungsdetails
+      (ADRESSID, KINDADRESSID, FIRMAADRESSID, RDATUM, BDATUM, GBEMERKUNG, RGESELLSCHAFTS_ID,
+       GUTSCHRIFT, STORNO, ZAHLUNGSAVIS, ZAHLUNGSART, ENDPREIS, USERNAME, GRUND, RFILIALE_ID)
+      VALUES
+      (:addressId, :childAddressId, :firmAddressId, :invoiceDate, :treatmentDate, :remark, :companyId,
+       0, 0, 1, :paymentMethod, :gross, :username, :reason, :branchId)
+      """, new MapSqlParameterSource().addValue("addressId", req.addressId()).addValue("childAddressId", req.childAddressId())
+        .addValue("firmAddressId", req.firmAddressId()).addValue("invoiceDate", invoiceDate).addValue("treatmentDate", treatmentDate)
+        .addValue("remark", req.remark()).addValue("companyId", companyId).addValue("paymentMethod", blankToDefault(req.paymentMethod(), "unbekannt"))
+        .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", req.reason()).addValue("branchId", req.branchId()),
+      keyHolder, new String[]{"ID"});
+    Number key = keyHolder.getKey();
+    int id = key == null ? jdbc.queryForObject("SELECT LAST_INSERT_ID()", Integer.class) : key.intValue();
+    jdbc.update("UPDATE p_rechnungsdetails SET PSRDID = ? WHERE ID = ?", id, id);
+    insertProformaLines(id, req.lines(), companyId, req.branchId());
+    String number = id + "P";
+    return new InvoiceCreateResponse(number, id, totals, findDetail(number));
   }
 
   private InvoiceCreateResponse createSpecialInvoiceFromOriginal(String originalNumber, String targetNumber, String username,
-      boolean cancelled, boolean creditNote, boolean paymentAdvice, String reason, boolean negativeLines) {
+      boolean cancelled, boolean creditNote, String reason, String lineTable) {
     if (invoiceNumberExists(targetNumber)) return new InvoiceCreateResponse(targetNumber, findSummary(targetNumber).id(), findDetail(targetNumber).totals(), findDetail(targetNumber));
     InvoiceSummary original = findSummary(originalNumber);
     List<InvoiceLine> sourceLines = findLines(originalNumber);
     if (sourceLines.isEmpty()) throw new IllegalArgumentException("Originalrechnung hat keine Positionen: " + originalNumber);
-
     List<InvoiceCreateLineRequest> lines = sourceLines.stream()
-      .map(l -> new InvoiceCreateLineRequest(l.productId(), signed(l.quantity(), negativeLines), signed(l.price(), negativeLines), l.vat(), l.branchId(), l.client(), l.performer()))
+      .map(l -> creditNote
+        ? new InvoiceCreateLineRequest(l.productId(), positiveQuantity(l.quantity()), negativePrice(l.price()), l.vat(), l.branchId(), l.client(), l.performer())
+        : new InvoiceCreateLineRequest(l.productId(), negativeQuantity(l.quantity()), positive(l.price()), l.vat(), l.branchId(), l.client(), l.performer()))
       .toList();
     InvoiceTotals totals = calculator.calculate(lines);
     String today = LocalDate.now().format(GERMAN_DATE);
@@ -286,18 +385,15 @@ public class InvoiceRepository {
       (RNUMMER, RDATUM, BDATUM, GBEMERKUNG, RGESELLSCHAFTS_ID,
        GUTSCHRIFT, STORNO, ZAHLUNGSAVIS, ZAHLUNGSART, ENDPREIS, USERNAME, GRUND, FADRESSE, FEMAIL)
       SELECT :targetNumber, :today, COALESCE(BDATUM, RDATUM, :today), GBEMERKUNG, RGESELLSCHAFTS_ID,
-             :creditNote, :cancelled, :paymentAdvice, ZAHLUNGSART, :gross, :username, :reason, FADRESSE, FEMAIL
+             :creditNote, :cancelled, 0, ZAHLUNGSART, :gross, :username, :reason, FADRESSE, FEMAIL
       FROM rechnungsdetails
       WHERE RNUMMER = :originalNumber
       LIMIT 1
-      """, new MapSqlParameterSource()
-        .addValue("targetNumber", targetNumber).addValue("originalNumber", originalNumber).addValue("today", today)
-        .addValue("creditNote", creditNote).addValue("cancelled", cancelled).addValue("paymentAdvice", paymentAdvice)
-        .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", reason));
+      """, new MapSqlParameterSource().addValue("targetNumber", targetNumber).addValue("originalNumber", originalNumber).addValue("today", today)
+        .addValue("creditNote", creditNote).addValue("cancelled", cancelled).addValue("gross", totals.gross()).addValue("username", username).addValue("reason", reason));
 
-    insertLines(targetNumber, lines, original.companyId(), null);
+    insertLines(lineTable, targetNumber, lines, original.companyId(), null);
 
-    // Original sichtbar als storniert/gutgeschrieben markieren, ohne Positionsdaten zu verändern.
     if (cancelled || creditNote) {
       named.update("""
         UPDATE rechnungsdetails
@@ -313,25 +409,43 @@ public class InvoiceRepository {
     return new InvoiceCreateResponse(targetNumber, findSummary(targetNumber).id(), totals, findDetail(targetNumber));
   }
 
-  private void insertLines(String number, List<InvoiceCreateLineRequest> lines, Integer companyId, Integer fallbackBranchId) {
+  private void insertLines(String table, String number, List<InvoiceCreateLineRequest> lines, Integer companyId, Integer fallbackBranchId) {
     for (InvoiceCreateLineRequest line : lines) {
       if (line.productId() == null) throw new IllegalArgumentException("Jede Rechnungsposition benötigt eine Produkt-ID.");
-      named.update("""
-        INSERT INTO rechnung (NUMMER, MENGE, PRODUKT_ID, MWST, PREIS2, RGESELLSCHAFTS_ID, AUFTRAGGEBER, `DURCHFÜHRENDER`, FILIALE_ID)
+      String sql = """
+        INSERT INTO %s (NUMMER, MENGE, PRODUKT_ID, MWST, PREIS2, RGESELLSCHAFTS_ID, AUFTRAGGEBER, `DURCHFÜHRENDER`, FILIALE_ID)
         VALUES (:number, :quantity, :productId, :vat, :price, :companyId, :client, :performer, :branchId)
-        """, new MapSqlParameterSource()
-          .addValue("number", number).addValue("quantity", line.quantity() == null ? 1.0 : line.quantity())
-          .addValue("productId", line.productId()).addValue("vat", line.vat()).addValue("price", line.price() == null ? 0.0 : line.price())
-          .addValue("companyId", companyId).addValue("client", line.client()).addValue("performer", line.performer())
-          .addValue("branchId", line.branchId() == null ? fallbackBranchId : line.branchId()));
+        """.formatted(table);
+      named.update(sql, new MapSqlParameterSource().addValue("number", number).addValue("quantity", line.quantity() == null ? 1.0 : line.quantity())
+        .addValue("productId", line.productId()).addValue("vat", line.vat() == null ? 0 : line.vat()).addValue("price", line.price() == null ? 0.0 : line.price())
+        .addValue("companyId", companyId).addValue("client", line.client()).addValue("performer", line.performer())
+        .addValue("branchId", line.branchId() == null ? fallbackBranchId : line.branchId()));
     }
   }
 
-  private static Double signed(Double value, boolean negative) {
-    if (value == null) return null;
-    double abs = Math.abs(value);
-    return negative ? -abs : abs;
+  private void insertProformaLines(int psrdid, List<InvoiceCreateLineRequest> lines, Integer companyId, Integer fallbackBranchId) {
+    for (InvoiceCreateLineRequest line : lines) {
+      if (line.productId() == null) throw new IllegalArgumentException("Jede Proforma-Position benötigt eine Produkt-ID.");
+      named.update("""
+        INSERT INTO p_rechnung (PSRDID, MENGE, PRODUKT_ID, MWST, PREIS2, RGESELLSCHAFTS_ID, AUFTRAGGEBER, `DURCHFÜHRENDER`, FILIALE_ID)
+        VALUES (:psrdid, :quantity, :productId, :vat, :price, :companyId, :client, :performer, :branchId)
+        """, new MapSqlParameterSource().addValue("psrdid", psrdid).addValue("quantity", line.quantity() == null ? 1.0 : line.quantity())
+        .addValue("productId", line.productId()).addValue("vat", line.vat() == null ? 0 : line.vat()).addValue("price", line.price() == null ? 0.0 : line.price())
+        .addValue("companyId", companyId).addValue("client", line.client()).addValue("performer", line.performer())
+        .addValue("branchId", line.branchId() == null ? fallbackBranchId : line.branchId()));
+    }
   }
+
+  private static Double negativeQuantity(Double value) {
+    if (value == null) return -1.0;
+    return -Math.abs(value);
+  }
+  private static Double positiveQuantity(Double value) {
+    if (value == null) return 1.0;
+    return Math.abs(value);
+  }
+  private static Double positive(Double value) { return value == null ? null : Math.abs(value); }
+  private static Double negativePrice(Double value) { return value == null ? null : -Math.abs(value); }
 
   private static String normalizeBaseInvoiceNumber(String number) {
     if (number == null || number.isBlank()) throw new IllegalArgumentException("Rechnungsnummer fehlt.");
@@ -340,12 +454,34 @@ public class InvoiceRepository {
     return n;
   }
 
-  /** Nur fuer technische Fehleingaben gedacht: storno ist fachlich sicherer als Loeschen. */
   @Transactional
   public void deleteDraftCompletely(String number) {
     if (!invoiceNumberExists(number)) return;
+    if (isProformaNumber(number)) {
+      int id = parseProformaId(number);
+      jdbc.update("DELETE FROM p_rechnung WHERE PSRDID = ?", id);
+      jdbc.update("DELETE FROM p_rechnungsdetails WHERE ID = ?", id);
+      return;
+    }
     jdbc.update("DELETE FROM rechnung WHERE NUMMER = ?", number);
+    jdbc.update("DELETE FROM storno WHERE NUMMER = ?", number);
+    jdbc.update("DELETE FROM gutschrift WHERE NUMMER = ?", number);
     jdbc.update("DELETE FROM rechnungsdetails WHERE RNUMMER = ?", number);
+  }
+
+  private boolean rowsExist(String table, String number) {
+    String sql = "SELECT COUNT(*) FROM " + table + " WHERE NUMMER = ?";
+    Integer count = jdbc.queryForObject(sql, Integer.class, number);
+    return count != null && count > 0;
+  }
+
+  private static boolean isStornoNumber(String number) { return number != null && number.trim().endsWith("S"); }
+  private static boolean isCreditNumber(String number) { return number != null && number.trim().endsWith("G"); }
+  private static boolean isProformaNumber(String number) { return number != null && number.trim().endsWith("P"); }
+  private static int parseProformaId(String number) {
+    String n = number == null ? "" : number.trim();
+    if (n.endsWith("P")) n = n.substring(0, n.length() - 1);
+    return Integer.parseInt(n);
   }
 
   private InvoiceSummary mapSummary(java.sql.ResultSet rs) throws java.sql.SQLException {

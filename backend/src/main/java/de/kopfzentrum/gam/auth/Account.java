@@ -24,4 +24,8 @@ public record Account(
   public boolean hasTwoFactorSecret() {
     return secretkey != null && !secretkey.isBlank();
   }
+
+  public boolean isSuperAdmin() {
+    return "superadmin".equals(normalizedRole()) || "super-administrator".equals(normalizedRole());
+  }
 }

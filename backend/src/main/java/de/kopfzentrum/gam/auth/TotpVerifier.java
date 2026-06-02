@@ -23,8 +23,8 @@ public class TotpVerifier {
     try {
       byte[] key = base32Decode(secret);
       byte[] msg = ByteBuffer.allocate(8).putLong(counter).array();
-      Mac mac = Mac.getInstance("HmacSHA512");
-      mac.init(new SecretKeySpec(key, "HmacSHA512"));
+      Mac mac = Mac.getInstance("HmacSHA1");
+      mac.init(new SecretKeySpec(key, "HmacSHA1"));
       byte[] h = mac.doFinal(msg);
       int offset = h[h.length - 1] & 0x0f;
       int binary = ((h[offset] & 0x7f) << 24) | ((h[offset + 1] & 0xff) << 16) | ((h[offset + 2] & 0xff) << 8) | (h[offset + 3] & 0xff);

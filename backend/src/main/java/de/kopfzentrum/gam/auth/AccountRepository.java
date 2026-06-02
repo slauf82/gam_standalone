@@ -73,6 +73,36 @@ public class AccountRepository {
     return findById(id).orElseThrow();
   }
 
+  public Account updateSecretKey(int id, String secretkey) {
+    jdbc.update("""
+      UPDATE accounts
+      SET secretkey = ?
+      WHERE id = ?
+      """, blankToNull(secretkey), id);
+    return findById(id).orElseThrow();
+  }
+
+
+
+  public Account updateSecretKeyByUsername(String username, String secretkey) {
+    String normalizedUsername = username == null ? "" : username.trim();
+    if (normalizedUsername.isBlank()) {
+      throw new IllegalArgumentException("Benutzername fehlt");
+    }
+
+    int changed = jdbc.update("""
+      UPDATE accounts
+      SET secretkey = ?
+      WHERE username = ?
+      """, blankToNull(secretkey), normalizedUsername);
+
+    if (changed != 1) {
+      throw new IllegalArgumentException("Secretkey konnte nicht gespeichert werden fuer Benutzer: " + normalizedUsername);
+    }
+
+    return findByUsername(normalizedUsername).orElseThrow();
+  }
+
   private String blankToNull(String v) {
     return v == null || v.isBlank() ? null : v.trim();
   }

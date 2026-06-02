@@ -8,9 +8,11 @@ if [ -f .env ]; then
   . ./.env
   set +a
 fi
-if ! command -v mvn >/dev/null 2>&1; then
-  echo "Maven wurde nicht gefunden. Bitte Maven installieren oder Backend-JAR vorher bauen."
+export SPRING_PROFILES_ACTIVE=local
+./mvnw clean package
+if [ $? -ne 0 ]; then
+  echo
+  echo "Build fehlgeschlagen. Backend wird nicht gestartet."
   exit 1
 fi
-cd backend
-mvn spring-boot:run -Dspring-boot.run.profiles=local
+./mvnw spring-boot:run

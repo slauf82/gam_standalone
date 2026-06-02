@@ -8,5 +8,12 @@ if exist .env (
   )
 )
 set SPRING_PROFILES_ACTIVE=local
+call mvnw.cmd clean package
+if errorlevel 1 (
+  echo.
+  echo Build fehlgeschlagen. Backend wird nicht gestartet.
+  pause
+  exit /b 1
+)
 call mvnw.cmd spring-boot:run
 pause

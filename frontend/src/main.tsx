@@ -1,43 +1,190 @@
 import React, {useEffect, useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Download, FilePlus2, FileText, LogOut, Search, ShieldCheck, UserRound, UsersRound, LayoutDashboard, Package, Warehouse, CheckSquare, ClipboardCheck, BriefcaseBusiness, Landmark, FileBarChart, ClipboardList} from 'lucide-react';
-import {AccountAdminDto, AccountDto, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadWarehouseItems, loadWarehouseStats, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial} from './api/client';
+import {Download, FilePlus2, FileText, LogOut, Search, ShieldCheck, UserRound, UsersRound, LayoutDashboard, Package, Warehouse, CheckSquare, ClipboardCheck, BriefcaseBusiness, Landmark, FileBarChart, ClipboardList, KeyRound, QrCode, Smartphone} from 'lucide-react';
+import {QRCodeSVG} from 'qrcode.react';
+import {AccountAdminDto, AccountDto, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadWarehouseItems, loadWarehouseStats, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish} from './api/client';
 import './style.css';
+
+
+function b64urlToBuffer(value:string){
+  const base64 = value.replace(/-/g,'+').replace(/_/g,'/') + '='.repeat((4 - value.length % 4) % 4);
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+  return out.buffer;
+}
+function bufferToB64url(buffer:ArrayBuffer){
+  const bytes = new Uint8Array(buffer);
+  let binary='';
+  bytes.forEach(b=>binary+=String.fromCharCode(b));
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function usernameToUserId(username:string){
+  return new TextEncoder().encode(username || 'gam-user');
+}
 
 type Page = 'dashboard'|'invoices'|'inventory'|'warehouse'|'users'|'tasks'|'approvals'|'personnel'|'cashbook'|'compliance'|'reports';
 
 function Login({onLogin}:{onLogin:()=>void}) {
-  const [username,setUsername]=useState(''); const [password,setPassword]=useState(''); const [totp,setTotp]=useState(''); const [err,setErr]=useState('');
-  async function submit(e:React.FormEvent){e.preventDefault(); setErr(''); try{await login(username,password,totp); onLogin();}catch{setErr('Login fehlgeschlagen');}}
-  return <main className="login"><form className="card" onSubmit={submit}><h1>GAM 2.0</h1><p>Kompatibler Login über bestehende <code>accounts</code>-Tabelle.</p><input autoFocus placeholder="Benutzername" value={username} onChange={e=>setUsername(e.target.value)}/><input placeholder="Passwort optional" type="password" value={password} onChange={e=>setPassword(e.target.value)}/><input placeholder="2FA-Code optional" value={totp} onChange={e=>setTotp(e.target.value)}/><button><ShieldCheck size={18}/> Anmelden</button>{err&&<b className="error">{err}</b>}</form></main>
+  const [tab,setTab]=useState<'password'|'totp-register'|'totp-login'|'passkey-register'|'passkey-login'>('password');
+  const [username,setUsername]=useState('');
+  const [password,setPassword]=useState('');
+  const [totp,setTotp]=useState('');
+  const [err,setErr]=useState('');
+  const [info,setInfo]=useState('');
+  const [retryAfter,setRetryAfter]=useState(0);
+  const [setup,setSetup]=useState<{secret:string; otpauthUri:string; alreadyConfigured:boolean}|null>(null);
+
+  useEffect(()=>{
+    if (retryAfter <= 0) return;
+    const timer = window.setInterval(()=>setRetryAfter(v=>Math.max(0, v-1)), 1000);
+    return ()=>window.clearInterval(timer);
+  },[retryAfter]);
+
+  function handleLoginError(ex:any, fallback:string) {
+    if (ex?.retryAfterSeconds) {
+      setRetryAfter(Number(ex.retryAfterSeconds));
+      setErr(`Zu viele Fehlversuche. Neuer Versuch in ${Number(ex.retryAfterSeconds)} Sekunden.`);
+      return;
+    }
+    setErr(ex?.message ?? fallback);
+  }
+
+  async function passwordLogin(e:React.FormEvent){
+    e.preventDefault();
+    if (retryAfter > 0) return;
+    setErr('');
+    try{await login(username,password,''); onLogin();}
+    catch(ex:any){handleLoginError(ex,'Login fehlgeschlagen');}
+  }
+
+  async function totpLogin(e:React.FormEvent){
+    e.preventDefault();
+    if (retryAfter > 0) return;
+    setErr('');
+    try{await login(username,'',totp); onLogin();}
+    catch(ex:any){handleLoginError(ex,'2FA-Login fehlgeschlagen');}
+  }
+
+  async function startTotpSetup(e:React.FormEvent){
+    e.preventDefault();
+    setErr(''); setInfo(''); setSetup(null);
+    try{
+      const r=await setupTotp(username);
+      setSetup({secret:r.secret, otpauthUri:r.otpauthUri, alreadyConfigured:r.alreadyConfigured});
+      setInfo(r.alreadyConfigured?'Es existiert bereits ein 2FA-Secret. Mit Bestätigung wird es ersetzt.':'QR-Code erzeugt. Bitte mit Authenticator scannen und den Code bestätigen.');
+    }catch(ex:any){setErr(ex.message??'2FA-Registrierung konnte nicht gestartet werden');}
+  }
+
+  async function confirmTotpSetup(){
+    setErr(''); setInfo('');
+    if(!setup){setErr('Bitte zuerst QR-Code erzeugen.'); return;}
+    try{
+      await confirmTotp(username,setup.secret,totp);
+      setInfo('2FA wurde in accounts.secretkey gespeichert. Du kannst nun den 2FA-Login verwenden.');
+      setTab('totp-login');
+      setTotp('');
+    }catch(ex:any){setErr(ex.message??'2FA-Code konnte nicht bestätigt werden');}
+  }
+
+  async function passkeyInfo(){
+    setErr('');
+    try{const r=await loadPasskeyStatus(); setInfo(String(r.note ?? 'Passkey/WebAuthn ist vorbereitet.'));}
+    catch(ex:any){setErr(ex.message??'Passkey-Status konnte nicht geladen werden');}
+  }
+
+  async function registerPasskey(){
+    setErr(''); setInfo('');
+    if(!username.trim()){setErr('Bitte zuerst Benutzernamen eingeben.'); return;}
+    if(!window.PublicKeyCredential){setErr('Dieser Browser unterstützt keine Passkeys/WebAuthn.'); return;}
+    try{
+      const opts = await passkeyRegisterOptions(username.trim());
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge: b64urlToBuffer(opts.challenge),
+          rp: {name: opts.rpName, id: location.hostname},
+          user: {id: usernameToUserId(opts.username), name: opts.username, displayName: opts.username},
+          pubKeyCredParams: [{type:'public-key', alg:-7}, {type:'public-key', alg:-257}],
+          authenticatorSelection: {userVerification:'preferred'},
+          timeout: 60000,
+          attestation: 'none'
+        }
+      }) as PublicKeyCredential | null;
+      if(!credential){setErr('Passkey-Registrierung wurde abgebrochen.'); return;}
+      const response = credential.response as AuthenticatorAttestationResponse;
+      await passkeyRegisterFinish(
+        username.trim(),
+        opts.challenge,
+        bufferToB64url(credential.rawId),
+        JSON.stringify({clientDataJSON: bufferToB64url(response.clientDataJSON), attestationObject: bufferToB64url(response.attestationObject)}),
+        navigator.userAgent.slice(0,120)
+      );
+      setInfo('Passkey wurde gespeichert. Du kannst jetzt den Passkey-Login testen.');
+      setTab('passkey-login');
+    }catch(ex:any){setErr(ex.message??'Passkey-Registrierung fehlgeschlagen');}
+  }
+
+  async function loginWithPasskey(){
+    setErr(''); setInfo('');
+    if(!username.trim()){setErr('Bitte Benutzernamen eingeben.'); return;}
+    if(!window.PublicKeyCredential){setErr('Dieser Browser unterstützt keine Passkeys/WebAuthn.'); return;}
+    try{
+      const opts = await passkeyLoginOptions(username.trim());
+      if(!opts.allowCredentialIds?.length){setErr('Für diesen Benutzer ist kein Passkey gespeichert.'); return;}
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge: b64urlToBuffer(opts.challenge),
+          allowCredentials: opts.allowCredentialIds.map(id=>({type:'public-key', id:b64urlToBuffer(id)})),
+          userVerification: 'preferred',
+          timeout: 60000
+        }
+      }) as PublicKeyCredential | null;
+      if(!assertion){setErr('Passkey-Login wurde abgebrochen.'); return;}
+      await passkeyLoginFinish(username.trim(), opts.challenge, bufferToB64url(assertion.rawId));
+      onLogin();
+    }catch(ex:any){setErr(ex.message??'Passkey-Login fehlgeschlagen');}
+  }
+
+  const locked = retryAfter > 0;
+
+  return <main className="login"><section className="card login-card"><h1>GAM 2.0</h1><p>Kompatibler Login über bestehende <code>accounts</code>-Tabelle.</p><nav className="tabs login-tabs"><button type="button" className={tab==='password'?'active':''} onClick={()=>setTab('password')}><ShieldCheck size={16}/> Passwort</button><button type="button" className={tab==='totp-register'?'active':''} onClick={()=>setTab('totp-register')}><QrCode size={16}/> 2FA registrieren</button><button type="button" className={tab==='totp-login'?'active':''} onClick={()=>setTab('totp-login')}><Smartphone size={16}/> 2FA-Login</button><button type="button" className={tab==='passkey-register'?'active':''} onClick={()=>{setTab('passkey-register'); passkeyInfo();}}><KeyRound size={16}/> Passkey registrieren</button><button type="button" className={tab==='passkey-login'?'active':''} onClick={()=>{setTab('passkey-login'); passkeyInfo();}}><KeyRound size={16}/> Passkey-Login</button></nav>
+  {locked&&<p className="note warn">Zu viele Fehlversuche. Neuer Versuch in <b>{retryAfter}</b> Sekunden.</p>}
+  {tab==='password'&&<form onSubmit={passwordLogin} className="login-form"><input autoFocus placeholder="Benutzername" value={username} onChange={e=>setUsername(e.target.value)}/><input placeholder="Passwort" type="password" value={password} onChange={e=>setPassword(e.target.value)}/><button disabled={locked}><ShieldCheck size={18}/> {locked?`Warten ${retryAfter}s`:'Anmelden'}</button></form>}
+  {tab==='totp-register'&&<section className="login-form"><form onSubmit={startTotpSetup} className="login-form"><input placeholder="Benutzername" value={username} onChange={e=>setUsername(e.target.value)}/><p className="muted">Für die 2FA-Registrierung wird nur der Benutzername benötigt. Das Passwortfeld ist bewusst ausgeblendet.</p><button><QrCode size={18}/> QR-Code erzeugen</button></form>{setup&&<div className="qr-box"><QRCodeSVG value={setup.otpauthUri} size={210}/><p><b>Secret:</b> <code>{setup.secret}</code></p><small>Authenticator: Google Authenticator, Microsoft Authenticator, Aegis, 2FAS, Bitwarden usw.</small><input placeholder="6-stelliger Code zur Bestätigung" value={totp} onChange={e=>setTotp(e.target.value)}/><button type="button" onClick={confirmTotpSetup}>2FA speichern</button></div>}</section>}
+  {tab==='totp-login'&&<form onSubmit={totpLogin} className="login-form"><input placeholder="Benutzername" value={username} onChange={e=>setUsername(e.target.value)}/><input placeholder="6-stelliger Authenticator-Code" value={totp} onChange={e=>setTotp(e.target.value)}/><button disabled={locked}><Smartphone size={18}/> {locked?`Warten ${retryAfter}s`:'Mit 2FA anmelden'}</button></form>}
+  {tab==='passkey-register'&&<section className="login-form"><input placeholder="Benutzername" value={username} onChange={e=>setUsername(e.target.value)}/><p className="note warn">Passkey-Testworkflow für localhost/Windows Hello/YubiKey. Für Produktivbetrieb wird die serverseitige WebAuthn-Signaturprüfung noch gehärtet.</p><button type="button" onClick={registerPasskey}><KeyRound size={18}/> Passkey registrieren</button><button type="button" className="secondary" onClick={passkeyInfo}>Passkey-Status prüfen</button></section>}
+  {tab==='passkey-login'&&<section className="login-form"><input placeholder="Benutzername" value={username} onChange={e=>setUsername(e.target.value)}/><p className="note warn">Passkey-Login über WebAuthn. Lokal funktioniert das mit <code>localhost</code>.</p><button type="button" onClick={loginWithPasskey}><KeyRound size={18}/> Mit Passkey anmelden</button><button type="button" className="secondary" onClick={passkeyInfo}>Passkey-Status prüfen</button></section>}
+  {info&&<p className="note ok">{info}</p>}{err&&<b className="error">{err}</b>}</section></main>
 }
 
-function App(){const [authed,setAuthed]=useState(!!token()); return authed?<Shell onLogout={()=>{logout();setAuthed(false)}}/>:<Login onLogin={()=>setAuthed(true)}/>}
+function App(){const [authed,setAuthed]=useState(!!token()); useEffect(()=>{const h=()=>setAuthed(false); window.addEventListener("gam-auth-expired",h); return()=>window.removeEventListener("gam-auth-expired",h)},[]); return authed?<Shell onLogout={()=>{logout();setAuthed(false)}}/>:<Login onLogin={()=>setAuthed(true)}/>}
 function Shell({onLogout}:{onLogout:()=>void}){const [account,setAccount]=useState<AccountDto|null>(null); const [menu,setMenu]=useState<RoleDto|null>(null); const [page,setPage]=useState<Page>('dashboard');
- useEffect(()=>{me().then(setAccount).catch(()=>{}); loadMenu().then(m=>{setMenu(m); if(m.modules.includes('invoices')) setPage('invoices')}).catch(()=>{})},[]);
+ useEffect(()=>{me().then(setAccount).catch(()=>{logout(); onLogout();}); loadMenu().then(m=>{setMenu(m); if(m.modules.includes('invoices')) setPage('invoices')}).catch(()=>{logout(); onLogout();})},[]);
  const modules=menu?.modules??['dashboard'];
  const nav=[['dashboard','Dashboard',LayoutDashboard],['invoices','Rechnungen',FileText],['inventory','Inventar',Package],['warehouse','Lager',Warehouse],['tasks','Aufgaben',CheckSquare],['approvals','Freigaben',ClipboardCheck],['personnel','Personal',BriefcaseBusiness],['cashbook','Kassenbuch',Landmark],['compliance','Prüfungen',ClipboardList],['reports','Reports',FileBarChart],['users','Benutzer/Rechte',UsersRound]] as const;
  return <main><header><div><h1>GAM 2.0</h1><span>{account?.fullname||account?.username} · Rolle: {menu?.label||account?.role||'—'} · Schritt 10 Rechte/Sicherheit</span></div><button className="secondary" onClick={onLogout}><LogOut size={16}/> Logout</button></header><nav className="tabs">{nav.filter(n=>modules.includes(n[0]) || (n[0]==='users' && modules.includes('admin'))).map(([key,label,Icon])=><button key={key} className={page===key?'active':''} onClick={()=>setPage(key as Page)}><Icon size={16}/>{label}</button>)}</nav>{page==='dashboard'&&<DashboardHome/>}{page==='invoices'&&<InvoicesPage/>}{page==='users'&&<UsersPage/>}{page==='inventory'&&<InventoryPage/>}{page==='warehouse'&&<><WarehousePage/><InventoryWarehousePage/></>}{page==='tasks'&&<RecordsPage title='Aufgaben' loader={loadGamTasks}/>} {page==='approvals'&&<RecordsPage title='Freigaben' loader={loadGamApprovals}/>} {page==='personnel'&&<RecordsPage title='Personal' loader={loadGamPersonnel}/>} {page==='cashbook'&&<RecordsPage title='Kassenbuch' loader={loadGamCashbook}/>} {page==='compliance'&&<CompliancePage/>} {page==='reports'&&<ReportsPage/>}</main>}
 function Placeholder({title,text}:{title:string;text:string}){return <section className="card"><h2>{title}</h2><p className="muted">{text}</p></section>}
 function DashboardHome(){const [status,setStatus]=useState<SystemStatus|null>(null); useEffect(()=>{loadSystemStatus().then(setStatus).catch(()=>{})},[]); return <section className="card"><h2>Dashboard</h2>{status?<p><b>DB:</b> {status.databaseAvailable?'verbunden':'nicht verbunden'} · <b>Accounts:</b> {status.accountCount} · <b>.lbd:</b> {status.lbdAvailable?'gefunden':'nicht gefunden'}</p>:<p className="muted">Status wird geladen.</p>}<p>Schritt 10 härtet Login, Rollen und API-Zugriffe: Module sind serverseitig geschützt, 2FA bleibt kompatibel, Admin-Endpunkte sind begrenzt.</p><ModuleTiles/></section>}
 function InvoicesPage(){
- const [rows,setRows]=useState<InvoiceSummary[]>([]); const [selected,setSelected]=useState<InvoiceDetail|null>(null); const [filter,setFilter]=useState(''); const [mode,setMode]=useState<'search'|'new'|'edit'>('search');
- async function refresh(q=filter){const r=await loadInvoices(100,q); setRows(r); if(r[0] && !selected) setSelected(await loadInvoice(r[0].number));}
+ const [rows,setRows]=useState<InvoiceSummary[]>([]); const [selected,setSelected]=useState<InvoiceDetail|null>(null); const [filter,setFilter]=useState(''); const [mode,setMode]=useState<'search'|'new'|'edit'>('search'); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [searchCompanyId,setSearchCompanyId]=useState<number|undefined>(); const [searchInfo,setSearchInfo]=useState('');
+ async function refresh(q=filter){if(!searchCompanyId){setRows([]); setSelected(null); setSearchInfo('Bitte zuerst eine Gesellschaft auswählen.'); return;} setSearchInfo(''); const r=await loadInvoices(100,q,searchCompanyId); setRows(r); if(r[0]) setSelected(await loadInvoice(r[0].number)); else setSelected(null);}
  async function select(number:string){const detail=await loadInvoice(number); setSelected(detail);}
- useEffect(()=>{refresh().catch(console.error);},[]);
+ useEffect(()=>{loadCompanies().then(cs=>{setCompanies(cs); if(cs[0]) setSearchCompanyId(cs[0].id)}).catch(()=>{})},[]);
  return <>
   <section className="toolbar invoice-menu">
     <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><FilePlus2 size={16}/> Neue Rechnung</button>
     <button className={mode==='search'?'active secondary':'secondary'} onClick={()=>setMode('search')}><Search size={16}/> Rechnung suchen</button>
     <button className="secondary" disabled={!selected} onClick={()=>setMode('edit')}>Rechnung bearbeiten</button>
   </section>
-  {mode==='new'&&<InvoiceEditor onSaved={async d=>{await refresh(); setSelected(d.invoice); setMode('search');}}/>}
+  {mode==='new'&&<InvoiceEditor initialCompanyId={searchCompanyId} onSaved={async d=>{await refresh(); setSelected(d.invoice); setMode('search');}}/>}
   {mode==='edit'&&selected&&<InvoiceEditor existing={selected} onSaved={async d=>{await refresh(); setSelected(d.invoice); setMode('search');}}/>}
   {mode==='search'&&<section className="layout invoice-search-layout">
     <aside className="card search-panel">
       <h2>Rechnung suchen</h2>
-      <label><Search size={16}/><input placeholder="Suche Nummer / Gesellschaft" value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') refresh(filter)}}/></label>
-      <button className="secondary" onClick={()=>refresh(filter)}>Suchen</button>
+      <label>Gesellschaft<select value={searchCompanyId??''} onChange={e=>setSearchCompanyId(e.target.value?Number(e.target.value):undefined)}><option value="">Bitte wählen</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name??c.code??c.id}</option>)}</select></label>
+      <label><Search size={16}/><input placeholder="Suche Nummer / Name / Grund" value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') refresh(filter)}}/></label>
+      <button className="secondary" disabled={!searchCompanyId} onClick={()=>refresh(filter)}>Suchen</button>
+      {searchInfo&&<p className="note warn">{searchInfo}</p>}
       <div className="list">{rows.map(r=><button key={r.id} onClick={()=>select(r.number)}><b>{r.number}</b><small>{r.invoiceDate} · {money(r.totalGross)} · {r.companyName}</small></button>)}</div>
     </aside>
     <section className="card detail">{selected?<><div className="row"><h2>Rechnung {selected.summary.number}</h2><div className="download-actions"><a className="buttonlink" target="_blank" href={pdfUrl(selected.summary.number)}><Download size={16}/> ZUGFeRD-PDF</a><a className="buttonlink secondarylink" target="_blank" href={zugferdXmlUrl(selected.summary.number)}><Download size={16}/> XML</a></div></div><p>{selected.summary.companyName} · {selected.summary.invoiceDate} · {money(selected.totals?.gross ?? selected.summary.totalGross)}</p><ExportCheck number={selected.summary.number}/><InvoiceStatusActions detail={selected} onChanged={setSelected}/><table><thead><tr><th>Menge</th><th>Code</th><th>Beschreibung</th><th>MwSt</th><th>Preis</th></tr></thead><tbody>{selected.lines.map(l=><tr key={l.id}><td>{l.quantity}</td><td>{l.code}</td><td>{l.description}</td><td>{l.vat}%</td><td>{money(l.price)}</td></tr>)}</tbody></table></>:<div className="empty">Bitte links eine Rechnung auswählen.</div>}</section>
@@ -48,8 +195,9 @@ function InvoiceStatusActions({detail,onChanged}:{detail:InvoiceDetail; onChange
 
 function ExportCheck({number}:{number:string}){const [check,setCheck]=useState<any|null>(null); useEffect(()=>{loadExportCheck(number).then(setCheck).catch(()=>setCheck(null))},[number]); if(!check) return <p className="muted">Exportprüfung wird geladen.</p>; return <div className={check.exportable?'note ok':'note warn'}>{check.exportable?'ZUGFeRD-Export bereit':'ZUGFeRD-Export hat Hinweise'}{check.issues?.length?<ul>{check.issues.map((i:any,idx:number)=><li key={idx}>{i.severity}: {i.field} – {i.message}</li>)}</ul>:null}</div>}
 
-function InvoiceEditor({existing,onSaved}:{existing?:InvoiceDetail; onSaved:(r:any)=>void}){const [products,setProducts]=useState<ProductDto[]>([]); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [companyId,setCompanyId]=useState(existing?.summary.companyId??2); const [productId,setProductId]=useState<number|undefined>(); const [qty,setQty]=useState(1); const [invoiceDate,setInvoiceDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [paymentMethod,setPaymentMethod]=useState('unbekannt'); const [reason,setReason]=useState(''); const [remark,setRemark]=useState(''); const [err,setErr]=useState(''); const [next,setNext]=useState(existing?.summary.number??''); const [lbd,setLbd]=useState<LbdRecipient|null>(null); const [lines,setLines]=useState<InvoiceCreateLineRequest[]>(existing?.lines.map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat,branchId:l.branchId,client:l.client,performer:l.performer}))??[]); const [totals,setTotals]=useState<any>(null);
- useEffect(()=>{loadProducts('',120).then(ps=>{setProducts(ps); if(ps[0]) setProductId(ps[0].id)}); loadCompanies().then(cs=>{setCompanies(cs); if(!existing && cs[0]) setCompanyId(cs[0].id)}).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null)); if(!existing) loadNextInvoiceNumber().then(n=>setNext(n.nextNumber)).catch(()=>{});},[]);
+function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDetail; initialCompanyId?:number; onSaved:(r:any)=>void}){const [products,setProducts]=useState<ProductDto[]>([]); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [companyId,setCompanyId]=useState(existing?.summary.companyId??initialCompanyId??2); const [productId,setProductId]=useState<number|undefined>(); const [qty,setQty]=useState(1); const [invoiceDate,setInvoiceDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [paymentMethod,setPaymentMethod]=useState('unbekannt'); const [reason,setReason]=useState(''); const [remark,setRemark]=useState(''); const [err,setErr]=useState(''); const [next,setNext]=useState(existing?.summary.number??''); const [lbd,setLbd]=useState<LbdRecipient|null>(null); const [lines,setLines]=useState<InvoiceCreateLineRequest[]>(existing?.lines.map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat,branchId:l.branchId,client:l.client,performer:l.performer}))??[]); const [totals,setTotals]=useState<any>(null);
+ useEffect(()=>{loadProducts('',120).then(ps=>{setProducts(ps); if(ps[0]) setProductId(ps[0].id)}); loadCompanies().then(cs=>{setCompanies(cs); if(!existing && cs[0]) setCompanyId(cs[0].id)}).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null)); if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{});},[]);
+ useEffect(()=>{if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{})},[companyId]);
  useEffect(()=>{if(lines.length) loadCalculate(lines,setTotals).catch(()=>{}); else setTotals(null)},[JSON.stringify(lines)]);
  const p=products.find(x=>x.id===productId); function addLine(){if(!p) return; setLines([...lines,{productId:p.id, quantity:qty, price:p.price??0, vat:p.vat??0}])}
  function updateLine(idx:number, patch:Partial<InvoiceCreateLineRequest>){setLines(lines.map((l,i)=>i===idx?{...l,...patch}:l))}

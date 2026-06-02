@@ -33,3 +33,12 @@ tr.selected{background:#eef4ff}
 .add-position,.save-invoice{align-self:end;white-space:nowrap;justify-content:center}
 .product-cell{max-width:560px;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
 @media(max-width:1000px){.invoice-search-layout{grid-template-columns:1fr}.newgrid{grid-template-columns:1fr}.product-field{grid-column:auto;max-width:none}.product-field select{max-width:none}.quantity-field{max-width:none}}
+
+/* Schritt 17: Login-Tabs, 2FA und Passkey-Vorbereitung */
+.login-card{width:min(760px,calc(100vw - 48px));display:grid;gap:1rem}
+.login-card form{width:auto}
+.login-tabs{padding:0;gap:.5rem}
+.login-tabs button{font-size:.92rem}
+.login-form{display:grid;gap:.75rem}
+.qr-box{display:grid;gap:.75rem;justify-items:start;background:#f7f9fd;border:1px solid #e7edf6;border-radius:16px;padding:1rem}
+.qr-box svg{background:white;padding:.5rem;border-radius:12px;border:1px solid #e7edf6}

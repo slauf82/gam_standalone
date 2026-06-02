@@ -27,6 +27,13 @@ public class SecurityConfig {
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(
           "/api/auth/login",
+          "/api/auth/totp/setup",
+          "/api/auth/totp/confirm",
+          "/api/auth/passkey/status",
+          "/api/auth/passkey/register/options",
+          "/api/auth/passkey/register/finish",
+          "/api/auth/passkey/login/options",
+          "/api/auth/passkey/login/finish",
           "/api/system/status",
           "/api/system/startup-check",
           "/api/invoices/lbd/preview",
@@ -40,17 +47,12 @@ public class SecurityConfig {
         // Administration: bewusst hart begrenzt. Benutzer/Rollen duerfen nur Admins sehen/aendern.
         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "ADMINISTRATOR", "SUPERADMIN")
 
-        // Rechnungen: im alten GAM fachlich kritisch, daher nur Admin/Rechnung.
-        .requestMatchers("/api/invoices/**").hasAnyRole("ADMIN", "ADMINISTRATOR", "SUPERADMIN", "RECHNUNG")
-
-        // Inventar und Lager getrennt, gemeinsame Buchungen fuer beide Rollen erlaubt.
-        .requestMatchers("/api/inventory-warehouse/**").hasAnyRole("ADMIN", "ADMINISTRATOR", "SUPERADMIN", "INVENTAR", "LAGER")
-        .requestMatchers("/api/inventory/**").hasAnyRole("ADMIN", "ADMINISTRATOR", "SUPERADMIN", "INVENTAR")
-        .requestMatchers("/api/warehouse/**").hasAnyRole("ADMIN", "ADMINISTRATOR", "SUPERADMIN", "LAGER")
-
-        // Gesamt-GAM: Lese-/Rahmenmodule bleiben angemeldet erreichbar; spaetere Feingranularitaet erfolgt im Service.
-        .requestMatchers("/api/gam/personnel/**").hasAnyRole("ADMIN", "ADMINISTRATOR", "SUPERADMIN", "PERSONAL")
-        .requestMatchers("/api/gam/cashbook/**").hasAnyRole("ADMIN", "ADMINISTRATOR", "SUPERADMIN")
+        // Fachrechte werden im GAM 2.0 kompatibel ueber userapplication geprueft.
+        // SUPERADMIN ist globaler Bypass; alle anderen Rechte sind an APPLICATION/RGESELLSCHAFTS_ID gekoppelt.
+        .requestMatchers("/api/invoices/**").authenticated()
+        .requestMatchers("/api/inventory-warehouse/**").authenticated()
+        .requestMatchers("/api/inventory/**").authenticated()
+        .requestMatchers("/api/warehouse/**").authenticated()
         .requestMatchers("/api/gam/**").authenticated()
 
         .anyRequest().authenticated())

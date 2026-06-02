@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class RoleCatalog {
+  private final UserApplicationRepository userApplications;
+
+  public RoleCatalog(UserApplicationRepository userApplications) {
+    this.userApplications = userApplications;
+  }
   public List<RoleDto> roles() {
     return List.of(
       new RoleDto("admin", "Administration", true, List.of("dashboard", "invoices", "inventory", "warehouse", "users", "tasks", "approvals", "personnel", "cashbook", "compliance", "reports", "admin")),
@@ -27,6 +32,15 @@ public class RoleCatalog {
     if (account == null) return false;
     String r = account.normalizedRole();
     return r.equals("admin") || r.equals("administrator") || r.equals("superadmin");
+  }
+
+  public RoleDto describe(Account account) {
+    if (account == null) return describe("viewer");
+    if (account.isSuperAdmin()) return describe("superadmin");
+    var modules = new java.util.ArrayList<>(userApplications.frontendModulesFor(account.username()));
+    if (modules.isEmpty()) modules.add("dashboard");
+    String label = account.fullname() == null || account.fullname().isBlank() ? account.username() : account.fullname();
+    return new RoleDto(account.normalizedRole(), label, false, modules);
   }
 
   public RoleDto describe(String role) {

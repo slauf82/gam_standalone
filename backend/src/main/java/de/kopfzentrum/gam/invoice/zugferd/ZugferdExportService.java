@@ -18,13 +18,14 @@ public class ZugferdExportService {
   private final InvoicePdfService pdfService;
   private final ZugferdXmlService xmlService;
   private final LbdService lbdService;
+  private final InvoicePdfArchiveService archiveService;
 
   @Value("${zugferd.enabled:true}") private boolean enabled;
   @Value("${zugferd.profile:EN16931}") private String profile;
   @Value("${zugferd.validate:false}") private boolean validate;
 
-  public ZugferdExportService(InvoiceRepository repo, InvoicePdfService pdfService, ZugferdXmlService xmlService, LbdService lbdService) {
-    this.repo = repo; this.pdfService = pdfService; this.xmlService = xmlService; this.lbdService = lbdService;
+  public ZugferdExportService(InvoiceRepository repo, InvoicePdfService pdfService, ZugferdXmlService xmlService, LbdService lbdService, InvoicePdfArchiveService archiveService) {
+    this.repo = repo; this.pdfService = pdfService; this.xmlService = xmlService; this.lbdService = lbdService; this.archiveService = archiveService;
   }
 
   public ZugferdStatus status() {
@@ -68,6 +69,7 @@ public class ZugferdExportService {
     byte[] xml = xmlService.buildXml(detail, company, recipient, totals);
     byte[] basePdf = pdfService.renderVisualPdf(number, true);
     byte[] finalPdf = enabled ? embed(basePdf, xml) : basePdf;
+    archiveService.archive(number, finalPdf);
     return new ZugferdExportResult(number, profile, "rechnung-" + number + "-zugferd.pdf", finalPdf, xml, enabled, !validate,
       validate ? "Validierung ist vorbereitet; harte Mustang-/KoSIT-Validierung folgt im nächsten Feinschliff." : "Interne Plausibilitätsprüfung bestanden; externe Validierung deaktiviert.");
   }
