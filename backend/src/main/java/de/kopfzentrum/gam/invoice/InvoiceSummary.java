@@ -10,5 +10,9 @@ public record InvoiceSummary(
   String username,
   Boolean creditNote,
   Boolean cancelled,
-  Boolean paymentAdvice
+  Boolean paymentAdvice,
+  Double couponAmount,
+  Integer discountPercent,
+  String discountRemark,
+  Integer installments
 ) {}

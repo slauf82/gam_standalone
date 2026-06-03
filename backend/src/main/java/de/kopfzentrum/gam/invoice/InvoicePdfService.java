@@ -53,7 +53,7 @@ public class InvoicePdfService {
     PdfPTable head = new PdfPTable(new float[]{6.5f, 3.5f});
     head.setWidthPercentage(100);
     PdfPCell left = borderless(companyBlock(company, small));
-    PdfPCell right = borderless(new Phrase("Rechnung " + summary.number(), title));
+    PdfPCell right = borderless(new Phrase(documentTitle(summary.number()) + " " + summary.number(), title));
     right.setHorizontalAlignment(Element.ALIGN_RIGHT);
     head.addCell(left); head.addCell(right);
     document.add(head);
@@ -90,6 +90,8 @@ public class InvoicePdfService {
     document.add(table);
     document.add(new Paragraph(" "));
 
+    addCommercialAdjustments(document, summary, lines, totals, normal, bold);
+
     PdfPTable totalTable = new PdfPTable(new float[]{7f, 3f});
     totalTable.setWidthPercentage(100);
     totalTable.addCell(borderless(new Phrase(forZugferd ? "Diese Rechnung enthält die maschinenlesbare ZUGFeRD/Factur-X XML im PDF." : "Debug-/Fallback-PDF; verbindlich ist der ZUGFeRD/Factur-X-Export.", small)));
@@ -106,6 +108,30 @@ public class InvoicePdfService {
     return out.toByteArray();
   }
 
+  private static void addCommercialAdjustments(Document document, InvoiceSummary summary, List<InvoiceLine> lines, InvoiceTotals totals, Font normal, Font bold) {
+    try {
+      double lineGross = lines.stream().mapToDouble(l -> (l.quantity() == null ? 1.0 : l.quantity()) * (l.price() == null ? 0.0 : l.price())).sum();
+      boolean hasRows = false;
+      PdfPTable adj = new PdfPTable(new float[]{8f, 2f});
+      adj.setWidthPercentage(100);
+      if (summary.discountPercent() != null && summary.discountPercent() > 0 && lineGross > 0) {
+        adj.addCell(borderless(new Phrase("Rabatt " + summary.discountPercent() + "%", normal)));
+        adj.addCell(borderless(new Phrase(EUR.format(-(lineGross * summary.discountPercent() / 100.0)), bold)));
+        hasRows = true;
+      }
+      if (summary.couponAmount() != null && summary.couponAmount() > 0) {
+        adj.addCell(borderless(new Phrase(summary.discountRemark() == null || summary.discountRemark().isBlank() ? "Gutschein" : summary.discountRemark(), normal)));
+        adj.addCell(borderless(new Phrase(EUR.format(-summary.couponAmount()), bold)));
+        hasRows = true;
+      }
+      if (hasRows) { document.add(adj); document.add(new Paragraph(" ")); }
+      if (summary.installments() != null && summary.installments() > 1) {
+        document.add(new Paragraph("Ratenzahlung: " + summary.installments() + " Raten à ca. " + EUR.format(totals.gross() / summary.installments()), normal));
+        document.add(new Paragraph(" "));
+      }
+    } catch (Exception ignored) { }
+  }
+
   private static Phrase companyBlock(InvoiceCompany company, Font font) {
     if (company == null) return new Phrase("Kopfzentrum\n", font);
     return new Phrase(nullSafe(company.name()) + "\n" + nullSafe(company.street()) + "\n" + nullSafe(company.city()) + "\n" + nullSafe(company.email()), font);
@@ -118,4 +144,14 @@ public class InvoicePdfService {
   private static String trimNumber(double d) { return d == Math.rint(d) ? Long.toString(Math.round(d)) : Double.toString(d); }
   private static String nullSafe(String value) { return value == null ? "" : value; }
   private static String nonNull(String value) { return value == null ? "" : value; }
+  private String documentTitle(String number) {
+    if (number == null) return "Rechnung";
+    String n = number.trim();
+    if (n.endsWith("S")) return "Stornorechnung";
+    if (n.endsWith("G")) return "Gutschrift";
+    if (n.endsWith("P")) return "Proforma-Rechnung";
+    if (n.matches(".*Z\\d*$")) return "Zahlungsavis";
+    return "Rechnung";
+  }
+
 }

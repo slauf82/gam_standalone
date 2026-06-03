@@ -20,6 +20,11 @@ public record InvoiceUpdateRequest(
   Boolean creditNote,
   Boolean cancelled,
   Boolean paymentAdvice,
+  String couponText,
+  Double couponAmount,
+  String discountType,
+  Double discountValue,
+  Integer installments,
   String lbdFile,
   List<InvoiceCreateLineRequest> lines
 ) {}

@@ -46,10 +46,14 @@ public class InvoiceController {
   }
 
   @GetMapping("/numbers/next")
-  public InvoiceNumberPreview nextNumber(@RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) { requireInvoiceRead(user, companyId); return repo.nextInvoiceNumberPreview(); }
+  public InvoiceNumberPreview nextNumber(@RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) { requireInvoiceRead(user, companyId); return repo.nextInvoiceNumberPreview(companyId); }
 
   @GetMapping("/{number}")
-  public InvoiceDetail detail(@PathVariable String number, @AuthenticationPrincipal AuthenticatedUser user) { InvoiceDetail d = repo.findDetail(number); requireInvoiceRead(user, d.summary().companyId()); return d; }
+  public InvoiceDetail detail(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) {
+    InvoiceDetail d = repo.findDetail(number, companyId);
+    requireInvoiceRead(user, d.summary().companyId());
+    return d;
+  }
 
   /** Pflicht-Export: sichtbares PDF + eingebettete ZUGFeRD/Factur-X XML. */
   @GetMapping("/{number}/pdf")
@@ -83,7 +87,7 @@ public class InvoiceController {
   }
 
   @GetMapping("/{number}/export-check")
-  public InvoiceExportCheck exportCheck(@PathVariable String number, @AuthenticationPrincipal AuthenticatedUser user) { InvoiceSummary s = repo.findSummary(number); requireInvoiceReport(user, s.companyId()); return zugferdService.check(number); }
+  public InvoiceExportCheck exportCheck(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) { InvoiceSummary s = repo.findSummary(number, companyId); requireInvoiceReport(user, s.companyId()); return zugferdService.check(number); }
 
   @GetMapping("/zugferd/status")
   public ZugferdStatus zugferdStatus() { return zugferdService.status(); }
@@ -98,7 +102,7 @@ public class InvoiceController {
   public InvoiceDraft draft(@RequestParam(defaultValue = "") String lbdFile, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) throws Exception {
     requireInvoiceRead(user, companyId);
     LbdRecipient lbd = lbdService.preview(lbdFile);
-    return new InvoiceDraft(repo.nextInvoiceNumber(), LocalDate.now().toString(), repo.findCompanies(), lbd, repo.calculate(List.of()));
+    return new InvoiceDraft(repo.nextInvoiceNumber(companyId), LocalDate.now().toString(), repo.findCompanies(), lbd, repo.calculate(List.of()));
   }
 
   @PostMapping("/calculate")
@@ -127,17 +131,19 @@ public class InvoiceController {
 
 
   @PostMapping("/{number}/cancel")
-  public InvoiceCreateResponse cancel(@PathVariable String number, @AuthenticationPrincipal AuthenticatedUser user) {
-    requireInvoiceWrite(user, repo.findSummary(number).companyId());
+  public InvoiceCreateResponse cancel(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) {
+    InvoiceSummary summary = repo.findSummary(number, companyId);
+    requireInvoiceWrite(user, summary.companyId());
     String username = user == null ? "gam2" : user.getUsername();
-    return repo.createCancellationInvoice(number, username);
+    return repo.createCancellationInvoice(number, summary.companyId(), username);
   }
 
   @PostMapping("/{number}/credit")
-  public InvoiceCreateResponse credit(@PathVariable String number, @AuthenticationPrincipal AuthenticatedUser user) {
-    requireInvoiceWrite(user, repo.findSummary(number).companyId());
+  public InvoiceCreateResponse credit(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) {
+    InvoiceSummary summary = repo.findSummary(number, companyId);
+    requireInvoiceWrite(user, summary.companyId());
     String username = user == null ? "gam2" : user.getUsername();
-    return repo.createCreditNote(number, username);
+    return repo.createCreditNote(number, summary.companyId(), username);
   }
 
   @PostMapping("/proforma")
