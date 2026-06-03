@@ -1,6 +1,6 @@
 # GAM Standalone
 
-Kleine Einschränkung : die Datenbank liegt aktuell aus Datenschutzgründen nicht bei, ist aber verfügbar und die Datensätze können bei Bedarf aus der Datenbank entfernt werden, so dass diese theoretisch nutzbar wäre !
+Ab Version 1.2.0 liegt eine anonymisierte Testdatenbank dem Release bei !
 
 Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/TypeScript + MariaDB.
 
