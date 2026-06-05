@@ -1,5 +1,4 @@
-# GAM Standalone
-
+# GAM 2.0
 Ab Version 1.2.0 liegt eine anonymisierte Testdatenbank dem Release bei !
 
 GAM 2.0 ist die Modernisierung und Weiterentwicklung eines historisch gewachsenen Praxis- und Verwaltungs­systems.
