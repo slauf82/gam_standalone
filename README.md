@@ -100,18 +100,3 @@ Weitere geplante Bereiche:
 ## Lizenz
 
 GNU GPL v3.0
-
-
-Kurzfassung Windows:
-
-```bat
-scripts\build-backend.bat
-scripts\run-backend-local.bat
-```
-
-Kurzfassung Linux/macOS:
-
-```bash
-./scripts/build-backend.sh
-./scripts/run-backend-local.sh
-```
