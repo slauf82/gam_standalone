@@ -2,140 +2,105 @@
 
 Ab Version 1.2.0 liegt eine anonymisierte Testdatenbank dem Release bei !
 
-Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/TypeScript + MariaDB.
+GAM 2.0 ist die Modernisierung und Weiterentwicklung eines historisch gewachsenen Praxis- und Verwaltungs­systems.
 
-## Aktueller Stand
+Das Projekt migriert die ursprüngliche Java-/JSF-Anwendung auf eine moderne Architektur mit Spring Boot, React und MariaDB und erweitert die bestehende Funktionalität um Mehrsprachigkeit, Barrierefreiheit und digitale Patientenservices.
 
-Dieses Paket enthält Phase 1A + Phase 1B/1C sowie Schritt 1–4:
+## Hauptfunktionen
 
-- kompatibler Login über bestehende `accounts`-Tabelle
-- vorbereitete Passwort-/2FA-Kompatibilität
-- JWT-Session-Grundlage
-- `.lbd`-Empfängerdatei-Suche und Vorschau
-- Rechnungsübersicht aus Bestandsdaten
-- Produktliste aus `rechnungsdaten`
-- neue Rechnung anlegen
-- Speichern in `rechnungsdetails` und `rechnung`
-- ZUGFeRD/Factur-X-E-Rechnungs-Export als primärer PDF-Export
-- Benutzer-/Rechteverwaltung mit Rollenmenü
-- Inventar-/Gerätemodul aus `geräte` und `geräte_neu`
-- Lager-/Materialmodul aus `lager` und `verbrauchsmaterial`
+### Rechnungswesen
 
-Details stehen in:
+* Rechnungen
+* Stornorechnungen
+* Gutschriften
+* Proforma-Rechnungen
+* Zahlungsavis
+* Gesellschaftsabhängige Nummernkreise
+* PDF-Erzeugung
+* ZUGFeRD-Unterstützung
 
-- `PHASE_1A_STATUS.md`
-- `PHASE_1B_1C_STATUS.md`
-- `PHASE_1C_ZUGFERD_STATUS.md`
-- `SCHRITT_1_RECHNUNGSMODUL_STATUS.md`
-- `SCHRITT_2_BENUTZER_RECHTE_STATUS.md`
-- `SCHRITT_3_INVENTAR_GERAETE_STATUS.md`
-- `SCHRITT_4_LAGER_MATERIAL_STATUS.md`
+### Mehrsprachigkeit
 
-## Backend starten
+* Deutsch
+* Englisch
+* Französisch
+* Ukrainisch
 
-```bash
-cd backend
-mvn spring-boot:run
-```
+Funktionen:
 
-Konfiguration über Umgebungsvariablen oder `backend/src/main/resources/application.yml`:
+* Mehrsprachige Rechnungstexte
+* PDF-Sprachwahl
+* Translation-Cache
+* Datenbankgestützte Übersetzungen
+* Erweiterbare Spracharchitektur
 
-```bash
-GAM_DB_URL=jdbc:mariadb://localhost:3306/kopfzentruminventardb
-GAM_DB_USER=root
-GAM_DB_PASSWORD=passwort
-GAM_JWT_SECRET=bitte-langes-secret-setzen
-GAM_LBD_FILE=./config/meine-datei.lbd
-```
+### Rechnungsvorschau
 
-## Frontend starten
+* WYSIWYG-Rechnungsvorschau
+* Vorschau von Rechnungstexten
+* Vorschau von Rabatten und Gutscheinen
+* Vorschau von Ratenzahlungen
+* Vorschau von Zahlungsinformationen
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Barrierefreiheit
 
-## .lbd-Dateien
+* PDF/UA-Vorbereitung
+* Vorlesefunktion
+* Sprachabhängige Vorlesbarkeit
+* Mehrsprachige Dokumente
 
-Gesucht wird standardmäßig in:
+### Patientenportal
 
-```text
-./config
-./daten/rechnung
-.
-```
+* QR-Code auf Rechnungen
+* Digitaler Rechnungsabruf
+* Mehrsprachige Darstellung
+* Rechnungshistorie
+* PDF-Download
+* Sprachwahl für Patienten
 
-Der Pfad kann über `GAM_LBD_FILE` überschrieben werden.
+### Sicherheit
 
-## Wichtiger Hinweis
+* Benutzer- und Rollenverwaltung
+* Rechtekonzept
+* TOTP-Zwei-Faktor-Authentifizierung
+* Passkey/WebAuthn-Unterstützung
 
-Das ist noch nicht das vollständige GAM 2.0. Es ist inzwischen ein breiter Modulrahmen mit Rechnungen, Benutzer/Rechte, Inventar/Geräte und Lager/Material. Das finale Rechnungsformular, Adresslogik, Freigaben, Layouts und Speziallogik werden schrittweise ergänzt. Ab Phase 1C ist `/api/invoices/{number}/pdf` bereits als ZUGFeRD/Factur-X-Pflichtexport vorgesehen; `/pdf-debug` bleibt als Fallback erhalten.
+## Architektur
 
+Backend:
 
-## Stand Schritt 5
+* Java
+* Spring Boot
+* Spring Security
+* MariaDB
 
-GAM 2.0 besitzt jetzt die Gesamtstruktur mit Rechnungen, Benutzer/Rechte, Inventar, Lager sowie Rahmenmodulen fuer Aufgaben, Freigaben, Personal, Kassenbuch, Pruefungen und Reports.
+Frontend:
 
-Die neu hinzugefuegten Rahmenmodule sind bewusst zuerst read-only, damit bestehende Fachlogik nicht versehentlich veraendert wird.
+* React
+* TypeScript
+* Vite
 
-## Schritt 6 – CRUD/Workflows
+Dokumente:
 
-Diese Version erweitert die GAM-2.0-Gesamtstruktur um erste echte Schreibfunktionen:
+* PDF
+* ZUGFeRD
+* Mehrsprachige Rechnungen
 
-- Aufgaben anlegen/bearbeiten/löschen
-- Freigaben anlegen/bearbeiten/löschen
-- Geräte bearbeiten bzw. neue Geräte anlegen
-- Lagerbestände setzen oder per Bewegung ändern
+## Projektstatus
 
-Details siehe `SCHRITT_6_CRUD_WORKFLOWS_STATUS.md`.
+Der Schwerpunkt liegt aktuell auf dem Rechnungswesen, der Mehrsprachigkeit, der Barrierefreiheit und dem digitalen Patientenportal.
 
-## Schritt 7 – Startfähigkeit
+Weitere geplante Bereiche:
 
-Diese Version ergänzt Startskripte, lokales Profil, Healthchecks und eine klare Testanleitung.
-Der Einstieg ist jetzt `START-HIER.md`.
+* Administration
+* Reports und Auswertungen
+* Erweiterung der Mehrsprachigkeit auf weitere Module
+* Erweiterung des Patientenportals
 
-Wichtige technische Prüfpunkte:
+## Lizenz
 
-```text
-http://localhost:8080/actuator/health
-http://localhost:8080/api/system/startup-check
-http://localhost:8080/api/system/status
-```
+GNU GPL v3.0
 
-Details siehe `SCHRITT_7_STARTFAEHIGE_ARBEITSVERSION_STATUS.md`.
-
----
-
-## Schritt 11: erster technischer Gesamttest
-
-Für den ersten systematischen Test bitte zuerst `START-HIER.md`, danach `TESTPLAN_GAM_2_0.md` lesen.
-
-Schnellprüfung nach Backend-Start:
-
-```powershell
-scripts\smoke-test.ps1 -BaseUrl http://localhost:8080
-```
-
-oder:
-
-```bash
-./scripts/smoke-test.sh http://localhost:8080
-```
-
-Ohne Token sind 401/403 bei geschützten Endpunkten normal. Wichtig sind zunächst:
-
-- `/actuator/health`
-- `/api/system/status`
-- `/api/system/startup-check`
-
-Diese sollten ohne schwerwiegenden Fehler antworten.
-
----
-
-## Schritt 12: erster echter Build-Test
-
-Für den lokalen Test bitte zuerst `START-HIER-SCHRITT12.md` lesen.
 
 Kurzfassung Windows:
 
