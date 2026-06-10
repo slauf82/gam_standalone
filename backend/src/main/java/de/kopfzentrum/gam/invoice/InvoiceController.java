@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -24,10 +25,14 @@ public class InvoiceController {
   private final InvoicePdfService pdfService;
   private final LbdService lbdService;
   private final ZugferdExportService zugferdService;
+  private final InvoiceTextPreviewService textPreviewService;
   private final GamPermissionService permissions;
+  private final InvoiceAccessTokenRepository accessTokens;
+  private final QrCodeService qrCodeService;
+  private final String portalBaseUrl;
 
-  public InvoiceController(InvoiceRepository repo, InvoicePdfService pdfService, LbdService lbdService, ZugferdExportService zugferdService, GamPermissionService permissions) {
-    this.repo = repo; this.pdfService = pdfService; this.lbdService = lbdService; this.zugferdService = zugferdService; this.permissions = permissions;
+  public InvoiceController(InvoiceRepository repo, InvoicePdfService pdfService, LbdService lbdService, ZugferdExportService zugferdService, InvoiceTextPreviewService textPreviewService, GamPermissionService permissions, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
+    this.repo = repo; this.pdfService = pdfService; this.lbdService = lbdService; this.zugferdService = zugferdService; this.textPreviewService = textPreviewService; this.permissions = permissions; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
   }
 
   @GetMapping
@@ -57,8 +62,8 @@ public class InvoiceController {
 
   /** Pflicht-Export: sichtbares PDF + eingebettete ZUGFeRD/Factur-X XML. */
   @GetMapping("/{number}/pdf")
-  public ResponseEntity<byte[]> pdf(@PathVariable String number) {
-    ZugferdExportResult result = zugferdService.export(number);
+  public ResponseEntity<byte[]> pdf(@PathVariable String number, @RequestParam(defaultValue = "de") String lang) {
+    ZugferdExportResult result = zugferdService.export(number, lang);
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + result.filename())
       .header("X-GAM-E-Invoice", "ZUGFeRD/Factur-X")
@@ -69,8 +74,8 @@ public class InvoiceController {
   }
 
   @GetMapping("/{number}/pdf-debug")
-  public ResponseEntity<byte[]> pdfDebug(@PathVariable String number) {
-    byte[] bytes = pdfService.render(number);
+  public ResponseEntity<byte[]> pdfDebug(@PathVariable String number, @RequestParam(defaultValue = "de") String lang) {
+    byte[] bytes = pdfService.render(number, lang);
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=rechnung-" + number + "-debug.pdf")
       .contentType(MediaType.APPLICATION_PDF)
@@ -86,11 +91,44 @@ public class InvoiceController {
       .body(bytes);
   }
 
+
+  @GetMapping("/{number}/access")
+  public java.util.Map<String,Object> invoiceAccess(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) {
+    InvoiceSummary summary = repo.findSummary(number, companyId);
+    requireInvoiceRead(user, summary.companyId());
+    InvoiceAccessToken access = accessTokens.getOrCreate(number, summary.companyId());
+    String url = portalBaseUrl.replaceAll("/$", "") + "/" + access.token();
+    return java.util.Map.of("token", access.token(), "url", url, "invoiceNumber", number, "companyId", summary.companyId());
+  }
+
+  @GetMapping("/{number}/access-qr")
+  public ResponseEntity<byte[]> invoiceAccessQr(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) {
+    InvoiceSummary summary = repo.findSummary(number, companyId);
+    requireInvoiceRead(user, summary.companyId());
+    InvoiceAccessToken access = accessTokens.getOrCreate(number, summary.companyId());
+    String url = portalBaseUrl.replaceAll("/$", "") + "/" + access.token();
+    return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(qrCodeService.png(url, 240));
+  }
+
   @GetMapping("/{number}/export-check")
   public InvoiceExportCheck exportCheck(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) { InvoiceSummary s = repo.findSummary(number, companyId); requireInvoiceReport(user, s.companyId()); return zugferdService.check(number); }
 
   @GetMapping("/zugferd/status")
   public ZugferdStatus zugferdStatus() { return zugferdService.status(); }
+
+
+  @GetMapping("/text-preview")
+  public InvoiceTextPreview textPreview(
+    @RequestParam(required = false) Integer companyId,
+    @RequestParam(defaultValue = "de") String lang,
+    @RequestParam(defaultValue = "") String treatmentDate,
+    @RequestParam(defaultValue = "") String lbdFile,
+    @AuthenticationPrincipal AuthenticatedUser user
+  ) throws Exception {
+    requireInvoiceRead(user, companyId);
+    LbdRecipient lbd = lbdService.preview(lbdFile);
+    return textPreviewService.preview(companyId, lang, treatmentDate, lbd);
+  }
 
   @GetMapping("/products")
   public List<ProductDto> products(@RequestParam(defaultValue = "") String q, @RequestParam(defaultValue = "100") int limit) { return repo.findProducts(q, Math.min(Math.max(limit, 1), 500)); }

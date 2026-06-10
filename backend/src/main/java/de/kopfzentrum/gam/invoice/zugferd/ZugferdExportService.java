@@ -59,7 +59,9 @@ public class ZugferdExportService {
     return new InvoiceExportCheck(number, exportable, issues);
   }
 
-  public ZugferdExportResult export(String number) {
+  public ZugferdExportResult export(String number) { return export(number, "de"); }
+
+  public ZugferdExportResult export(String number, String language) {
     InvoiceExportCheck check = check(number);
     if (!check.exportable()) throw new IllegalStateException("ZUGFeRD-Export nicht möglich: " + check.issues());
     InvoiceDetail detail = repo.findDetail(number);
@@ -67,7 +69,7 @@ public class ZugferdExportService {
     LbdRecipient recipient = previewRecipient();
     InvoiceTotals totals = detail.totals() == null ? repo.calculateFromExistingLines(detail.lines()) : detail.totals();
     byte[] xml = xmlService.buildXml(detail, company, recipient, totals);
-    byte[] basePdf = pdfService.renderVisualPdf(number, true);
+    byte[] basePdf = pdfService.renderVisualPdf(number, true, language);
     byte[] finalPdf = enabled ? embed(basePdf, xml) : basePdf;
     archiveService.archive(number, finalPdf);
     return new ZugferdExportResult(number, profile, "rechnung-" + number + "-zugferd.pdf", finalPdf, xml, enabled, !validate,

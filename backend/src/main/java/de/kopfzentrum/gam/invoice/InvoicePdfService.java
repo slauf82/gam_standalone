@@ -6,12 +6,17 @@ import com.lowagie.text.Font;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
+import com.lowagie.text.Image;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.PdfName;
+import com.lowagie.text.pdf.PdfString;
 import de.kopfzentrum.gam.invoice.lbd.LbdRecipient;
 import de.kopfzentrum.gam.invoice.lbd.LbdService;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import java.io.ByteArrayOutputStream;
 import java.text.NumberFormat;
 import java.util.List;
@@ -21,16 +26,23 @@ import java.util.Locale;
 public class InvoicePdfService {
   private final InvoiceRepository repo;
   private final LbdService lbdService;
+  private final TranslationService translations;
+  private final InvoiceAccessTokenRepository accessTokens;
+  private final QrCodeService qrCodeService;
+  private final String portalBaseUrl;
   private static final NumberFormat EUR = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
-  public InvoicePdfService(InvoiceRepository repo, LbdService lbdService) {
-    this.repo = repo; this.lbdService = lbdService;
+  public InvoicePdfService(InvoiceRepository repo, LbdService lbdService, TranslationService translations, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
+    this.repo = repo; this.lbdService = lbdService; this.translations = translations; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
   }
 
   /** Normal-PDF bleibt Fallback/Debug. Der verbindliche Export läuft über ZUGFeRD/Factur-X. */
-  public byte[] render(String number) { return renderVisualPdf(number, false); }
+  public byte[] render(String number) { return renderVisualPdf(number, false, "de"); }
+  public byte[] render(String number, String language) { return renderVisualPdf(number, false, language); }
 
-  public byte[] renderVisualPdf(String number, boolean forZugferd) {
+  public byte[] renderVisualPdf(String number, boolean forZugferd) { return renderVisualPdf(number, forZugferd, "de"); }
+
+  public byte[] renderVisualPdf(String number, boolean forZugferd, String language) {
     InvoiceDetail detail = repo.findDetail(number);
     InvoiceSummary summary = detail.summary();
     List<InvoiceLine> lines = detail.lines();
@@ -41,7 +53,14 @@ public class InvoicePdfService {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Document document = new Document(PageSize.A4, 45, 45, 42, 45);
-    PdfWriter.getInstance(document, out);
+    PdfWriter writer = PdfWriter.getInstance(document, out);
+    writer.setViewerPreferences(PdfWriter.DisplayDocTitle);
+    document.addTitle(documentTitle(summary.number(), language) + " " + summary.number());
+    document.addSubject("GAM 2.0 accessible invoice document");
+    document.addCreator("GAM 2.0");
+    document.addAuthor(company == null ? "GAM 2.0" : nullSafe(company.name()));
+    document.addKeywords("invoice, accessibility, PDF/UA, " + languageTag(language));
+    try { writer.getExtraCatalog().put(PdfName.LANG, new PdfString(languageTag(language))); } catch (Exception ignored) { }
     document.open();
 
     Font title = new Font(Font.HELVETICA, 18, Font.BOLD);
@@ -52,35 +71,39 @@ public class InvoicePdfService {
 
     PdfPTable head = new PdfPTable(new float[]{6.5f, 3.5f});
     head.setWidthPercentage(100);
-    PdfPCell left = borderless(companyBlock(company, small));
-    PdfPCell right = borderless(new Phrase(documentTitle(summary.number()) + " " + summary.number(), title));
+    PdfPCell left = companyLogoCell(company, small);
+    PdfPCell right = borderless(new Phrase(documentTitle(summary.number(), language) + " " + summary.number(), title));
     right.setHorizontalAlignment(Element.ALIGN_RIGHT);
     head.addCell(left); head.addCell(right);
     document.add(head);
     document.add(new Paragraph(" "));
 
     document.add(new Paragraph(senderLine(company), sub));
-    document.add(new Paragraph("Rechnungsempfänger", bold));
+    document.add(new Paragraph(translations.invoice("invoiceRecipient", language), bold));
     if (recipient != null && recipient.found()) {
       document.add(new Paragraph(recipientName(recipient), normal));
       document.add(new Paragraph(nullSafe(recipient.street()), normal));
       document.add(new Paragraph((nullSafe(recipient.postalCode()) + " " + nullSafe(recipient.city())).trim(), normal));
       if (recipient.country() != null && !recipient.country().isBlank()) document.add(new Paragraph(recipient.country(), normal));
     } else {
-      document.add(new Paragraph("Kein .lbd-Empfänger gefunden - bitte konfigurieren.", normal));
+      document.add(new Paragraph(translations.invoice("invoiceNoRecipient", language), normal));
     }
+    document.add(new Paragraph(" "));
+
+    document.add(new Paragraph(invoiceText("invoiceSalutationLabel0", language, summary, company, recipient), normal));
+    document.add(new Paragraph(invoiceText("invoiceInvoiceTextLabel0", language, summary, company, recipient), normal));
     document.add(new Paragraph(" "));
 
     PdfPTable meta = new PdfPTable(new float[]{6f, 4f});
     meta.setWidthPercentage(100);
-    meta.addCell(borderless(new Phrase("Vielen Dank. Wir berechnen Ihnen folgende Leistungen:", normal)));
-    meta.addCell(borderless(new Phrase("Datum: " + nullSafe(summary.invoiceDate()) + "\nKundendatei: " + (recipient == null ? "—" : nullSafe(recipient.file())) + "\nBenutzer: " + nullSafe(summary.username()), small)));
+    meta.addCell(borderless(new Phrase("", normal)));
+    meta.addCell(borderless(new Phrase(translations.invoice("invoiceDate", language) + ": " + nullSafe(summary.invoiceDate()) + "\n" + translations.invoice("invoiceCustomerFile", language) + ": " + (recipient == null ? "—" : nullSafe(recipient.file())) + "\n" + translations.invoice("invoiceUser", language) + ": " + nullSafe(summary.username()), small)));
     document.add(meta);
     document.add(new Paragraph(" "));
 
     PdfPTable table = new PdfPTable(new float[]{1.0f, 1.4f, 5.5f, 1.0f, 1.4f, 1.6f});
     table.setWidthPercentage(100);
-    addHeader(table, "Menge"); addHeader(table, "Code"); addHeader(table, "Beschreibung"); addHeader(table, "MwSt"); addHeader(table, "Einzel"); addHeader(table, "Gesamt");
+    addHeader(table, translations.invoice("invoiceAmount", language)); addHeader(table, translations.invoice("invoiceProductCode", language)); addHeader(table, translations.invoice("invoiceDescription", language)); addHeader(table, translations.invoice("invoiceTaxRate", language)); addHeader(table, translations.invoice("invoiceSinglePrice", language)); addHeader(table, translations.invoice("invoiceTotalPrice", language));
     for (InvoiceLine line : lines) {
       double q = line.quantity() == null ? 1.0 : line.quantity();
       double p = line.price() == null ? 0.0 : line.price();
@@ -90,46 +113,118 @@ public class InvoicePdfService {
     document.add(table);
     document.add(new Paragraph(" "));
 
-    addCommercialAdjustments(document, summary, lines, totals, normal, bold);
+    addCommercialAdjustments(document, summary, lines, totals, normal, bold, translations, language);
 
     PdfPTable totalTable = new PdfPTable(new float[]{7f, 3f});
     totalTable.setWidthPercentage(100);
-    totalTable.addCell(borderless(new Phrase(forZugferd ? "Diese Rechnung enthält die maschinenlesbare ZUGFeRD/Factur-X XML im PDF." : "Debug-/Fallback-PDF; verbindlich ist der ZUGFeRD/Factur-X-Export.", small)));
-    totalTable.addCell(borderless(new Phrase("Netto: " + EUR.format(totals.net()) + "\nMwSt: " + EUR.format(totals.vat()) + "\nGesamt: " + EUR.format(totals.gross()), bold)));
+    totalTable.addCell(borderless(new Phrase(forZugferd ? translations.invoice("invoiceZugferdNote", language) : translations.invoice("invoiceFallbackPdfNote", language), small)));
+    totalTable.addCell(borderless(new Phrase(translations.invoice("net", language) + ": " + EUR.format(totals.net()) + "\n" + translations.invoice("vat", language) + ": " + EUR.format(totals.vat()) + "\n" + translations.invoice("gross", language) + ": " + EUR.format(totals.gross()), bold)));
     document.add(totalTable);
+
+    document.add(new Paragraph(" "));
+    document.add(new Paragraph(invoiceText("invoiceLawHintLabel0", language, summary, company, recipient), small));
+    document.add(new Paragraph(invoiceText("invoiceGreetingsLabel0", language, summary, company, recipient), normal));
 
     if (company != null) {
       document.add(new Paragraph(" "));
-      document.add(new Paragraph("Bankverbindung: " + nullSafe(company.accountHolder()) + " · IBAN " + nullSafe(company.iban()) + " · BIC " + nullSafe(company.bic()), small));
-      document.add(new Paragraph("Steuernummer/USt-ID: " + nullSafe(company.taxNumber()) + " " + nullSafe(company.vatId()), small));
+      document.add(new Paragraph(translations.invoice("bank", language) + ": " + nullSafe(company.accountHolder()) + " · IBAN " + nullSafe(company.iban()) + " · BIC " + nullSafe(company.bic()), small));
+      document.add(new Paragraph(translations.invoice("invoiceTaxNumberVatId", language) + ": " + nullSafe(company.taxNumber()) + " " + nullSafe(company.vatId()), small));
     }
+
+    addInvoicePortalQr(document, summary, language, small);
 
     document.close();
     return out.toByteArray();
   }
 
-  private static void addCommercialAdjustments(Document document, InvoiceSummary summary, List<InvoiceLine> lines, InvoiceTotals totals, Font normal, Font bold) {
+  private void addInvoicePortalQr(Document document, InvoiceSummary summary, String language, Font small) {
+    try {
+      InvoiceAccessToken access = accessTokens.getOrCreate(summary.number(), summary.companyId());
+      String url = portalBaseUrl.replaceAll("/$", "") + "/" + access.token();
+      document.add(new Paragraph(" "));
+      PdfPTable qrTable = new PdfPTable(new float[]{7f, 3f});
+      qrTable.setWidthPercentage(100);
+      qrTable.addCell(borderless(new Phrase(translations.invoice("invoicePortalQrHint", language) + "\n" + url, small)));
+      Image qr = Image.getInstance(qrCodeService.png(url, 140));
+      qr.scaleAbsolute(90, 90);
+      PdfPCell qrCell = borderless(new Phrase(""));
+      qrCell.addElement(qr);
+      qrCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+      qrTable.addCell(qrCell);
+      document.add(qrTable);
+    } catch (Exception ignored) { }
+  }
+
+  private static void addCommercialAdjustments(Document document, InvoiceSummary summary, List<InvoiceLine> lines, InvoiceTotals totals, Font normal, Font bold, TranslationService translations, String language) {
     try {
       double lineGross = lines.stream().mapToDouble(l -> (l.quantity() == null ? 1.0 : l.quantity()) * (l.price() == null ? 0.0 : l.price())).sum();
       boolean hasRows = false;
       PdfPTable adj = new PdfPTable(new float[]{8f, 2f});
       adj.setWidthPercentage(100);
       if (summary.discountPercent() != null && summary.discountPercent() > 0 && lineGross > 0) {
-        adj.addCell(borderless(new Phrase("Rabatt " + summary.discountPercent() + "%", normal)));
+        adj.addCell(borderless(new Phrase(translations.invoice("invoiceReducement", language) + " " + summary.discountPercent() + "%", normal)));
         adj.addCell(borderless(new Phrase(EUR.format(-(lineGross * summary.discountPercent() / 100.0)), bold)));
         hasRows = true;
       }
       if (summary.couponAmount() != null && summary.couponAmount() > 0) {
-        adj.addCell(borderless(new Phrase(summary.discountRemark() == null || summary.discountRemark().isBlank() ? "Gutschein" : summary.discountRemark(), normal)));
+        adj.addCell(borderless(new Phrase(summary.discountRemark() == null || summary.discountRemark().isBlank() ? translations.invoice("invoiceCoupon", language) : summary.discountRemark(), normal)));
         adj.addCell(borderless(new Phrase(EUR.format(-summary.couponAmount()), bold)));
         hasRows = true;
       }
       if (hasRows) { document.add(adj); document.add(new Paragraph(" ")); }
       if (summary.installments() != null && summary.installments() > 1) {
-        document.add(new Paragraph("Ratenzahlung: " + summary.installments() + " Raten à ca. " + EUR.format(totals.gross() / summary.installments()), normal));
+        document.add(new Paragraph(translations.invoice("invoiceInstallments", language) + ": " + summary.installments() + " " + translations.invoice("invoiceInstallmentApprox", language) + " " + EUR.format(totals.gross() / summary.installments()), normal));
         document.add(new Paragraph(" "));
       }
     } catch (Exception ignored) { }
+  }
+
+  private String invoiceText(String key, String language, InvoiceSummary summary, InvoiceCompany company, LbdRecipient recipient) {
+    return replacePlaceholders(translations.invoice(key, language), language, summary, company, recipient)
+      .replace("-br-", "\n")
+      .replace("  ", " ")
+      .trim();
+  }
+
+  private String replacePlaceholders(String text, String language, InvoiceSummary summary, InvoiceCompany company, LbdRecipient recipient) {
+    if (text == null) return "";
+    String result = text;
+    result = result.replace("<SieIhrKind>", translations.invoice("invoiceYou", language));
+    result = result.replace("<Anrede>", recipient == null ? "" : nullSafe(recipient.salutation()));
+    result = result.replace("<Titel>", recipient == null ? "" : nullSafe(recipient.title()));
+    result = result.replace("<Vorname>", recipient == null ? "" : nullSafe(recipient.firstName()));
+    result = result.replace("<Namenszusatz>", recipient == null ? "" : nullSafe(recipient.nameSuffix()));
+    result = result.replace("<Nachname>", recipient == null ? "" : nullSafe(recipient.lastName()));
+    result = result.replace("<Behandlungsdatum>", summary == null ? "" : nullSafe(summary.invoiceDate()));
+    result = result.replace("<Gesellschaftsname>", company == null ? "" : nullSafe(company.name()));
+    return result;
+  }
+
+
+  private static PdfPCell companyLogoCell(InvoiceCompany company, Font font) {
+    PdfPCell cell = new PdfPCell();
+    cell.setBorder(PdfPCell.NO_BORDER);
+    cell.setPadding(2);
+    try {
+      ClassPathResource res = new ClassPathResource("static/images/" + companyLogoFile(company));
+      if (res.exists()) {
+        Image logo = Image.getInstance(res.getInputStream().readAllBytes());
+        logo.scaleToFit(180, 70);
+        cell.addElement(logo);
+      }
+    } catch (Exception ignored) { }
+    cell.addElement(companyBlock(company, font));
+    return cell;
+  }
+
+  private static String companyLogoFile(InvoiceCompany company) {
+    if (company == null || company.id() == null) return "KOPFZENTRUM_LOGO.png";
+    return switch (company.id()) {
+      case 1 -> "logo_AMAE_blau.png";
+      case 2, 3 -> "logo_ACQUA_blau.png";
+      case 6 -> "Healthcode_logo_blau.png";
+      default -> "KOPFZENTRUM_LOGO.png";
+    };
   }
 
   private static Phrase companyBlock(InvoiceCompany company, Font font) {
@@ -144,14 +239,24 @@ public class InvoicePdfService {
   private static String trimNumber(double d) { return d == Math.rint(d) ? Long.toString(Math.round(d)) : Double.toString(d); }
   private static String nullSafe(String value) { return value == null ? "" : value; }
   private static String nonNull(String value) { return value == null ? "" : value; }
-  private String documentTitle(String number) {
-    if (number == null) return "Rechnung";
+  private static String languageTag(String language) {
+    if (language == null) return "de-DE";
+    return switch (language.toLowerCase(Locale.ROOT)) {
+      case "en", "english" -> "en-US";
+      case "fr", "french" -> "fr-FR";
+      case "uk", "ukrainian" -> "uk-UA";
+      default -> "de-DE";
+    };
+  }
+
+  private String documentTitle(String number, String language) {
+    if (number == null) return translations.invoice("invoice", language);
     String n = number.trim();
-    if (n.endsWith("S")) return "Stornorechnung";
-    if (n.endsWith("G")) return "Gutschrift";
-    if (n.endsWith("P")) return "Proforma-Rechnung";
-    if (n.matches(".*Z\\d*$")) return "Zahlungsavis";
-    return "Rechnung";
+    if (n.endsWith("S")) return translations.invoice("cancellation", language);
+    if (n.endsWith("G")) return translations.invoice("credit", language);
+    if (n.endsWith("P")) return translations.invoice("proformaInvoice", language);
+    if (n.matches(".*Z\\d*$")) return translations.invoice("paymentAdvice", language);
+    return translations.invoice("invoice", language);
   }
 
 }

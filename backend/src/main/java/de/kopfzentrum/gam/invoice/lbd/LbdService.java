@@ -44,6 +44,18 @@ public class LbdService {
         Path candidate = folder.resolve(preferredFileName);
         if (Files.exists(candidate) && Files.isRegularFile(candidate)) return Optional.of(candidate.toAbsolutePath().normalize());
       }
+
+// Demo/first-run fallback: use a neutral demo LBD if no explicit file was requested.
+// This improves the GitHub demo experience and avoids a missing-LBD warning
+// when config/demo-lbd/max.mustermann.lbd is present.
+if (preferredFileName.isBlank()) {
+  String demoFileName = "max.mustermann.lbd";
+  for (Path folder : searchFolders) {
+    Path candidate = folder.resolve(demoFileName);
+    if (Files.exists(candidate) && Files.isRegularFile(candidate)) return Optional.of(candidate.toAbsolutePath().normalize());
+  }
+}
+
     }
     for (Path folder : searchFolders) {
       if (!Files.isDirectory(folder)) continue;

@@ -8,7 +8,7 @@ export type InvoiceNumberPreview = { nextNumber: string; currentMaxNumber: strin
 export type InvoiceValidationIssue = { severity: string; field: string; message: string };
 export type InvoiceExportCheck = { number: string; exportable: boolean; issues: InvoiceValidationIssue[] };
 export type ProductDto = { id: number; code?: string; description?: string; category?: string; price?: number; vat?: number; companyId?: number };
-export type InvoiceCompany = { id: number; code?: string; name?: string; address?: string; street?: string; city?: string; email?: string; iban?: string; bic?: string };
+export type InvoiceCompany = { id: number; code?: string; name?: string; address?: string; street?: string; city?: string; email?: string; iban?: string; bic?: string; accountHolder?: string; taxNumber?: string; vatId?: string };
 export type InvoiceCreateLineRequest = { productId?: number; quantity?: number; price?: number; vat?: number; branchId?: number; client?: string; performer?: string };
 export type InvoiceCreateRequest = { number?: string; invoiceDate?: string; treatmentDate?: string; companyId?: number; addressId?: number; childAddressId?: number; firmAddressId?: number; branchId?: number; paymentMethod?: string; reason?: string; remark?: string; creditNote?: boolean; cancelled?: boolean; paymentAdvice?: boolean; couponText?: string; couponAmount?: number; discountType?: string; discountValue?: number; installments?: number; lbdFile?: string; lines: InvoiceCreateLineRequest[] };
 export type InvoiceTotals = { net: number; vat: number; gross: number; vatByRate: Record<string, number> };
@@ -16,6 +16,7 @@ export type InvoiceCreateResponse = { number: string; detailId?: number; totals:
 export type InvoiceUpdateRequest = Omit<InvoiceCreateRequest, "number">;
 export type InvoiceStatusUpdateRequest = { cancelled?: boolean; creditNote?: boolean; paymentAdvice?: boolean; reason?: string };
 export type InvoiceDraft = { suggestedNumber: string; invoiceDate: string; companies: InvoiceCompany[]; lbdRecipient: LbdRecipient; totals: InvoiceTotals };
+export type InvoiceTextPreview = { language:string; companyId?:number; documentTitle?:string; salutation:string; invoiceText:string; lawHint:string; greetings:string; labels?: Record<string,string> };
 export type LbdRecipient = { found: boolean; file?: string; patientNumber?: string; nameSuffix?: string; lastName?: string; firstName?: string; birthDate?: string; title?: string; insuranceNumber?: string; postalCode?: string; city?: string; country?: string; street?: string; insuranceType?: string; salutationIndex?: number; salutation?: string; rawFields: Record<string,string> };
 
 const API = import.meta.env.VITE_GAM_API ?? "http://localhost:8080/api";
@@ -74,6 +75,7 @@ export const loadInvoices = (limit = 100, q = "", companyId?: number) => request
 export const loadInvoice = (number: string, companyId?: number) => request<InvoiceDetail>(`/invoices/${encodeURIComponent(number)}${companyId ? `?companyId=${companyId}` : ""}`);
 export const loadLbdPreview = (file = "") => request<LbdRecipient>(`/invoices/lbd/preview${file ? `?file=${encodeURIComponent(file)}` : ""}`);
 export const loadProducts = (q = "", limit = 50) => request<ProductDto[]>(`/invoices/products?q=${encodeURIComponent(q)}&limit=${limit}`);
+export const loadInvoiceTextPreview = (companyId?: number, lang = "de", treatmentDate = "", lbdFile = "") => { const p = new URLSearchParams(); if (companyId) p.set("companyId", String(companyId)); p.set("lang", lang); if (treatmentDate) p.set("treatmentDate", treatmentDate); if (lbdFile) p.set("lbdFile", lbdFile); return request<InvoiceTextPreview>(`/invoices/text-preview?${p}`); };
 export const loadDraft = () => request<InvoiceDraft>("/invoices/draft");
 export const loadCompanies = () => request<InvoiceCompany[]>("/invoices/companies");
 export const loadNextInvoiceNumber = (companyId?: number) => request<InvoiceNumberPreview>(`/invoices/numbers/next${companyId ? `?companyId=${companyId}` : ""}`);
@@ -86,9 +88,12 @@ export const createCancellationInvoice = (number: string, companyId?: number) =>
 export const createCreditNote = (number: string, companyId?: number) => request<InvoiceCreateResponse>(`/invoices/${encodeURIComponent(number)}/credit${companyId ? `?companyId=${companyId}` : ""}`, {method: "POST"});
 export const createProformaInvoice = (payload: InvoiceCreateRequest) => request<InvoiceCreateResponse>("/invoices/proforma", {method: "POST", body: JSON.stringify(payload)});
 export const deleteInvoiceDraft = (number: string) => fetch(`${API}/invoices/${encodeURIComponent(number)}/draft`, {method: "DELETE", headers: {...(token() ? {Authorization: `Bearer ${token()}`} : {})}}).then(r => { if(!r.ok) throw new Error("Loeschen fehlgeschlagen"); });
-export const pdfUrl = (number: string) => `${API}/invoices/${encodeURIComponent(number)}/pdf`;
+export const pdfUrl = (number: string, lang = "de") => `${API}/invoices/${encodeURIComponent(number)}/pdf?lang=${encodeURIComponent(lang)}`;
 export const pdfDebugUrl = (number: string) => `${API}/invoices/${encodeURIComponent(number)}/pdf-debug`;
 export const zugferdXmlUrl = (number: string) => `${API}/invoices/${encodeURIComponent(number)}/zugferd.xml`;
+export type InvoiceAccessInfo = { token:string; url:string; invoiceNumber:string; companyId?:number };
+export const loadInvoiceAccess = (number:string, companyId?:number) => request<InvoiceAccessInfo>(`/invoices/${encodeURIComponent(number)}/access${companyId ? `?companyId=${companyId}` : ""}`);
+export const invoiceAccessQrUrl = (number:string, companyId?:number) => `${API}/invoices/${encodeURIComponent(number)}/access-qr${companyId ? `?companyId=${companyId}` : ""}${token() ? `${companyId ? "&" : "?"}t=${encodeURIComponent(token())}` : ""}`;
 export type ZugferdStatus = { enabled: boolean; profile: string; validationEnabled: boolean; note: string };
 export const loadZugferdStatus = () => request<ZugferdStatus>("/invoices/zugferd/status");
 export type RoleDto = { key: string; label: string; administrative: boolean; modules: string[] };
@@ -130,6 +135,13 @@ export const loadGamCompliance = (limit=100) => request<Record<string, ModuleRec
 export const loadGamFolders = (limit=100) => request<ModuleRecord[]>(`/gam/folders?limit=${limit}`);
 export const loadGamNews = (limit=50) => request<ModuleRecord[]>(`/gam/news?limit=${limit}`);
 export const loadGamReportSummary = () => request<Record<string, unknown>>('/gam/reports/summary');
+
+export type InvoiceReportRow = { invoiceDate?:string; companyId?:number; companyName?:string; documentType?:string; number?:string; username?:string; reason?:string; gross?:number; cancelled?:boolean; creditNote?:boolean; paymentAdvice?:boolean };
+export type InvoiceReportSummary = { count:number; grossTotal:number; invoices:number; cancellations:number; creditNotes:number; paymentAdvices:number; proforma:number; note?:string };
+export const loadInvoiceReportRows = (from:string, to:string, companyId?:number, reportType:string='overview') => { const p = new URLSearchParams(); if(from) p.set('from', from); if(to) p.set('to', to); if(companyId) p.set('companyId', String(companyId)); if(reportType) p.set('reportType', reportType); return request<InvoiceReportRow[]>(`/gam/reports/invoices?${p}`); };
+export const loadInvoiceReportSummary = (from:string, to:string, companyId?:number, reportType:string='overview') => { const p = new URLSearchParams(); if(from) p.set('from', from); if(to) p.set('to', to); if(companyId) p.set('companyId', String(companyId)); if(reportType) p.set('reportType', reportType); return request<InvoiceReportSummary>(`/gam/reports/invoices/summary?${p}`); };
+export async function downloadInvoiceReport(from:string, to:string, companyId:number|undefined, format:string, reportType:string='overview') { const p = new URLSearchParams(); if(from) p.set('from', from); if(to) p.set('to', to); if(companyId) p.set('companyId', String(companyId)); if(reportType) p.set('reportType', reportType); p.set('format', format); const res = await fetch(`${API}/gam/reports/invoices/export?${p}`, {headers: {...(token() ? {Authorization: `Bearer ${token()}`} : {})}}); if(!res.ok) throw new Error(await res.text() || 'Report-Export fehlgeschlagen'); const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `gam-rechnungsreport.${format === 'datev' ? 'csv' : format}`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
 
 
 // Schritt 9: Inventar/Lager-Verbindung

@@ -40,6 +40,7 @@ public class SecurityConfig {
           "/api/invoices/*/pdf",
           "/api/invoices/*/pdf-debug",
           "/api/invoices/*/zugferd.xml",
+          "/api/invoice-portal/**",
           "/actuator/health"
         ).permitAll()
         .requestMatchers("/api/auth/me", "/api/auth/menu").authenticated()
