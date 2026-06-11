@@ -35,7 +35,45 @@
     <dependency><groupId>com.google.zxing</groupId><artifactId>core</artifactId><version>${zxing.version}</version></dependency>
     <dependency><groupId>com.google.zxing</groupId><artifactId>javase</artifactId><version>${zxing.version}</version></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
-  </dependencies>
+  
+<!-- Schritt 33d: Embedded MaryTTS runtime and voices -->
+<dependency>
+    <groupId>de.dfki.mary</groupId>
+    <artifactId>marytts-runtime</artifactId>
+    <version>5.2.1</version>
+</dependency>
+<dependency>
+    <groupId>de.dfki.mary</groupId>
+    <artifactId>marytts-lang-de</artifactId>
+    <version>5.2.1</version>
+</dependency>
+<dependency>
+    <groupId>de.dfki.mary</groupId>
+    <artifactId>marytts-lang-en</artifactId>
+    <version>5.2.1</version>
+</dependency>
+<dependency>
+    <groupId>de.dfki.mary</groupId>
+    <artifactId>marytts-lang-fr</artifactId>
+    <version>5.2.1</version>
+</dependency>
+<dependency>
+    <groupId>de.dfki.mary</groupId>
+    <artifactId>voice-bits3-hsmm</artifactId>
+    <version>5.2</version>
+</dependency>
+<dependency>
+    <groupId>de.dfki.mary</groupId>
+    <artifactId>voice-cmu-slt-hsmm</artifactId>
+    <version>5.2.1</version>
+</dependency>
+<dependency>
+    <groupId>de.dfki.mary</groupId>
+    <artifactId>voice-enst-camille-hsmm</artifactId>
+    <version>5.2</version>
+</dependency>
+
+    </dependencies>
   <build>
     <plugins>
       <plugin>

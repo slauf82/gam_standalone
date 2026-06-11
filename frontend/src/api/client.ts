@@ -35,7 +35,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     let data: any = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
 
-    if ((res.status === 401 || res.status === 403) && !path.startsWith("/auth/login") && !path.startsWith("/auth/totp/")) {
+    // Schritt 31u:
+    // Nicht jeder 401/403 nach dem Login darf sofort die komplette Oberfläche ausloggen.
+    // Einige noch nicht vollständig migrierte Demo-/Modulendpunkte können temporär 401/403 liefern.
+    // Nur /auth/me ist der harte Sitzungsnachweis. Alle anderen Aufrufer sollen ihren Fehler lokal behandeln.
+    if ((res.status === 401 || res.status === 403) && path.startsWith("/auth/me")) {
       logout();
       window.dispatchEvent(new CustomEvent("gam-auth-expired"));
       throw new Error("Sitzung abgelaufen. Bitte erneut anmelden.");
@@ -154,3 +158,16 @@ export const bookMaterial = (payload: MaterialBookingRequest) => request('/inven
 
 export type SecurityStatus = { authenticated:boolean; username:string; role:string; legacySha256PasswordAllowed:boolean; totpOnlyAllowed:boolean; totpRequiredWhenSecretExists:boolean };
 export const loadSecurityStatus = () => request<SecurityStatus>("/security/status");
+
+
+export type TtsStatus = { enabled: boolean; engine: string; maryTtsEnabled: boolean; maryTtsEmbedded: boolean; maryTtsEmbeddedAvailable: boolean; maryTtsEmbeddedError: string; maryTtsEmbeddedVoices: string[]; maryTtsBundled: boolean; maryTtsHome: string; maryTtsEndpoint: string; maryTtsReachable: boolean; browserFallback: boolean; fallback: Record<string, string[]> };
+export const loadTtsStatus = () => request<TtsStatus>('/tts/status');
+export async function loadTtsAudio(language: string, text: string, engine = 'marytts') {
+  const res = await fetch(`${API}/tts/audio`, {
+    method: 'POST',
+    headers: {"Content-Type": "application/json", ...(token() ? {Authorization: `Bearer ${token()}`} : {})},
+    body: JSON.stringify({language, text, engine})
+  });
+  if (!res.ok) throw new Error('TTS audio unavailable');
+  return await res.blob();
+}

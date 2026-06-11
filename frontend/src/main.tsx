@@ -2,12 +2,19 @@ import React, {useEffect, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Download, FilePlus2, FileText, LogOut, Search, ShieldCheck, UserRound, UsersRound, LayoutDashboard, Package, Warehouse, CheckSquare, ClipboardCheck, BriefcaseBusiness, Landmark, FileBarChart, ClipboardList, KeyRound, QrCode, Smartphone} from 'lucide-react';
 import {QRCodeSVG} from 'qrcode.react';
-import {AccountAdminDto, AccountDto, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadWarehouseItems, loadWarehouseStats, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary} from './api/client';
+import {AccountAdminDto, AccountDto, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadWarehouseItems, loadWarehouseStats, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary, loadTtsAudio} from './api/client';
 import './style.css';
 import { UI_LANGUAGES, normalizeUiLanguage, tUi, iconForModule, moduleKeyFromLabel, type UiLanguage } from "./i18n";
 
 const UI_LABELS: Record<string, Record<string, string>> = {
   de: {
+    invoiceTypePaymentAdvice: "Zahlungsavis",
+    paymentAdvice: "Zahlungsavis",
+    users: "Benutzer/Rechte",
+    compliance: "Prüfungen",
+    invoicePreviewTitle: "Verbindliche Rechnungsvorschau",
+    previewTitle: "Verbindliche Rechnungsvorschau",
+    step31ModuleOverviewShort: "Schritt 31 Modulübersicht",
     demoReadOnlyShell: "Lesemodus-Shell",
     proformaFailed: "Proforma konnte nicht erstellt werden",
     saveFailed: "Speichern fehlgeschlagen",
@@ -88,7 +95,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     totpCodeConfirm: "6-stelliger Code zur Bestätigung",
     totpQrCreate: "QR-Code erzeugen",
     totpRegisterHint: "Für die 2FA-Registrierung wird nur der Benutzername benötigt. Das Passwortfeld ist bewusst ausgeblendet.",
-    legacyLoginHint: "Kompatibler Login über bestehende accounts-Tabelle.",
+    lbdMissingPlaceholder:'lbd – .lbd-Empfängerdatei wurde nicht gefunden; Export nutzt Platzhalter.', legacyLoginHint: "Kompatibler Login über bestehende accounts-Tabelle.",
     uiLanguage: "Sprache der Oberfläche",
     chooseApplication: "Anwendung wählen",
     moduleVisibilityHint: "Alle historischen GAM-Anwendungen sind sichtbar; noch nicht vollständig migrierte Module starten im Lesemodus.",
@@ -124,6 +131,14 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     pdfLanguage: "PDF-Sprache",
   },
   en: {
+    invoiceTypePaymentAdvice: "Payment advice",
+    paymentAdvice: "Payment advice",
+    users: "Users/permissions",
+    compliance: "Checks",
+    invoicePreviewTitle: "Binding invoice preview",
+    previewTitle: "Binding invoice preview",
+    lbdMissingPlaceholder: "lbd – .lbd recipient file was not found; export uses placeholders.",
+    step31ModuleOverviewShort: "Step 31 module overview",
     demoReadOnlyShell: "read-only shell",
     proformaFailed: "Proforma could not be created",
     saveFailed: "Saving failed",
@@ -240,6 +255,14 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     pdfLanguage: "PDF language",
   },
   fr: {
+    invoiceTypePaymentAdvice: "Avis de paiement",
+    paymentAdvice: "Avis de paiement",
+    users: "Utilisateurs/droits",
+    compliance: "Contrôles",
+    invoicePreviewTitle: "Aperçu de facture contraignant",
+    previewTitle: "Aperçu de facture contraignant",
+    lbdMissingPlaceholder: "lbd – le fichier destinataire .lbd est introuvable ; l’export utilise des valeurs de remplacement.",
+    step31ModuleOverviewShort: "Aperçu des modules étape 31",
     demoReadOnlyShell: "module en lecture seule",
     proformaFailed: "La proforma n’a pas pu être créée",
     saveFailed: "Échec de l’enregistrement",
@@ -356,6 +379,14 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     pdfLanguage: "Langue du PDF",
   },
   uk: {
+    invoiceTypePaymentAdvice: "Платіжне повідомлення",
+    paymentAdvice: "Платіжне повідомлення",
+    users: "Користувачі/права",
+    compliance: "Перевірки",
+    invoicePreviewTitle: "Обов’язковий попередній перегляд рахунку",
+    previewTitle: "Обов’язковий попередній перегляд рахунку",
+    lbdMissingPlaceholder: "lbd – файл одержувача .lbd не знайдено; експорт використовує заповнювачі.",
+    step31ModuleOverviewShort: "Огляд модулів кроку 31",
     demoReadOnlyShell: "модуль лише для перегляду",
     proformaFailed: "Не вдалося створити проформу",
     saveFailed: "Не вдалося зберегти",
@@ -483,7 +514,7 @@ const uiText = (language: string | undefined | null, key: string) =>
 
 const moduleKey = (labelOrKey: string) => {
   const v = (labelOrKey || "").toLowerCase();
-  if (["invoice","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard"].includes(v)) return v;
+  if (["invoice","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard","checks","usersRights","compliance"].includes(v)) return v;
   if (v.includes("rechnung")) return "invoice";
   if (v.includes("gerät") || v.includes("geraet") || v.includes("device")) return "inventory";
   if (v.includes("lager") || v.includes("warehouse")) return "warehouse";
@@ -506,6 +537,15 @@ const moduleText = (language: string | undefined | null, labelOrKey: string) =>
 
 const GAM_UI_LABELS: Record<string, Record<string, string>> = {
   de: {
+    invoiceTypePaymentAdvice: "Zahlungsavis",
+    paymentAdvice: "Zahlungsavis",
+    invoiceSearch: "Rechnung suchen",
+    newInvoice: "Neue Rechnung",
+    users: "Benutzer/Rechte",
+    compliance: "Prüfungen",
+    invoicePreviewTitle: "Verbindliche Rechnungsvorschau",
+    previewTitle: "Verbindliche Rechnungsvorschau",
+    lbdMissingPlaceholder: "lbd – .lbd-Empfängerdatei wurde nicht gefunden; Export nutzt Platzhalter.",
     demoReadOnlyShell: "Lesemodus-Shell",
     proformaFailed: "Proforma konnte nicht erstellt werden",
     saveFailed: "Speichern fehlgeschlagen",
@@ -597,6 +637,15 @@ const GAM_UI_LABELS: Record<string, Record<string, string>> = {
     readOnly: "Lesemodus"
   },
   en: {
+    invoiceTypePaymentAdvice: "Payment advice",
+    paymentAdvice: "Payment advice",
+    invoiceSearch: "Search invoice",
+    newInvoice: "New invoice",
+    users: "Users/permissions",
+    compliance: "Checks",
+    invoicePreviewTitle: "Binding invoice preview",
+    previewTitle: "Binding invoice preview",
+    lbdMissingPlaceholder: "lbd – .lbd recipient file was not found; export uses placeholders.",
     demoReadOnlyShell: "read-only shell",
     proformaFailed: "Proforma could not be created",
     saveFailed: "Saving failed",
@@ -688,6 +737,15 @@ const GAM_UI_LABELS: Record<string, Record<string, string>> = {
     readOnly: "Read-only mode"
   },
   fr: {
+    invoiceTypePaymentAdvice: "Avis de paiement",
+    paymentAdvice: "Avis de paiement",
+    invoiceSearch: "Rechercher une facture",
+    newInvoice: "Nouvelle facture",
+    users: "Utilisateurs/droits",
+    compliance: "Contrôles",
+    invoicePreviewTitle: "Aperçu de facture contraignant",
+    previewTitle: "Aperçu de facture contraignant",
+    lbdMissingPlaceholder: "lbd – le fichier destinataire .lbd est introuvable ; l’export utilise des valeurs de remplacement.",
     demoReadOnlyShell: "module en lecture seule",
     proformaFailed: "La proforma n’a pas pu être créée",
     saveFailed: "Échec de l’enregistrement",
@@ -779,6 +837,15 @@ const GAM_UI_LABELS: Record<string, Record<string, string>> = {
     readOnly: "Mode lecture seule"
   },
   uk: {
+    invoiceTypePaymentAdvice: "Платіжне повідомлення",
+    paymentAdvice: "Платіжне повідомлення",
+    invoiceSearch: "Пошук рахунку",
+    newInvoice: "Новий рахунок",
+    users: "Користувачі/права",
+    compliance: "Перевірки",
+    invoicePreviewTitle: "Обов’язковий попередній перегляд рахунку",
+    previewTitle: "Обов’язковий попередній перегляд рахунку",
+    lbdMissingPlaceholder: "lbd – файл одержувача .lbd не знайдено; експорт використовує заповнювачі.",
     demoReadOnlyShell: "модуль лише для перегляду",
     proformaFailed: "Не вдалося створити проформу",
     saveFailed: "Не вдалося зберегти",
@@ -886,7 +953,7 @@ const gamUi = (key: string) => {
 
 const gamModuleKey = (labelOrKey: string) => {
   const value = (labelOrKey || "").toLowerCase();
-  if (["invoice","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard"].includes(value)) return value;
+  if (["invoice","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard","checks","usersRights","compliance"].includes(value)) return value;
   if (value.includes("rechnung")) return "invoice";
   if (value.includes("gerät") || value.includes("geraet") || value.includes("device")) return "inventory";
   if (value.includes("lager") || value.includes("warehouse")) return "warehouse";
@@ -961,6 +1028,87 @@ const LANGUAGES: {value: GamLanguage; label: string}[] = [
 ];
 const LOGIN_APPLICATIONS = ['Rechnungsprogramm','Geräteverzeichnis','Lagerverwaltung','Kassenbuch','Aufgabenverwaltung','Freigabemanagement','Bestelltool','Personaldaten','Arbeitsplatzausstattung','Preisliste','Reports','Administration'];
 function currentUiLanguage(): GamLanguage { return ((localStorage.getItem('gam_ui_language') || localStorage.getItem('gam.uiLanguage') || 'de') as GamLanguage); }
+
+
+
+
+async function playMaryTtsAudio(lang: GamLanguage | string, text: string, onDone?:()=>void) {
+  const blob = await loadTtsAudio(String(lang), text, 'marytts');
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  audio.onended = () => { URL.revokeObjectURL(url); onDone?.(); };
+  audio.onerror = () => { URL.revokeObjectURL(url); onDone?.(); };
+  await audio.play();
+  return audio;
+}
+
+function ttsFallbackChain(appLang: GamLanguage | string): string[] {
+  const lang = String(appLang || 'de').toLowerCase();
+
+  // Fallback chain:
+  // 1. target language
+  // 2. close/acceptable fallback
+  // 3. English
+  // 4. German
+  if (lang === 'de') return ['de-DE', 'de-AT', 'de-CH', 'de', 'en-US', 'en-GB', 'en'];
+  if (lang === 'en') return ['en-US', 'en-GB', 'en-AU', 'en-CA', 'en', 'de-DE', 'de'];
+  if (lang === 'fr') return ['fr-FR', 'fr-CA', 'fr-BE', 'fr', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
+  if (lang === 'uk') return ['uk-UA', 'uk', 'ru-RU', 'ru', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
+  return ['de-DE', 'de', 'en-US', 'en-GB', 'en'];
+}
+
+function ttsVoiceNameHints(appLang: GamLanguage | string): string[] {
+  const lang = String(appLang || 'de').toLowerCase();
+  if (lang === 'de') return ['german', 'deutsch', 'hedda', 'katja'];
+  if (lang === 'en') return ['english', 'david', 'zira', 'mark', 'aria', 'jenny'];
+  if (lang === 'fr') return ['french', 'français', 'hortense', 'denise'];
+  if (lang === 'uk') return ['ukrainian', 'україн', 'russian', 'русск', 'irina', 'pavel', 'english'];
+  return [];
+}
+
+function preferredSpeechVoice(appLang: GamLanguage | string) {
+  const synth = (window as any).speechSynthesis;
+  if (!synth?.getVoices) return null;
+
+  const voices: SpeechSynthesisVoice[] = synth.getVoices() ?? [];
+  if (!voices.length) return null;
+
+  const chain = ttsFallbackChain(appLang);
+
+  // Exact language match first.
+  for (const candidate of chain) {
+    const c = candidate.toLowerCase();
+    const exact = voices.find(v => v.lang?.toLowerCase() === c);
+    if (exact) return exact;
+  }
+
+  // Prefix match next, e.g. en-US for en.
+  for (const candidate of chain) {
+    const c = candidate.toLowerCase();
+    const prefix = voices.find(v => v.lang?.toLowerCase().startsWith(c));
+    if (prefix) return prefix;
+  }
+
+  // Some voices expose better information in their names than in lang.
+  for (const hint of ttsVoiceNameHints(appLang)) {
+    const byName = voices.find(v => v.name?.toLowerCase().includes(hint.toLowerCase()));
+    if (byName) return byName;
+  }
+
+  return voices.find(v => v.default) ?? voices[0] ?? null;
+}
+
+
+function describePreferredSpeechVoice(appLang: GamLanguage | string): string {
+  const voice = preferredSpeechVoice(appLang);
+  return voice ? `${voice.name} (${voice.lang})` : 'keine passende Stimme gefunden';
+}
+
+function prepareSpeechVoices() {
+  const synth = (window as any).speechSynthesis;
+  if (!synth?.getVoices) return;
+  synth.getVoices();
+}
 
 function speechLang(lang: GamLanguage): string {
   switch (lang) {
@@ -1142,18 +1290,62 @@ function effectiveModules(account: AccountDto|null, menu: RoleDto|null): string[
   return fromMenu.length ? fromMenu : ['dashboard'];
 }
 
+
+function fallbackSuperadminMenu(): RoleDto {
+  return {
+    label: 'Super-Administration',
+    modules: ['dashboard','invoices','inventory','warehouse','tasks','approvals','orders','personnel','cashbook','workplace','priceList','compliance','reports','users']
+  } as RoleDto;
+}
+
 function Shell({onLogout}:{onLogout:()=>void}){const [account,setAccount]=useState<AccountDto|null>(null); const [menu,setMenu]=useState<RoleDto|null>(null); const [page,setPage]=useState<Page>('dashboard');
- useEffect(()=>{me().then(setAccount).catch(()=>{logout(); onLogout();}); loadMenu().then(m=>{setMenu(m); if(m.modules.includes('invoices')) setPage('invoices')}).catch(()=>{logout(); onLogout();})},[]);
+ useEffect(()=>{me().then(setAccount).catch(()=>{logout(); onLogout();}); loadMenu().then(m=>{setMenu(m); if((m.modules??[]).includes('invoices')) setPage('invoices')}).catch(()=>{const fallback=fallbackSuperadminMenu(); setMenu(fallback); setPage('invoices');})},[]);
  const modules=effectiveModules(account, menu);
  const nav=[['dashboard','Dashboard',LayoutDashboard],['invoices','Rechnungsprogramm',FileText],['inventory','Geräteverzeichnis',Package],['warehouse','Lagerverwaltung',Warehouse],['tasks','Aufgabenverwaltung',CheckSquare],['approvals','Freigabemanagement',ClipboardCheck],['orders','Bestelltool',ClipboardList],['personnel','Personaldaten',BriefcaseBusiness],['cashbook','Kassenbuch',Landmark],['workplace','Arbeitsplatzausstattung',Package],['priceList','Preisliste',FileText],['compliance','Prüfungen',ClipboardList],['reports','Reports',FileBarChart],['users','Benutzer/Rechte',UsersRound]] as const;
- return <main><header><div><h1>GAM 2.0</h1><span>{account?.fullname||account?.username} · Rolle: {menu?.label||account?.role||'—'} · Schritt 31 Modulübersicht</span></div><button className="secondary" onClick={onLogout}><LogOut size={16}/> Logout</button></header><nav className="tabs module-tabs">{nav.map(([key,label,Icon])=><button key={key} className={page===key?'active':''} onClick={()=>setPage(key as Page)}><Icon size={16}/>{moduleText(currentUiLanguage(), label)}</button>)}</nav>{page==='dashboard'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'dashboard')}><DashboardHome/></ModuleErrorBoundary>}{page==='invoices'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'invoices')}><InvoicesPage/></ModuleErrorBoundary>}{page==='users'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'admin')}><UsersPage/></ModuleErrorBoundary>}{page==='inventory'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'inventory')}><InventoryPage/></ModuleErrorBoundary>}{page==='warehouse'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'warehouse')}><><WarehousePage/><InventoryWarehousePage/></></ModuleErrorBoundary>}{page==='tasks'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'tasks')}><RecordsPage title={moduleText(currentUiLanguage(),'tasks')} loader={loadGamTasks}/></ModuleErrorBoundary>} {page==='approvals'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'approval')}><RecordsPage title={moduleText(currentUiLanguage(),'approval')} loader={loadGamApprovals}/></ModuleErrorBoundary>} {page==='orders'&&<ReadOnlyModuleShell title='Bestelltool' description='Historisches GAM-Modul für Beschaffung und Bestellungen. Schritt 31 zeigt das Modul bereits als Lesemodus-Shell; Schreibfunktionen folgen nach Rekonstruktion der Alt-GAM-Fachlogik.'/>}{page==='personnel'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'personnel')}><RecordsPage title={moduleText(currentUiLanguage(),'personnel')} loader={loadGamPersonnel}/></ModuleErrorBoundary>} {page==='cashbook'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'cashbook')}><RecordsPage title={moduleText(currentUiLanguage(),'cashbook')} loader={loadGamCashbook}/></ModuleErrorBoundary>} {page==='workplace'&&<ReadOnlyModuleShell title='Arbeitsplatzausstattung' description='Historisches Modul für Arbeitsplatz-, Raum- und Geräteausstattung. In Schritt 31 bewusst sichtbar, aber noch ohne Bearbeitungsfunktionen.'/>}{page==='priceList'&&<ReadOnlyModuleShell title='Preisliste' description='Historische Preislisten- und Produktübersicht. Administration und Bearbeitung werden später separat rekonstruiert.'/>}{page==='compliance'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'checks')}><CompliancePage/></ModuleErrorBoundary>} {page==='reports'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'reports')}><ReportsPage/></ModuleErrorBoundary>}</main>}
+ return <main><header><div><h1>GAM 2.0</h1><span>{account?.fullname||account?.username} · {ui('role')}: {menu?.label||account?.role||'—'} · {ui('step31ModuleOverviewShort')}</span></div><button className="secondary" onClick={onLogout}><LogOut size={16}/> {ui("logout")}</button></header><nav className="tabs module-tabs">{nav.map(([key,label,Icon])=><button key={key} className={page===key?'active':''} onClick={()=>setPage(key as Page)}><img src={iconForModule(label)} alt="" className="module-button-icon nav-module-icon" />{moduleText(currentUiLanguage(), label)}</button>)}</nav>{page==='dashboard'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'dashboard')}><DashboardHome/></ModuleErrorBoundary>}{page==='invoices'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'invoices')}><InvoicesPage/></ModuleErrorBoundary>}{page==='users'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'admin')}><UsersPage/></ModuleErrorBoundary>}{page==='inventory'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'inventory')}><InventoryPage/></ModuleErrorBoundary>}{page==='warehouse'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'warehouse')}><><WarehousePage/><InventoryWarehousePage/></></ModuleErrorBoundary>}{page==='tasks'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'tasks')}><RecordsPage title={moduleText(currentUiLanguage(),'tasks')} loader={loadGamTasks}/></ModuleErrorBoundary>} {page==='approvals'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'approval')}><RecordsPage title={moduleText(currentUiLanguage(),'approval')} loader={loadGamApprovals}/></ModuleErrorBoundary>} {page==='orders'&&<ReadOnlyModuleShell title='Bestelltool' description='Historisches GAM-Modul für Beschaffung und Bestellungen. Schritt 31 zeigt das Modul bereits als Lesemodus-Shell; Schreibfunktionen folgen nach Rekonstruktion der Alt-GAM-Fachlogik.'/>}{page==='personnel'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'personnel')}><RecordsPage title={moduleText(currentUiLanguage(),'personnel')} loader={loadGamPersonnel}/></ModuleErrorBoundary>} {page==='cashbook'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'cashbook')}><RecordsPage title={moduleText(currentUiLanguage(),'cashbook')} loader={loadGamCashbook}/></ModuleErrorBoundary>} {page==='workplace'&&<ReadOnlyModuleShell title='Arbeitsplatzausstattung' description='Historisches Modul für Arbeitsplatz-, Raum- und Geräteausstattung. In Schritt 31 bewusst sichtbar, aber noch ohne Bearbeitungsfunktionen.'/>}{page==='priceList'&&<ReadOnlyModuleShell title='Preisliste' description='Historische Preislisten- und Produktübersicht. Administration und Bearbeitung werden später separat rekonstruiert.'/>}{page==='compliance'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'checks')}><CompliancePage/></ModuleErrorBoundary>} {page==='reports'&&<ModuleErrorBoundary title={moduleText(currentUiLanguage(),'reports')}><ReportsPage/></ModuleErrorBoundary>}</main>}
 function Placeholder({title,text}:{title:string;text:string}){return <section className="card"><h2>{title}</h2><p className="muted">{text}</p></section>}
 function DashboardHome(){const [status,setStatus]=useState<SystemStatus|null>(null); useEffect(()=>{loadSystemStatus().then(setStatus).catch(()=>{})},[]); return <section className="card"><h2>{ui("dashboard")}</h2>{status?<p><b>{ui('db')}:</b> {status.databaseAvailable?ui('connected'):ui('notConnected')} · <b>{ui('accounts')}:</b> {status.accountCount} · <b>{ui('lbd')}:</b> {status.lbdAvailable?ui('found'):ui('notFound')}</p>:<p className="muted">{ui("statusLoading")}</p>}<p>{ui("step31ModuleOverview")}</p><HistoricalModuleOverview/><ModuleTiles/></section>}
 const UI_TEXT: Record<string, Record<string,string>> = {
-  de: { demoReadOnlyShell:'Lesemodus-Shell', proformaFailed:'Proforma konnte nicht erstellt werden', saveFailed:'Speichern fehlgeschlagen', selectAtLeastOneLine:'Bitte mindestens eine Position auswählen.', mandatoryZugferd:'ZUGFeRD/Factur-X ist Pflicht-Export.', loadingNumber:'wird geladen', gross:'Brutto', net:'Netto', remove:'Entfernen', addPosition:'+ Position übernehmen', quantity:'Menge', product:'Produkt', installmentCount:'Ratenanzahl', amount:'Betrag', percent:'Prozent', discountValue:'Rabattwert', discountType:'Rabattart', voucherAmount:'Gutscheinbetrag', voucherText:'Gutscheintext', remark:'Bemerkung', reason:'Grund', paymentMethod:'Zahlungsart', invoiceDate:'Rechnungsdatum', saveInvoice:'Rechnung speichern', editChangesSave:'Änderungen speichern', cancelInvoice:'Stornorechnung', createCreditNote:'Gutschrift erstellen', technicalDelete:'Technisch löschen', accessLinkError:'Abruflink konnte nicht erzeugt werden', qrAltPortal:'QR-Code Rechnungsportal', openPortal:'Portal öffnen', patientPortalHint:'QR-Code für Patientenabruf mit Sprachwahl und Rechnungshistorie.', patientPortalDigital:'Digitales Rechnungsportal', zugferdIssues:'ZUGFeRD-Export hat Hinweise', zugferdReady:'ZUGFeRD-Export bereit', exportCheckLoading:'Exportprüfung wird geladen.', xml:'XML', zugferdPdf:'ZUGFeRD-PDF', pdfLanguage:'PDF-Sprache', pleaseSelectInvoice:'Bitte links eine Rechnung auswählen.', search:'Suchen', searchPlaceholder:'Suche Nummer / Name / Grund', pleaseChoose:'Bitte wählen', pleaseSelectCompany:'Bitte zuerst eine Gesellschaft auswählen.', invoiceEdit:'Rechnung bearbeiten', usersRights:'Benutzer/Rechte', checks:'Prüfungen', role:'Rolle', logout:'Logout', step31ModuleOverview:'Schritt 31 stellt alle historischen GAM-Anwendungen sichtbar dar. Vollständig migrierte Bereiche sind nutzbar, noch offene Module erscheinen bewusst als Lesemodus-Shells.', statusLoading:'Status wird geladen.', notFound:'nicht gefunden', found:'gefunden', notConnected:'nicht verbunden', connected:'verbunden', lbd:'.lbd', accounts:'Accounts', db:'DB',discount:'Rabatt', voucher:'Gutschein', reducedTotal:'Endbetrag nach Abzug', installments:'Ratenzahlung', approx:'Raten à ca.', previewTitle:'Verbindliche Rechnungsvorschau', previewHelp:'Diese Vorschau soll dem späteren PDF entsprechen: Texte, Positionen, Rabatt/Gutschein, Ratenzahlung, Hinweise und Bankdaten.', readAloud:'Rechnung vorlesen', stopReading:'Vorlesen stoppen', accessibilityNote:'PDF/UA-Vorbereitung: Sprache, Titel, Metadaten und Lesereihenfolge werden gesetzt.', invoice:'Rechnung', company:'Gesellschaft', qty:'Menge', code:'Code', description:'Beschreibung', tax:'MwSt', price:'Preis', lineTotal:'Gesamt', noLines:'Noch keine Positionen übernommen.', total:'Gesamt', recipient:'Empfänger', date:'Datum', language:'Sprache', payment:'Zahlungsart', notes:'Hinweise', bank:'Bankverbindung', iban:'IBAN', bic:'BIC', taxNo:'Steuer/VAT', noRecipient:'Keine Empfängerdatei geladen'},
-  en: { demoReadOnlyShell:'read-only shell', proformaFailed:'Proforma could not be created', saveFailed:'Saving failed', selectAtLeastOneLine:'Please select at least one item.', mandatoryZugferd:'ZUGFeRD/Factur-X is the mandatory export.', loadingNumber:'loading', gross:'Gross', net:'Net', remove:'Remove', addPosition:'+ Add item', quantity:'Quantity', product:'Product', installmentCount:'Number of installments', amount:'Amount', percent:'Percent', discountValue:'Discount value', discountType:'Discount type', voucherAmount:'Voucher amount', voucherText:'Voucher text', remark:'Remark', reason:'Reason', paymentMethod:'Payment method', invoiceDate:'Invoice date', saveInvoice:'Save invoice', editChangesSave:'Save changes', cancelInvoice:'Cancellation invoice', createCreditNote:'Create credit note', technicalDelete:'Technical delete', accessLinkError:'Access link could not be created', qrAltPortal:'Invoice portal QR code', openPortal:'Open portal', patientPortalHint:'QR code for patient access with language selection and invoice history.', patientPortalDigital:'Digital invoice portal', zugferdIssues:'ZUGFeRD export has notes', zugferdReady:'ZUGFeRD export ready', exportCheckLoading:'Loading export check.', xml:'XML', zugferdPdf:'ZUGFeRD PDF', pdfLanguage:'PDF language', pleaseSelectInvoice:'Please select an invoice on the left.', search:'Search', searchPlaceholder:'Search number / name / reason', pleaseChoose:'Please choose', pleaseSelectCompany:'Please select a company first.', invoiceEdit:'Edit invoice', usersRights:'Users/permissions', checks:'Checks', role:'Role', logout:'Logout', step31ModuleOverview:'Step 31 makes all historical GAM applications visible. Fully migrated areas are usable; open modules are intentionally shown as read-only shells.', statusLoading:'Loading status.', notFound:'not found', found:'found', notConnected:'not connected', connected:'connected', lbd:'.lbd', accounts:'Accounts', db:'DB',discount:'Discount', voucher:'Voucher', reducedTotal:'Total after deduction', installments:'Installment payment', approx:'installments of approx.', previewTitle:'Binding invoice preview', previewHelp:'This preview should match the later PDF: texts, items, discount/voucher, installments, notices and bank details.', readAloud:'Read invoice aloud', stopReading:'Stop reading', accessibilityNote:'PDF/UA preparation: language, title, metadata and reading order are set.', invoice:'Invoice', company:'Company', qty:'Quantity', code:'Code', description:'Description', tax:'VAT', price:'Price', lineTotal:'Total', noLines:'No items have been added yet.', total:'Total', recipient:'Recipient', date:'Date', language:'Language', payment:'Payment method', notes:'Notes', bank:'Bank details', iban:'IBAN', bic:'BIC', taxNo:'Tax/VAT', noRecipient:'No recipient file loaded'},
-  fr: { demoReadOnlyShell:'module en lecture seule', proformaFailed:'La proforma n’a pas pu être créée', saveFailed:'Échec de l’enregistrement', selectAtLeastOneLine:'Veuillez sélectionner au moins un poste.', mandatoryZugferd:'ZUGFeRD/Factur-X est l’export obligatoire.', loadingNumber:'chargement', gross:'Brut', net:'Net', remove:'Supprimer', addPosition:'+ Ajouter le poste', quantity:'Quantité', product:'Produit', installmentCount:'Nombre d’échéances', amount:'Montant', percent:'Pourcentage', discountValue:'Valeur de remise', discountType:'Type de remise', voucherAmount:'Montant du bon', voucherText:'Texte du bon', remark:'Remarque', reason:'Motif', paymentMethod:'Mode de paiement', invoiceDate:'Date de facture', saveInvoice:'Enregistrer la facture', editChangesSave:'Enregistrer les modifications', cancelInvoice:'Facture d’annulation', createCreditNote:'Créer un avoir', technicalDelete:'Suppression technique', accessLinkError:'Le lien d’accès n’a pas pu être créé', qrAltPortal:'Code QR du portail factures', openPortal:'Ouvrir le portail', patientPortalHint:'Code QR pour l’accès patient avec choix de langue et historique des factures.', patientPortalDigital:'Portail numérique de factures', zugferdIssues:'L’export ZUGFeRD contient des remarques', zugferdReady:'Export ZUGFeRD prêt', exportCheckLoading:'Chargement de la vérification d’export.', xml:'XML', zugferdPdf:'PDF ZUGFeRD', pdfLanguage:'Langue du PDF', pleaseSelectInvoice:'Veuillez sélectionner une facture à gauche.', search:'Rechercher', searchPlaceholder:'Recherche numéro / nom / motif', pleaseChoose:'Veuillez choisir', pleaseSelectCompany:'Veuillez d’abord sélectionner une société.', invoiceEdit:'Modifier la facture', usersRights:'Utilisateurs/droits', checks:'Contrôles', role:'Rôle', logout:'Déconnexion', step31ModuleOverview:'L’étape 31 rend visibles toutes les applications GAM historiques. Les zones entièrement migrées sont utilisables ; les modules encore ouverts sont affichés volontairement comme des modules en lecture seule.', statusLoading:'Chargement du statut.', notFound:'non trouvé', found:'trouvé', notConnected:'non connecté', connected:'connecté', lbd:'.lbd', accounts:'Comptes', db:'BD',discount:'Remise', voucher:'Bon', reducedTotal:'Total après déduction', installments:'Paiement échelonné', approx:"échéances d'environ", previewTitle:'Aperçu de facture contraignant', previewHelp:"Cet aperçu doit correspondre au PDF final : textes, postes, remise/bon, paiements échelonnés, avis et coordonnées bancaires.", readAloud:'Lire la facture', stopReading:'Arrêter la lecture', accessibilityNote:'Préparation PDF/UA : langue, titre, métadonnées et ordre de lecture sont définis.', invoice:'Facture', company:'Société', qty:'Quantité', code:'Code', description:'Description', tax:'TVA', price:'Prix', lineTotal:'Total', noLines:"Aucun poste n'a encore été ajouté.", total:'Total', recipient:'Destinataire', date:'Date', language:'Langue', payment:'Mode de paiement', notes:'Notes', bank:'Coordonnées bancaires', iban:'IBAN', bic:'BIC', taxNo:'Fiscal/TVA', noRecipient:'Aucun destinataire chargé'},
-  uk: { demoReadOnlyShell:'модуль лише для перегляду', proformaFailed:'Не вдалося створити проформу', saveFailed:'Не вдалося зберегти', selectAtLeastOneLine:'Виберіть принаймні одну позицію.', mandatoryZugferd:'ZUGFeRD/Factur-X є обов’язковим експортом.', loadingNumber:'завантаження', gross:'Брутто', net:'Нетто', remove:'Видалити', addPosition:'+ Додати позицію', product:'Продукт', installmentCount:'Кількість платежів', amount:'Сума', percent:'Відсоток', voucherAmount:'Сума ваучера', voucherText:'Текст ваучера', remark:'Примітка', saveInvoice:'Зберегти рахунок', editChangesSave:'Зберегти зміни', cancelInvoice:'Рахунок скасування', createCreditNote:'Створити кредит-ноту', technicalDelete:'Технічно видалити', accessLinkError:'Не вдалося створити посилання доступу', qrAltPortal:'QR-код порталу рахунків', openPortal:'Відкрити портал', patientPortalHint:'QR-код для доступу пацієнта з вибором мови та історією рахунків.', patientPortalDigital:'Цифровий портал рахунків', zugferdIssues:'Експорт ZUGFeRD має примітки', zugferdReady:'Експорт ZUGFeRD готовий', exportCheckLoading:'Завантаження перевірки експорту.', xml:'XML', zugferdPdf:'ZUGFeRD PDF', pdfLanguage:'Мова PDF', pleaseSelectInvoice:'Виберіть рахунок ліворуч.', search:'Пошук', searchPlaceholder:'Пошук номера / імені / причини', pleaseChoose:'Будь ласка, виберіть', pleaseSelectCompany:'Спочатку виберіть організацію.', invoiceEdit:'Редагувати рахунок', usersRights:'Користувачі/права', checks:'Перевірки', role:'Роль', logout:'Вийти', step31ModuleOverview:'Крок 31 робить видимими всі історичні застосунки GAM. Повністю перенесені області доступні; відкриті модулі навмисно показані як модулі лише для перегляду.', statusLoading:'Завантаження статусу.', notFound:'не знайдено', found:'знайдено', notConnected:'не підключено', connected:'підключено', lbd:'.lbd', accounts:'Облікові записи', db:'БД',discount:'Знижка', voucher:'Ваучер', reducedTotal:'Сума після вирахування', installments:'Оплата частинами', approx:'платежі приблизно по', previewTitle:'Обов’язковий попередній перегляд рахунку', previewHelp:'Цей перегляд має відповідати майбутньому PDF: тексти, позиції, знижка/ваучер, оплата частинами, примітки та банківські дані.', readAloud:'Зачитати рахунок', stopReading:'Зупинити читання', accessibilityNote:'Підготовка PDF/UA: встановлено мову, назву, метадані та порядок читання.', invoice:'Рахунок', company:'Організація', qty:'Кількість', code:'Код', description:'Опис', tax:'ПДВ', price:'Ціна', lineTotal:'Разом', noLines:'Позиції ще не додано.', total:'Разом', recipient:'Одержувач', date:'Дата', language:'Мова', payment:'Спосіб оплати', notes:'Примітки', bank:'Банківські реквізити', iban:'IBAN', bic:'BIC', taxNo:'Податок/VAT', noRecipient:'Файл одержувача не завантажено'}
+  de: {
+    invoiceTypePaymentAdvice: "Zahlungsavis",
+    paymentAdvice: "Zahlungsavis",
+    invoiceSearch: "Rechnung suchen",
+    newInvoice: "Neue Rechnung",
+    users: "Benutzer/Rechte",
+    reports: "Reports",
+    compliance: "Prüfungen",
+    invoicePreviewTitle: "Verbindliche Rechnungsvorschau",
+    lbdMissingPlaceholder: "lbd – .lbd-Empfängerdatei wurde nicht gefunden; Export nutzt Platzhalter.", demoReadOnlyShell:'Lesemodus-Shell', proformaFailed:'Proforma konnte nicht erstellt werden', saveFailed:'Speichern fehlgeschlagen', selectAtLeastOneLine:'Bitte mindestens eine Position auswählen.', mandatoryZugferd:'ZUGFeRD/Factur-X ist Pflicht-Export.', loadingNumber:'wird geladen', gross:'Brutto', net:'Netto', remove:'Entfernen', addPosition:'+ Position übernehmen', quantity:'Menge', product:'Produkt', installmentCount:'Ratenanzahl', amount:'Betrag', percent:'Prozent', discountValue:'Rabattwert', discountType:'Rabattart', voucherAmount:'Gutscheinbetrag', voucherText:'Gutscheintext', remark:'Bemerkung', reason:'Grund', paymentMethod:'Zahlungsart', invoiceDate:'Rechnungsdatum', saveInvoice:'Rechnung speichern', editChangesSave:'Änderungen speichern', cancelInvoice:'Stornorechnung', createCreditNote:'Gutschrift erstellen', technicalDelete:'Technisch löschen', accessLinkError:'Abruflink konnte nicht erzeugt werden', qrAltPortal:'QR-Code Rechnungsportal', openPortal:'Portal öffnen', patientPortalHint:'QR-Code für Patientenabruf mit Sprachwahl und Rechnungshistorie.', patientPortalDigital:'Digitales Rechnungsportal', zugferdIssues:'ZUGFeRD-Export hat Hinweise', zugferdReady:'ZUGFeRD-Export bereit', exportCheckLoading:'Exportprüfung wird geladen.', xml:'XML', zugferdPdf:'ZUGFeRD-PDF', pdfLanguage:'PDF-Sprache', pleaseSelectInvoice:'Bitte links eine Rechnung auswählen.', search:'Suchen', searchPlaceholder:'Suche Nummer / Name / Grund', pleaseChoose:'Bitte wählen', pleaseSelectCompany:'Bitte zuerst eine Gesellschaft auswählen.', invoiceEdit:'Rechnung bearbeiten', usersRights:'Benutzer/Rechte', checks:'Prüfungen', role:'Rolle', logout:'Logout', step31ModuleOverview:'Schritt 31 stellt alle historischen GAM-Anwendungen sichtbar dar. Vollständig migrierte Bereiche sind nutzbar, noch offene Module erscheinen bewusst als Lesemodus-Shells.', statusLoading:'Status wird geladen.', notFound:'nicht gefunden', found:'gefunden', notConnected:'nicht verbunden', connected:'verbunden', lbd:'.lbd', accounts:'Accounts', db:'DB',discount:'Rabatt', voucher:'Gutschein', reducedTotal:'Endbetrag nach Abzug', installments:'Ratenzahlung', approx:'Raten à ca.', previewTitle:'Verbindliche Rechnungsvorschau', previewHelp:'Diese Vorschau soll dem späteren PDF entsprechen: Texte, Positionen, Rabatt/Gutschein, Ratenzahlung, Hinweise und Bankdaten.', readAloud:'Rechnung vorlesen', stopReading:'Vorlesen stoppen', accessibilityNote:'PDF/UA-Vorbereitung: Sprache, Titel, Metadaten und Lesereihenfolge werden gesetzt.', invoice:'Rechnung', company:'Gesellschaft', qty:'Menge', code:'Code', description:'Beschreibung', tax:'MwSt', price:'Preis', lineTotal:'Gesamt', noLines:'Noch keine Positionen übernommen.', total:'Gesamt', recipient:'Empfänger', date:'Datum', language:'Sprache', payment:'Zahlungsart', notes:'Hinweise', bank:'Bankverbindung', iban:'IBAN', bic:'BIC', taxNo:'Steuer/VAT', noRecipient:'Keine Empfängerdatei geladen'},
+  en: {
+    invoiceTypePaymentAdvice: "Payment advice",
+    paymentAdvice: "Payment advice",
+    invoiceSearch: "Search invoice",
+    newInvoice: "New invoice",
+    users: "Users/permissions",
+    reports: "Reports",
+    compliance: "Checks",
+    invoicePreviewTitle: "Binding invoice preview",
+    lbdMissingPlaceholder: "lbd – .lbd recipient file was not found; export uses placeholders.", demoReadOnlyShell:'read-only shell', proformaFailed:'Proforma could not be created', saveFailed:'Saving failed', selectAtLeastOneLine:'Please select at least one item.', mandatoryZugferd:'ZUGFeRD/Factur-X is the mandatory export.', loadingNumber:'loading', gross:'Gross', net:'Net', remove:'Remove', addPosition:'+ Add item', quantity:'Quantity', product:'Product', installmentCount:'Number of installments', amount:'Amount', percent:'Percent', discountValue:'Discount value', discountType:'Discount type', voucherAmount:'Voucher amount', voucherText:'Voucher text', remark:'Remark', reason:'Reason', paymentMethod:'Payment method', invoiceDate:'Invoice date', saveInvoice:'Save invoice', editChangesSave:'Save changes', cancelInvoice:'Cancellation invoice', createCreditNote:'Create credit note', technicalDelete:'Technical delete', accessLinkError:'Access link could not be created', qrAltPortal:'Invoice portal QR code', openPortal:'Open portal', patientPortalHint:'QR code for patient access with language selection and invoice history.', patientPortalDigital:'Digital invoice portal', zugferdIssues:'ZUGFeRD export has notes', zugferdReady:'ZUGFeRD export ready', exportCheckLoading:'Loading export check.', xml:'XML', zugferdPdf:'ZUGFeRD PDF', pdfLanguage:'PDF language', pleaseSelectInvoice:'Please select an invoice on the left.', search:'Search', searchPlaceholder:'Search number / name / reason', pleaseChoose:'Please choose', pleaseSelectCompany:'Please select a company first.', invoiceEdit:'Edit invoice', usersRights:'Users/permissions', checks:'Checks', role:'Role', logout:'Logout', step31ModuleOverview:'Step 31 makes all historical GAM applications visible. Fully migrated areas are usable; open modules are intentionally shown as read-only shells.', statusLoading:'Loading status.', notFound:'not found', found:'found', notConnected:'not connected', connected:'connected', lbd:'.lbd', accounts:'Accounts', db:'DB',discount:'Discount', voucher:'Voucher', reducedTotal:'Total after deduction', installments:'Installment payment', approx:'installments of approx.', previewTitle:'Binding invoice preview', previewHelp:'This preview should match the later PDF: texts, items, discount/voucher, installments, notices and bank details.', readAloud:'Read invoice aloud', stopReading:'Stop reading', accessibilityNote:'PDF/UA preparation: language, title, metadata and reading order are set.', invoice:'Invoice', company:'Company', qty:'Quantity', code:'Code', description:'Description', tax:'VAT', price:'Price', lineTotal:'Total', noLines:'No items have been added yet.', total:'Total', recipient:'Recipient', date:'Date', language:'Language', payment:'Payment method', notes:'Notes', bank:'Bank details', iban:'IBAN', bic:'BIC', taxNo:'Tax/VAT', noRecipient:'No recipient file loaded'},
+  fr: {
+    invoiceTypePaymentAdvice: "Avis de paiement",
+    paymentAdvice: "Avis de paiement",
+    invoiceSearch: "Rechercher une facture",
+    newInvoice: "Nouvelle facture",
+    users: "Utilisateurs/droits",
+    reports: "Rapports",
+    compliance: "Contrôles",
+    invoicePreviewTitle: "Aperçu de facture contraignant",
+    lbdMissingPlaceholder: "lbd – le fichier destinataire .lbd est introuvable ; l’export utilise des valeurs de remplacement.", demoReadOnlyShell:'module en lecture seule', proformaFailed:'La proforma n’a pas pu être créée', saveFailed:'Échec de l’enregistrement', selectAtLeastOneLine:'Veuillez sélectionner au moins un poste.', mandatoryZugferd:'ZUGFeRD/Factur-X est l’export obligatoire.', loadingNumber:'chargement', gross:'Brut', net:'Net', remove:'Supprimer', addPosition:'+ Ajouter le poste', quantity:'Quantité', product:'Produit', installmentCount:'Nombre d’échéances', amount:'Montant', percent:'Pourcentage', discountValue:'Valeur de remise', discountType:'Type de remise', voucherAmount:'Montant du bon', voucherText:'Texte du bon', remark:'Remarque', reason:'Motif', paymentMethod:'Mode de paiement', invoiceDate:'Date de facture', saveInvoice:'Enregistrer la facture', editChangesSave:'Enregistrer les modifications', cancelInvoice:'Facture d’annulation', createCreditNote:'Créer un avoir', technicalDelete:'Suppression technique', accessLinkError:'Le lien d’accès n’a pas pu être créé', qrAltPortal:'Code QR du portail factures', openPortal:'Ouvrir le portail', patientPortalHint:'Code QR pour l’accès patient avec choix de langue et historique des factures.', patientPortalDigital:'Portail numérique de factures', zugferdIssues:'L’export ZUGFeRD contient des remarques', zugferdReady:'Export ZUGFeRD prêt', exportCheckLoading:'Chargement de la vérification d’export.', xml:'XML', zugferdPdf:'PDF ZUGFeRD', pdfLanguage:'Langue du PDF', pleaseSelectInvoice:'Veuillez sélectionner une facture à gauche.', search:'Rechercher', searchPlaceholder:'Recherche numéro / nom / motif', pleaseChoose:'Veuillez choisir', pleaseSelectCompany:'Veuillez d’abord sélectionner une société.', invoiceEdit:'Modifier la facture', usersRights:'Utilisateurs/droits', checks:'Contrôles', role:'Rôle', logout:'Déconnexion', step31ModuleOverview:'L’étape 31 rend visibles toutes les applications GAM historiques. Les zones entièrement migrées sont utilisables ; les modules encore ouverts sont affichés volontairement comme des modules en lecture seule.', statusLoading:'Chargement du statut.', notFound:'non trouvé', found:'trouvé', notConnected:'non connecté', connected:'connecté', lbd:'.lbd', accounts:'Comptes', db:'BD',discount:'Remise', voucher:'Bon', reducedTotal:'Total après déduction', installments:'Paiement échelonné', approx:"échéances d'environ", previewTitle:'Aperçu de facture contraignant', previewHelp:"Cet aperçu doit correspondre au PDF final : textes, postes, remise/bon, paiements échelonnés, avis et coordonnées bancaires.", readAloud:'Lire la facture', stopReading:'Arrêter la lecture', accessibilityNote:'Préparation PDF/UA : langue, titre, métadonnées et ordre de lecture sont définis.', invoice:'Facture', company:'Société', qty:'Quantité', code:'Code', description:'Description', tax:'TVA', price:'Prix', lineTotal:'Total', noLines:"Aucun poste n'a encore été ajouté.", total:'Total', recipient:'Destinataire', date:'Date', language:'Langue', payment:'Mode de paiement', notes:'Notes', bank:'Coordonnées bancaires', iban:'IBAN', bic:'BIC', taxNo:'Fiscal/TVA', noRecipient:'Aucun destinataire chargé'},
+  uk: {
+    invoiceTypePaymentAdvice: "Платіжне повідомлення",
+    paymentAdvice: "Платіжне повідомлення",
+    invoiceSearch: "Пошук рахунку",
+    newInvoice: "Новий рахунок",
+    users: "Користувачі/права",
+    reports: "Звіти",
+    compliance: "Перевірки",
+    invoicePreviewTitle: "Обов’язковий попередній перегляд рахунку",
+    lbdMissingPlaceholder: "lbd – файл одержувача .lbd не знайдено; експорт використовує заповнювачі.", demoReadOnlyShell:'модуль лише для перегляду', proformaFailed:'Не вдалося створити проформу', saveFailed:'Не вдалося зберегти', selectAtLeastOneLine:'Виберіть принаймні одну позицію.', mandatoryZugferd:'ZUGFeRD/Factur-X є обов’язковим експортом.', loadingNumber:'завантаження', gross:'Брутто', net:'Нетто', remove:'Видалити', addPosition:'+ Додати позицію', product:'Продукт', installmentCount:'Кількість платежів', amount:'Сума', percent:'Відсоток', voucherAmount:'Сума ваучера', voucherText:'Текст ваучера', remark:'Примітка', saveInvoice:'Зберегти рахунок', editChangesSave:'Зберегти зміни', cancelInvoice:'Рахунок скасування', createCreditNote:'Створити кредит-ноту', technicalDelete:'Технічно видалити', accessLinkError:'Не вдалося створити посилання доступу', qrAltPortal:'QR-код порталу рахунків', openPortal:'Відкрити портал', patientPortalHint:'QR-код для доступу пацієнта з вибором мови та історією рахунків.', patientPortalDigital:'Цифровий портал рахунків', zugferdIssues:'Експорт ZUGFeRD має примітки', zugferdReady:'Експорт ZUGFeRD готовий', exportCheckLoading:'Завантаження перевірки експорту.', xml:'XML', zugferdPdf:'ZUGFeRD PDF', pdfLanguage:'Мова PDF', pleaseSelectInvoice:'Виберіть рахунок ліворуч.', search:'Пошук', searchPlaceholder:'Пошук номера / імені / причини', pleaseChoose:'Будь ласка, виберіть', pleaseSelectCompany:'Спочатку виберіть організацію.', invoiceEdit:'Редагувати рахунок', usersRights:'Користувачі/права', checks:'Перевірки', role:'Роль', logout:'Вийти', step31ModuleOverview:'Крок 31 робить видимими всі історичні застосунки GAM. Повністю перенесені області доступні; відкриті модулі навмисно показані як модулі лише для перегляду.', statusLoading:'Завантаження статусу.', notFound:'не знайдено', found:'знайдено', notConnected:'не підключено', connected:'підключено', lbd:'.lbd', accounts:'Облікові записи', db:'БД',discount:'Знижка', voucher:'Ваучер', reducedTotal:'Сума після вирахування', installments:'Оплата частинами', approx:'платежі приблизно по', previewTitle:'Обов’язковий попередній перегляд рахунку', previewHelp:'Цей перегляд має відповідати майбутньому PDF: тексти, позиції, знижка/ваучер, оплата частинами, примітки та банківські дані.', readAloud:'Зачитати рахунок', stopReading:'Зупинити читання', accessibilityNote:'Підготовка PDF/UA: встановлено мову, назву, метадані та порядок читання.', invoice:'Рахунок', company:'Організація', qty:'Кількість', code:'Код', description:'Опис', tax:'ПДВ', price:'Ціна', lineTotal:'Разом', noLines:'Позиції ще не додано.', total:'Разом', recipient:'Одержувач', date:'Дата', language:'Мова', payment:'Спосіб оплати', notes:'Примітки', bank:'Банківські реквізити', iban:'IBAN', bic:'BIC', taxNo:'Податок/VAT', noRecipient:'Файл одержувача не завантажено'}
 };
 function ui(key:string, lang:GamLanguage=currentUiLanguage()) { return (UI_TEXT[lang] ?? UI_TEXT.de)[key] ?? UI_TEXT.de[key] ?? key; }
 
@@ -1195,6 +1387,38 @@ function isTrainingCompany(c?:InvoiceCompany) {
   return text.includes('training');
 }
 
+
+
+function oldGamIcon(name: string) {
+  return `/old-gam-icons/${name}`;
+}
+
+
+function uiSafe(keyOrText: string, lang: GamLanguage = currentUiLanguage()) {
+  const translated = ui(keyOrText, lang);
+  if (translated !== keyOrText) return translated;
+  const mapped: Record<string,string> = {
+    newInvoice: 'newInvoice',
+    invoiceSearch: 'invoiceSearch',
+    reports: 'Звіти',
+    users: 'usersRights',
+    usersRights: 'usersRights',
+    compliance: 'checks',
+    checks: 'checks',
+    paymentAdvice: 'paymentAdvice'
+  };
+  const mappedKey = mapped[keyOrText] ?? mapped[moduleKey(keyOrText)] ?? '';
+  return mappedKey ? ui(mappedKey, lang) : keyOrText;
+}
+
+function translatedInvoiceLabel(number?: string, lang: GamLanguage = currentUiLanguage()): string {
+  const n = number ?? '';
+  if (/S$/.test(n)) return `${ui('cancelInvoice', lang)} ${n}`;
+  if (/G$/.test(n)) return `${ui('createCreditNote', lang).replace(/^Create /,'').replace(/^Créer /,'')} ${n}`;
+  if (/P$/.test(n) || /Z\d*$/.test(n)) return `${ui('invoiceTypePaymentAdvice', lang)} ${n}`;
+  return `${ui('invoice', lang)} ${n}`;
+}
+
 function InvoicesPage(){
  const [rows,setRows]=useState<InvoiceSummary[]>([]); const [selected,setSelected]=useState<InvoiceDetail|null>(null); const [filter,setFilter]=useState(''); const [mode,setMode]=useState<'search'|'new'|'edit'>('search'); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [products,setProducts]=useState<ProductDto[]>([]); const [lbd,setLbd]=useState<LbdRecipient|null>(null); const [textPreview,setTextPreview]=useState<InvoiceTextPreview|null>(null); const [searchCompanyId,setSearchCompanyId]=useState<number|undefined>(); const [searchInfo,setSearchInfo]=useState(''); const [pdfLanguage,setPdfLanguage]=useState<GamLanguage>('de');
  async function refresh(q=filter){if(!searchCompanyId){setRows([]); setSelected(null); setSearchInfo(ui('pleaseSelectCompany')); return;} setSearchInfo(''); const r=await loadInvoices(100,q,searchCompanyId); setRows(r); if(r[0]) setSelected(await loadInvoice(r[0].number, r[0].companyId)); else setSelected(null);}
@@ -1203,8 +1427,8 @@ function InvoicesPage(){
  useEffect(()=>{if(selected) loadInvoiceTextPreview(selected.summary.companyId,pdfLanguage,selected.summary.invoiceDate??'',lbd?.file??'').then(setTextPreview).catch(()=>setTextPreview(null)); else setTextPreview(null)},[selected?.summary.number,selected?.summary.companyId,pdfLanguage,lbd?.file]);
  return <>
   <section className="toolbar invoice-menu">
-    <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><FilePlus2 size={16}/> Neue Rechnung</button>
-    <button className={mode==='search'?'active secondary':'secondary'} onClick={()=>setMode('search')}><Search size={16}/> Rechnung suchen</button>
+    <button className={mode==='new'?'active':''} onClick={()=>setMode('new')}><img src={oldGamIcon("save.png")} alt="" className="action-icon" /> {ui("newInvoice")}</button>
+    <button className={mode==='search'?'active secondary':'secondary'} onClick={()=>setMode('search')}><img src={oldGamIcon("search.png")} alt="" className="action-icon" /> {ui("invoiceSearch")}</button>
     <button className="secondary" disabled={!selected} onClick={()=>setMode('edit')}>{ui("invoiceEdit")}</button>
   </section>
   {mode==='new'&&<InvoiceEditor initialCompanyId={searchCompanyId} onSaved={async d=>{await refresh(); setSelected(d.invoice); setMode('search');}}/>}
@@ -1216,15 +1440,15 @@ function InvoicesPage(){
       <label><Search size={16}/><input placeholder={ui("searchPlaceholder")} value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') refresh(filter)}}/></label>
       <button className="secondary" disabled={!searchCompanyId} onClick={()=>refresh(filter)}>{ui("search")}</button>
       {searchInfo&&<p className="note warn">{searchInfo}</p>}
-      <div className="list">{(rows ?? []).map(r=><button key={r.id} onClick={()=>select(r.number)}><b>{invoiceLabel(r.number)}</b><small>{r.invoiceDate} · {money(r.totalGross)} · {r.companyName}</small></button>)}</div>
+      <div className="list">{(rows ?? []).map(r=><button key={r.id} onClick={()=>select(r.number)}><b>{translatedInvoiceLabel(r.number)}</b><small>{r.invoiceDate} · {money(r.totalGross)} · {r.companyName}</small></button>)}</div>
     </aside>
-    <section className="card detail">{selected?<><div className="row"><h2>{invoiceLabel(selected.summary.number)}</h2><div className="download-actions"><label className="pdf-language-select">{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><a className="buttonlink" target="_blank" href={pdfUrl(selected.summary.number,pdfLanguage)}><Download size={16}/> ZUGFeRD-PDF</a><a className="buttonlink secondarylink" target="_blank" href={zugferdXmlUrl(selected.summary.number)}><Download size={16}/> XML</a></div></div><p>{selected.summary.companyName} · {selected.summary.invoiceDate} · {money(selected.totals?.gross ?? selected.summary.totalGross)}</p><ExportCheck number={selected.summary.number} companyId={selected.summary.companyId}/><InvoiceAccessBox number={selected.summary.number} companyId={selected.summary.companyId}/><PreviewErrorBoundary><InvoiceTextPreviewPanel preview={textPreview} lines={(selected.lines ?? []).map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat}))} products={products ?? []} company={companies.find(c=>c.id===selected.summary.companyId)} number={selected.summary.number} totals={selected.totals} lang={pdfLanguage} summary={selected.summary} recipient={lbd} invoiceDate={selected.summary.invoiceDate??''} paymentMethod={(selected.summary as any).paymentMethod??'—'}/></PreviewErrorBoundary><InvoiceStatusActions detail={selected} onChanged={setSelected} onCreated={invoice=>{setRows(prev=>[invoice.summary, ...prev.filter(r=>!(r.id===invoice.summary.id || (r.number===invoice.summary.number && r.companyId===invoice.summary.companyId)))]); setSelected(invoice);}}/></>:<div className="empty">{ui("pleaseSelectInvoice")}</div>}</section>
+    <section className="card detail">{selected?<><div className="row"><h2>{translatedInvoiceLabel(selected.summary.number)}</h2><div className="download-actions"><label className="pdf-language-select">{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><a className="buttonlink" target="_blank" href={pdfUrl(selected.summary.number,pdfLanguage)}><Download size={16}/> ZUGFeRD-PDF</a><a className="buttonlink secondarylink" target="_blank" href={zugferdXmlUrl(selected.summary.number)}><Download size={16}/> XML</a></div></div><p>{selected.summary.companyName} · {selected.summary.invoiceDate} · {money(selected.totals?.gross ?? selected.summary.totalGross)}</p><ExportCheck number={selected.summary.number} companyId={selected.summary.companyId}/><InvoiceAccessBox number={selected.summary.number} companyId={selected.summary.companyId}/><PreviewErrorBoundary><InvoiceTextPreviewPanel preview={textPreview} lines={(selected.lines ?? []).map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat}))} products={products ?? []} company={companies.find(c=>c.id===selected.summary.companyId)} number={selected.summary.number} totals={selected.totals} lang={pdfLanguage} summary={selected.summary} recipient={lbd} invoiceDate={selected.summary.invoiceDate??''} paymentMethod={(selected.summary as any).paymentMethod??'—'}/></PreviewErrorBoundary><InvoiceStatusActions detail={selected} onChanged={setSelected} onCreated={invoice=>{setRows(prev=>[invoice.summary, ...prev.filter(r=>!(r.id===invoice.summary.id || (r.number===invoice.summary.number && r.companyId===invoice.summary.companyId)))]); setSelected(invoice);}}/></>:<div className="empty">{ui("pleaseSelectInvoice")}</div>}</section>
   </section>}
  </>}
 
 function InvoiceStatusActions({detail,onChanged,onCreated}:{detail:InvoiceDetail; onChanged:(d:InvoiceDetail)=>void; onCreated?:(d:InvoiceDetail)=>Promise<void> | void}){const [busy,setBusy]=useState(false); const n=detail.summary.number; const companyId=detail.summary.companyId; const isSpecial=/[SGP]$/.test(n) || /Z\d*$/.test(n); async function cancel(){if(!confirm(`Stornorechnung ${n}S fuer Gesellschaft ${companyId ?? '—'} erstellen?`)) return; setBusy(true); try{const res=await createCancellationInvoice(n, companyId); onChanged(res.invoice); await onCreated?.(res.invoice);}finally{setBusy(false)}} async function credit(){if(!confirm(`Gutschrift zu ${n} fuer Gesellschaft ${companyId ?? '—'} erstellen?`)) return; setBusy(true); try{const res=await createCreditNote(n, companyId); onChanged(res.invoice); await onCreated?.(res.invoice);}finally{setBusy(false)}} async function del(){if(!confirm('Diese Rechnung wirklich technisch löschen? Fachlich ist Storno meistens sicherer.')) return; setBusy(true); try{await deleteInvoiceDraft(detail.summary.number); location.reload();}finally{setBusy(false)}} return <div className="toolbar small"><button className="secondary" disabled={busy || isSpecial} onClick={cancel}>Stornorechnung {n}S</button><button className="secondary" disabled={busy || isSpecial} onClick={credit}>{ui("createCreditNote")}</button><button className="danger" disabled={busy} onClick={del}>{ui("technicalDelete")}</button></div>}
 
-function ExportCheck({number,companyId}:{number:string; companyId?:number}){const [check,setCheck]=useState<any|null>(null); useEffect(()=>{loadExportCheck(number, companyId).then(setCheck).catch(()=>setCheck(null))},[number,companyId]); if(!check) return <p className="muted">{ui("exportCheckLoading")}</p>; return <div className={check.exportable?'note ok':'note warn'}>{check.exportable?'ZUGFeRD-Export bereit':'ZUGFeRD-Export hat Hinweise'}{check.issues?.length?<ul>{check.issues.map((i:any,idx:number)=><li key={idx}>{i.severity}: {i.field} – {i.message}</li>)}</ul>:null}</div>}
+function ExportCheck({number,companyId}:{number:string; companyId?:number}){const [check,setCheck]=useState<any|null>(null); useEffect(()=>{loadExportCheck(number, companyId).then(setCheck).catch(()=>setCheck(null))},[number,companyId]); if(!check) return <p className="muted">{ui("exportCheckLoading")}</p>; return <div className={check.exportable?'note ok':'note warn'}>{check.exportable?ui('zugferdReady'):ui('zugferdIssues')}{check.issues?.length?<ul>{check.issues.map((i:any,idx:number)=>{const msg=String(i.message??''); const translatedMsg=msg.includes('.lbd-Empfängerdatei')?ui('lbdMissingPlaceholder'):msg; const sev=String(i.severity??''); return <li key={idx}>{sev==='WARN'?'WARN':sev}: {i.field} – {translatedMsg}</li>})}</ul>:null}</div>}
 
 function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDetail; initialCompanyId?:number; onSaved:(r:any)=>void}){const [products,setProducts]=useState<ProductDto[]>([]); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [companyId,setCompanyId]=useState(existing?.summary.companyId??initialCompanyId??2); const [productId,setProductId]=useState<number|undefined>(); const [qty,setQty]=useState(1); const [invoiceDate,setInvoiceDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [paymentMethod,setPaymentMethod]=useState('unbekannt'); const [pdfLanguage,setPdfLanguage]=useState<GamLanguage>('de'); const [reason,setReason]=useState(''); const [remark,setRemark]=useState(''); const [voucherEnabled,setVoucherEnabled]=useState(false); const [couponText,setCouponText]=useState(''); const [couponAmount,setCouponAmount]=useState(0); const [discountEnabled,setDiscountEnabled]=useState(false); const [discountType,setDiscountType]=useState<'percent'|'amount'>('percent'); const [discountValue,setDiscountValue]=useState(0); const [installmentsEnabled,setInstallmentsEnabled]=useState(false); const [installments,setInstallments]=useState(1); const [err,setErr]=useState(''); const [next,setNext]=useState(existing?.summary.number??''); const [lbd,setLbd]=useState<LbdRecipient|null>(null); const [textPreview,setTextPreview]=useState<InvoiceTextPreview|null>(null); const [lines,setLines]=useState<InvoiceCreateLineRequest[]>(existing?.lines.map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat,branchId:l.branchId,client:l.client,performer:l.performer}))??[]); const [totals,setTotals]=useState<any>(null);
  useEffect(()=>{loadProducts('',120).then(ps=>{setProducts(ps); if(ps[0]) setProductId(ps[0].id)}); loadCompanies().then(cs=>{setCompanies(cs); if(!existing && cs[0]) setCompanyId(cs[0].id)}).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null)); if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{});},[]);
@@ -1241,6 +1465,8 @@ function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDet
 
 
 function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,lang,summary,recipient,invoiceDate,paymentMethod}:{preview:InvoiceTextPreview|null; lines:InvoiceCreateLineRequest[]; products:ProductDto[]; company?:InvoiceCompany; number:string; totals:any; lang:GamLanguage; summary:InvoiceSummary; recipient:LbdRecipient|null; invoiceDate:string; paymentMethod:string}){
+ useEffect(()=>{prepareSpeechVoices(); const synth=(window as any).speechSynthesis; if(synth) synth.onvoiceschanged=()=>prepareSpeechVoices(); return ()=>{ if(synth) synth.onvoiceschanged=null; };},[]);
+ const [speaking,setSpeaking]=useState(false);
  const labels = preview?.labels ?? {};
  const t = (key:string, fallback?:string) => labels[key] ?? ui(key, lang) ?? fallback ?? key;
  const documentTitle = preview?.documentTitle ?? t('invoice', ui('invoice', lang));
@@ -1252,9 +1478,8 @@ function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,l
  const userName = summary.username || '—';
  const taxInfo = [company?.taxNumber, company?.vatId].filter(Boolean).join(' ') || '—';
  const speechText = [documentTitle + ' ' + (number || ''), company?.name, recipientName, recipientAddress.join(' '), preview?.salutation, preview?.invoiceText, `${t('invoiceDate')}: ${invoiceDate || '—'}`, `${t('invoiceCustomerFile')}: ${customerFile}`, `${t('invoiceUser')}: ${userName}`, `${t('invoicePaymentMethod')}: ${paymentMethod || '—'}`, ...lineTexts, totals ? `${t('net')} ${money(totals.net)}. ${t('vat')} ${money(totals.vat)}. ${t('gross')} ${money(totals.gross)}` : '', preview?.lawHint, preview?.greetings, company ? `${t('bank')} ${company.name} IBAN ${company.iban || ''} BIC ${company.bic || ''}. ${t('invoiceTaxNumberVatId')}: ${taxInfo}` : ''].filter(Boolean).join('. ');
- function readAloud(){ const synth=(window as any).speechSynthesis; if(!synth) return; synth.cancel(); const u=new SpeechSynthesisUtterance(speechText); u.lang=speechLang(lang); synth.speak(u); }
- function stopReading(){ const synth=(window as any).speechSynthesis; if(synth) synth.cancel(); }
- return <section className="card invoice-preview-card"><div className="row"><h2>{t('invoicePreviewTitle', ui('previewTitle', lang))}</h2><div className="download-actions"><button type="button" className="secondary" onClick={readAloud}>{ui('readAloud', lang)}</button><button type="button" className="secondary" onClick={stopReading}>{ui('stopReading', lang)}</button></div></div><p className="muted">{t('invoicePreviewHelp', ui('previewHelp', lang))}</p><p className="note ok">{ui('accessibilityNote', lang)}</p><div className="invoice-preview-box" aria-label={t('invoicePreviewTitle', ui('previewTitle', lang))} lang={speechLang(lang)}>
+ function toggleReading(){ const synth=(window as any).speechSynthesis; if(!synth) return; if(speaking){synth.cancel(); setSpeaking(false); return;} synth.cancel(); const u=new SpeechSynthesisUtterance(speechText); const voice=preferredSpeechVoice(lang); if(voice){u.voice=voice; u.lang=voice.lang; console.info('GAM TTS voice', lang, voice.name, voice.lang);} else {try{setSpeaking(true); playMaryTtsAudio(lang, speechText, ()=>setSpeaking(false)).catch(()=>setSpeaking(false)); return;}catch(e){u.lang=speechLang(lang); console.info('GAM TTS fallback lang', lang, u.lang);}} u.onend=()=>setSpeaking(false); u.onerror=()=>setSpeaking(false); setSpeaking(true); synth.speak(u); }
+ return <section className="card invoice-preview-card"><div className="row"><h2>{t('invoicePreviewTitle', ui('previewTitle', lang))}</h2><div className="download-actions"><button type="button" className={speaking?"danger speech-toggle":"secondary speech-toggle speech-start"} onClick={toggleReading}>{speaking?ui("stopReading", lang):ui("readAloud", lang)}</button></div></div><p className="muted">{t('invoicePreviewHelp', ui('previewHelp', lang))}</p><p className="note ok">{ui('accessibilityNote', lang)}</p><div className="invoice-preview-box" aria-label={t('invoicePreviewTitle', ui('previewTitle', lang))} lang={speechLang(lang)}>
   <div className="row invoice-preview-head"><div><img className="company-logo-preview" src={companyLogoSrc(company)} alt={company?.name ?? 'GAM Gesellschaft'} /><h3>{documentTitle} {number || '—'}</h3></div><span>{company?.name ?? ui('company', lang)}</span></div>
   <div className="preview-meta"><span>{t('invoiceDate', ui('date', lang))}: {invoiceDate || '—'}</span><span>{ui('language', lang)}: {LANGUAGES.find(l=>l.value===lang)?.label ?? lang}</span><span>{t('invoicePaymentMethod', ui('payment', lang))}: {paymentMethod || '—'}</span></div>
   <div className="preview-meta"><span>{t('invoiceCustomerFile')}: {customerFile}</span><span>{t('invoiceUser')}: {userName}</span></div>

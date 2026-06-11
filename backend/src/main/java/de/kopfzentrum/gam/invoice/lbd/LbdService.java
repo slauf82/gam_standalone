@@ -22,62 +22,106 @@ public class LbdService {
     @Value("${app.invoice.lbd.search-folders:./config,./daten/rechnung,.}") String folders,
     @Value("${app.invoice.lbd.charset:windows-1252}") String charsetName
   ) {
-    this.preferredFileName = (file == null || file.isBlank()) ? "" : file.trim();
+    this.preferredFileName = (file == null || file.isBlank()) ? "beispiel.lbd" : file.trim();
     this.searchFolders = Arrays.stream(folders.split(","))
       .map(String::trim).filter(s -> !s.isBlank()).map(Paths::get).toList();
     this.charset = Charset.forName(charsetName == null || charsetName.isBlank() ? StandardCharsets.UTF_8.name() : charsetName);
   }
 
   public Optional<Path> findFile(String requestedName) throws IOException {
-    if (requestedName != null && !requestedName.isBlank()) {
-      Path direct = Paths.get(requestedName.trim());
-      if (Files.exists(direct) && Files.isRegularFile(direct)) return Optional.of(direct.toAbsolutePath().normalize());
-      for (Path folder : searchFolders) {
-        Path candidate = folder.resolve(requestedName.trim());
-        if (Files.exists(candidate) && Files.isRegularFile(candidate)) return Optional.of(candidate.toAbsolutePath().normalize());
-      }
+    String requested = requestedName == null ? "" : requestedName.trim();
+
+    if (!requested.isBlank()) {
+      Optional<Path> direct = tryResolve(requested);
+      if (direct.isPresent()) return direct;
     }
+
     if (!preferredFileName.isBlank()) {
-      Path configured = Paths.get(preferredFileName);
-      if (Files.exists(configured) && Files.isRegularFile(configured)) return Optional.of(configured.toAbsolutePath().normalize());
-      for (Path folder : searchFolders) {
-        Path candidate = folder.resolve(preferredFileName);
-        if (Files.exists(candidate) && Files.isRegularFile(candidate)) return Optional.of(candidate.toAbsolutePath().normalize());
-      }
-
-// Demo/first-run fallback: use a neutral demo LBD if no explicit file was requested.
-// This improves the GitHub demo experience and avoids a missing-LBD warning
-// when config/demo-lbd/max.mustermann.lbd is present.
-if (preferredFileName.isBlank()) {
-  String demoFileName = "max.mustermann.lbd";
-  for (Path folder : searchFolders) {
-    Path candidate = folder.resolve(demoFileName);
-    if (Files.exists(candidate) && Files.isRegularFile(candidate)) return Optional.of(candidate.toAbsolutePath().normalize());
-  }
-}
-
+      Optional<Path> configured = tryResolve(preferredFileName);
+      if (configured.isPresent()) return configured;
     }
-    for (Path folder : searchFolders) {
+
+    for (String demoFileName : List.of("beispiel.lbd", "max.mustermann.lbd")) {
+      Optional<Path> demo = tryResolve(demoFileName);
+      if (demo.isPresent()) return demo;
+    }
+
+    for (Path folder : effectiveSearchFolders()) {
       if (!Files.isDirectory(folder)) continue;
-      try (Stream<Path> s = Files.list(folder)) {
-        Optional<Path> first = s.filter(p -> Files.isRegularFile(p) && p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".lbd"))
-          .sorted().findFirst();
+      try (Stream<Path> stream = Files.list(folder)) {
+        Optional<Path> first = stream
+          .filter(p -> Files.isRegularFile(p) && p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".lbd"))
+          .sorted()
+          .findFirst();
         if (first.isPresent()) return Optional.of(first.get().toAbsolutePath().normalize());
       }
     }
     return Optional.empty();
   }
 
-  public Optional<Path> findFirstLbdFile() {
-    try {
-      return findFile(null);
-    } catch (IOException e) {
-      return Optional.empty();
+  private Optional<Path> tryResolve(String fileNameOrPath) {
+    Path direct = Paths.get(fileNameOrPath);
+    if (Files.exists(direct) && Files.isRegularFile(direct)) return Optional.of(direct.toAbsolutePath().normalize());
+
+    for (Path folder : effectiveSearchFolders()) {
+      Path candidate = folder.resolve(fileNameOrPath);
+      if (Files.exists(candidate) && Files.isRegularFile(candidate)) return Optional.of(candidate.toAbsolutePath().normalize());
     }
+    return Optional.empty();
   }
 
+  private List<Path> effectiveSearchFolders() {
+    LinkedHashSet<Path> folders = new LinkedHashSet<>();
+    Path userDir = Paths.get(System.getProperty("user.dir", ".")).toAbsolutePath().normalize();
+
+    // Explicit installation/demo paths
+    folders.add(Paths.get("C:/GAM2/config"));
+    folders.add(Paths.get("C:\\GAM2\\config"));
+
+    // Common start locations:
+    // - C:\GAM2
+    // - C:\GAM2\backend
+    // - IDE working directory
+    folders.add(userDir.resolve("config").normalize());
+    folders.add(userDir.resolve("../config").normalize());
+    folders.add(userDir.resolve("config/demo-lbd").normalize());
+    folders.add(userDir.resolve("../config/demo-lbd").normalize());
+    folders.add(userDir.resolve("daten/rechnung").normalize());
+    folders.add(userDir.resolve("../daten/rechnung").normalize());
+    folders.add(userDir);
+
+    if (userDir.getParent() != null) {
+      Path parent = userDir.getParent();
+      folders.add(parent.resolve("config").normalize());
+      folders.add(parent.resolve("config/demo-lbd").normalize());
+      folders.add(parent.resolve("daten/rechnung").normalize());
+      folders.add(parent);
+    }
+
+    for (Path configured : searchFolders) {
+      folders.add(configured);
+      if (!configured.isAbsolute()) {
+        folders.add(userDir.resolve(configured).normalize());
+        folders.add(userDir.resolve("../").resolve(configured).normalize());
+        if (userDir.getParent() != null) folders.add(userDir.getParent().resolve(configured).normalize());
+      }
+    }
+
+    return folders.stream().toList();
+  }
+
+
+
+public Optional<Path> findFirstLbdFile() {
+  try {
+    return findFile(null);
+  } catch (IOException e) {
+    return Optional.empty();
+  }
+}
+
   public List<String> searchFolders() {
-    return searchFolders.stream().map(Path::toString).toList();
+    return effectiveSearchFolders().stream().map(Path::toString).toList();
   }
 
   public LbdRecipient preview(String requestedName) throws IOException {

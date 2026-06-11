@@ -1,110 +1,98 @@
-# GAM 2.0
-Ab Version 1.2.0 liegt eine anonymisierte Testdatenbank dem Release bei !
+# GAM Standalone
 
-<<<<<<< Updated upstream
-GAM 2.0 ist die Modernisierung und Weiterentwicklung eines historisch gewachsenen Praxis- und Verwaltungs­systems.
-
-Das Projekt migriert die ursprüngliche Java-/JSF-Anwendung auf eine moderne Architektur mit Spring Boot, React und MariaDB und erweitert die bestehende Funktionalität um Mehrsprachigkeit, Barrierefreiheit und digitale Patientenservices.
-=======
 Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/TypeScript + MariaDB.
->>>>>>> Stashed changes
 
-## Hauptfunktionen
+## Aktueller Stand
 
-### Rechnungswesen
+Dieses Paket enthält Phase 1A + Phase 1B/1C sowie Schritt 1–4:
 
-* Rechnungen
-* Stornorechnungen
-* Gutschriften
-* Proforma-Rechnungen
-* Zahlungsavis
-* Gesellschaftsabhängige Nummernkreise
-* PDF-Erzeugung
-* ZUGFeRD-Unterstützung
+- kompatibler Login über bestehende `accounts`-Tabelle
+- vorbereitete Passwort-/2FA-Kompatibilität
+- JWT-Session-Grundlage
+- `.lbd`-Empfängerdatei-Suche und Vorschau
+- Rechnungsübersicht aus Bestandsdaten
+- Produktliste aus `rechnungsdaten`
+- neue Rechnung anlegen
+- Speichern in `rechnungsdetails` und `rechnung`
+- ZUGFeRD/Factur-X-E-Rechnungs-Export als primärer PDF-Export
+- Benutzer-/Rechteverwaltung mit Rollenmenü
+- Inventar-/Gerätemodul aus `geräte` und `geräte_neu`
+- Lager-/Materialmodul aus `lager` und `verbrauchsmaterial`
 
-### Mehrsprachigkeit
+Details stehen in:
 
-* Deutsch
-* Englisch
-* Französisch
-* Ukrainisch
+- `PHASE_1A_STATUS.md`
+- `PHASE_1B_1C_STATUS.md`
+- `PHASE_1C_ZUGFERD_STATUS.md`
+- `SCHRITT_1_RECHNUNGSMODUL_STATUS.md`
+- `SCHRITT_2_BENUTZER_RECHTE_STATUS.md`
+- `SCHRITT_3_INVENTAR_GERAETE_STATUS.md`
+- `SCHRITT_4_LAGER_MATERIAL_STATUS.md`
 
-Funktionen:
+## Backend starten
 
-* Mehrsprachige Rechnungstexte
-* PDF-Sprachwahl
-* Translation-Cache
-* Datenbankgestützte Übersetzungen
-* Erweiterbare Spracharchitektur
+```bash
+cd backend
+mvn spring-boot:run
+```
 
-### Rechnungsvorschau
+Konfiguration über Umgebungsvariablen oder `backend/src/main/resources/application.yml`:
 
-* WYSIWYG-Rechnungsvorschau
-* Vorschau von Rechnungstexten
-* Vorschau von Rabatten und Gutscheinen
-* Vorschau von Ratenzahlungen
-* Vorschau von Zahlungsinformationen
+```bash
+GAM_DB_URL=jdbc:mariadb://localhost:3306/kopfzentruminventardb
+GAM_DB_USER=root
+GAM_DB_PASSWORD=passwort
+GAM_JWT_SECRET=bitte-langes-secret-setzen
+GAM_LBD_FILE=./config/meine-datei.lbd
+```
 
-### Barrierefreiheit
+## Frontend starten
 
-* PDF/UA-Vorbereitung
-* Vorlesefunktion
-* Sprachabhängige Vorlesbarkeit
-* Mehrsprachige Dokumente
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### Patientenportal
+## .lbd-Dateien
 
-* QR-Code auf Rechnungen
-* Digitaler Rechnungsabruf
-* Mehrsprachige Darstellung
-* Rechnungshistorie
-* PDF-Download
-* Sprachwahl für Patienten
+Gesucht wird standardmäßig in:
 
-### Sicherheit
+```text
+./config
+./daten/rechnung
+.
+```
 
-* Benutzer- und Rollenverwaltung
-* Rechtekonzept
-* TOTP-Zwei-Faktor-Authentifizierung
-* Passkey/WebAuthn-Unterstützung
+Der Pfad kann über `GAM_LBD_FILE` überschrieben werden.
 
-## Architektur
+## Wichtiger Hinweis
 
-Backend:
+Das ist noch nicht das vollständige GAM 2.0. Es ist inzwischen ein breiter Modulrahmen mit Rechnungen, Benutzer/Rechte, Inventar/Geräte und Lager/Material. Das finale Rechnungsformular, Adresslogik, Freigaben, Layouts und Speziallogik werden schrittweise ergänzt. Ab Phase 1C ist `/api/invoices/{number}/pdf` bereits als ZUGFeRD/Factur-X-Pflichtexport vorgesehen; `/pdf-debug` bleibt als Fallback erhalten.
 
-* Java
-* Spring Boot
-* Spring Security
-* MariaDB
 
-Frontend:
+## Stand Schritt 5
 
-* React
-* TypeScript
-* Vite
+GAM 2.0 besitzt jetzt die Gesamtstruktur mit Rechnungen, Benutzer/Rechte, Inventar, Lager sowie Rahmenmodulen fuer Aufgaben, Freigaben, Personal, Kassenbuch, Pruefungen und Reports.
 
-Dokumente:
+Die neu hinzugefuegten Rahmenmodule sind bewusst zuerst read-only, damit bestehende Fachlogik nicht versehentlich veraendert wird.
 
-* PDF
-* ZUGFeRD
-* Mehrsprachige Rechnungen
+## Schritt 6 – CRUD/Workflows
 
-## Projektstatus
+Diese Version erweitert die GAM-2.0-Gesamtstruktur um erste echte Schreibfunktionen:
 
-Der Schwerpunkt liegt aktuell auf dem Rechnungswesen, der Mehrsprachigkeit, der Barrierefreiheit und dem digitalen Patientenportal.
+- Aufgaben anlegen/bearbeiten/löschen
+- Freigaben anlegen/bearbeiten/löschen
+- Geräte bearbeiten bzw. neue Geräte anlegen
+- Lagerbestände setzen oder per Bewegung ändern
 
-Weitere geplante Bereiche:
+Details siehe `SCHRITT_6_CRUD_WORKFLOWS_STATUS.md`.
 
-* Administration
-* Reports und Auswertungen
-* Erweiterung der Mehrsprachigkeit auf weitere Module
-* Erweiterung des Patientenportals
+## Schritt 7 – Startfähigkeit
 
-## Lizenz
+Diese Version ergänzt Startskripte, lokales Profil, Healthchecks und eine klare Testanleitung.
+Der Einstieg ist jetzt `START-HIER.md`.
 
-<<<<<<< Updated upstream
-GNU GPL v3.0
-=======
 Wichtige technische Prüfpunkte:
 
 ```text
@@ -296,4 +284,55 @@ Sichtbare hart codierte Texte in `frontend/src/main.tsx` wurden weitgehend auf `
 ## Schritt 31n – Modulzugriff / White-Screen-Fix
 
 Modulbereiche sind nun durch eine Error-Boundary geschützt. Superadmin/Admin erhalten eine vollständige Fallback-Modulliste, sodass historische Modul-Shells sichtbar bleiben und Renderfehler nicht mehr die komplette Oberfläche weiß werden lassen.
->>>>>>> Stashed changes
+
+## Schritt 31t – stabile Fixes auf Basis 31o
+
+31o als stabile Grundlage plus sauberer Backend-LBD-Fix und vorsichtiger Vorlesen/Stoppen-Toggle.
+
+## Schritt 31u – Auth-Fallback-Fix
+
+401/403-Fehler einzelner Modul-Endpunkte lösen nicht mehr automatisch einen kompletten Logout aus. Nur `/auth/me` beendet die Sitzung hart.
+
+## Schritt 31v – LBD und i18n-Platzhalter-Fix
+
+Fehlende i18n-Keys für Rechnungsvorschau/LBD wurden ergänzt und die LBD-Suche für `beispiel.lbd` robuster gemacht.
+
+## Schritt 31w – Favicon & Visual Consistency
+
+Originales GAM-Favicon und alte Aktionsicons wurden wieder eingebunden. Die Modulnavigation nutzt nun dieselbe Bildsprache wie der Login.
+
+## Schritt 31x – LBD Compile-Fix
+
+`findFirstLbdFile()` wurde in `LbdService` wieder ergänzt, damit Startup- und Systemstatus-Controller kompilieren.
+
+## Schritt 32 – stabile UI-/Favicon-Fixes
+
+Auf Basis von 31x wurden die kleinen UI-Übersetzungsreste und das Favicon korrigiert, ohne die funktionierende Navigationslogik umzubauen.
+
+## Schritt 32b – Safe i18n Recovery
+
+Recovery auf Basis von 32. 32a wird verworfen; nur sichere Minimalfixes für i18n-Reststellen werden übernommen.
+
+## Schritt 32c – Text-only i18n Fix
+
+Korrigiert nur Textübersetzungen für Prüfungen, Reports, Benutzer/Rechte und Stornorechnung, ohne Navigation oder Funktionalität umzubauen.
+
+## Schritt 33 – sprachabhängige Vorlesestimmen
+
+Die Vorlesefunktion wählt nun automatisch eine passende Browser-/Systemstimme zur gewählten Sprache aus.
+
+## Schritt 33a – TTS-Fallback-Kette
+
+Die Vorlesefunktion nutzt nun pro Sprache eine Fallback-Kette der aktuell verfügbaren Browser-/Systemstimmen. Ukrainisch fällt bei fehlender Stimme auf Russisch, danach Englisch und Deutsch zurück.
+
+## Schritt 33b – MaryTTS-Konfiguration als Standard
+
+MaryTTS ist als Standard-TTS-Backend konfiguriert; Browser-TTS und Fallback-Kette bleiben erhalten.
+
+## Schritt 33c – MaryTTS Autostart / No-Config-Modus
+
+GAM sucht beim Start automatisch nach einem lokalen MaryTTS-Bundle unter `tts/marytts` und startet es, falls vorhanden. Keine Benutzerkonfiguration erforderlich.
+
+## Schritt 33d – MaryTTS Embedded
+
+MaryTTS wird nun direkt im Java-Backend über Maven-Artefakte eingebunden. Deutsch, Englisch und Französisch sind als eingebettete MaryTTS-Sprachen/Stimmen vorbereitet.

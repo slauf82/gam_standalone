@@ -277,3 +277,28 @@ tr.selected{background:#eef4ff}
 
 /* Schritt 31n */
 .note.warn small { display:block; margin-top: 6px; }
+
+.speech-toggle.speech-start{background:#15803d;border-color:#166534;color:#fff}
+.speech-toggle.speech-start:hover{background:#166534}
+.speech-toggle.danger{background:#b91c1c;border-color:#991b1b;color:#fff}
+.speech-toggle.danger:hover{background:#991b1b}
+
+
+/* Schritt 31w visual consistency */
+.module-tabs button {
+  gap: 8px;
+  align-items: center;
+}
+.nav-module-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+.action-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
+}

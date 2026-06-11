@@ -26,7 +26,7 @@ gam:
   jwt:
     secret: ${GAM_JWT_SECRET:BITTE_IN_PRODUKTION_AENDERN_MINDESTENS_32_ZEICHEN}
   lbd:
-    file: ${GAM_LBD_FILE:max.mustermann.lbd}
+    file: ${GAM_LBD_FILE:beispiel.lbd}
 
 app:
   security:
@@ -39,15 +39,33 @@ app:
     require-totp-when-secret-exists: ${GAM_REQUIRE_TOTP_WHEN_SECRET_EXISTS:false}
   invoice:
     lbd:
-      file: ${GAM_LBD_FILE:max.mustermann.lbd}
-      search-folders: ${GAM_LBD_SEARCH_FOLDERS:./config/demo-lbd,./config,./daten/rechnung,.}
-      charset: ${GAM_LBD_CHARSET:UTF-8}
+      file: ${GAM_LBD_FILE:beispiel.lbd}
+      search-folders: ${GAM_LBD_SEARCH_FOLDERS:C:/GAM2/config,./config,../config,./config/demo-lbd,../config/demo-lbd,./daten/rechnung,../daten/rechnung,.}
+      charset: ${GAM_LBD_CHARSET:windows-1252}
     pdf:
       archive-enabled: ${GAM_PDF_ARCHIVE_ENABLED:true}
       archive-folder: ${GAM_PDF_ARCHIVE_FOLDER:./daten/rechnung/archiv}
       hotfolder-enabled: ${GAM_PDF_HOTFOLDER_ENABLED:false}
       hotfolder-folder: ${GAM_PDF_HOTFOLDER_FOLDER:./daten/rechnung/hotfolder}
       hotfolder-filename-mode: ${GAM_PDF_HOTFOLDER_FILENAME_MODE:patient-number}
+
+  tts:
+    enabled: ${GAM_TTS_ENABLED:true}
+    engine: ${GAM_TTS_ENGINE:marytts}
+    browser-fallback: ${GAM_TTS_BROWSER_FALLBACK:true}
+    marytts:
+      embedded: ${GAM_MARYTTS_EMBEDDED:true}
+      autostart: ${GAM_MARYTTS_AUTOSTART:true}
+      home: ${GAM_MARYTTS_HOME:./tts/marytts}
+      port: ${GAM_MARYTTS_PORT:59125}
+      enabled: ${GAM_MARYTTS_ENABLED:true}
+      endpoint: ${GAM_MARYTTS_ENDPOINT:http://localhost:${GAM_MARYTTS_PORT:59125}/process}
+      timeout-ms: ${GAM_MARYTTS_TIMEOUT_MS:12000}
+    fallback:
+      de: ${GAM_TTS_FALLBACK_DE:de-DE,de,en-US,en}
+      en: ${GAM_TTS_FALLBACK_EN:en-US,en-GB,en,de-DE,de}
+      fr: ${GAM_TTS_FALLBACK_FR:fr-FR,fr,en-US,en,de-DE,de}
+      uk: ${GAM_TTS_FALLBACK_UK:uk-UA,uk,ru-RU,ru,en-US,en,de-DE,de}
 
 zugferd:
   enabled: ${GAM_ZUGFERD_ENABLED:true}
