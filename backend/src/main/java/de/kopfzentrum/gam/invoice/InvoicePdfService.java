@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import java.io.ByteArrayOutputStream;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
@@ -97,7 +99,7 @@ public class InvoicePdfService {
     PdfPTable meta = new PdfPTable(new float[]{6f, 4f});
     meta.setWidthPercentage(100);
     meta.addCell(borderless(new Phrase("", normal)));
-    meta.addCell(borderless(new Phrase(translations.invoice("invoiceDate", language) + ": " + nullSafe(summary.invoiceDate()) + "\n" + translations.invoice("invoiceCustomerFile", language) + ": " + (recipient == null ? "—" : nullSafe(recipient.file())) + "\n" + translations.invoice("invoiceUser", language) + ": " + nullSafe(summary.username()), small)));
+    meta.addCell(borderless(new Phrase(translations.invoice("invoiceDate", language) + ": " + formatDate(summary.invoiceDate(), language) + "\n" + translations.invoice("invoiceCustomerFile", language) + ": " + (recipient == null ? "—" : nullSafe(recipient.file())) + "\n" + translations.invoice("invoiceUser", language) + ": " + nullSafe(summary.username()), small)));
     document.add(meta);
     document.add(new Paragraph(" "));
 
@@ -107,7 +109,7 @@ public class InvoicePdfService {
     for (InvoiceLine line : lines) {
       double q = line.quantity() == null ? 1.0 : line.quantity();
       double p = line.price() == null ? 0.0 : line.price();
-      addCell(table, trimNumber(q)); addCell(table, nullSafe(line.code())); addCell(table, nullSafe(line.description()));
+      addCell(table, trimNumber(q)); addCell(table, nullSafe(line.code())); addCell(table, translatedProductDescription(line, language));
       addCell(table, (line.vat() == null ? 0 : line.vat()) + "%"); addCell(table, EUR.format(p)); addCell(table, EUR.format(q * p));
     }
     document.add(table);
@@ -195,11 +197,41 @@ public class InvoicePdfService {
     result = result.replace("<Vorname>", recipient == null ? "" : nullSafe(recipient.firstName()));
     result = result.replace("<Namenszusatz>", recipient == null ? "" : nullSafe(recipient.nameSuffix()));
     result = result.replace("<Nachname>", recipient == null ? "" : nullSafe(recipient.lastName()));
-    result = result.replace("<Behandlungsdatum>", summary == null ? "" : nullSafe(summary.invoiceDate()));
+    result = result.replace("<Behandlungsdatum>", summary == null ? "" : formatDate(summary.invoiceDate(), language));
     result = result.replace("<Gesellschaftsname>", company == null ? "" : nullSafe(company.name()));
     return result;
   }
 
+
+  private String translatedProductDescription(InvoiceLine line, String language) {
+    String description = nullSafe(line.description());
+    String code = nullSafe(line.code()).trim();
+    if (description.isBlank()) return description;
+    String key = code.isBlank() ? "productDescription." + Integer.toHexString(description.hashCode()) : "productDescription." + code.replaceAll("[^A-Za-z0-9_-]", "_");
+    return translations.resolve(key, language, description, false);
+  }
+
+  private static String formatDate(String value, String language) {
+    if (value == null || value.isBlank()) return "";
+    try {
+      String s = value.trim();
+      LocalDate d;
+      if (s.matches("\\d{2}\\.\\d{2}\\.\\d{4}")) {
+        d = LocalDate.parse(s, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+      } else {
+        d = LocalDate.parse(s.length() >= 10 ? s.substring(0, 10) : s);
+      }
+      String lang = language == null ? "de" : language.toLowerCase(Locale.ROOT);
+      return switch (lang) {
+        case "en", "english" -> d.format(DateTimeFormatter.ofPattern("MM/dd/yyyy"));
+        case "fr", "french", "it", "italian" -> d.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        case "sv", "swedish" -> d.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        default -> d.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+      };
+    } catch (Exception ignored) {
+      return value;
+    }
+  }
 
   private static PdfPCell companyLogoCell(InvoiceCompany company, Font font) {
     PdfPCell cell = new PdfPCell();
@@ -245,6 +277,10 @@ public class InvoicePdfService {
       case "en", "english" -> "en-US";
       case "fr", "french" -> "fr-FR";
       case "uk", "ukrainian" -> "uk-UA";
+      case "it", "italian" -> "it-IT";
+      case "sv", "swedish" -> "sv-SE";
+      case "tr", "turkish" -> "tr-TR";
+      case "ru", "russian" -> "ru-RU";
       default -> "de-DE";
     };
   }

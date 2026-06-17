@@ -1,4 +1,7 @@
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration
   datasource:
     url: ${GAM_DB_URL:jdbc:mariadb://localhost:3306/kopfzentruminventardb}
     username: ${GAM_DB_USER:root}
@@ -28,12 +31,22 @@ app:
       hotfolder-folder: ${GAM_PDF_HOTFOLDER_FOLDER:./daten/rechnung/hotfolder}
       hotfolder-filename-mode: ${GAM_PDF_HOTFOLDER_FILENAME_MODE:patient-number}
 
+  translation:
+    libretranslate:
+      enabled: ${GAM_LIBRETRANSLATE_ENABLED:true}
+      # Zuerst lokaler Server, falls vorhanden. Dadurch bleibt GAM lokal/offline-faehig.
+      url: ${GAM_LIBRETRANSLATE_URL:http://localhost:5000/translate}
+      # Schlanker Online-Fallback im Stil der alten libretranslate-java-Nutzung.
+      fallback-url: ${GAM_LIBRETRANSLATE_FALLBACK_URL:https://translate.fedilab.app/translate}
+      api-key: ${GAM_LIBRETRANSLATE_API_KEY:}
+      java-client-enabled: ${GAM_LIBRETRANSLATE_JAVA_CLIENT_ENABLED:true}
+      diagnostics: ${GAM_LIBRETRANSLATE_DIAGNOSTICS:false}
+
   tts:
     enabled: ${GAM_TTS_ENABLED:true}
     engine: ${GAM_TTS_ENGINE:marytts}
     browser-fallback: ${GAM_TTS_BROWSER_FALLBACK:true}
     marytts:
-      embedded: ${GAM_MARYTTS_EMBEDDED:true}
       autostart: ${GAM_MARYTTS_AUTOSTART:true}
       home: ${GAM_MARYTTS_HOME:./tts/marytts}
       port: ${GAM_MARYTTS_PORT:59125}

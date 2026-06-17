@@ -2,17 +2,16 @@ package de.kopfzentrum.gam.tts;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public record TtsStatus(
   boolean enabled,
   String engine,
+  String mode,
   boolean maryTtsEnabled,
-  boolean maryTtsEmbedded,
-  boolean maryTtsEmbeddedAvailable,
-  String maryTtsEmbeddedError,
-  Set<String> maryTtsEmbeddedVoices,
   boolean maryTtsBundled,
+  boolean maryTtsBundledStarted,
+  boolean maryTtsBundledAvailable,
+  String maryTtsBundledError,
   String maryTtsHome,
   String maryTtsEndpoint,
   boolean maryTtsReachable,

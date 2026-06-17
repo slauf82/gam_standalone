@@ -336,3 +336,32 @@ GAM sucht beim Start automatisch nach einem lokalen MaryTTS-Bundle unter `tts/ma
 ## Schritt 33d – MaryTTS Embedded
 
 MaryTTS wird nun direkt im Java-Backend über Maven-Artefakte eingebunden. Deutsch, Englisch und Französisch sind als eingebettete MaryTTS-Sprachen/Stimmen vorbereitet.
+
+## Schritt 33g – MaryTTS 5.2.1 Maven-Central-Fix
+
+Korrigiert die MaryTTS-Maven-Abhängigkeiten auf die in Maven Central verfügbaren 5.2.1-Artefakte.
+
+## Schritt 33h – MaryTTS Transitive-Dependency-Repository-Fix
+
+Ergänzt gezielte Legacy-Repositories und Dependency-Management für die drei fehlenden MaryTTS-Transitiv-Abhängigkeiten fast-md5, Jampack und jtok-core.
+
+## Schritt 33i – Groovy-Autoconfiguration-Fix
+
+Deaktiviert Spring Boots Groovy-Template-Autokonfiguration, die durch MaryTTS/Groovy 2.4 transitiv aktiviert wurde.
+
+## Schritt 33j – TTS UI-, Status- und Sprachfix
+
+Ergänzt Vorlesesprache-Auswahl, gibt `/api/tts/status` frei und nutzt PDF-/TTS-Sprache korrekt für die Vorlesefunktion.
+
+## Schritt 33k – TTS-Einstellungen in der UI
+
+Ergänzt Vorlesesprache, Vorlesetechnik, Stimme und Geschwindigkeit für die Rechnungsvorschau.
+
+
+## Schritt 34 – Bundled MaryTTS Autostart
+
+Setzt auf Schritt 33k auf: Embedded MaryTTS ist standardmäßig deaktiviert, stattdessen wird die gebündelte MaryTTS-Distribution automatisch als separater Prozess gestartet. Browser-Fallback bleibt aktiv.
+
+## Schritt 34c – TTS-Architektur bereinigt
+
+MaryTTS läuft nun standardmäßig als gebündelter separater Prozess. Embedded-MaryTTS ist aus dem normalen Build- und Statuspfad entfernt, damit der TTS-Status keine irreführenden Embedded-Meldungen mehr enthält.

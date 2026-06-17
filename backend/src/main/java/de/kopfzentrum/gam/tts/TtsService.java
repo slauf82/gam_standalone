@@ -17,8 +17,6 @@ public class TtsService {
   private final boolean maryEnabled;
   private final String maryEndpoint;
   private final MaryTtsRuntimeManager maryRuntime;
-  private final EmbeddedMaryTtsService embeddedMary;
-  private final boolean maryEmbedded;
   private final RestTemplate restTemplate = new RestTemplate();
   private final Map<String, List<String>> fallback;
 
@@ -28,27 +26,50 @@ public class TtsService {
     @Value("${app.tts.browser-fallback:true}") boolean browserFallback,
     @Value("${app.tts.marytts.enabled:true}") boolean maryEnabled,
     @Value("${app.tts.marytts.endpoint:http://localhost:59125/process}") String maryEndpoint,
-    @Value("${app.tts.marytts.embedded:true}") boolean maryEmbedded,
     MaryTtsRuntimeManager maryRuntime,
-    EmbeddedMaryTtsService embeddedMary,
     @Value("${app.tts.fallback.de:de-DE,de,en-US,en}") String de,
     @Value("${app.tts.fallback.en:en-US,en-GB,en,de-DE,de}") String en,
     @Value("${app.tts.fallback.fr:fr-FR,fr,en-US,en,de-DE,de}") String fr,
-    @Value("${app.tts.fallback.uk:uk-UA,uk,ru-RU,ru,en-US,en,de-DE,de}") String uk
+    @Value("${app.tts.fallback.uk:uk-UA,uk,ru-RU,ru,en-US,en,de-DE,de}") String uk,
+    @Value("${app.tts.fallback.it:it-IT,it,en-US,en,de-DE,de}") String it,
+    @Value("${app.tts.fallback.sv:sv-SE,sv,en-US,en,de-DE,de}") String sv,
+    @Value("${app.tts.fallback.tr:tr-TR,tr,en-US,en,de-DE,de}") String tr,
+    @Value("${app.tts.fallback.ru:ru-RU,ru,en-US,en,de-DE,de}") String ru
   ) {
     this.enabled = enabled;
     this.engine = (engine == null || engine.isBlank()) ? "marytts" : engine;
     this.browserFallback = browserFallback;
     this.maryEnabled = maryEnabled;
     this.maryEndpoint = maryEndpoint;
-    this.maryEmbedded = maryEmbedded;
     this.maryRuntime = maryRuntime;
-    this.embeddedMary = embeddedMary;
-    this.fallback = Map.of("de", split(de), "en", split(en), "fr", split(fr), "uk", split(uk));
+    this.fallback = Map.of(
+      "de", split(de),
+      "en", split(en),
+      "fr", split(fr),
+      "uk", split(uk),
+      "it", split(it),
+      "sv", split(sv),
+      "tr", split(tr),
+      "ru", split(ru)
+    );
   }
 
   public TtsStatus status() {
-    return new TtsStatus(enabled, engine, maryEnabled, maryEmbedded, embeddedMary.available(), embeddedMary.error(), embeddedMary.voices(), maryRuntime.bundled(), maryRuntime.home(), maryEndpoint, maryReachable(), browserFallback, fallback);
+    return new TtsStatus(
+      enabled,
+      engine,
+      "bundled",
+      maryEnabled,
+      maryRuntime.bundled(),
+      maryRuntime.bundledStarted(),
+      maryRuntime.bundledAvailable(),
+      maryRuntime.bundledError(),
+      maryRuntime.home(),
+      maryEndpoint,
+      maryReachable(),
+      browserFallback,
+      fallback
+    );
   }
 
   public ResponseEntity<byte[]> audio(TtsRequest request) {
@@ -92,6 +113,9 @@ public class TtsService {
     if (l.startsWith("en")) return "en_US";
     if (l.startsWith("fr")) return "fr";
     if (l.startsWith("uk") || l.startsWith("ru")) return "ru";
+    if (l.startsWith("it")) return "it";
+    if (l.startsWith("sv")) return "sv";
+    if (l.startsWith("tr")) return "tr";
     return "de";
   }
 

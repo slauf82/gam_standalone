@@ -26,7 +26,7 @@ public class SecurityConfig {
       .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(
-          "/api/auth/login",
+          "/api/auth/login", "/api/tts/status",
           "/api/auth/totp/setup",
           "/api/auth/totp/confirm",
           "/api/auth/passkey/status",
@@ -36,12 +36,13 @@ public class SecurityConfig {
           "/api/auth/passkey/login/finish",
           "/api/system/status",
           "/api/system/startup-check",
+          "/api/ui-translations",
           "/api/invoices/lbd/preview",
           "/api/invoices/*/pdf",
           "/api/invoices/*/pdf-debug",
           "/api/invoices/*/zugferd.xml",
           "/api/invoice-portal/**",
-          "/actuator/health"
+          "/actuator/health", "/api/tts/status"
         ).permitAll()
         .requestMatchers("/api/auth/me", "/api/auth/menu").authenticated()
 

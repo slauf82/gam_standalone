@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Service
 public class InvoiceTextPreviewService {
@@ -36,7 +39,7 @@ public class InvoiceTextPreviewService {
     Map<String, String> map = new LinkedHashMap<>();
     String[] keys = {
       "invoice", "proformaInvoice", "credit", "cancellation", "paymentAdvice",
-      "invoiceRecipient", "invoiceNoRecipient", "invoiceDate", "invoiceCustomerFile", "invoiceUser", "invoicePaymentMethod",
+      "invoiceRecipient", "invoiceNoRecipient", "invoiceDate", "treatmentDate", "serviceDate", "dueDate", "invoiceCustomerFile", "invoiceUser", "invoicePaymentMethod",
       "invoiceAmount", "invoiceProductCode", "invoiceDescription", "invoiceTaxRate", "invoiceSinglePrice", "invoiceTotalPrice",
       "invoiceZugferdNote", "invoiceFallbackPdfNote", "net", "vat", "gross",
       "invoiceReducement", "invoiceReducedTotal", "invoiceCoupon", "invoiceInstallments", "invoiceInstallmentApprox",
@@ -56,7 +59,7 @@ public class InvoiceTextPreviewService {
     result = result.replace("<Vorname>", value(recipient == null ? null : recipient.firstName()));
     result = result.replace("<Namenszusatz>", value(recipient == null ? null : recipient.nameSuffix()));
     result = result.replace("<Nachname>", value(recipient == null ? null : recipient.lastName()));
-    result = result.replace("<Behandlungsdatum>", value(treatmentDate));
+    result = result.replace("<Behandlungsdatum>", formatDate(treatmentDate, language));
     result = result.replace("<Gesellschaftsname>", value(company == null ? null : company.name()));
     result = result.replace("<SieIhrKind>", translations.invoice("invoiceYou", language));
     return result.replaceAll("[ \\t]+", " ").replace(" ,", ",").trim();
@@ -66,12 +69,33 @@ public class InvoiceTextPreviewService {
     return value == null ? "" : value.trim();
   }
 
+  private static String formatDate(String value, String language) {
+    if (value == null || value.isBlank()) return "";
+    try {
+      String s = value.trim();
+      LocalDate d;
+      if (s.matches("\\d{2}\\.\\d{2}\\.\\d{4}")) d = LocalDate.parse(s, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+      else d = LocalDate.parse(s.length() >= 10 ? s.substring(0, 10) : s);
+      String lang = language == null ? "de" : language.toLowerCase(Locale.ROOT);
+      return switch (lang) {
+        case "en", "english" -> d.format(DateTimeFormatter.ofPattern("MM/dd/yyyy"));
+        case "fr", "french", "it", "italian" -> d.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        case "sv", "swedish" -> d.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        default -> d.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+      };
+    } catch (Exception ignored) { return value; }
+  }
+
   private static String normalize(String language) {
     if (language == null || language.isBlank()) return "de";
     String l = language.trim().toLowerCase();
     if (l.startsWith("en")) return "en";
     if (l.startsWith("fr")) return "fr";
     if (l.startsWith("uk") || l.startsWith("ua")) return "uk";
+    if (l.startsWith("it")) return "it";
+    if (l.startsWith("sv") || l.startsWith("se")) return "sv";
+    if (l.startsWith("tr")) return "tr";
+    if (l.startsWith("ru")) return "ru";
     return "de";
   }
 }

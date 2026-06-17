@@ -302,3 +302,27 @@ tr.selected{background:#eef4ff}
   vertical-align: middle;
   margin-right: 6px;
 }
+
+.tts-language-select{display:inline-flex;align-items:center;gap:6px;margin-right:8px;font-size:.9rem}
+.tts-language-select select{min-width:130px}
+
+.tts-settings-panel{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:8px 0;padding:8px;border:1px solid rgba(148,163,184,.35);border-radius:10px}
+.tts-settings-panel label{display:inline-flex;align-items:center;gap:6px;font-size:.9rem}
+.tts-settings-panel select{min-width:130px}
+.tts-settings-panel input[type="range"]{width:120px}
+
+/* Schritt 34z3: Vorschau muss auf grauem/dunklem Hintergrund gut lesbar bleiben. */
+.invoice-preview-box, .invoice-preview-box .muted, .invoice-preview-box .preview-meta, .invoice-preview-box .preview-block, .invoice-preview-box .preview-bank { color: #000 !important; }
+.invoice-preview-box { background: #f3f4f6 !important; }
+
+/* Schritt 34z7d – großer Vorlesen-Button in der Rechnungsvorschau */
+.invoice-preview-settings .speech-toggle {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1.2;
+}

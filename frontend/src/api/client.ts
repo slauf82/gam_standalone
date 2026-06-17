@@ -160,7 +160,7 @@ export type SecurityStatus = { authenticated:boolean; username:string; role:stri
 export const loadSecurityStatus = () => request<SecurityStatus>("/security/status");
 
 
-export type TtsStatus = { enabled: boolean; engine: string; maryTtsEnabled: boolean; maryTtsEmbedded: boolean; maryTtsEmbeddedAvailable: boolean; maryTtsEmbeddedError: string; maryTtsEmbeddedVoices: string[]; maryTtsBundled: boolean; maryTtsHome: string; maryTtsEndpoint: string; maryTtsReachable: boolean; browserFallback: boolean; fallback: Record<string, string[]> };
+export type TtsStatus = { enabled: boolean; engine: string; mode: string; maryTtsEnabled: boolean; maryTtsBundled: boolean; maryTtsBundledStarted: boolean; maryTtsBundledAvailable: boolean; maryTtsBundledError: string | null; maryTtsHome: string; maryTtsEndpoint: string; maryTtsReachable: boolean; browserFallback: boolean; fallback: Record<string, string[]> };
 export const loadTtsStatus = () => request<TtsStatus>('/tts/status');
 export async function loadTtsAudio(language: string, text: string, engine = 'marytts') {
   const res = await fetch(`${API}/tts/audio`, {
@@ -171,3 +171,10 @@ export async function loadTtsAudio(language: string, text: string, engine = 'mar
   if (!res.ok) throw new Error('TTS audio unavailable');
   return await res.blob();
 }
+
+export type UiTranslationRequest = { language: string; entries: Record<string, string>; knownTranslations?: Record<string, string> };
+export const loadUiTranslations = (language: string, entries: Record<string, string>, knownTranslations?: Record<string, string>) =>
+  request<Record<string, string>>("/ui-translations", {method:"POST", body: JSON.stringify({language, entries, knownTranslations: knownTranslations ?? {}})});
+
+export const loadUiTranslationsLive = (language: string, entries: Record<string, string>) =>
+  request<Record<string, string>>("/ui-translations/live", {method:"POST", body: JSON.stringify({language, entries, knownTranslations: {}})});
