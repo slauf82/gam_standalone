@@ -32,8 +32,10 @@ public class ZugferdExportService {
     return new ZugferdStatus(enabled, profile, validate, "Schritt 1: ZUGFeRD/Factur-X ist Pflicht-Export; Debug-PDF bleibt nur Fallback.");
   }
 
-  public InvoiceExportCheck check(String number) {
-    InvoiceDetail detail = repo.findDetail(number);
+  public InvoiceExportCheck check(String number) { return check(number, null); }
+
+  public InvoiceExportCheck check(String number, Integer companyId) {
+    InvoiceDetail detail = repo.findDetail(number, companyId);
     InvoiceCompany company = repo.findCompany(detail.summary().companyId());
     LbdRecipient recipient = previewRecipient();
     List<InvoiceValidationIssue> issues = new ArrayList<>();
@@ -59,25 +61,27 @@ public class ZugferdExportService {
     return new InvoiceExportCheck(number, exportable, issues);
   }
 
-  public ZugferdExportResult export(String number) { return export(number, "de"); }
-
-  public ZugferdExportResult export(String number, String language) {
-    InvoiceExportCheck check = check(number);
+  public ZugferdExportResult export(String number) { return export(number, null, "de"); }
+  public ZugferdExportResult export(String number, String language) { return export(number, null, language); }
+  public ZugferdExportResult export(String number, Integer companyId, String language) {
+    InvoiceExportCheck check = check(number, companyId);
     if (!check.exportable()) throw new IllegalStateException("ZUGFeRD-Export nicht möglich: " + check.issues());
-    InvoiceDetail detail = repo.findDetail(number);
+    InvoiceDetail detail = repo.findDetail(number, companyId);
     InvoiceCompany company = repo.findCompany(detail.summary().companyId());
     LbdRecipient recipient = previewRecipient();
     InvoiceTotals totals = detail.totals() == null ? repo.calculateFromExistingLines(detail.lines()) : detail.totals();
     byte[] xml = xmlService.buildXml(detail, company, recipient, totals);
-    byte[] basePdf = pdfService.renderVisualPdf(number, true, language);
+    byte[] basePdf = pdfService.renderVisualPdf(number, detail.summary().companyId(), true, language);
     byte[] finalPdf = enabled ? embed(basePdf, xml) : basePdf;
-    archiveService.archive(number, finalPdf);
+    archiveService.archive(number, detail.summary().companyId(), finalPdf);
     return new ZugferdExportResult(number, profile, "rechnung-" + number + "-zugferd.pdf", finalPdf, xml, enabled, !validate,
       validate ? "Validierung ist vorbereitet; harte Mustang-/KoSIT-Validierung folgt im nächsten Feinschliff." : "Interne Plausibilitätsprüfung bestanden; externe Validierung deaktiviert.");
   }
 
-  public byte[] xml(String number) {
-    InvoiceDetail detail = repo.findDetail(number);
+  public byte[] xml(String number) { return xml(number, null); }
+
+  public byte[] xml(String number, Integer companyId) {
+    InvoiceDetail detail = repo.findDetail(number, companyId);
     InvoiceCompany company = repo.findCompany(detail.summary().companyId());
     LbdRecipient recipient = previewRecipient();
     InvoiceTotals totals = detail.totals() == null ? repo.calculateFromExistingLines(detail.lines()) : detail.totals();

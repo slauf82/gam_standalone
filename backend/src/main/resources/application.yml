@@ -66,20 +66,28 @@ app:
 
   tts:
     enabled: ${GAM_TTS_ENABLED:true}
-    engine: ${GAM_TTS_ENGINE:marytts}
+    engine: ${GAM_TTS_ENGINE:piper}
     browser-fallback: ${GAM_TTS_BROWSER_FALLBACK:true}
-    marytts:
-      autostart: ${GAM_MARYTTS_AUTOSTART:true}
-      home: ${GAM_MARYTTS_HOME:./tts/marytts}
-      port: ${GAM_MARYTTS_PORT:59125}
-      enabled: ${GAM_MARYTTS_ENABLED:true}
-      endpoint: ${GAM_MARYTTS_ENDPOINT:http://localhost:${GAM_MARYTTS_PORT:59125}/process}
-      timeout-ms: ${GAM_MARYTTS_TIMEOUT_MS:12000}
+    piper:
+      home: ${GAM_PIPER_HOME:./tts/piper}
+      executable: ${GAM_PIPER_EXECUTABLE:./tts/piper/piper.exe}
+      voices-dir: ${GAM_PIPER_VOICES_DIR:./tts/piper/voices}
+      auto-download: ${GAM_PIPER_AUTO_DOWNLOAD:true}
     fallback:
       de: ${GAM_TTS_FALLBACK_DE:de-DE,de,en-US,en}
       en: ${GAM_TTS_FALLBACK_EN:en-US,en-GB,en,de-DE,de}
       fr: ${GAM_TTS_FALLBACK_FR:fr-FR,fr,en-US,en,de-DE,de}
       uk: ${GAM_TTS_FALLBACK_UK:uk-UA,uk,ru-RU,ru,en-US,en,de-DE,de}
+      it: ${GAM_TTS_FALLBACK_IT:it-IT,it,en-US,en,de-DE,de}
+      sv: ${GAM_TTS_FALLBACK_SV:sv-SE,sv,en-US,en-GB,en,de-DE,de}
+      tr: ${GAM_TTS_FALLBACK_TR:tr-TR,tr,en-US,en-GB,en,de-DE,de}
+      ru: ${GAM_TTS_FALLBACK_RU:ru-RU,ru,en-US,en-GB,en,de-DE,de}
+      es: ${GAM_TTS_FALLBACK_ES:es-ES,es,en-US,en-GB,en,de-DE,de}
+      pt: ${GAM_TTS_FALLBACK_PT:pt-PT,pt-BR,pt,en-US,en-GB,en,de-DE,de}
+      nl: ${GAM_TTS_FALLBACK_NL:nl-NL,nl,en-US,en-GB,en,de-DE,de}
+      pl: ${GAM_TTS_FALLBACK_PL:pl-PL,pl,en-US,en-GB,en,de-DE,de}
+      cs: ${GAM_TTS_FALLBACK_CS:cs-CZ,cs,en-US,en-GB,en,de-DE,de}
+
 
 zugferd:
   enabled: ${GAM_ZUGFERD_ENABLED:true}

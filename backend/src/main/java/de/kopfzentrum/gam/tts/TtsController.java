@@ -14,4 +14,7 @@ public class TtsController {
 
   @PostMapping("/audio")
   public ResponseEntity<byte[]> audio(@RequestBody TtsRequest request) { return tts.audio(request); }
+
+  @PostMapping("/install/{language}")
+  public java.util.Map<String, Object> installLanguage(@PathVariable String language) { return tts.installLanguage(language); }
 }

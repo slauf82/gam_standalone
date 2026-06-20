@@ -14,6 +14,7 @@ import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfString;
 import de.kopfzentrum.gam.invoice.lbd.LbdRecipient;
 import de.kopfzentrum.gam.invoice.lbd.LbdService;
+import de.kopfzentrum.gam.translation.UiTranslationService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -23,29 +24,38 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class InvoicePdfService {
   private final InvoiceRepository repo;
   private final LbdService lbdService;
   private final TranslationService translations;
+  private final UiTranslationService liveTranslations;
   private final InvoiceAccessTokenRepository accessTokens;
   private final QrCodeService qrCodeService;
   private final String portalBaseUrl;
   private static final NumberFormat EUR = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
-  public InvoicePdfService(InvoiceRepository repo, LbdService lbdService, TranslationService translations, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
-    this.repo = repo; this.lbdService = lbdService; this.translations = translations; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
+  public InvoicePdfService(InvoiceRepository repo, LbdService lbdService, TranslationService translations, UiTranslationService liveTranslations, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
+    this.repo = repo; this.lbdService = lbdService; this.translations = translations; this.liveTranslations = liveTranslations; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
   }
 
   /** Normal-PDF bleibt Fallback/Debug. Der verbindliche Export läuft über ZUGFeRD/Factur-X. */
-  public byte[] render(String number) { return renderVisualPdf(number, false, "de"); }
-  public byte[] render(String number, String language) { return renderVisualPdf(number, false, language); }
+  public byte[] render(String number) { return renderVisualPdf(number, null, false, "de"); }
+  public byte[] render(String number, String language) { return renderVisualPdf(number, null, false, language); }
+  public byte[] render(String number, Integer companyId, String language) { return renderVisualPdf(number, companyId, false, language); }
 
-  public byte[] renderVisualPdf(String number, boolean forZugferd) { return renderVisualPdf(number, forZugferd, "de"); }
+  public byte[] renderVisualPdf(String number, boolean forZugferd) { return renderVisualPdf(number, null, forZugferd, "de"); }
+  public byte[] renderVisualPdf(String number, boolean forZugferd, String language) { return renderVisualPdf(number, null, forZugferd, language); }
 
-  public byte[] renderVisualPdf(String number, boolean forZugferd, String language) {
-    InvoiceDetail detail = repo.findDetail(number);
+  /**
+   * Verbindlicher Renderer für Vorschau/PDF/ZUGFeRD.
+   * Wichtig: Rechnungsnummern sind in Alt-GAM nicht zwingend global eindeutig.
+   * Deshalb muss die Gesellschaft bei PDF/ZUGFeRD bis in den Renderer durchgereicht werden.
+   */
+  public byte[] renderVisualPdf(String number, Integer companyId, boolean forZugferd, String language) {
+    InvoiceDetail detail = repo.findDetail(number, companyId);
     InvoiceSummary summary = detail.summary();
     List<InvoiceLine> lines = detail.lines();
     InvoiceTotals totals = detail.totals() == null ? repo.calculateFromExistingLines(lines) : detail.totals();
@@ -206,9 +216,64 @@ public class InvoicePdfService {
   private String translatedProductDescription(InvoiceLine line, String language) {
     String description = nullSafe(line.description());
     String code = nullSafe(line.code()).trim();
-    if (description.isBlank()) return description;
+    String lang = normalizeLanguage(language);
+    if (description.isBlank() || "de".equals(lang)) return description;
     String key = code.isBlank() ? "productDescription." + Integer.toHexString(description.hashCode()) : "productDescription." + code.replaceAll("[^A-Za-z0-9_-]", "_");
-    return translations.resolve(key, language, description, false);
+
+    // 1) vorhandene Translation-Tabelle nutzen, aber nichts Neues für Produkttexte persistieren
+    String cached = translations.resolve(key, lang, description, false);
+    if (usableProductTranslation(cached, description)) return cached;
+
+    // 2) Live-Übersetzung ohne DB-Schreibzugriff erzwingen
+    try {
+      Map<String, String> live = liveTranslations.translateLive(lang, Map.of(key, description));
+      String translated = live == null ? null : live.get(key);
+      if (usableProductTranslation(translated, description)) return translated;
+    } catch (Exception ignored) { }
+
+    // 3) Niemals deutschen Produkttext in fremdsprachige PDFs schreiben.
+    return productTranslationPending(lang);
+  }
+
+  private static boolean usableProductTranslation(String value, String source) {
+    if (value == null || value.isBlank()) return false;
+    return source == null || !value.trim().equalsIgnoreCase(source.trim());
+  }
+
+  private static String normalizeLanguage(String language) {
+    if (language == null || language.isBlank()) return "de";
+    String l = language.trim().toLowerCase(Locale.ROOT);
+    if (l.startsWith("en")) return "en";
+    if (l.startsWith("fr")) return "fr";
+    if (l.startsWith("it")) return "it";
+    if (l.startsWith("es")) return "es";
+    if (l.startsWith("pt")) return "pt";
+    if (l.startsWith("nl")) return "nl";
+    if (l.startsWith("pl")) return "pl";
+    if (l.startsWith("cs") || l.startsWith("cz")) return "cs";
+    if (l.startsWith("sv") || l.startsWith("se")) return "sv";
+    if (l.startsWith("tr")) return "tr";
+    if (l.startsWith("ru")) return "ru";
+    if (l.startsWith("uk") || l.startsWith("ua")) return "uk";
+    return "de";
+  }
+
+  private static String productTranslationPending(String lang) {
+    return switch (lang) {
+      case "fr" -> "Traduction de la description du produit en cours";
+      case "en" -> "Product description translation pending";
+      case "it" -> "Traduzione della descrizione del prodotto in corso";
+      case "es" -> "Traducción de la descripción del producto pendiente";
+      case "pt" -> "Tradução da descrição do produto pendente";
+      case "nl" -> "Vertaling van de productbeschrijving in behandeling";
+      case "pl" -> "Tłumaczenie opisu produktu w toku";
+      case "cs" -> "Překlad popisu produktu čeká na zpracování";
+      case "sv" -> "Översättning av produktbeskrivning pågår";
+      case "tr" -> "Ürün açıklaması çevirisi bekleniyor";
+      case "ru" -> "Перевод описания продукта ожидается";
+      case "uk" -> "Переклад опису продукту очікується";
+      default -> "Product description translation pending";
+    };
   }
 
   private static String formatDate(String value, String language) {

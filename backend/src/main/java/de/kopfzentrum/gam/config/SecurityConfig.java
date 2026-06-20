@@ -37,6 +37,7 @@ public class SecurityConfig {
           "/api/system/status",
           "/api/system/startup-check",
           "/api/ui-translations",
+          "/api/ui-translations/**",
           "/api/invoices/lbd/preview",
           "/api/invoices/*/pdf",
           "/api/invoices/*/pdf-debug",

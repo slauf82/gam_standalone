@@ -1,5 +1,12 @@
 # GAM Standalone
 
+## Schritt 36a – Piper Verfügbarkeits- und UI-Fix
+
+Diese Version korrigiert die Piper-Erkennung: Das Backend sucht `piper.exe` und `voices` nun über mehrere plausible Pfade und meldet den tatsächlich gefundenen Pfad in `/api/tts/status`. Die Oberfläche graut Piper nicht mehr hart aus, wenn eine unterstützte Sprache noch per Auto-Download/Fallback verarbeitet werden kann.
+
+Siehe: `SCHRITT_36A_PIPER_VERFUEGBARKEIT_UI_FIX_STATUS.md`
+
+
 Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/TypeScript + MariaDB.
 
 ## Aktueller Stand
@@ -365,3 +372,71 @@ Setzt auf Schritt 33k auf: Embedded MaryTTS ist standardmäßig deaktiviert, sta
 ## Schritt 34c – TTS-Architektur bereinigt
 
 MaryTTS läuft nun standardmäßig als gebündelter separater Prozess. Embedded-MaryTTS ist aus dem normalen Build- und Statuspfad entfernt, damit der TTS-Status keine irreführenden Embedded-Meldungen mehr enthält.
+
+
+## Schritt 35 / GAM 2.0 v1.7.0 – Piper TTS v1
+
+MaryTTS wird ab diesem Stand nicht mehr als Vorlesetechnik angeboten. Piper ist die Standard-TTS-Engine, Browser Speech bleibt Fallback.
+
+Aktive TTS-Struktur:
+
+```text
+tts/piper/piper.exe
+tts/piper/voices/*.onnx
+tts/piper/voices/*.onnx.json
+```
+
+Unterstützte UI-/TTS-Sprachen: Deutsch, Englisch, Französisch, Italienisch, Spanisch, Portugiesisch, Niederländisch, Polnisch, Tschechisch, Schwedisch, Türkisch, Russisch und Ukrainisch.
+## Schritt 36 – PiperTTS v1
+
+GAM 2.0 v1.7.0 nutzt ab Schritt 36 PiperTTS als Standard-Vorlesetechnik. MaryTTS wird in der aktiven Bedienlogik nicht mehr angeboten.
+
+Standardpaket: Deutsch, Englisch, Französisch.
+Weitere UI-/Vorlesesprachen werden bei Bedarf automatisch als Piper-Voice nachinstalliert.
+
+Start: `INSTALL_PIPER_TTS.bat`
+Check: `CHECK_PIPER_TTS.bat`
+Status: `SCHRITT_36_PIPER_TTS_V1_STATUS.md`
+
+
+### Schritt 36.1a Hinweis: Piper Windows-Paket
+
+PiperTTS darf unter Windows nicht als einzelne `piper.exe` installiert werden.
+Das Installationsskript laedt jetzt das komplette `piper_windows_amd64.zip`,
+entpackt alle DLLs/Datenordner nach `tts/piper/` und fuehrt einen WAV-Echttest aus.
+
+### Hinweis Schritt 36 Fix 2
+
+Falls Piper nach erfolgreichem `CHECK_PIPER_TTS.bat` in der Oberfläche weiterhin ausgegraut war, lag das an einer zu strengen Status-/UI-Prüfung. Diese Version behandelt `tts/piper/piper.exe` als ausreichende Engine-Erkennung; die echte Laufprüfung erfolgt beim WAV-Test bzw. beim Audio-Aufruf.
+
+
+## Schritt 36b - Piper Autostart und Live-Produktbeschreibung
+
+Dieses Paket ergänzt Schritt 36a:
+
+- `start-backend.bat` installiert PiperTTS automatisch, falls Engine oder Standardstimmen fehlen.
+- Deutsch, Englisch und Französisch bleiben Standardstimmen.
+- Weitere Piper-Stimmen werden bei Bedarf automatisch nachgeladen.
+- Produktbeschreibungen werden live übersetzt, aber nicht in der Datenbank gespeichert.
+
+Statusdatei: `SCHRITT_36B_PIPER_AUTOSTART_LIVE_PRODUCT_TRANSLATION_STATUS.md`
+
+
+## Schritt 36d – Fremdsprachige Produktbeschreibungen
+
+- Produktbeschreibungen werden bei fremdsprachiger Rechnung live übersetzt.
+- Die Übersetzung wird nicht in der DB gespeichert.
+- Deutscher Produkttext darf in fremdsprachiger Vorschau/PDF nicht mehr durchrutschen.
+- Bekannter Botox-Testfall ist als lokaler Fallback abgesichert.
+
+## Schritt 36e – PDF-/Vorschau-Gesellschaftskonsistenz
+
+Schritt 36e behebt einen release-blockierenden Fehler: PDF-/ZUGFeRD-Export, XML, Archiv und Patientenportal verwenden jetzt dieselbe `companyId` wie die Vorschau. Damit kann bei gleicher Rechnungsnummer keine falsche Rechnungsgesellschaft mehr in das PDF geraten.
+
+Statusdatei: `SCHRITT_36E_PDF_GESELLSCHAFTS_KONSISTENZ_FIX_STATUS.md`
+
+## Schritt 36f – Benutzeranzeige Release-Fix
+
+- Anzeige-Fallback für leere Rechnungsbenutzer ergänzt.
+- Bei angemeldeter Sitzung erscheint in Vorschau/PDF nicht mehr `Benutzer: —`, sondern z. B. `Benutzer: slauf`.
+- Gespeicherte USERNAME-Werte bleiben vorrangig und werden nicht überschrieben.

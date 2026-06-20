@@ -2,14 +2,14 @@ import React, {useEffect, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Download, FilePlus2, FileText, LogOut, Search, ShieldCheck, UserRound, UsersRound, LayoutDashboard, Package, Warehouse, CheckSquare, ClipboardCheck, BriefcaseBusiness, Landmark, FileBarChart, ClipboardList, KeyRound, QrCode, Smartphone} from 'lucide-react';
 import {QRCodeSVG} from 'qrcode.react';
-import {AccountAdminDto, AccountDto, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadWarehouseItems, loadWarehouseStats, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary, InvoiceTotals, loadTtsAudio, loadUiTranslations, loadUiTranslationsLive} from './api/client';
+import {AccountAdminDto, AccountDto, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadWarehouseItems, loadWarehouseStats, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary, InvoiceTotals, loadTtsAudio, loadTtsStatus, loadUiTranslations, loadUiTranslationsLive} from './api/client';
 import './style.css';
 import { UI_LANGUAGES, normalizeUiLanguage, tUi, iconForModule, moduleKeyFromLabel, germanUiEntries, type UiLanguage } from "./i18n";
 
 const UI_LABELS: Record<string, Record<string, string>> = {
   de: {
     ttsRate: "Geschwindigkeit",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Browser/Windows",
     ttsVoiceAuto: "Automatische Stimme",
     ttsVoice: "Stimme",
@@ -160,7 +160,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
   },
   en: {
     ttsRate: "Speed",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Browser/Windows",
     ttsVoiceAuto: "Automatic voice",
     ttsVoice: "Voice",
@@ -304,7 +304,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
   },
   fr: {
     ttsRate: "Vitesse",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Navigateur/Windows",
     ttsVoiceAuto: "Voix automatique",
     ttsVoice: "Voix",
@@ -448,7 +448,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
   },
   uk: {
     ttsRate: "Швидкість",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Браузер/Windows",
     ttsVoiceAuto: "Автоматичний голос",
     ttsVoice: "Голос",
@@ -832,7 +832,7 @@ const moduleText = (language: string | undefined | null, labelOrKey: string) => 
 const GAM_UI_LABELS: Record<string, Record<string, string>> = {
   de: {
     ttsRate: "Geschwindigkeit",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Browser/Windows",
     ttsVoiceAuto: "Automatische Stimme",
     ttsVoice: "Stimme",
@@ -960,7 +960,7 @@ const GAM_UI_LABELS: Record<string, Record<string, string>> = {
   },
   en: {
     ttsRate: "Speed",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Browser/Windows",
     ttsVoiceAuto: "Automatic voice",
     ttsVoice: "Voice",
@@ -1080,7 +1080,7 @@ const GAM_UI_LABELS: Record<string, Record<string, string>> = {
   },
   fr: {
     ttsRate: "Vitesse",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Navigateur/Windows",
     ttsVoiceAuto: "Voix automatique",
     ttsVoice: "Voix",
@@ -1200,7 +1200,7 @@ const GAM_UI_LABELS: Record<string, Record<string, string>> = {
   },
   uk: {
     ttsRate: "Швидкість",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Браузер/Windows",
     ttsVoiceAuto: "Автоматичний голос",
     ttsVoice: "Голос",
@@ -1401,16 +1401,21 @@ class ModuleErrorBoundary extends React.Component<{children: React.ReactNode; ti
 }
 
 type Page = 'dashboard'|'invoices'|'inventory'|'warehouse'|'users'|'tasks'|'approvals'|'personnel'|'cashbook'|'compliance'|'reports'|'orders'|'priceList'|'workplace';
-type GamLanguage = 'de'|'en'|'fr'|'uk'|'it'|'sv'|'tr'|'ru';
+type GamLanguage = 'de'|'en'|'fr'|'uk'|'it'|'sv'|'tr'|'ru'|'es'|'pt'|'nl'|'pl'|'cs';
 const LANGUAGES: {value: GamLanguage; label: string}[] = [
   {value:'de', label:'Deutsch'},
   {value:'en', label:'English'},
   {value:'fr', label:'Français'},
-  {value:'uk', label:'Українська'},
   {value:'it', label:'Italiano'},
+  {value:'es', label:'Español'},
+  {value:'pt', label:'Português'},
+  {value:'nl', label:'Nederlands'},
+  {value:'pl', label:'Polski'},
+  {value:'cs', label:'Čeština'},
   {value:'sv', label:'Svenska'},
   {value:'tr', label:'Türkçe'},
   {value:'ru', label:'Русский'},
+  {value:'uk', label:'Українська'},
 ];
 const LOGIN_APPLICATIONS = ['Rechnungsprogramm','Geräteverzeichnis','Lagerverwaltung','Kassenbuch','Aufgabenverwaltung','Freigabemanagement','Bestelltool','Personaldaten','Arbeitsplatzausstattung','Preisliste','Reports','Administration'];
 function currentUiLanguage(): GamLanguage { return normalizeGamLanguage(localStorage.getItem('gam_ui_language') || localStorage.getItem('gam.uiLanguage') || 'de'); }
@@ -1596,7 +1601,7 @@ function useUiTranslationCache(language: GamLanguage | string, enabled = true, d
 }
 
 
-type TtsEngineChoice = 'auto' | 'browser' | 'marytts';
+type TtsEngineChoice = 'auto' | 'piper' | 'browser';
 type TtsSettings = {
   language: string;
   engine: TtsEngineChoice;
@@ -1606,7 +1611,7 @@ type TtsSettings = {
 
 const DEFAULT_TTS_SETTINGS: TtsSettings = {
   language: 'auto',
-  engine: 'browser',
+  engine: 'auto',
   voiceURI: 'auto',
   rate: 1
 };
@@ -1615,10 +1620,7 @@ function loadTtsSettings(scope: string): TtsSettings {
   try {
     const saved = JSON.parse(localStorage.getItem(`gam.tts.${scope}`) || '{}');
     const next: TtsSettings = {...DEFAULT_TTS_SETTINGS, ...saved};
-    // Schritt 34k: Browser/Windows-TTS ist wieder der stabile Standard.
-    // Alte Teststände konnten hier 'marytts' speichern und dadurch die
-    // funktionierende Browser-Ausgabe blockieren oder stark verzögern.
-    if (next.engine !== 'browser') next.engine = 'browser';
+    if (!['auto','piper','browser'].includes(next.engine)) next.engine = 'auto';
     return next;
   } catch {
     return DEFAULT_TTS_SETTINGS;
@@ -1633,11 +1635,42 @@ function saveTtsSettings(scope: string, settings: TtsSettings) {
 // Keep utterances alive while the browser is speaking. Chromium/Edge can
 // otherwise garbage-collect SpeechSynthesisUtterance objects and silently stop.
 let gamActiveSpeechUtterances: SpeechSynthesisUtterance[] = [];
+let gamActivePiperAudios: HTMLAudioElement[] = [];
+let gamActiveTtsAbortControllers: AbortController[] = [];
 let gamSpeechRunId = 0;
 
-function clearGamSpeechQueue() {
+function stopAllGamSpeech() {
   gamSpeechRunId += 1;
+  const synth = (window as any).speechSynthesis;
+  try { synth?.cancel?.(); } catch {}
+  // Manche Browser starten direkt nach cancel noch queued utterances; ein zweites cancel
+  // nach dem aktuellen Eventloop beendet diese Restinstanzen zuverlässig.
+  window.setTimeout(() => { try { synth?.cancel?.(); } catch {} }, 0);
+  window.setTimeout(() => { try { synth?.cancel?.(); } catch {} }, 120);
+
+  gamActiveSpeechUtterances.forEach(u => {
+    try { u.onend = null; u.onerror = null; } catch {}
+  });
   gamActiveSpeechUtterances = [];
+
+  gamActiveTtsAbortControllers.forEach(c => { try { c.abort(); } catch {} });
+  gamActiveTtsAbortControllers = [];
+
+  gamActivePiperAudios.forEach(audio => {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.src = '';
+      audio.load?.();
+      audio.onended = null;
+      audio.onerror = null;
+    } catch {}
+  });
+  gamActivePiperAudios = [];
+}
+
+function clearGamSpeechQueue() {
+  stopAllGamSpeech();
 }
 
 function allBrowserVoices(): SpeechSynthesisVoice[] {
@@ -1675,7 +1708,25 @@ function selectedBrowserVoice(appLang: GamLanguage | string, voiceURI?: string) 
 
 function TtsSettingsControls({scope, lang, pdfLang, settings, setSettings}:{scope:string; lang:GamLanguage; pdfLang?:GamLanguage|string; settings:TtsSettings; setSettings:(s:TtsSettings)=>void}) {
   const [voices,setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [ttsStatus,setTtsStatus] = useState<any|null>(null);
   const effectiveLang = effectiveTtsLanguage(settings.language, pdfLang, lang);
+  const normalizedTtsLang = normalizeGamLanguage(effectiveLang);
+  const piperLanguageInstalled = Array.isArray(ttsStatus?.installedLanguages) && ttsStatus.installedLanguages.includes(normalizedTtsLang);
+  const piperLanguageSupported = Array.isArray(ttsStatus?.supportedLanguages) && ttsStatus.supportedLanguages.includes(normalizedTtsLang);
+  const piperEngineAvailable = !!ttsStatus?.piperAvailable;
+  const piperUsable = piperEngineAvailable && (piperLanguageInstalled || (!!ttsStatus?.autoDownload && piperLanguageSupported));
+  // Schritt 36a: Piper nicht mehr hart ausgrauen, wenn die Sprache unterstützt ist.
+  // Falls Engine/Voice beim Klick noch fehlt, startet der Audio-Aufruf den Auto-Download
+  // oder fällt sauber auf BrowserTTS zurück.
+  const piperSelectable = piperLanguageSupported || piperEngineAvailable;
+
+  useEffect(()=>{
+    let cancelled=false;
+    const refresh=()=>loadTtsStatus().then(s=>{ if(!cancelled) setTtsStatus(s); }).catch(()=>{ if(!cancelled) setTtsStatus(null); });
+    refresh();
+    const timer=window.setInterval(refresh, 5000);
+    return ()=>{cancelled=true; window.clearInterval(timer);};
+  },[]);
 
   useEffect(()=>{
     let cancelled = false;
@@ -1699,6 +1750,7 @@ function TtsSettingsControls({scope, lang, pdfLang, settings, setSettings}:{scop
 
   function update(patch: Partial<TtsSettings>) {
     const next = {...settings, ...patch};
+    if (next.engine === 'piper') next.voiceURI = 'auto';
     setSettings(next);
     saveTtsSettings(scope, next);
   }
@@ -1709,13 +1761,15 @@ function TtsSettingsControls({scope, lang, pdfLang, settings, setSettings}:{scop
       <option value="auto">{ui('ttsAuto', lang)}</option>
       {LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}
     </select></label>
-    <label>{ui('ttsEngine', lang)}<select value="browser" onChange={e=>update({engine:'browser'})}>
+    <label>{ui('ttsEngine', lang)}<select value={settings.engine} onChange={e=>update({engine:e.target.value as TtsEngineChoice})}>
+      <option value="auto">{piperUsable ? 'Piper / BrowserTTS' : ui('ttsAuto', lang)}</option>
+      <option value="piper" disabled={!piperSelectable}>Piper{piperUsable ? (piperLanguageInstalled ? '' : ' (Download bei Bedarf)') : (piperSelectable ? ' (prüfen / Fallback aktiv)' : ' (nicht verfügbar)')}</option>
       <option value="browser">{ui('ttsBrowser', lang)}</option>
     </select></label>
-    <label>{ui('ttsVoice', lang)}<select value={settings.voiceURI} onChange={e=>update({voiceURI:e.target.value})} disabled={settings.engine==='marytts'}>
+    {settings.engine !== 'piper' && <label>{ui('ttsVoice', lang)}<select value={settings.voiceURI} onChange={e=>update({voiceURI:e.target.value})}>
       <option value="auto">{ui('ttsVoiceAuto', lang)}</option>
       {voices.map(v=><option key={v.voiceURI || v.name} value={v.voiceURI || v.name}>{v.name} ({v.lang})</option>)}
-    </select></label>
+    </select></label>}
     <label>{ui('ttsRate', lang)}<input type="range" min="0.6" max="1.5" step="0.05" value={settings.rate} onChange={e=>update({rate:Number(e.target.value)})}/><span>{settings.rate.toFixed(2)}x</span></label>
   </div>;
 }
@@ -1729,6 +1783,11 @@ function normalizeGamLanguage(value: GamLanguage | string | undefined): GamLangu
   if (v.startsWith('sv') || v.startsWith('se')) return 'sv';
   if (v.startsWith('tr')) return 'tr';
   if (v.startsWith('ru')) return 'ru';
+  if (v.startsWith('es')) return 'es';
+  if (v.startsWith('pt')) return 'pt';
+  if (v.startsWith('nl')) return 'nl';
+  if (v.startsWith('pl')) return 'pl';
+  if (v.startsWith('cs') || v.startsWith('cz')) return 'cs';
   return 'de';
 }
 
@@ -1737,14 +1796,29 @@ function effectiveTtsLanguage(ttsLang: string | undefined, pdfLang: GamLanguage 
   return normalizeGamLanguage(selected);
 }
 
-async function playMaryTtsAudio(lang: GamLanguage | string, text: string, onDone?:()=>void) {
-  const blob = await loadTtsAudio(String(lang), text, 'marytts');
+async function playPiperTtsAudio(lang: GamLanguage | string, text: string, runId: number, onDone?:()=>void) {
+  const controller = new AbortController();
+  gamActiveTtsAbortControllers.push(controller);
+  const blob = await loadTtsAudio(String(lang), text, 'piper', controller.signal);
+  gamActiveTtsAbortControllers = gamActiveTtsAbortControllers.filter(c => c !== controller);
+  if (runId !== gamSpeechRunId || controller.signal.aborted) return null;
+
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
-  audio.onended = () => { URL.revokeObjectURL(url); onDone?.(); };
-  audio.onerror = () => { URL.revokeObjectURL(url); onDone?.(); };
+  gamActivePiperAudios.push(audio);
+  const cleanup = () => {
+    URL.revokeObjectURL(url);
+    gamActivePiperAudios = gamActivePiperAudios.filter(a => a !== audio);
+    if (runId === gamSpeechRunId) onDone?.();
+  };
+  audio.onended = cleanup;
+  audio.onerror = cleanup;
   await audio.play();
   return audio;
+}
+
+function piperSupportsLanguage(lang: GamLanguage | string) {
+  return ['de','en','fr','it','es','pt','nl','pl','cs','sv','tr','ru','uk'].includes(normalizeGamLanguage(lang));
 }
 
 function ttsFallbackChain(appLang: GamLanguage | string): string[] {
@@ -1763,6 +1837,11 @@ function ttsFallbackChain(appLang: GamLanguage | string): string[] {
   if (lang === 'sv') return ['sv-SE', 'sv', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
   if (lang === 'tr') return ['tr-TR', 'tr', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
   if (lang === 'ru') return ['ru-RU', 'ru', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
+  if (lang === 'es') return ['es-ES', 'es-MX', 'es', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
+  if (lang === 'pt') return ['pt-PT', 'pt-BR', 'pt', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
+  if (lang === 'nl') return ['nl-NL', 'nl-BE', 'nl', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
+  if (lang === 'pl') return ['pl-PL', 'pl', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
+  if (lang === 'cs') return ['cs-CZ', 'cs', 'en-US', 'en-GB', 'en', 'de-DE', 'de'];
   return ['de-DE', 'de', 'en-US', 'en-GB', 'en'];
 }
 
@@ -1776,6 +1855,11 @@ function ttsVoiceNameHints(appLang: GamLanguage | string): string[] {
   if (lang === 'sv') return ['swedish', 'svenska', 'astrid'];
   if (lang === 'tr') return ['turkish', 'türk', 'türkçe'];
   if (lang === 'ru') return ['russian', 'русск', 'irina', 'pavel'];
+  if (lang === 'es') return ['spanish', 'español', 'helena', 'elvira', 'sabina'];
+  if (lang === 'pt') return ['portuguese', 'português', 'maria'];
+  if (lang === 'nl') return ['dutch', 'nederlands', 'frank'];
+  if (lang === 'pl') return ['polish', 'polski', 'paulina'];
+  if (lang === 'cs') return ['czech', 'čeština', 'jakub'];
   return [];
 }
 
@@ -1829,6 +1913,11 @@ function speechLang(lang: GamLanguage): string {
     case 'sv': return 'sv-SE';
     case 'tr': return 'tr-TR';
     case 'ru': return 'ru-RU';
+    case 'es': return 'es-ES';
+    case 'pt': return 'pt-PT';
+    case 'nl': return 'nl-NL';
+    case 'pl': return 'pl-PL';
+    case 'cs': return 'cs-CZ';
     case 'de':
     default: return 'de-DE';
   }
@@ -2024,7 +2113,7 @@ function DashboardHome(){const [status,setStatus]=useState<SystemStatus|null>(nu
 const UI_TEXT: Record<string, Record<string,string>> = {
   de: {
     ttsRate: "Geschwindigkeit",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Browser/Windows",
     ttsVoiceAuto: "Automatische Stimme",
     ttsVoice: "Stimme",
@@ -2043,7 +2132,7 @@ const UI_TEXT: Record<string, Record<string,string>> = {
     lbdMissingPlaceholder: "lbd – .lbd-Empfängerdatei wurde nicht gefunden; Export nutzt Platzhalter.", demoReadOnlyShell:'Lesemodus-Shell', proformaFailed:'Proforma konnte nicht erstellt werden', saveFailed:'Speichern fehlgeschlagen', selectAtLeastOneLine:'Bitte mindestens eine Position auswählen.', mandatoryZugferd:'ZUGFeRD/Factur-X ist Pflicht-Export.', loadingNumber:'wird geladen', gross:'Brutto', net:'Netto', remove:'Entfernen', addPosition:'+ Position übernehmen', quantity:'Menge', product:'Produkt', installmentCount:'Ratenanzahl', amount:'Betrag', percent:'Prozent', discountValue:'Rabattwert', discountType:'Rabattart', voucherAmount:'Gutscheinbetrag', voucherText:'Gutscheintext', remark:'Bemerkung', reason:'Grund', paymentMethod:'Zahlungsart', paymentCash:'Barzahlung', paymentCard:'Kartenzahlung', paymentTransfer:'Überweisung', paymentUnknown:'unbekannt', invoiceDate:'Rechnungsdatum', saveInvoice:'Rechnung speichern', editChangesSave:'Änderungen speichern', cancelInvoice:'Stornorechnung', createCreditNote:'Gutschrift erstellen', creditNote:'Gutschrift', invoiceTypeInvoice:'Rechnung', technicalDelete:'Technisch löschen', accessLinkError:'Abruflink konnte nicht erzeugt werden', qrAltPortal:'QR-Code Rechnungsportal', openPortal:'Portal öffnen', patientPortalHint:'QR-Code für Patientenabruf mit Sprachwahl und Rechnungshistorie.', patientPortalDigital:'Digitales Rechnungsportal', zugferdIssues:'ZUGFeRD-Export hat Hinweise', zugferdReady:'ZUGFeRD-Export bereit', exportCheckLoading:'Exportprüfung wird geladen.', xml:'XML', zugferdPdf:'ZUGFeRD-PDF', pdfLanguage:'PDF-Sprache', pleaseSelectInvoice:'Bitte links eine Rechnung auswählen.', search:'Suchen', searchPlaceholder:'Suche Nummer / Name / Grund', pleaseChoose:'Bitte wählen', pleaseSelectCompany:'Bitte zuerst eine Gesellschaft auswählen.', invoiceEdit:'Rechnung bearbeiten', usersRights:'Benutzer/Rechte', checks:'Prüfungen', role:'Rolle', logout:'Logout', step31ModuleOverview:'Schritt 31 stellt alle historischen GAM-Anwendungen sichtbar dar. Vollständig migrierte Bereiche sind nutzbar, noch offene Module erscheinen bewusst als Lesemodus-Shells.', statusLoading:'Status wird geladen.', notFound:'nicht gefunden', found:'gefunden', notConnected:'nicht verbunden', connected:'verbunden', lbd:'.lbd', accounts:'Accounts', db:'DB',discount:'Rabatt', voucher:'Gutschein', voucherEnable:'Gutschein', discountEnable:'Rabatt', installmentsEnable:'Ratenzahlung', rateSingular:'Rate', ratePlural:'Raten', reducedTotal:'Endbetrag nach Abzug', installments:'Ratenzahlung', approx:'Raten à ca.', previewTitle:'Verbindliche Rechnungsvorschau', previewHelp:'Diese Vorschau soll dem späteren PDF entsprechen: Texte, Positionen, Rabatt/Gutschein, Ratenzahlung, Hinweise und Bankdaten.', readAloud:'Rechnung vorlesen', stopReading:'Vorlesen stoppen', accessibilityNote:'PDF/UA-Vorbereitung: Sprache, Titel, Metadaten und Lesereihenfolge werden gesetzt.', invoice:'Rechnung', company:'Gesellschaft', qty:'Menge', code:'Code', description:'Beschreibung', tax:'MwSt', price:'Preis', lineTotal:'Gesamt', noLines:'Noch keine Positionen übernommen.', total:'Gesamt', recipient:'Empfänger', date:'Datum', language:'Sprache', payment:'Zahlungsart', notes:'Hinweise', bank:'Bankverbindung', iban:'IBAN', bic:'BIC', taxNo:'Steuer/VAT', noRecipient:'Keine Empfängerdatei geladen'},
   en: {
     ttsRate: "Speed",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Browser/Windows",
     ttsVoiceAuto: "Automatic voice",
     ttsVoice: "Voice",
@@ -2062,7 +2151,7 @@ const UI_TEXT: Record<string, Record<string,string>> = {
     lbdMissingPlaceholder: "lbd – .lbd recipient file was not found; export uses placeholders.", demoReadOnlyShell:'read-only shell', proformaFailed:'Proforma could not be created', saveFailed:'Saving failed', selectAtLeastOneLine:'Please select at least one item.', mandatoryZugferd:'ZUGFeRD/Factur-X is the mandatory export.', loadingNumber:'loading', gross:'Gross', net:'Net', remove:'Remove', addPosition:'+ Add item', quantity:'Quantity', product:'Product', installmentCount:'Number of installments', amount:'Amount', percent:'Percent', discountValue:'Discount value', discountType:'Discount type', voucherAmount:'Voucher amount', voucherText:'Voucher text', remark:'Remark', reason:'Reason', paymentMethod:'Payment method', paymentCash:'Cash payment', paymentCard:'Card payment', paymentTransfer:'Bank transfer', paymentUnknown:'unknown', invoiceDate:'Invoice date', saveInvoice:'Save invoice', editChangesSave:'Save changes', cancelInvoice:'Cancellation invoice', createCreditNote:'Create credit note', creditNote:'Credit note', invoiceTypeInvoice:'Invoice', technicalDelete:'Technical delete', accessLinkError:'Access link could not be created', qrAltPortal:'Invoice portal QR code', openPortal:'Open portal', patientPortalHint:'QR code for patient access with language selection and invoice history.', patientPortalDigital:'Digital invoice portal', zugferdIssues:'ZUGFeRD export has notes', zugferdReady:'ZUGFeRD export ready', exportCheckLoading:'Loading export check.', xml:'XML', zugferdPdf:'ZUGFeRD PDF', pdfLanguage:'PDF language', pleaseSelectInvoice:'Please select an invoice on the left.', search:'Search', searchPlaceholder:'Search number / name / reason', pleaseChoose:'Please choose', pleaseSelectCompany:'Please select a company first.', invoiceEdit:'Edit invoice', usersRights:'Users/permissions', checks:'Checks', role:'Role', logout:'Logout', step31ModuleOverview:'Step 31 makes all historical GAM applications visible. Fully migrated areas are usable; open modules are intentionally shown as read-only shells.', statusLoading:'Loading status.', notFound:'not found', found:'found', notConnected:'not connected', connected:'connected', lbd:'.lbd', accounts:'Accounts', db:'DB',discount:'Discount', voucher:'Voucher', voucherEnable:'Voucher', discountEnable:'Discount', installmentsEnable:'Installments', rateSingular:'installment', ratePlural:'installments', reducedTotal:'Total after deduction', installments:'Installment payment', approx:'installments of approx.', previewTitle:'Binding invoice preview', previewHelp:'This preview should match the later PDF: texts, items, discount/voucher, installments, notices and bank details.', readAloud:'Read invoice aloud', stopReading:'Stop reading', accessibilityNote:'PDF/UA preparation: language, title, metadata and reading order are set.', invoice:'Invoice', company:'Company', qty:'Quantity', code:'Code', description:'Description', tax:'VAT', price:'Price', lineTotal:'Total', noLines:'No items have been added yet.', total:'Total', recipient:'Recipient', date:'Date', language:'Language', payment:'Payment method', notes:'Notes', bank:'Bank details', iban:'IBAN', bic:'BIC', taxNo:'Tax/VAT', noRecipient:'No recipient file loaded'},
   fr: {
     ttsRate: "Vitesse",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Navigateur/Windows",
     ttsVoiceAuto: "Voix automatique",
     ttsVoice: "Voix",
@@ -2081,7 +2170,7 @@ const UI_TEXT: Record<string, Record<string,string>> = {
     lbdMissingPlaceholder: "lbd – le fichier destinataire .lbd est introuvable ; l’export utilise des valeurs de remplacement.", demoReadOnlyShell:'module en lecture seule', proformaFailed:'La proforma n’a pas pu être créée', saveFailed:'Échec de l’enregistrement', selectAtLeastOneLine:'Veuillez sélectionner au moins un poste.', mandatoryZugferd:'ZUGFeRD/Factur-X est l’export obligatoire.', loadingNumber:'chargement', gross:'Brut', net:'Net', remove:'Supprimer', addPosition:'+ Ajouter le poste', quantity:'Quantité', product:'Produit', installmentCount:'Nombre d’échéances', amount:'Montant', percent:'Pourcentage', discountValue:'Valeur de remise', discountType:'Type de remise', voucherAmount:'Montant du bon', voucherText:'Texte du bon', remark:'Remarque', reason:'Motif', paymentMethod:'Mode de paiement', paymentCash:'Paiement en espèces', paymentCard:'Paiement par carte', paymentTransfer:'Virement bancaire', paymentUnknown:'inconnu', invoiceDate:'Date de facture', saveInvoice:'Enregistrer la facture', editChangesSave:'Enregistrer les modifications', cancelInvoice:'Facture d’annulation', createCreditNote:'Créer un avoir', creditNote:'Avoir', invoiceTypeInvoice:'Facture', technicalDelete:'Suppression technique', accessLinkError:'Le lien d’accès n’a pas pu être créé', qrAltPortal:'Code QR du portail factures', openPortal:'Ouvrir le portail', patientPortalHint:'Code QR pour l’accès patient avec choix de langue et historique des factures.', patientPortalDigital:'Portail numérique de factures', zugferdIssues:'L’export ZUGFeRD contient des remarques', zugferdReady:'Export ZUGFeRD prêt', exportCheckLoading:'Chargement de la vérification d’export.', xml:'XML', zugferdPdf:'PDF ZUGFeRD', pdfLanguage:'Langue du PDF', pleaseSelectInvoice:'Veuillez sélectionner une facture à gauche.', search:'Rechercher', searchPlaceholder:'Recherche numéro / nom / motif', pleaseChoose:'Veuillez choisir', pleaseSelectCompany:'Veuillez d’abord sélectionner une société.', invoiceEdit:'Modifier la facture', usersRights:'Utilisateurs/droits', checks:'Contrôles', role:'Rôle', logout:'Déconnexion', step31ModuleOverview:'L’étape 31 rend visibles toutes les applications GAM historiques. Les zones entièrement migrées sont utilisables ; les modules encore ouverts sont affichés volontairement comme des modules en lecture seule.', statusLoading:'Chargement du statut.', notFound:'non trouvé', found:'trouvé', notConnected:'non connecté', connected:'connecté', lbd:'.lbd', accounts:'Comptes', db:'BD',discount:'Remise', voucher:'Bon', reducedTotal:'Total après déduction', installments:'Paiement échelonné', approx:"échéances d'environ", previewTitle:'Aperçu de facture contraignant', previewHelp:"Cet aperçu doit correspondre au PDF final : textes, postes, remise/bon, paiements échelonnés, avis et coordonnées bancaires.", readAloud:'Lire la facture', stopReading:'Arrêter la lecture', accessibilityNote:'Préparation PDF/UA : langue, titre, métadonnées et ordre de lecture sont définis.', invoice:'Facture', company:'Société', qty:'Quantité', code:'Code', description:'Description', tax:'TVA', price:'Prix', lineTotal:'Total', noLines:"Aucun poste n'a encore été ajouté.", total:'Total', recipient:'Destinataire', date:'Date', language:'Langue', payment:'Mode de paiement', notes:'Notes', bank:'Coordonnées bancaires', iban:'IBAN', bic:'BIC', taxNo:'Fiscal/TVA', noRecipient:'Aucun destinataire chargé'},
   uk: {
     ttsRate: "Швидкість",
-    ttsMary: "MaryTTS",
+    ttsMary: "Piper",
     ttsBrowser: "Браузер/Windows",
     ttsVoiceAuto: "Автоматичний голос",
     ttsVoice: "Голос",
@@ -2262,7 +2351,7 @@ function InvoicesPage(){
       {searchInfo&&<p className="note warn">{searchInfo}</p>}
       <div className="list">{(rows ?? []).map(r=><button key={r.id} onClick={()=>select(r.number)}><b>{translatedInvoiceLabel(r.number)}</b><small>{r.invoiceDate} · {money(r.totalGross)} · {r.companyName}</small></button>)}</div>
     </aside>
-    <section className="card detail">{selected?<><div className="row"><h2>{translatedInvoiceLabel(selected.summary.number)}</h2><div className="download-actions"><label className="pdf-language-select">{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><a className="buttonlink" target="_blank" href={pdfUrl(selected.summary.number,pdfLanguage)}><Download size={16}/> {ui("zugferdPdf")}</a><a className="buttonlink secondarylink" target="_blank" href={zugferdXmlUrl(selected.summary.number)}><Download size={16}/> {ui("xml")}</a></div></div><p>{selected.summary.companyName} · {selected.summary.invoiceDate} · {money(selected.totals?.gross ?? selected.summary.totalGross)}</p><ExportCheck number={selected.summary.number} companyId={selected.summary.companyId}/><InvoiceAccessBox number={selected.summary.number} companyId={selected.summary.companyId}/><PreviewErrorBoundary><InvoiceTextPreviewPanel preview={textPreview} lines={(selected.lines ?? []).map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat}))} products={products ?? []} company={companies.find(c=>c.id===selected.summary.companyId)} number={selected.summary.number} totals={selected.totals} lang={pdfLanguage} summary={selected.summary} recipient={lbd} invoiceDate={selected.summary.invoiceDate??''} treatmentDate={selected.summary.invoiceDate??''} paymentMethod={(selected.summary as any).paymentMethod??'—'}/></PreviewErrorBoundary><InvoiceStatusActions detail={selected} onChanged={setSelected} onCreated={invoice=>{setRows(prev=>[invoice.summary, ...prev.filter(r=>!(r.id===invoice.summary.id || (r.number===invoice.summary.number && r.companyId===invoice.summary.companyId)))]); setSelected(invoice);}}/></>:<div className="empty">{ui("pleaseSelectInvoice")}</div>}</section>
+    <section className="card detail">{selected?<><div className="row"><h2>{translatedInvoiceLabel(selected.summary.number)}</h2><div className="download-actions"><label className="pdf-language-select">{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><a className="buttonlink" target="_blank" href={pdfUrl(selected.summary.number,pdfLanguage,selected.summary.companyId)}><Download size={16}/> {ui("zugferdPdf")}</a><a className="buttonlink secondarylink" target="_blank" href={zugferdXmlUrl(selected.summary.number,selected.summary.companyId)}><Download size={16}/> {ui("xml")}</a></div></div><p>{selected.summary.companyName} · {selected.summary.invoiceDate} · {money(selected.totals?.gross ?? selected.summary.totalGross)}</p><ExportCheck number={selected.summary.number} companyId={selected.summary.companyId}/><InvoiceAccessBox number={selected.summary.number} companyId={selected.summary.companyId}/><PreviewErrorBoundary><InvoiceTextPreviewPanel preview={textPreview} lines={(selected.lines ?? []).map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat,description:l.description} as any))} products={products ?? []} company={companies.find(c=>c.id===selected.summary.companyId)} number={selected.summary.number} totals={selected.totals} lang={pdfLanguage} summary={selected.summary} recipient={lbd} invoiceDate={selected.summary.invoiceDate??''} treatmentDate={selected.summary.invoiceDate??''} paymentMethod={(selected.summary as any).paymentMethod??'—'}/></PreviewErrorBoundary><InvoiceStatusActions detail={selected} onChanged={setSelected} onCreated={invoice=>{setRows(prev=>[invoice.summary, ...prev.filter(r=>!(r.id===invoice.summary.id || (r.number===invoice.summary.number && r.companyId===invoice.summary.companyId)))]); setSelected(invoice);}}/></>:<div className="empty">{ui("pleaseSelectInvoice")}</div>}</section>
   </section>}
  </>}
 
@@ -2270,8 +2359,20 @@ function InvoiceStatusActions({detail,onChanged,onCreated}:{detail:InvoiceDetail
 
 function ExportCheck({number,companyId}:{number:string; companyId?:number}){const [check,setCheck]=useState<any|null>(null); useEffect(()=>{loadExportCheck(number, companyId).then(setCheck).catch(()=>setCheck(null))},[number,companyId]); if(!check) return <p className="muted">{ui("exportCheckLoading")}</p>; return <div className={check.exportable?'note ok':'note warn'}>{check.exportable?ui('zugferdReady'):ui('zugferdIssues')}{check.issues?.length?<ul>{check.issues.map((i:any,idx:number)=>{const msg=String(i.message??''); const translatedMsg=msg.includes('.lbd-Empfängerdatei')?ui('lbdMissingPlaceholder'):msg; const sev=String(i.severity??''); return <li key={idx}>{sev==='WARN'?'WARN':sev}: {i.field} – {translatedMsg}</li>})}</ul>:null}</div>}
 
-function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDetail; initialCompanyId?:number; onSaved:(r:any)=>void}){const [products,setProducts]=useState<ProductDto[]>([]); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [companyId,setCompanyId]=useState(existing?.summary.companyId??initialCompanyId??2); const [productId,setProductId]=useState<number|undefined>(); const [qty,setQty]=useState(1); const [invoiceDate,setInvoiceDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [treatmentDate,setTreatmentDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [paymentMethod,setPaymentMethod]=useState('unbekannt'); const [pdfLanguage,setPdfLanguage]=useState<GamLanguage>('de'); const [reason,setReason]=useState(''); const [remark,setRemark]=useState(''); const [voucherEnabled,setVoucherEnabled]=useState(false); const [couponText,setCouponText]=useState(''); const [couponAmount,setCouponAmount]=useState(0); const [discountEnabled,setDiscountEnabled]=useState(false); const [discountType,setDiscountType]=useState<'percent'|'amount'>('percent'); const [discountValue,setDiscountValue]=useState(0); const [installmentsEnabled,setInstallmentsEnabled]=useState(false); const [installments,setInstallments]=useState(1); const [err,setErr]=useState(''); const [next,setNext]=useState(existing?.summary.number??''); const [lbd,setLbd]=useState<LbdRecipient|null>(null); const [textPreview,setTextPreview]=useState<InvoiceTextPreview|null>(null); const [lines,setLines]=useState<InvoiceCreateLineRequest[]>(existing?.lines.map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat,branchId:l.branchId,client:l.client,performer:l.performer}))??[]); const [totals,setTotals]=useState<any>(null);
+function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDetail; initialCompanyId?:number; onSaved:(r:any)=>void}){const [products,setProducts]=useState<ProductDto[]>([]); const [productDescTranslations,setProductDescTranslations]=useState<Record<string,string>>({}); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [companyId,setCompanyId]=useState(existing?.summary.companyId??initialCompanyId??2); const [productId,setProductId]=useState<number|undefined>(); const [qty,setQty]=useState(1); const [invoiceDate,setInvoiceDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [treatmentDate,setTreatmentDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [paymentMethod,setPaymentMethod]=useState('unbekannt'); const [pdfLanguage,setPdfLanguage]=useState<GamLanguage>('de'); const [reason,setReason]=useState(''); const [remark,setRemark]=useState(''); const [voucherEnabled,setVoucherEnabled]=useState(false); const [couponText,setCouponText]=useState(''); const [couponAmount,setCouponAmount]=useState(0); const [discountEnabled,setDiscountEnabled]=useState(false); const [discountType,setDiscountType]=useState<'percent'|'amount'>('percent'); const [discountValue,setDiscountValue]=useState(0); const [installmentsEnabled,setInstallmentsEnabled]=useState(false); const [installments,setInstallments]=useState(1); const [err,setErr]=useState(''); const [next,setNext]=useState(existing?.summary.number??''); const [lbd,setLbd]=useState<LbdRecipient|null>(null); const [textPreview,setTextPreview]=useState<InvoiceTextPreview|null>(null); const [lines,setLines]=useState<InvoiceCreateLineRequest[]>(existing?.lines.map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat,branchId:l.branchId,client:l.client,performer:l.performer}))??[]); const [totals,setTotals]=useState<any>(null);
  useEffect(()=>{loadProducts('',120).then(ps=>{setProducts(ps); if(ps[0]) setProductId(ps[0].id)}); loadCompanies().then(cs=>{setCompanies(cs); if(!existing && cs[0]) setCompanyId(cs[0].id)}).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null)); if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{});},[]);
+ useEffect(()=>{
+   let cancelled = false;
+   const targetLang = normalizeGamLanguage(pdfLanguage);
+   const entries: Record<string,string> = {};
+   (products ?? []).forEach(p=>{ if(p?.description) entries[productTranslationKey(p)] = p.description; });
+   if(Object.keys(entries).length && targetLang !== 'de') {
+     loadUiTranslationsLive(targetLang, entries)
+       .then(res=>{ if(!cancelled) setProductDescTranslations(res); })
+       .catch(()=>{ if(!cancelled) setProductDescTranslations({}); });
+   } else setProductDescTranslations({});
+   return ()=>{ cancelled = true; };
+ }, [pdfLanguage, JSON.stringify((products ?? []).map(p=>[p.id,p.code,p.description]))]);
  useEffect(()=>{if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{})},[companyId]);
  useEffect(()=>{if(lines.length) loadCalculate(lines,setTotals).catch(()=>{}); else setTotals(null)},[JSON.stringify(lines)]);
  useEffect(()=>{loadInvoiceTextPreview(companyId,pdfLanguage,treatmentDate,lbd?.file??'').then(setTextPreview).catch(()=>setTextPreview(null));},[companyId,pdfLanguage,treatmentDate,lbd?.file]);
@@ -2282,7 +2383,8 @@ function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDet
  async function submit(e:React.FormEvent){e.preventDefault(); setErr(''); try{const payload=buildPayload(); const res=existing?await updateInvoice(existing.summary.number,payload):await createInvoice({...payload, number: next || undefined}); onSaved(res);}catch(ex:any){setErr(ex.message??ui('saveFailed'));}}
  async function submitProforma(){setErr(''); try{const payload=buildPayload(); const res=await createProformaInvoice({...payload, number: undefined, paymentAdvice: true, reason: reason || 'Proforma-Rechnung'}); onSaved(res);}catch(ex:any){setErr(ex.message??ui('proformaFailed'));}}
  const previewSummary = {id:0, number: next, invoiceDate, companyId, companyName: companies.find(c=>c.id===companyId)?.name, couponAmount: voucherEnabled ? couponAmount : undefined, discountPercent: discountEnabled && discountType==='percent' ? discountValue : undefined, discountRemark: (voucherEnabled && couponText) ? couponText : undefined, installments: installmentsEnabled ? installments : undefined} as InvoiceSummary;
- return <section className="invoice-editor-layout"><section className="card new invoice-editor"><div className="row"><div><h2>{existing?ui('invoiceEdit'):ui('newInvoice')}</h2><p className="muted">Nummer: <b>{next||ui('loadingNumber')}</b> · {ui('mandatoryZugferd')}</p></div>{lbd?.found&&<div className="lbd-compact"><UserRound size={16}/><div><b>{[lbd.salutation,lbd.title,lbd.firstName,lbd.lastName].filter(Boolean).join(' ')}</b><br/><small>{lbd.street} · {[lbd.postalCode,lbd.city].filter(Boolean).join(' ')}</small></div></div>}</div><form onSubmit={submit} className="newgrid"><label>{ui("invoiceDate")}<input type="date" value={invoiceDate} onChange={e=>setInvoiceDate(e.target.value)}/><small>{formatGamDate(invoiceDate,currentUiLanguage())}</small></label><label>{ui("treatmentDate")}<input type="date" value={treatmentDate} onChange={e=>setTreatmentDate(e.target.value)}/><small>{formatGamDate(treatmentDate,currentUiLanguage())}</small></label><label>{ui("company")}<select value={companyId} onChange={e=>setCompanyId(Number(e.target.value))}>{companies.map(c=><option key={c.id} value={c.id}>{c.name??c.code??c.id}</option>)}</select></label><label>{ui("paymentMethod")}<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="unbekannt">{ui("paymentUnknown")}</option><option value="Barzahlung">{ui("paymentCash")}</option><option value="Kartenzahlung">{ui("paymentCard")}</option><option value="Überweisung">{ui("paymentTransfer")}</option></select></label><label>{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><label>{ui("reason")}<input value={reason} onChange={e=>setReason(e.target.value)}/></label><label>{ui("remark")}<input value={remark} onChange={e=>setRemark(e.target.value)}/></label><label className="toggle-field"><input type="checkbox" checked={voucherEnabled} onChange={e=>setVoucherEnabled(e.target.checked)}/> {ui("voucherEnable")}</label>{voucherEnabled&&<><label>{ui("voucherText")}<input value={couponText} onChange={e=>setCouponText(e.target.value)} placeholder={ui("voucher")}/></label><label>{ui("voucherAmount")}<input type="number" step="0.01" value={couponAmount} onChange={e=>setCouponAmount(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={discountEnabled} onChange={e=>setDiscountEnabled(e.target.checked)}/> {ui("discountEnable")}</label>{discountEnabled&&<><label>{ui("discountType")}<select value={discountType} onChange={e=>setDiscountType(e.target.value as any)}><option value="percent">{ui("percent")}</option><option value="amount">{ui("amount")}</option></select></label><label>{ui("discountValue")}<input type="number" step="0.01" value={discountValue} onChange={e=>setDiscountValue(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={installmentsEnabled} onChange={e=>setInstallmentsEnabled(e.target.checked)}/> {ui("installmentsEnable")}</label>{installmentsEnabled&&<label>{ui("installmentCount")}<select value={installments} onChange={e=>setInstallments(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} {n>1?ui('ratePlural'):ui('rateSingular')}</option>)}</select></label>}<label className="product-field">{ui("product")}<select value={productId??''} onChange={e=>setProductId(Number(e.target.value))}>{products.map(p=><option key={p.id} value={p.id}>{p.code} · {p.description} · {money(p.price)}</option>)}</select></label><label className="quantity-field">{ui("quantity")}<input type="number" step="0.1" value={qty} onChange={e=>setQty(Number(e.target.value))}/></label><button type="button" className="secondary add-position" onClick={addLine}>{ui("addPosition")}</button><button className="save-invoice">{existing?ui('editChangesSave'):ui('saveInvoice')}</button>{!existing&&<button type="button" className="secondary" onClick={submitProforma}>Proforma +P</button>}</form>{lines.length>0&&<table><thead><tr><th>{ui("quantity")}</th><th>{ui("product")}</th><th>{ui('tax')}</th><th>{ui('price')}</th><th></th></tr></thead><tbody>{lines.map((l,idx)=>{const prod=products.find(p=>p.id===l.productId); return <tr key={idx}><td><input type="number" step="0.1" value={l.quantity??1} onChange={e=>updateLine(idx,{quantity:Number(e.target.value)})}/></td><td className="product-cell"><b>{prod?.code??l.productId}</b><br/><span>{prod?.description??''}</span></td><td><input type="number" value={l.vat??0} onChange={e=>updateLine(idx,{vat:Number(e.target.value)})}/></td><td><input type="number" step="0.01" value={l.price??0} onChange={e=>updateLine(idx,{price:Number(e.target.value)})}/></td><td><button type="button" className="danger" onClick={()=>removeLine(idx)}>{ui("remove")}</button></td></tr>})}</tbody></table>}{commercialRows(previewSummary, totals, lines, pdfLanguage)}{totals&&<p className="note ok">{ui('net')} {money(totals.net)} · {ui('tax')} {money(totals.vat)} · {ui('gross')} <b>{money(totals.gross)}</b></p>}{err&&<b className="error">{err}</b>}</section><InvoiceTextPreviewPanel preview={textPreview} lines={lines} products={products} company={companies.find(c=>c.id===companyId)} number={next} totals={totals} lang={pdfLanguage} summary={previewSummary} recipient={lbd} invoiceDate={invoiceDate} treatmentDate={treatmentDate} paymentMethod={paymentMethod}/></section>}
+ const translatedProductDescription = (p?:ProductDto, fallbackId?:number|string, lineDescription?:string) => productDescriptionForLanguage(pdfLanguage, p, fallbackId, lineDescription, productDescTranslations);
+ return <section className="invoice-editor-layout"><section className="card new invoice-editor"><div className="row"><div><h2>{existing?ui('invoiceEdit'):ui('newInvoice')}</h2><p className="muted">Nummer: <b>{next||ui('loadingNumber')}</b> · {ui('mandatoryZugferd')}</p></div>{lbd?.found&&<div className="lbd-compact"><UserRound size={16}/><div><b>{[lbd.salutation,lbd.title,lbd.firstName,lbd.lastName].filter(Boolean).join(' ')}</b><br/><small>{lbd.street} · {[lbd.postalCode,lbd.city].filter(Boolean).join(' ')}</small></div></div>}</div><form onSubmit={submit} className="newgrid"><label>{ui("invoiceDate")}<input type="date" value={invoiceDate} onChange={e=>setInvoiceDate(e.target.value)}/><small>{formatGamDate(invoiceDate,currentUiLanguage())}</small></label><label>{ui("treatmentDate")}<input type="date" value={treatmentDate} onChange={e=>setTreatmentDate(e.target.value)}/><small>{formatGamDate(treatmentDate,currentUiLanguage())}</small></label><label>{ui("company")}<select value={companyId} onChange={e=>setCompanyId(Number(e.target.value))}>{companies.map(c=><option key={c.id} value={c.id}>{c.name??c.code??c.id}</option>)}</select></label><label>{ui("paymentMethod")}<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="unbekannt">{ui("paymentUnknown")}</option><option value="Barzahlung">{ui("paymentCash")}</option><option value="Kartenzahlung">{ui("paymentCard")}</option><option value="Überweisung">{ui("paymentTransfer")}</option></select></label><label>{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><label>{ui("reason")}<input value={reason} onChange={e=>setReason(e.target.value)}/></label><label>{ui("remark")}<input value={remark} onChange={e=>setRemark(e.target.value)}/></label><label className="toggle-field"><input type="checkbox" checked={voucherEnabled} onChange={e=>setVoucherEnabled(e.target.checked)}/> {ui("voucherEnable")}</label>{voucherEnabled&&<><label>{ui("voucherText")}<input value={couponText} onChange={e=>setCouponText(e.target.value)} placeholder={ui("voucher")}/></label><label>{ui("voucherAmount")}<input type="number" step="0.01" value={couponAmount} onChange={e=>setCouponAmount(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={discountEnabled} onChange={e=>setDiscountEnabled(e.target.checked)}/> {ui("discountEnable")}</label>{discountEnabled&&<><label>{ui("discountType")}<select value={discountType} onChange={e=>setDiscountType(e.target.value as any)}><option value="percent">{ui("percent")}</option><option value="amount">{ui("amount")}</option></select></label><label>{ui("discountValue")}<input type="number" step="0.01" value={discountValue} onChange={e=>setDiscountValue(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={installmentsEnabled} onChange={e=>setInstallmentsEnabled(e.target.checked)}/> {ui("installmentsEnable")}</label>{installmentsEnabled&&<label>{ui("installmentCount")}<select value={installments} onChange={e=>setInstallments(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} {n>1?ui('ratePlural'):ui('rateSingular')}</option>)}</select></label>}<label className="product-field">{ui("product")}<select value={productId??''} onChange={e=>setProductId(Number(e.target.value))}>{products.map(p=><option key={p.id} value={p.id}>{p.code} · {translatedProductDescription(p)} · {money(p.price)}</option>)}</select></label><label className="quantity-field">{ui("quantity")}<input type="number" step="0.1" value={qty} onChange={e=>setQty(Number(e.target.value))}/></label><button type="button" className="secondary add-position" onClick={addLine}>{ui("addPosition")}</button><button className="save-invoice">{existing?ui('editChangesSave'):ui('saveInvoice')}</button>{!existing&&<button type="button" className="secondary" onClick={submitProforma}>Proforma +P</button>}</form>{lines.length>0&&<table><thead><tr><th>{ui("quantity")}</th><th>{ui("product")}</th><th>{ui('tax')}</th><th>{ui('price')}</th><th></th></tr></thead><tbody>{lines.map((l,idx)=>{const prod=products.find(p=>p.id===l.productId); return <tr key={idx}><td><input type="number" step="0.1" value={l.quantity??1} onChange={e=>updateLine(idx,{quantity:Number(e.target.value)})}/></td><td className="product-cell"><b>{prod?.code??l.productId}</b><br/><span>{translatedProductDescription(prod, l.productId, (l as any).description)}</span></td><td><input type="number" value={l.vat??0} onChange={e=>updateLine(idx,{vat:Number(e.target.value)})}/></td><td><input type="number" step="0.01" value={l.price??0} onChange={e=>updateLine(idx,{price:Number(e.target.value)})}/></td><td><button type="button" className="danger" onClick={()=>removeLine(idx)}>{ui("remove")}</button></td></tr>})}</tbody></table>}{commercialRows(previewSummary, totals, lines, pdfLanguage)}{totals&&<p className="note ok">{ui('net')} {money(totals.net)} · {ui('tax')} {money(totals.vat)} · {ui('gross')} <b>{money(totals.gross)}</b></p>}{err&&<b className="error">{err}</b>}</section><InvoiceTextPreviewPanel preview={textPreview} lines={lines} products={products} company={companies.find(c=>c.id===companyId)} number={next} totals={totals} lang={pdfLanguage} summary={previewSummary} recipient={lbd} invoiceDate={invoiceDate} treatmentDate={treatmentDate} paymentMethod={paymentMethod}/></section>}
 
 
 function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,lang,summary,recipient,invoiceDate,treatmentDate,paymentMethod}:{preview:InvoiceTextPreview|null; lines:InvoiceCreateLineRequest[]; products:ProductDto[]; company?:InvoiceCompany; number:string; totals:any; lang:GamLanguage; summary:InvoiceSummary; recipient:LbdRecipient|null; invoiceDate:string; treatmentDate?:string; paymentMethod:string}){
@@ -2291,11 +2393,21 @@ function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,l
  const [ttsSettings,setTtsSettings]=useState<TtsSettings>(()=>loadTtsSettings('invoice-preview'));
  const [productDescTranslations,setProductDescTranslations]=useState<Record<string,string>>({});
  useEffect(()=>{
+   let cancelled = false;
+   const targetLang = normalizeGamLanguage(lang);
    const entries: Record<string,string> = {};
-   (products ?? []).forEach(p=>{ if(p?.description) entries[productTranslationKey(p)] = p.description; });
-   if(Object.keys(entries).length && lang !== 'de') loadUiTranslationsLive(lang, entries).then(setProductDescTranslations).catch(()=>setProductDescTranslations({}));
-   else setProductDescTranslations({});
- }, [lang, JSON.stringify((products ?? []).map(p=>[p.id,p.code,p.description]))]);
+   (lines ?? []).forEach(l => {
+     const prod = products.find(p => p.id === l.productId);
+     const text = (prod?.description || (l as any).description || '').trim();
+     if (text) entries[productTranslationKey(prod, l.productId)] = text;
+   });
+   if(Object.keys(entries).length && targetLang !== 'de') {
+     loadUiTranslationsLive(targetLang, entries)
+       .then(res=>{ if(!cancelled) setProductDescTranslations(res); })
+       .catch(()=>{ if(!cancelled) setProductDescTranslations({}); });
+   } else setProductDescTranslations({});
+   return ()=>{ cancelled = true; };
+ }, [lang, JSON.stringify((lines ?? []).map(l=>[l.productId,(l as any).description])), JSON.stringify((products ?? []).map(p=>[p.id,p.code,p.description]))]);
  const labels = preview?.labels ?? {};
  const uiLangForPreview = currentUiLanguage();
  const isTechnicalLabel = (value: unknown, key: string) => {
@@ -2308,34 +2420,52 @@ function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,l
  };
  const t = (key:string, fallback?:string) => !isTechnicalLabel(labels[key], key) ? String(labels[key]).trim() : (INVOICE_METADATA_LABELS[lang]?.[key] || ui(key, lang) || fallback || UI_LABELS.de[key] || key);
  const tui = (key:string, fallback?:string) => { const value = ui(key, uiLangForPreview); return value && value !== key ? value : (fallback ?? key); };
- const translatedProductDescription = (p?:ProductDto, fallbackId?:number|string) => { const text = p?.description ?? String(fallbackId ?? ''); const translated = productDescTranslations[productTranslationKey(p)]; return translated && translated.trim() ? translated : text; };
+ const translatedProductDescription = (p?:ProductDto, fallbackId?:number|string, lineDescription?:string) => productDescriptionForLanguage(lang, p, fallbackId, lineDescription, productDescTranslations);
  const documentTitle = preview?.documentTitle ?? t('invoice', ui('invoice', lang));
  const recipientName = recipient?.found ? [recipient.salutation,recipient.title,recipient.firstName,recipient.lastName].filter(Boolean).join(' ') : '';
  const recipientAddress = recipient?.found ? [recipient.street, [recipient.postalCode, recipient.city].filter(Boolean).join(' ')].filter(Boolean) : [];
- const lineTexts = lines.map((l)=>{const prod=products.find(p=>p.id===l.productId); const q=l.quantity??1; const price=l.price??prod?.price??0; return `${q} ${translatedProductDescription(prod, l.productId)}, ${money(q*price)}`;});
+ const lineTexts = lines.map((l)=>{const prod=products.find(p=>p.id===l.productId); const q=l.quantity??1; const price=l.price??prod?.price??0; return `${q} ${translatedProductDescription(prod, l.productId, (l as any).description)}, ${money(q*price)}`;});
  const zugferdNote = t('invoiceZugferdNote', 'ZUGFeRD/Factur-X');
  const customerFile = recipient?.found ? (recipient.file || '—') : '—';
  const userName = summary.username || '—';
  const taxInfo = [company?.taxNumber, company?.vatId].filter(Boolean).join(' ') || '—';
  const speechText = [documentTitle + ' ' + (number || ''), company?.name, recipientName, recipientAddress.join(' '), preview?.salutation, preview?.invoiceText, `${t('invoiceDate')}: ${formatGamDate(invoiceDate, lang)}`, `${t('treatmentDate', ui('treatmentDate', lang))}: ${formatGamDate(treatmentDate || invoiceDate, lang)}`, `${t('invoiceCustomerFile')}: ${customerFile}`, `${t('invoiceUser')}: ${userName}`, `${t('invoicePaymentMethod')}: ${paymentMethod || '—'}`, ...lineTexts, totals ? `${t('net')} ${money(totals.net)}. ${t('vat')} ${money(totals.vat)}. ${t('gross')} ${money(totals.gross)}` : '', preview?.lawHint, preview?.greetings, company ? `${t('bank')} ${company.name} IBAN ${company.iban || ''} BIC ${company.bic || ''}. ${t('invoiceTaxNumberVatId')}: ${taxInfo}` : ''].filter(Boolean).join('. ');
- function toggleReading(){
+ async function toggleReading(){
    const synth=(window as any).speechSynthesis;
-   if(!synth) return;
 
    if(speaking){
-     synth.cancel();
-     clearGamSpeechQueue();
+     stopAllGamSpeech();
      setSpeaking(false);
      return;
    }
 
-   // Schritt 34k: MaryTTS wird vorerst nicht mehr im Vorlese-Klick benutzt.
-   // Der Klick muss immer sofort hörbar über Browser/Windows-TTS laufen.
    const speechLanguage=effectiveTtsLanguage(ttsSettings.language, lang, currentUiLanguage());
-   const voice=selectedBrowserVoice(speechLanguage, ttsSettings.voiceURI);
-   const langCode = voice?.lang || speechLang(speechLanguage);
    const cleanText = (speechText || '').replace(/\s+/g, ' ').trim();
    if(!cleanText) return;
+
+   const wantsPiper = ttsSettings.engine === 'piper' || (ttsSettings.engine === 'auto' && piperSupportsLanguage(speechLanguage));
+   if (wantsPiper) {
+     let runId = 0;
+     try {
+       stopAllGamSpeech();
+       runId = gamSpeechRunId;
+       setSpeaking(true);
+       await playPiperTtsAudio(speechLanguage, cleanText, runId, () => setSpeaking(false));
+       if (runId === gamSpeechRunId) return;
+       return;
+     } catch (e) {
+       // Wenn der Benutzer inzwischen Stop gedrückt hat, darf der abgebrochene
+       // Piper-Request nicht mehr in den Browser-Fallback springen.
+       if (runId && runId !== gamSpeechRunId) return;
+       // Piper ist Standard. Wenn Engine oder Voice noch nicht installiert sind,
+       // fällt GAM sofort auf BrowserTTS zurück.
+       setSpeaking(false);
+     }
+   }
+
+   if(!synth) return;
+   const voice=selectedBrowserVoice(speechLanguage, ttsSettings.voiceURI);
+   const langCode = voice?.lang || speechLang(speechLanguage);
 
    const chunks = cleanText
      .split(/(?<=[.!?])\s+/)
@@ -2354,8 +2484,7 @@ function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,l
      }, [''])
      .filter(Boolean);
 
-   synth.cancel();
-   clearGamSpeechQueue();
+   stopAllGamSpeech();
    const runId = gamSpeechRunId;
    let idx = 0;
    setSpeaking(true);
@@ -2373,18 +2502,12 @@ function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,l
      u.lang = langCode;
      if (voice) u.voice = voice;
      u.onend = speakNext;
-     u.onerror = () => {
-       // Nicht hängen bleiben. Bei einzelnen fehlerhaften Segmenten versuchen
-       // wir das nächste Segment, damit der Button nicht dauerhaft aktiv bleibt.
-       window.setTimeout(speakNext, 50);
-     };
+     u.onerror = () => window.setTimeout(speakNext, 50);
      gamActiveSpeechUtterances.push(u);
      synth.speak(u);
    };
 
    prepareSpeechVoices();
-   // Nach cancel() braucht Chromium/Edge häufig einen kurzen Tick. Ohne diesen
-   // Tick bleibt die Ausgabe gelegentlich stumm, obwohl speak() aufgerufen wird.
    window.setTimeout(speakNext, 80);
  }
 
@@ -2394,7 +2517,7 @@ function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,l
   <div className="preview-meta"><span>{t('treatmentDate', ui('treatmentDate', lang))}: {formatGamDate(treatmentDate || invoiceDate, lang)}</span><span>{t('invoiceCustomerFile', ui('invoiceCustomerFile', lang))}: {customerFile}</span><span>{t('invoiceUser', ui('invoiceUser', lang))}: {userName}</span></div>
   <div className="preview-recipient"><b>{t('invoiceRecipient', ui('recipient', lang))}</b>{recipient?.found?<>{recipientName&&<div>{recipientName}</div>}{recipientAddress.map((line,i)=><div key={i}>{line}</div>)}</>:<div className="muted">{t('invoiceNoRecipient', ui('noRecipient', lang))}</div>}</div>
   {preview?<><div className="preview-block">{preview.salutation}</div><div className="preview-block">{preview.invoiceText}</div></>:<p className="muted">{tui('invoiceNoLines', 'Rechnungstexte werden geladen.')}</p>}
-  <table><thead><tr><th>{t('invoiceAmount', ui('qty', lang))}</th><th>{t('invoiceProductCode', ui('code', lang))}</th><th>{t('invoiceDescription', ui('description', lang))}</th><th>{t('invoiceTaxRate', ui('tax', lang))}</th><th>{t('invoiceSinglePrice', ui('price', lang))}</th><th>{t('invoiceTotalPrice', ui('lineTotal', lang))}</th></tr></thead><tbody>{lines.length?lines.map((l,idx)=>{const prod=products.find(p=>p.id===l.productId); const q=l.quantity??1; const price=l.price??prod?.price??0; return <tr key={idx}><td>{q}</td><td>{prod?.code ?? l.productId}</td><td>{translatedProductDescription(prod, l.productId)}</td><td>{l.vat ?? prod?.vat ?? 0}%</td><td>{money(price)}</td><td>{money(q*price)}</td></tr>}):<tr><td colSpan={6} className="muted">{t('invoiceNoLines', ui('noLines', lang))}</td></tr>}</tbody></table>
+  <table><thead><tr><th>{t('invoiceAmount', ui('qty', lang))}</th><th>{t('invoiceProductCode', ui('code', lang))}</th><th>{t('invoiceDescription', ui('description', lang))}</th><th>{t('invoiceTaxRate', ui('tax', lang))}</th><th>{t('invoiceSinglePrice', ui('price', lang))}</th><th>{t('invoiceTotalPrice', ui('lineTotal', lang))}</th></tr></thead><tbody>{lines.length?lines.map((l,idx)=>{const prod=products.find(p=>p.id===l.productId); const q=l.quantity??1; const price=l.price??prod?.price??0; return <tr key={idx}><td>{q}</td><td>{prod?.code ?? l.productId}</td><td>{translatedProductDescription(prod, l.productId, (l as any).description)}</td><td>{l.vat ?? prod?.vat ?? 0}%</td><td>{money(price)}</td><td>{money(q*price)}</td></tr>}):<tr><td colSpan={6} className="muted">{t('invoiceNoLines', ui('noLines', lang))}</td></tr>}</tbody></table>
   {commercialRows(summary, totals, lines, lang, labels)}
   {totals&&<><p className="note ok">{t('net')}: {money(totals.net)} · {t('vat')}: {money(totals.vat)} · {t('gross')}: <b>{money(totals.gross)}</b></p><p className="muted">{zugferdNote}</p></>}
   {preview&&<><div className="preview-block muted">{preview.lawHint}</div><div className="preview-block">{preview.greetings}</div></>}
@@ -2421,9 +2544,70 @@ function formatGamDate(value?: string, lang: GamLanguage = currentUiLanguage()) 
   const locale = lang === 'en' ? 'en-US' : lang === 'fr' ? 'fr-FR' : lang === 'it' ? 'it-IT' : lang === 'sv' ? 'sv-SE' : lang === 'tr' ? 'tr-TR' : lang === 'ru' ? 'ru-RU' : lang === 'uk' ? 'uk-UA' : 'de-DE';
   return new Intl.DateTimeFormat(locale, {year:'numeric', month:'2-digit', day:'2-digit'}).format(d);
 }
-function productTranslationKey(p?: ProductDto) {
+function productTranslationKey(p?: ProductDto, fallbackId?: number | string) {
   const code = String(p?.code ?? '').trim().replace(/[^A-Za-z0-9_-]/g, '_');
-  return `productDescription.${code || p?.id || 'unknown'}`;
+  return `productDescription.${code || p?.id || fallbackId || 'unknown'}`;
+}
+
+function productDescriptionForLanguage(lang: GamLanguage | string, p?: ProductDto, fallbackId?: number | string, lineDescription?: string, translations?: Record<string,string>) {
+  const target = normalizeGamLanguage(lang);
+  const text = (p?.description ?? lineDescription ?? String(fallbackId ?? '')).trim();
+  if (!text) return '';
+  if (target === 'de') return text;
+  const key = productTranslationKey(p, fallbackId);
+  const translated = translations?.[key];
+  if (isUsableProductTranslation(translated, text)) return translated!.trim();
+  const local = localProductDescriptionFallback(text, target);
+  if (isUsableProductTranslation(local, text)) return local!.trim();
+  // Schritt 36d: In fremdsprachigen Rechnungen darf kein deutscher Produkttext
+  // durchrutschen. Bis LibreTranslate geantwortet hat, zeigen wir einen neutralen
+  // Hinweis in der Zielsprache statt des deutschen Datenbanktexts.
+  return pendingProductDescription(target);
+}
+
+function isUsableProductTranslation(value: string | undefined | null, source: string) {
+  return !!value && !!value.trim() && value.trim().toLowerCase() !== source.trim().toLowerCase();
+}
+
+function localProductDescriptionFallback(source: string, lang: GamLanguage) {
+  const s = source.trim().toLowerCase();
+  if (s.includes('botox') && s.includes('gezielten entspannung') && s.includes('flächenmuskeln')) {
+    const map: Record<string,string> = {
+      fr: 'Botox pour la relaxation ciblée des grands muscles de surface - 50 unités (Vistabel)',
+      en: 'Botox for targeted relaxation of large superficial muscles - 50 units (Vistabel)',
+      it: 'Botox per il rilassamento mirato dei grandi muscoli superficiali - 50 unità (Vistabel)',
+      es: 'Botox para la relajación dirigida de grandes músculos superficiales - 50 unidades (Vistabel)',
+      pt: 'Botox para o relaxamento direcionado de grandes músculos superficiais - 50 unidades (Vistabel)',
+      nl: 'Botox voor gerichte ontspanning van grote oppervlakkige spieren - 50 eenheden (Vistabel)',
+      pl: 'Botox do ukierunkowanego rozluźnienia dużych mięśni powierzchownych - 50 jednostek (Vistabel)',
+      cs: 'Botox k cílenému uvolnění velkých povrchových svalů - 50 jednotek (Vistabel)',
+      sv: 'Botox för riktad avslappning av stora ytliga muskler - 50 enheter (Vistabel)',
+      tr: 'Büyük yüzey kaslarının hedefli gevşetilmesi için Botox - 50 ünite (Vistabel)',
+      ru: 'Ботокс для целевого расслабления крупных поверхностных мышц - 50 единиц (Vistabel)',
+      uk: 'Ботокс для цілеспрямованого розслаблення великих поверхневих м’язів - 50 одиниць (Vistabel)'
+    };
+    return map[lang];
+  }
+  return '';
+}
+
+function pendingProductDescription(lang: GamLanguage) {
+  const map: Record<string,string> = {
+    fr: 'Traduction de la description du produit en cours',
+    en: 'Product description translation pending',
+    it: 'Traduzione della descrizione del prodotto in corso',
+    es: 'Traducción de la descripción del producto pendiente',
+    pt: 'Tradução da descrição do produto pendente',
+    nl: 'Vertaling van de productbeschrijving in behandeling',
+    pl: 'Tłumaczenie opisu produktu w toku',
+    cs: 'Překlad popisu produktu čeká na zpracování',
+    sv: 'Översättning av produktbeskrivning pågår',
+    tr: 'Ürün açıklaması çevirisi bekleniyor',
+    ru: 'Перевод описания продукта ожидается',
+    uk: 'Переклад опису продукту очікується',
+    de: 'Produktbeschreibung wird übersetzt'
+  };
+  return map[lang] || map.en;
 }
 
 

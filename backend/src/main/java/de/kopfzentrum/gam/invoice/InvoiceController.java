@@ -62,8 +62,9 @@ public class InvoiceController {
 
   /** Pflicht-Export: sichtbares PDF + eingebettete ZUGFeRD/Factur-X XML. */
   @GetMapping("/{number}/pdf")
-  public ResponseEntity<byte[]> pdf(@PathVariable String number, @RequestParam(defaultValue = "de") String lang) {
-    ZugferdExportResult result = zugferdService.export(number, lang);
+  public ResponseEntity<byte[]> pdf(@PathVariable String number, @RequestParam(defaultValue = "de") String lang, @RequestParam(required = false) Integer companyId) {
+    InvoiceSummary summary = repo.findSummary(number, companyId);
+    ZugferdExportResult result = zugferdService.export(number, summary.companyId(), lang);
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + result.filename())
       .header("X-GAM-E-Invoice", "ZUGFeRD/Factur-X")
@@ -74,8 +75,9 @@ public class InvoiceController {
   }
 
   @GetMapping("/{number}/pdf-debug")
-  public ResponseEntity<byte[]> pdfDebug(@PathVariable String number, @RequestParam(defaultValue = "de") String lang) {
-    byte[] bytes = pdfService.render(number, lang);
+  public ResponseEntity<byte[]> pdfDebug(@PathVariable String number, @RequestParam(defaultValue = "de") String lang, @RequestParam(required = false) Integer companyId) {
+    InvoiceSummary summary = repo.findSummary(number, companyId);
+    byte[] bytes = pdfService.render(number, summary.companyId(), lang);
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=rechnung-" + number + "-debug.pdf")
       .contentType(MediaType.APPLICATION_PDF)
@@ -83,8 +85,9 @@ public class InvoiceController {
   }
 
   @GetMapping("/{number}/zugferd.xml")
-  public ResponseEntity<byte[]> zugferdXml(@PathVariable String number) {
-    byte[] bytes = zugferdService.xml(number);
+  public ResponseEntity<byte[]> zugferdXml(@PathVariable String number, @RequestParam(required = false) Integer companyId) {
+    InvoiceSummary summary = repo.findSummary(number, companyId);
+    byte[] bytes = zugferdService.xml(number, summary.companyId());
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=rechnung-" + number + "-zugferd.xml")
       .contentType(MediaType.APPLICATION_XML)
@@ -111,7 +114,7 @@ public class InvoiceController {
   }
 
   @GetMapping("/{number}/export-check")
-  public InvoiceExportCheck exportCheck(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) { InvoiceSummary s = repo.findSummary(number, companyId); requireInvoiceReport(user, s.companyId()); return zugferdService.check(number); }
+  public InvoiceExportCheck exportCheck(@PathVariable String number, @RequestParam(required = false) Integer companyId, @AuthenticationPrincipal AuthenticatedUser user) { InvoiceSummary s = repo.findSummary(number, companyId); requireInvoiceReport(user, s.companyId()); return zugferdService.check(number, s.companyId()); }
 
   @GetMapping("/zugferd/status")
   public ZugferdStatus zugferdStatus() { return zugferdService.status(); }

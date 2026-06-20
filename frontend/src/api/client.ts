@@ -92,9 +92,9 @@ export const createCancellationInvoice = (number: string, companyId?: number) =>
 export const createCreditNote = (number: string, companyId?: number) => request<InvoiceCreateResponse>(`/invoices/${encodeURIComponent(number)}/credit${companyId ? `?companyId=${companyId}` : ""}`, {method: "POST"});
 export const createProformaInvoice = (payload: InvoiceCreateRequest) => request<InvoiceCreateResponse>("/invoices/proforma", {method: "POST", body: JSON.stringify(payload)});
 export const deleteInvoiceDraft = (number: string) => fetch(`${API}/invoices/${encodeURIComponent(number)}/draft`, {method: "DELETE", headers: {...(token() ? {Authorization: `Bearer ${token()}`} : {})}}).then(r => { if(!r.ok) throw new Error("Loeschen fehlgeschlagen"); });
-export const pdfUrl = (number: string, lang = "de") => `${API}/invoices/${encodeURIComponent(number)}/pdf?lang=${encodeURIComponent(lang)}`;
-export const pdfDebugUrl = (number: string) => `${API}/invoices/${encodeURIComponent(number)}/pdf-debug`;
-export const zugferdXmlUrl = (number: string) => `${API}/invoices/${encodeURIComponent(number)}/zugferd.xml`;
+export const pdfUrl = (number: string, lang = "de", companyId?: number) => { const p = new URLSearchParams(); p.set("lang", lang); if (companyId) p.set("companyId", String(companyId)); return `${API}/invoices/${encodeURIComponent(number)}/pdf?${p}`; };
+export const pdfDebugUrl = (number: string, companyId?: number) => `${API}/invoices/${encodeURIComponent(number)}/pdf-debug${companyId ? `?companyId=${companyId}` : ""}`;
+export const zugferdXmlUrl = (number: string, companyId?: number) => `${API}/invoices/${encodeURIComponent(number)}/zugferd.xml${companyId ? `?companyId=${companyId}` : ""}`;
 export type InvoiceAccessInfo = { token:string; url:string; invoiceNumber:string; companyId?:number };
 export const loadInvoiceAccess = (number:string, companyId?:number) => request<InvoiceAccessInfo>(`/invoices/${encodeURIComponent(number)}/access${companyId ? `?companyId=${companyId}` : ""}`);
 export const invoiceAccessQrUrl = (number:string, companyId?:number) => `${API}/invoices/${encodeURIComponent(number)}/access-qr${companyId ? `?companyId=${companyId}` : ""}${token() ? `${companyId ? "&" : "?"}t=${encodeURIComponent(token())}` : ""}`;
@@ -160,13 +160,15 @@ export type SecurityStatus = { authenticated:boolean; username:string; role:stri
 export const loadSecurityStatus = () => request<SecurityStatus>("/security/status");
 
 
-export type TtsStatus = { enabled: boolean; engine: string; mode: string; maryTtsEnabled: boolean; maryTtsBundled: boolean; maryTtsBundledStarted: boolean; maryTtsBundledAvailable: boolean; maryTtsBundledError: string | null; maryTtsHome: string; maryTtsEndpoint: string; maryTtsReachable: boolean; browserFallback: boolean; fallback: Record<string, string[]> };
+export type TtsStatus = { enabled: boolean; engine: string; mode: string; piperAvailable: boolean; piperAvailabilityMessage?: string; piperDiagnostics?: Record<string, unknown>; piperExecutable: string; piperVoicesDir: string; piperVoices: Record<string,string>; languageLabels?: Record<string,string>; installedLanguages: string[]; supportedLanguages?: string[]; standardLanguages?: string[]; downloadingLanguages?: string[]; downloadErrors?: Record<string,string>; autoDownload?: boolean; browserFallback: boolean; fallback: Record<string, string[]> };
 export const loadTtsStatus = () => request<TtsStatus>('/tts/status');
-export async function loadTtsAudio(language: string, text: string, engine = 'marytts') {
+export const installTtsLanguage = (language: string) => request<Record<string, unknown>>(`/tts/install/${encodeURIComponent(language)}`, {method:'POST'});
+export async function loadTtsAudio(language: string, text: string, engine = 'piper', signal?: AbortSignal) {
   const res = await fetch(`${API}/tts/audio`, {
     method: 'POST',
     headers: {"Content-Type": "application/json", ...(token() ? {Authorization: `Bearer ${token()}`} : {})},
-    body: JSON.stringify({language, text, engine})
+    body: JSON.stringify({language, text, engine}),
+    signal
   });
   if (!res.ok) throw new Error('TTS audio unavailable');
   return await res.blob();

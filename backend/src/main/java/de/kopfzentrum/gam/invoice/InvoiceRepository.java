@@ -4,6 +4,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -677,9 +679,29 @@ public class InvoiceRepository {
   private InvoiceSummary mapSummary(java.sql.ResultSet rs) throws java.sql.SQLException {
     return new InvoiceSummary(
       rs.getInt("ID"), rs.getString("RNUMMER"), rs.getString("RDATUM"), getDouble(rs, "ENDPREIS"),
-      getInt(rs, "RGESELLSCHAFTS_ID"), rs.getString("gesellschaftsname"), rs.getString("USERNAME"),
+      getInt(rs, "RGESELLSCHAFTS_ID"), rs.getString("gesellschaftsname"), displayUsername(rs.getString("USERNAME")),
       getBool(rs, "GUTSCHRIFT"), getBool(rs, "STORNO"), getBool(rs, "ZAHLUNGSAVIS"),
       getDouble(rs, "GPREIS"), getInt(rs, "RPROZENT"), rs.getString("RBEMERKUNG"), getInt(rs, "RATENANZAHL"));
+  }
+
+  /**
+   * Schritt 36f: bestehende Alt-/Demo-Rechnungen koennen in USERNAME leer sein.
+   * Fuer die Anzeige in Vorschau/PDF/Portal wird dann der aktuell angemeldete
+   * Benutzer verwendet, damit nicht mehr "Benutzer: —" erscheint.
+   * Neue oder geaenderte Rechnungen speichern USERNAME weiterhin dauerhaft beim
+   * create/update-Pfad; diese Methode ist nur ein Anzeige-Fallback.
+   */
+  private static String displayUsername(String storedUsername) {
+    if (storedUsername != null && !storedUsername.isBlank()) return storedUsername.trim();
+    try {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth == null || !auth.isAuthenticated()) return null;
+      String name = auth.getName();
+      if (name == null || name.isBlank() || "anonymousUser".equalsIgnoreCase(name.trim())) return null;
+      return name.trim();
+    } catch (Exception ignored) {
+      return null;
+    }
   }
 
   private static InvoiceTotals totalsWithStoredGross(InvoiceTotals base, Double storedGross) {

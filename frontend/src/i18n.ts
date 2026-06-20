@@ -1,4 +1,4 @@
-export type UiLanguage = "de" | "en" | "fr" | "uk" | "it" | "sv" | "tr" | "ru";
+export type UiLanguage = "de" | "en" | "fr" | "uk" | "it" | "sv" | "tr" | "ru" | "es" | "pt" | "nl" | "pl" | "cs";
 
 export const UI_LANGUAGES: { code: UiLanguage; label: string; native: string }[] = [
   { code: "de", label: "Deutsch", native: "Deutsch" },
@@ -6,6 +6,11 @@ export const UI_LANGUAGES: { code: UiLanguage; label: string; native: string }[]
   { code: "fr", label: "Français", native: "Français" },
   { code: "uk", label: "Українська", native: "Українська" },
   { code: "it", label: "Italiano", native: "Italiano" },
+  { code: "es", label: "Español", native: "Español" },
+  { code: "pt", label: "Português", native: "Português" },
+  { code: "nl", label: "Nederlands", native: "Nederlands" },
+  { code: "pl", label: "Polski", native: "Polski" },
+  { code: "cs", label: "Čeština", native: "Čeština" },
   { code: "sv", label: "Svenska", native: "Svenska" },
   { code: "tr", label: "Türkçe", native: "Türkçe" },
   { code: "ru", label: "Русский", native: "Русский" },
@@ -154,7 +159,7 @@ export function germanUiEntries(): Record<string, string> {
 }
 
 export function normalizeUiLanguage(value: string | null | undefined): UiLanguage {
-  return value === "en" || value === "fr" || value === "uk" || value === "it" || value === "sv" || value === "tr" || value === "ru" ? value : "de";
+  return value === "en" || value === "fr" || value === "uk" || value === "it" || value === "sv" || value === "tr" || value === "ru" || value === "es" || value === "pt" || value === "nl" || value === "pl" || value === "cs" ? value : "de";
 }
 
 export function tUi(language: UiLanguage, key: string): string {

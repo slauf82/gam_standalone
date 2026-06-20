@@ -86,9 +86,12 @@ public class InvoicePortalController {
   @GetMapping("/{token}/pdf/{number}")
   public ResponseEntity<byte[]> pdf(@PathVariable String token, @PathVariable String number, @RequestParam(defaultValue="de") String lang) {
     InvoiceAccessToken access = tokens.findByToken(token);
-    boolean allowed = tokens.listPatientInvoices(access).stream().anyMatch(i -> number.equals(i.number()));
-    if (!allowed) throw new IllegalArgumentException("Rechnung gehoert nicht zu diesem Portalzugriff");
-    byte[] bytes = pdfService.render(number, lang);
+    InvoicePortalInvoice selected = tokens.listPatientInvoices(access).stream()
+      .filter(i -> number.equals(i.number()))
+      .filter(i -> access.companyId() == null || java.util.Objects.equals(access.companyId(), i.companyId()))
+      .findFirst()
+      .orElseThrow(() -> new IllegalArgumentException("Rechnung gehoert nicht zu diesem Portalzugriff"));
+    byte[] bytes = pdfService.render(number, selected.companyId(), lang);
     return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=rechnung-"+number+"-"+lang+".pdf").contentType(MediaType.APPLICATION_PDF).body(bytes);
   }
 

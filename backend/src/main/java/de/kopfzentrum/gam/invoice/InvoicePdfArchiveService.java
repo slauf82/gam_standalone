@@ -38,10 +38,12 @@ public class InvoicePdfArchiveService {
     this.lbdService = lbdService;
   }
 
-  public void archive(String invoiceNumber, byte[] pdfBytes) {
+  public void archive(String invoiceNumber, byte[] pdfBytes) { archive(invoiceNumber, null, pdfBytes); }
+
+  public void archive(String invoiceNumber, Integer companyId, byte[] pdfBytes) {
     if (pdfBytes == null || pdfBytes.length == 0 || invoiceNumber == null || invoiceNumber.isBlank()) return;
 
-    InvoiceDetail detail = repo.findDetail(invoiceNumber);
+    InvoiceDetail detail = repo.findDetail(invoiceNumber, companyId);
     InvoiceSummary summary = detail.summary();
     InvoiceCompany company = repo.findCompany(summary.companyId());
     LbdRecipient recipient = previewRecipient();

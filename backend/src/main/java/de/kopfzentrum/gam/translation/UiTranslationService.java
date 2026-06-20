@@ -244,11 +244,19 @@ public class UiTranslationService {
         result.put(key, germanText);
         continue;
       }
-      String translated = translateText(germanText, lang);
+      String translated = liveProductTranslationFallback(germanText, lang);
       if (!isUsableTranslation(translated, germanText)) {
         translated = manualTranslationFallback(key, lang, germanText);
       }
-      result.put(key, isUsableTranslation(translated, germanText) ? translated : germanText);
+      if (!isUsableTranslation(translated, germanText)) {
+        translated = translateText(germanText, lang);
+      }
+      // Schritt 36d: Live-Übersetzungen dürfen bei Fremdsprachen niemals
+      // einfach den deutschen Produkttext zurückgeben. Produkttexte werden nicht
+      // in die DB geschrieben; wenn keine brauchbare Übersetzung verfügbar ist,
+      // bekommt das Frontend einen leeren Wert und zeigt einen fremdsprachigen
+      // Lade-/Fallbackhinweis statt deutschen Text.
+      result.put(key, isUsableTranslation(translated, germanText) ? translated : "");
     }
     return result;
   }
@@ -319,6 +327,39 @@ public class UiTranslationService {
         upsert(table, description, translated);
       }
     }
+  }
+
+
+  /**
+   * Kleine fachliche Notfallliste für Produktbeschreibungen, die in Demo-/Testrechnungen
+   * sofort fremdsprachig erscheinen müssen, auch wenn LibreTranslate offline ist.
+   * Diese Werte werden bewusst NICHT persistiert.
+   */
+  public static String liveProductTranslationFallback(String germanText, String language) {
+    String lang = normalize(language);
+    if (blank(germanText) || "de".equals(lang)) return germanText;
+    String t = germanText.trim();
+    String normalized = t.toLowerCase(Locale.ROOT);
+
+    if (normalized.contains("botox") && normalized.contains("gezielten entspannung") && normalized.contains("flächenmuskeln")) {
+      return switch (lang) {
+        case "fr" -> "Botox pour la relaxation ciblée des grands muscles de surface - 50 unités (Vistabel)";
+        case "en" -> "Botox for targeted relaxation of large superficial muscles - 50 units (Vistabel)";
+        case "it" -> "Botox per il rilassamento mirato dei grandi muscoli superficiali - 50 unità (Vistabel)";
+        case "es" -> "Botox para la relajación dirigida de grandes músculos superficiales - 50 unidades (Vistabel)";
+        case "pt" -> "Botox para o relaxamento direcionado de grandes músculos superficiais - 50 unidades (Vistabel)";
+        case "nl" -> "Botox voor gerichte ontspanning van grote oppervlakkige spieren - 50 eenheden (Vistabel)";
+        case "pl" -> "Botox do ukierunkowanego rozluźnienia dużych mięśni powierzchownych - 50 jednostek (Vistabel)";
+        case "cs" -> "Botox k cílenému uvolnění velkých povrchových svalů - 50 jednotek (Vistabel)";
+        case "sv" -> "Botox för riktad avslappning av stora ytliga muskler - 50 enheter (Vistabel)";
+        case "tr" -> "Büyük yüzey kaslarının hedefli gevşetilmesi için Botox - 50 ünite (Vistabel)";
+        case "ru" -> "Ботокс для целевого расслабления крупных поверхностных мышц - 50 единиц (Vistabel)";
+        case "uk" -> "Ботокс для цілеспрямованого розслаблення великих поверхневих м’язів - 50 одиниць (Vistabel)";
+        default -> null;
+      };
+    }
+
+    return null;
   }
 
   private String translateText(String text, String target) {
@@ -636,7 +677,7 @@ public class UiTranslationService {
     entries.put("ttsBrowser", "Browser/Windows");
     entries.put("ttsEngine", "Vorlesetechnik");
     entries.put("ttsLanguage", "Vorlesesprache");
-    entries.put("ttsMary", "MaryTTS");
+    entries.put("ttsMary", "Piper");
     entries.put("ttsRate", "Geschwindigkeit");
     entries.put("ttsSettings", "Vorleseinstellungen");
     entries.put("ttsVoice", "Stimme");
@@ -991,6 +1032,11 @@ public class UiTranslationService {
     if (l.startsWith("sv") || l.startsWith("se")) return "sv";
     if (l.startsWith("tr")) return "tr";
     if (l.startsWith("ru")) return "ru";
+    if (l.startsWith("es")) return "es";
+    if (l.startsWith("pt")) return "pt";
+    if (l.startsWith("nl")) return "nl";
+    if (l.startsWith("pl")) return "pl";
+    if (l.startsWith("cs") || l.startsWith("cz")) return "cs";
     return "de";
   }
 
@@ -1003,6 +1049,11 @@ public class UiTranslationService {
       case "sv" -> "translation_swedish";
       case "tr" -> "translation_turkish";
       case "ru" -> "translation_russian";
+      case "es" -> "translation_spanish";
+      case "pt" -> "translation_portuguese";
+      case "nl" -> "translation_dutch";
+      case "pl" -> "translation_polish";
+      case "cs" -> "translation_czech";
       default -> "translation_german";
     };
   }
@@ -1016,6 +1067,11 @@ public class UiTranslationService {
       case "sv" -> "SWEDISH";
       case "tr" -> "TURKISH";
       case "ru" -> "RUSSIAN";
+      case "es" -> "SPANISH";
+      case "pt" -> "PORTUGUESE";
+      case "nl" -> "DUTCH";
+      case "pl" -> "POLISH";
+      case "cs" -> "CZECH";
       default -> "GERMAN";
     };
   }
