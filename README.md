@@ -440,3 +440,14 @@ Statusdatei: `SCHRITT_36E_PDF_GESELLSCHAFTS_KONSISTENZ_FIX_STATUS.md`
 - Anzeige-Fallback für leere Rechnungsbenutzer ergänzt.
 - Bei angemeldeter Sitzung erscheint in Vorschau/PDF nicht mehr `Benutzer: —`, sondern z. B. `Benutzer: slauf`.
 - Gespeicherte USERNAME-Werte bleiben vorrangig und werden nicht überschrieben.
+
+## Schritt 36g / v1.7.1 – LBD, manuelle Adressen, Piper-Stimmen, PDF/UA
+
+Diese Version erweitert den v1.7.0-Stand um den nächsten Feinschliff:
+
+- LBD-Empfängerdaten können vor der Übernahme in eine Rechnung geändert werden.
+- Rechnungen können vollständig ohne LBD-Datei mit manueller Adresse erstellt werden.
+- Die gespeicherte Rechnungsadresse wird für Vorschau und PDF konsistent verwendet.
+- Piper-Stimmenauswahl weiblich/männlich ist als Ziel für die Sprachpaketverwaltung dokumentiert.
+- PDF/UA-Grundlagen wie Dokumentensprache, Titel, Metadaten und konsistente Lesereihenfolge sind berücksichtigt.
+

@@ -1,5 +1,6 @@
 package de.kopfzentrum.gam.invoice;
 
+import de.kopfzentrum.gam.invoice.lbd.LbdRecipient;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -285,7 +286,7 @@ public class InvoiceRepository {
         .addValue("couponAmount", positiveOrNull(req.couponAmount())).addValue("discountPercent", discountPercent(req.discountType(), req.discountValue()))
         .addValue("discountRemark", discountRemark(req)).addValue("installments", normalizeInstallments(req.installments()))
         .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", req.reason()).addValue("branchId", req.branchId())
-        .addValue("postal", true).addValue("email", false), keyHolder, new String[]{"ID"});
+        .addValue("postal", recipientPostal(req.recipient())).addValue("email", recipientEmail(req.recipient())), keyHolder, new String[]{"ID"});
 
     insertLines("rechnung", number, req.lines(), companyId, req.branchId());
     createPaymentAdviceInstallments(number, req, username, companyId, totals);
@@ -335,7 +336,9 @@ public class InvoiceRepository {
           ENDPREIS = :gross,
           USERNAME = :username,
           GRUND = :reason,
-          RFILIALE_ID = :branchId
+          RFILIALE_ID = :branchId,
+          FADRESSE = :postal,
+          FEMAIL = :email
       WHERE RNUMMER = :number
       """, new MapSqlParameterSource()
         .addValue("number", number).addValue("addressId", req.addressId()).addValue("childAddressId", req.childAddressId())
@@ -345,7 +348,8 @@ public class InvoiceRepository {
         .addValue("paymentAdvice", Boolean.TRUE.equals(req.paymentAdvice())).addValue("paymentMethod", blankToDefault(req.paymentMethod(), "unbekannt"))
         .addValue("couponAmount", positiveOrNull(req.couponAmount())).addValue("discountPercent", discountPercent(req.discountType(), req.discountValue()))
         .addValue("discountRemark", discountRemark(req)).addValue("installments", normalizeInstallments(req.installments()))
-        .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", req.reason()).addValue("branchId", req.branchId()));
+        .addValue("gross", totals.gross()).addValue("username", username).addValue("reason", req.reason()).addValue("branchId", req.branchId())
+        .addValue("postal", recipientPostal(req.recipient())).addValue("email", recipientEmail(req.recipient())));
 
     jdbc.update("DELETE FROM rechnung WHERE NUMMER = ?", number);
     jdbc.update("DELETE FROM zahlungsavis WHERE NUMMER LIKE ?", number + "Z%");
@@ -616,6 +620,60 @@ public class InvoiceRepository {
         """, new MapSqlParameterSource().addValue("number", zNumber).addValue("productId", req.lines().get(0).productId())
           .addValue("amount", amount).addValue("branchId", req.branchId() == null ? 0 : req.branchId()).addValue("companyId", companyId));
     }
+  }
+
+
+  /** Schritt 36g: Empfaenger aus Rechnung lesen, damit Vorschau/PDF/Portal dieselbe Adresse verwenden. */
+  public LbdRecipient findInvoiceRecipient(String number, Integer companyId) {
+    if (number == null || number.isBlank()) return emptyRecipient();
+    if (isProformaNumber(number)) return emptyRecipient();
+    try {
+      MapSqlParameterSource p = new MapSqlParameterSource().addValue("number", number).addValue("companyId", companyId);
+      return named.queryForObject("""
+        SELECT FADRESSE, FEMAIL
+        FROM rechnungsdetails
+        WHERE RNUMMER = :number
+          AND (:companyId IS NULL OR RGESELLSCHAFTS_ID = :companyId)
+        LIMIT 1
+        """, p, (rs, row) -> recipientFromStoredAddress(number, rs.getString("FADRESSE"), rs.getString("FEMAIL")));
+    } catch (Exception ignored) {
+      return emptyRecipient();
+    }
+  }
+
+  private static LbdRecipient recipientFromStoredAddress(String file, String postal, String email) {
+    if (postal == null || postal.isBlank()) return emptyRecipient();
+    String[] lines = postal.replace("\r", "").split("\n");
+    String name = lines.length > 0 ? lines[0].trim() : "";
+    String street = lines.length > 1 ? lines[1].trim() : "";
+    String cityLine = lines.length > 2 ? lines[2].trim() : "";
+    String country = lines.length > 3 ? lines[3].trim() : "";
+    String postalCode = "";
+    String city = cityLine;
+    java.util.regex.Matcher m = java.util.regex.Pattern.compile("^(\\d{4,6})\\s+(.+)$").matcher(cityLine);
+    if (m.matches()) { postalCode = m.group(1); city = m.group(2); }
+    String[] nameParts = name.split("\\s+");
+    String firstName = nameParts.length > 1 ? nameParts[0] : "";
+    String lastName = nameParts.length > 1 ? name.substring(firstName.length()).trim() : name;
+    return new LbdRecipient(true, file, "", "", lastName, firstName, "", "", "", postalCode, city, country, street, "", null, "", java.util.Map.of("email", email == null ? "" : email));
+  }
+
+  private static LbdRecipient emptyRecipient() {
+    return new LbdRecipient(false, "", "", "", "", "", "", "", "", "", "", "", "", "", null, "", java.util.Map.of());
+  }
+
+  private static String recipientPostal(InvoiceRecipientRequest r) {
+    if (r == null) return null;
+    String name = java.util.stream.Stream.of(r.salutation(), r.title(), r.firstName(), r.lastName(), r.nameSuffix())
+      .filter(v -> v != null && !v.isBlank()).map(String::trim).reduce((a,b) -> a + " " + b).orElse("");
+    String cityLine = java.util.stream.Stream.of(r.postalCode(), r.city())
+      .filter(v -> v != null && !v.isBlank()).map(String::trim).reduce((a,b) -> a + " " + b).orElse("");
+    return java.util.stream.Stream.of(name, r.street(), cityLine, r.country())
+      .filter(v -> v != null && !v.isBlank()).map(String::trim).reduce((a,b) -> a + "\n" + b).orElse(null);
+  }
+
+  private static String recipientEmail(InvoiceRecipientRequest r) {
+    return r == null || r.email() == null || r.email().isBlank() ? null : r.email().trim();
   }
 
   private static int normalizeInstallments(Integer installments) {

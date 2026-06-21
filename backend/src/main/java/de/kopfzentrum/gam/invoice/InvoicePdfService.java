@@ -60,8 +60,10 @@ public class InvoicePdfService {
     List<InvoiceLine> lines = detail.lines();
     InvoiceTotals totals = detail.totals() == null ? repo.calculateFromExistingLines(lines) : detail.totals();
     InvoiceCompany company = repo.findCompany(summary.companyId());
-    LbdRecipient recipient;
-    try { recipient = lbdService.preview(""); } catch (Exception e) { recipient = null; }
+    LbdRecipient recipient = repo.findInvoiceRecipient(summary.number(), summary.companyId());
+    if (recipient == null || !recipient.found()) {
+      try { recipient = lbdService.preview(""); } catch (Exception e) { recipient = null; }
+    }
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Document document = new Document(PageSize.A4, 45, 45, 42, 45);
@@ -72,6 +74,8 @@ public class InvoicePdfService {
     document.addCreator("GAM 2.0");
     document.addAuthor(company == null ? "GAM 2.0" : nullSafe(company.name()));
     document.addKeywords("invoice, accessibility, PDF/UA, " + languageTag(language));
+    // Schritt 36g: PDF/UA-Grundlagen. OpenPDF erzeugt hier Metadaten, Sprache und konsistente Lesereihenfolge;
+    // vollstaendige PDF/UA-Validierung bleibt abhaengig von der eingesetzten PDF-Bibliothek.
     try { writer.getExtraCatalog().put(PdfName.LANG, new PdfString(languageTag(language))); } catch (Exception ignored) { }
     document.open();
 

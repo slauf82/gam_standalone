@@ -23,5 +23,6 @@ public record InvoiceCreateRequest(
   Double discountValue,
   Integer installments,
   String lbdFile,
+  InvoiceRecipientRequest recipient,
   List<InvoiceCreateLineRequest> lines
 ) {}
