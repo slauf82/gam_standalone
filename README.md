@@ -451,3 +451,19 @@ Diese Version erweitert den v1.7.0-Stand um den nächsten Feinschliff:
 - Piper-Stimmenauswahl weiblich/männlich ist als Ziel für die Sprachpaketverwaltung dokumentiert.
 - PDF/UA-Grundlagen wie Dokumentensprache, Titel, Metadaten und konsistente Lesereihenfolge sind berücksichtigt.
 
+
+## GAM 2.0 v1.7.2 / Schritt 36h – Backend Auto-DB-Setup
+
+Ab v1.7.2 prüft `start-backend.bat`, ob unter `localhost:3306` eine MariaDB/MySQL-Instanz erreichbar ist.
+
+- Ist eine Datenbank vorhanden, wird sie unverändert verwendet.
+- Ist keine Datenbank vorhanden, kann eine portable MariaDB unter `tools/mariadb` vorbereitet werden.
+- Die anonymisierte Demo-Datenbank wird nur importiert, wenn die Ziel-Datenbank fehlt oder leer ist.
+- Vorhandene Datenbanken werden nicht überschrieben.
+
+Damit bleiben für den einfachen lokalen Testbetrieb im Idealfall nur noch notwendig:
+
+```text
+start-backend.bat
+start-frontend.bat
+```

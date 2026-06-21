@@ -9,6 +9,14 @@ if exist .env (
 )
 set SPRING_PROFILES_ACTIVE=local
 
+REM Schritt 36h: MariaDB/MySQL sicher erkennen und Demo-Datenbank optional vorbereiten.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ensure-gam-database.ps1"
+if errorlevel 1 (
+  echo.
+  echo [WARNUNG] Datenbank-Setup meldete einen Fehler. Backend-Start wird versucht.
+  echo Bitte logs und .env pruefen, falls der Backend-Start fehlschlaegt.
+)
+
 REM Schritt 36b: Piper-Basis automatisch vorbereiten, damit start-backend.bat + start-frontend.bat genuegen.
 set PIPER_NEEDS_INSTALL=0
 if not exist "tts\piper\piper.exe" set PIPER_NEEDS_INSTALL=1
