@@ -12,6 +12,9 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfString;
+import com.lowagie.text.pdf.PdfBoolean;
+import com.lowagie.text.pdf.PdfDictionary;
+import com.lowagie.text.pdf.PdfObject;
 import de.kopfzentrum.gam.invoice.lbd.LbdRecipient;
 import de.kopfzentrum.gam.invoice.lbd.LbdService;
 import de.kopfzentrum.gam.translation.UiTranslationService;
@@ -25,6 +28,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Method;
 
 @Service
 public class InvoicePdfService {
@@ -68,15 +73,14 @@ public class InvoicePdfService {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Document document = new Document(PageSize.A4, 45, 45, 42, 45);
     PdfWriter writer = PdfWriter.getInstance(document, out);
+    String pdfTitle = documentTitle(summary.number(), language) + " " + summary.number();
     writer.setViewerPreferences(PdfWriter.DisplayDocTitle);
-    document.addTitle(documentTitle(summary.number(), language) + " " + summary.number());
-    document.addSubject("GAM 2.0 accessible invoice document");
+    enablePdfUa(writer, pdfTitle, languageTag(language), company);
+    document.addTitle(pdfTitle);
+    document.addSubject("GAM 2.0 barrierefreie Rechnung mit ZUGFeRD/Factur-X XML");
     document.addCreator("GAM 2.0");
     document.addAuthor(company == null ? "GAM 2.0" : nullSafe(company.name()));
-    document.addKeywords("invoice, accessibility, PDF/UA, " + languageTag(language));
-    // Schritt 36g: PDF/UA-Grundlagen. OpenPDF erzeugt hier Metadaten, Sprache und konsistente Lesereihenfolge;
-    // vollstaendige PDF/UA-Validierung bleibt abhaengig von der eingesetzten PDF-Bibliothek.
-    try { writer.getExtraCatalog().put(PdfName.LANG, new PdfString(languageTag(language))); } catch (Exception ignored) { }
+    document.addKeywords("invoice, accessibility, PDF/UA, ZUGFeRD, Factur-X, " + languageTag(language));
     document.open();
 
     Font title = new Font(Font.HELVETICA, 18, Font.BOLD);
@@ -86,9 +90,12 @@ public class InvoicePdfService {
     Font small = new Font(Font.HELVETICA, 8, Font.NORMAL);
 
     PdfPTable head = new PdfPTable(new float[]{6.5f, 3.5f});
+    setRole(head, "Table");
     head.setWidthPercentage(100);
     PdfPCell left = companyLogoCell(company, small);
+    setRole(left, "TD");
     PdfPCell right = borderless(new Phrase(documentTitle(summary.number(), language) + " " + summary.number(), title));
+    setRole(right, "H1");
     right.setHorizontalAlignment(Element.ALIGN_RIGHT);
     head.addCell(left); head.addCell(right);
     document.add(head);
@@ -111,6 +118,7 @@ public class InvoicePdfService {
     document.add(new Paragraph(" "));
 
     PdfPTable meta = new PdfPTable(new float[]{6f, 4f});
+    setRole(meta, "Table");
     meta.setWidthPercentage(100);
     meta.addCell(borderless(new Phrase("", normal)));
     meta.addCell(borderless(new Phrase(translations.invoice("invoiceDate", language) + ": " + formatDate(summary.invoiceDate(), language) + "\n" + translations.invoice("invoiceCustomerFile", language) + ": " + (recipient == null ? "—" : nullSafe(recipient.file())) + "\n" + translations.invoice("invoiceUser", language) + ": " + nullSafe(summary.username()), small)));
@@ -118,6 +126,7 @@ public class InvoicePdfService {
     document.add(new Paragraph(" "));
 
     PdfPTable table = new PdfPTable(new float[]{1.0f, 1.4f, 5.5f, 1.0f, 1.4f, 1.6f});
+    setRole(table, "Table");
     table.setWidthPercentage(100);
     addHeader(table, translations.invoice("invoiceAmount", language)); addHeader(table, translations.invoice("invoiceProductCode", language)); addHeader(table, translations.invoice("invoiceDescription", language)); addHeader(table, translations.invoice("invoiceTaxRate", language)); addHeader(table, translations.invoice("invoiceSinglePrice", language)); addHeader(table, translations.invoice("invoiceTotalPrice", language));
     for (InvoiceLine line : lines) {
@@ -132,6 +141,7 @@ public class InvoicePdfService {
     addCommercialAdjustments(document, summary, lines, totals, normal, bold, translations, language);
 
     PdfPTable totalTable = new PdfPTable(new float[]{7f, 3f});
+    setRole(totalTable, "Table");
     totalTable.setWidthPercentage(100);
     totalTable.addCell(borderless(new Phrase(forZugferd ? translations.invoice("invoiceZugferdNote", language) : translations.invoice("invoiceFallbackPdfNote", language), small)));
     totalTable.addCell(borderless(new Phrase(translations.invoice("net", language) + ": " + EUR.format(totals.net()) + "\n" + translations.invoice("vat", language) + ": " + EUR.format(totals.vat()) + "\n" + translations.invoice("gross", language) + ": " + EUR.format(totals.gross()), bold)));
@@ -159,9 +169,12 @@ public class InvoicePdfService {
       String url = portalBaseUrl.replaceAll("/$", "") + "/" + access.token();
       document.add(new Paragraph(" "));
       PdfPTable qrTable = new PdfPTable(new float[]{7f, 3f});
+      setRole(qrTable, "Table");
       qrTable.setWidthPercentage(100);
       qrTable.addCell(borderless(new Phrase(translations.invoice("invoicePortalQrHint", language) + "\n" + url, small)));
       Image qr = Image.getInstance(qrCodeService.png(url, 140));
+      setRole(qr, "Figure");
+      setAlt(qr, translations.invoice("invoicePortalQrHint", language));
       qr.scaleAbsolute(90, 90);
       PdfPCell qrCell = borderless(new Phrase(""));
       qrCell.addElement(qr);
@@ -176,6 +189,7 @@ public class InvoicePdfService {
       double lineGross = lines.stream().mapToDouble(l -> (l.quantity() == null ? 1.0 : l.quantity()) * (l.price() == null ? 0.0 : l.price())).sum();
       boolean hasRows = false;
       PdfPTable adj = new PdfPTable(new float[]{8f, 2f});
+      setRole(adj, "Table");
       adj.setWidthPercentage(100);
       if (summary.discountPercent() != null && summary.discountPercent() > 0 && lineGross > 0) {
         adj.addCell(borderless(new Phrase(translations.invoice("invoiceReducement", language) + " " + summary.discountPercent() + "%", normal)));
@@ -310,6 +324,8 @@ public class InvoicePdfService {
       ClassPathResource res = new ClassPathResource("static/images/" + companyLogoFile(company));
       if (res.exists()) {
         Image logo = Image.getInstance(res.getInputStream().readAllBytes());
+        setRole(logo, "Figure");
+        setAlt(logo, company == null ? "Kopfzentrum Logo" : "Logo " + nullSafe(company.name()));
         logo.scaleToFit(180, 70);
         cell.addElement(logo);
       }
@@ -334,12 +350,92 @@ public class InvoicePdfService {
   }
   private static String senderLine(InvoiceCompany c) { return c == null ? "" : nullSafe(c.name()) + " · " + nullSafe(c.street()) + " · " + nullSafe(c.city()); }
   private static String recipientName(LbdRecipient r) { return (nonNull(r.salutation()) + " " + nonNull(r.title()) + " " + nonNull(r.firstName()) + " " + nonNull(r.lastName())).trim(); }
-  private static PdfPCell borderless(Phrase p) { PdfPCell c = new PdfPCell(p); c.setBorder(PdfPCell.NO_BORDER); c.setPadding(2); return c; }
-  private static void addHeader(PdfPTable table, String text) { PdfPCell c = new PdfPCell(new Phrase(text, new Font(Font.HELVETICA, 9, Font.BOLD))); c.setPadding(5); table.addCell(c); }
-  private static void addCell(PdfPTable table, String text) { PdfPCell c = new PdfPCell(new Phrase(text == null ? "" : text, new Font(Font.HELVETICA, 9))); c.setPadding(5); table.addCell(c); }
+  private static PdfPCell borderless(Phrase p) { PdfPCell c = new PdfPCell(p); c.setBorder(PdfPCell.NO_BORDER); c.setPadding(2); setRole(c, "TD"); return c; }
+  private static void addHeader(PdfPTable table, String text) { PdfPCell c = new PdfPCell(new Phrase(text, new Font(Font.HELVETICA, 9, Font.BOLD))); c.setPadding(5); setRole(c, "TH"); setAlt(c, text); table.addCell(c); }
+  private static void addCell(PdfPTable table, String text) { PdfPCell c = new PdfPCell(new Phrase(text == null ? "" : text, new Font(Font.HELVETICA, 9))); c.setPadding(5); setRole(c, "TD"); table.addCell(c); }
   private static String trimNumber(double d) { return d == Math.rint(d) ? Long.toString(Math.round(d)) : Double.toString(d); }
   private static String nullSafe(String value) { return value == null ? "" : value; }
   private static String nonNull(String value) { return value == null ? "" : value; }
+
+  /**
+   * Schritt 36i: PDF/UA + ZUGFeRD gemeinsam.
+   * OpenPDF 1.3.x ist iText-2-kompatibel und bietet je nach Laufzeitversion unterschiedliche
+   * Tagged-PDF-Methoden. Deshalb werden die PDF/UA-Schalter defensiv gesetzt:
+   * - wenn setTagged() vorhanden ist, wird ein echter Tagged-PDF-Ausgabemodus aktiviert
+   * - zusätzlich werden Lang, MarkInfo und PDF/UA-XMP-Metadaten gesetzt
+   * - ZUGFeRD/Factur-X bleibt unverändert über Mustangproject auf diesem Basis-PDF erhalten
+   */
+  private static void enablePdfUa(PdfWriter writer, String title, String languageTag, InvoiceCompany company) {
+    if (writer == null) return;
+    invokeNoArg(writer, "setTagged");
+    try { writer.getExtraCatalog().put(new PdfName("Lang"), new PdfString(languageTag)); } catch (Exception ignored) { }
+    try {
+      PdfDictionary markInfo = new PdfDictionary();
+      markInfo.put(new PdfName("Marked"), PdfBoolean.PDFTRUE);
+      writer.getExtraCatalog().put(new PdfName("MarkInfo"), markInfo);
+    } catch (Exception ignored) { }
+    try {
+      PdfDictionary viewerPreferences = new PdfDictionary();
+      viewerPreferences.put(new PdfName("DisplayDocTitle"), PdfBoolean.PDFTRUE);
+      writer.getExtraCatalog().put(new PdfName("ViewerPreferences"), viewerPreferences);
+    } catch (Exception ignored) { }
+    setXmp(writer, title, languageTag, company);
+  }
+
+  private static void setXmp(PdfWriter writer, String title, String languageTag, InvoiceCompany company) {
+    try {
+      String escapedTitle = xmlEscape(title == null ? "GAM Rechnung" : title);
+      String escapedAuthor = xmlEscape(company == null ? "GAM 2.0" : nullSafe(company.name()));
+      String escapedLang = xmlEscape(languageTag == null ? "de-DE" : languageTag);
+      String xmp = """
+        <?xpacket begin='﻿' id='W5M0MpCehiHzreSzNTczkc9d'?>
+        <x:xmpmeta xmlns:x='adobe:ns:meta/'>
+          <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+            <rdf:Description rdf:about=''
+              xmlns:dc='http://purl.org/dc/elements/1.1/'
+              xmlns:pdf='http://ns.adobe.com/pdf/1.3/'
+              xmlns:pdfuaid='http://www.aiim.org/pdfua/ns/id/'
+              xmlns:xmp='http://ns.adobe.com/xap/1.0/'>
+              <dc:title><rdf:Alt><rdf:li xml:lang='%s'>%s</rdf:li></rdf:Alt></dc:title>
+              <dc:creator><rdf:Seq><rdf:li>%s</rdf:li></rdf:Seq></dc:creator>
+              <dc:language><rdf:Bag><rdf:li>%s</rdf:li></rdf:Bag></dc:language>
+              <pdf:Producer>GAM 2.0 / OpenPDF / Mustangproject ZUGFeRD</pdf:Producer>
+              <pdfuaid:part>1</pdfuaid:part>
+              <xmp:CreatorTool>GAM 2.0</xmp:CreatorTool>
+            </rdf:Description>
+          </rdf:RDF>
+        </x:xmpmeta>
+        <?xpacket end='w'?>
+        """.formatted(escapedLang, escapedTitle, escapedAuthor, escapedLang);
+      writer.setXmpMetadata(xmp.getBytes(StandardCharsets.UTF_8));
+    } catch (Exception ignored) { }
+  }
+
+  private static void setRole(Object target, String roleName) {
+    if (target == null || roleName == null || roleName.isBlank()) return;
+    try {
+      Method m = target.getClass().getMethod("setRole", PdfName.class);
+      m.invoke(target, new PdfName(roleName));
+    } catch (Exception ignored) { }
+  }
+
+  private static void setAlt(Object target, String altText) {
+    if (target == null || altText == null || altText.isBlank()) return;
+    try {
+      Method m = target.getClass().getMethod("setAccessibleAttribute", PdfName.class, PdfObject.class);
+      m.invoke(target, new PdfName("Alt"), new PdfString(altText));
+    } catch (Exception ignored) { }
+  }
+
+  private static void invokeNoArg(Object target, String methodName) {
+    try { target.getClass().getMethod(methodName).invoke(target); } catch (Exception ignored) { }
+  }
+
+  private static String xmlEscape(String value) {
+    if (value == null) return "";
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;");
+  }
+
   private static String languageTag(String language) {
     if (language == null) return "de-DE";
     return switch (language.toLowerCase(Locale.ROOT)) {

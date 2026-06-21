@@ -467,3 +467,20 @@ Damit bleiben für den einfachen lokalen Testbetrieb im Idealfall nur noch notwe
 start-backend.bat
 start-frontend.bat
 ```
+
+## GAM 2.0 v1.7.3 / Schritt 36i – PDF/UA + ZUGFeRD
+
+Schritt 36i ergänzt die Rechnungserzeugung um PDF/UA-orientierte Barrierefreiheitsinformationen, ohne den ZUGFeRD/Factur-X-Export zu entfernen.
+
+Enthalten:
+
+- Dokumentensprache und PDF-Metadaten
+- PDF/UA-XMP-Kennung
+- MarkInfo und Tagged-PDF-Aktivierung, soweit von OpenPDF unterstützt
+- Rollen für Tabellen, Tabellenzellen und Bilder
+- Alternativtexte für Logo und QR-Code
+- ZUGFeRD/Factur-X bleibt weiterhin eingebettet
+
+Für die finale Freigabe wird eine Prüfung mit PAC 2024 oder Adobe Acrobat Preflight empfohlen. Weitere Hinweise siehe:
+
+`tools/pdfua/README_PDF_UA_ZUGFERD.md`

@@ -29,7 +29,7 @@ public class ZugferdExportService {
   }
 
   public ZugferdStatus status() {
-    return new ZugferdStatus(enabled, profile, validate, "Schritt 1: ZUGFeRD/Factur-X ist Pflicht-Export; Debug-PDF bleibt nur Fallback.");
+    return new ZugferdStatus(enabled, profile, validate, "Schritt 36i: ZUGFeRD/Factur-X bleibt Pflicht-Export; sichtbares PDF wird mit PDF/UA-Metadaten, Sprache, MarkInfo und Tagged-PDF-Grundstruktur erzeugt.");
   }
 
   public InvoiceExportCheck check(String number) { return check(number, null); }
