@@ -6,30 +6,41 @@ Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/Type
 
 ## Aktueller Stand
 
-Dieses Paket enthält Phase 1A + Phase 1B/1C sowie Schritt 1–4:
+GAM 2.0 hat sich von einer reinen Modernisierung des historischen Rechnungssystems zu einer modularen Verwaltungsplattform entwickelt.
 
-- kompatibler Login über bestehende `accounts`-Tabelle
-- vorbereitete Passwort-/2FA-Kompatibilität
-- JWT-Session-Grundlage
-- `.lbd`-Empfängerdatei-Suche und Vorschau
-- Rechnungsübersicht aus Bestandsdaten
-- Produktliste aus `rechnungsdaten`
-- neue Rechnung anlegen
-- Speichern in `rechnungsdetails` und `rechnung`
-- ZUGFeRD/Factur-X-E-Rechnungs-Export als primärer PDF-Export
-- Benutzer-/Rechteverwaltung mit Rollenmenü
-- Inventar-/Gerätemodul aus `geräte` und `geräte_neu`
-- Lager-/Materialmodul aus `lager` und `verbrauchsmaterial`
+Der aktuelle Funktionsumfang umfasst:
 
-Details stehen in:
+* Benutzeranmeldung mit Rollen- und Rechteverwaltung
+* JWT-basierte Sitzungsverwaltung
+* Vorbereitete Passwort-, 2FA- und Passkey-Unterstützung
+* Rechnungsverwaltung mit Vorschau und PDF-Erzeugung
+* ZUGFeRD-/Factur-X-E-Rechnungen
+* PDF/A-3-konforme Dokumente
+* PDF/UA-konforme Dokumente
+* WCAG-konforme Dokumente
+* Mehrsprachige Rechnungen
+* Live-Übersetzung von Produktbeschreibungen
+* QR-Code-basiertes Rechnungsportal
+* LBD-Empfängerverwaltung mit manueller Adressbearbeitung
+* Inventar- und Gerätemanagement
+* Lager- und Materialverwaltung
+* Report- und Exportfunktionen
+* DATEV-nahe Exportformate
+* Mehrsprachige Benutzeroberfläche
+* PiperTTS-basierte Vorlesefunktion
+* Automatische Datenbankerkennung für lokale Installationen
+* Vollständig lokale Nutzung ohne Cloud-Abhängigkeit
 
-- `PHASE_1A_STATUS.md`
-- `PHASE_1B_1C_STATUS.md`
-- `PHASE_1C_ZUGFERD_STATUS.md`
-- `SCHRITT_1_RECHNUNGSMODUL_STATUS.md`
-- `SCHRITT_2_BENUTZER_RECHTE_STATUS.md`
-- `SCHRITT_3_INVENTAR_GERAETE_STATUS.md`
-- `SCHRITT_4_LAGER_MATERIAL_STATUS.md`
+Besondere Schwerpunkte von GAM 2.0 sind:
+
+* Datenschutz und lokaler Betrieb
+* Barrierefreiheit
+* Offene Standards
+* Langfristige Archivierung
+* Erweiterbarkeit und Wartbarkeit
+* Kompatibilität mit bestehenden GAM-Datenbeständen
+
+Detaillierte Informationen zu den einzelnen Entwicklungsständen befinden sich in den jeweiligen Statusdokumenten von Phase 1A bis Schritt 37I4.
 
 ## Backend starten
 
