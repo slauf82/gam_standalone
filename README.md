@@ -2,13 +2,6 @@
 
 Moderne Praxis-, Verwaltungs- und Rechnungsplattform auf Basis von Spring Boot, React, MariaDB, OpenHTMLtoPDF und PDFBox 3 mit Unterstützung für PDF/A-3, ZUGFeRD, PDF/UA und WCAG.
 
-## Schritt 36a – Piper Verfügbarkeits- und UI-Fix
-
-Diese Version korrigiert die Piper-Erkennung: Das Backend sucht `piper.exe` und `voices` nun über mehrere plausible Pfade und meldet den tatsächlich gefundenen Pfad in `/api/tts/status`. Die Oberfläche graut Piper nicht mehr hart aus, wenn eine unterstützte Sprache noch per Auto-Download/Fallback verarbeitet werden kann.
-
-Siehe: `SCHRITT_36A_PIPER_VERFUEGBARKEIT_UI_FIX_STATUS.md`
-
-
 Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/TypeScript + MariaDB.
 
 ## Aktueller Stand
