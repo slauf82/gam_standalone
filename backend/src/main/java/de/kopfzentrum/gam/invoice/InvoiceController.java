@@ -22,7 +22,7 @@ import java.util.List;
 @RequestMapping("/api/invoices")
 public class InvoiceController {
   private final InvoiceRepository repo;
-  private final InvoicePdfService pdfService;
+  private final InvoiceOpenHtmlPdfService openHtmlPdfService;
   private final LbdService lbdService;
   private final ZugferdExportService zugferdService;
   private final InvoiceTextPreviewService textPreviewService;
@@ -31,8 +31,8 @@ public class InvoiceController {
   private final QrCodeService qrCodeService;
   private final String portalBaseUrl;
 
-  public InvoiceController(InvoiceRepository repo, InvoicePdfService pdfService, LbdService lbdService, ZugferdExportService zugferdService, InvoiceTextPreviewService textPreviewService, GamPermissionService permissions, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
-    this.repo = repo; this.pdfService = pdfService; this.lbdService = lbdService; this.zugferdService = zugferdService; this.textPreviewService = textPreviewService; this.permissions = permissions; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
+  public InvoiceController(InvoiceRepository repo, InvoiceOpenHtmlPdfService openHtmlPdfService, LbdService lbdService, ZugferdExportService zugferdService, InvoiceTextPreviewService textPreviewService, GamPermissionService permissions, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
+    this.repo = repo; this.openHtmlPdfService = openHtmlPdfService; this.lbdService = lbdService; this.zugferdService = zugferdService; this.textPreviewService = textPreviewService; this.permissions = permissions; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
   }
 
   @GetMapping
@@ -60,13 +60,14 @@ public class InvoiceController {
     return d;
   }
 
-  /** Pflicht-Export: sichtbares PDF + eingebettete ZUGFeRD/Factur-X XML. */
+  /** Pflicht-Export: OpenHTMLtoPDF + PDF/A-3 + ZUGFeRD/Factur-X + PDF/UA/WCAG. */
   @GetMapping("/{number}/pdf")
   public ResponseEntity<byte[]> pdf(@PathVariable String number, @RequestParam(defaultValue = "de") String lang, @RequestParam(required = false) Integer companyId) {
     InvoiceSummary summary = repo.findSummary(number, companyId);
     ZugferdExportResult result = zugferdService.export(number, summary.companyId(), lang);
     return ResponseEntity.ok()
       .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + result.filename())
+      .header("X-GAM-PDF-Engine", "OpenHTMLtoPDF-PDFUA-PDFA3-ZUGFeRD")
       .header("X-GAM-E-Invoice", "ZUGFeRD/Factur-X")
       .header("X-GAM-ZUGFeRD-Profile", result.profile())
       .header("X-GAM-ZUGFeRD-Valid", Boolean.toString(result.valid()))
@@ -74,14 +75,23 @@ public class InvoiceController {
       .body(result.pdfBytes());
   }
 
-  @GetMapping("/{number}/pdf-debug")
-  public ResponseEntity<byte[]> pdfDebug(@PathVariable String number, @RequestParam(defaultValue = "de") String lang, @RequestParam(required = false) Integer companyId) {
+  /**
+   * Kompatibilitaetsalias fuer den bisherigen Button-2-Testpfad.
+   * Seit Schritt 37i identisch mit dem produktiven OpenHTMLtoPDF-Pflicht-Export.
+   */
+  @GetMapping("/{number}/pdf-openhtml")
+  public ResponseEntity<byte[]> pdfOpenHtml(@PathVariable String number, @RequestParam(defaultValue = "de") String lang, @RequestParam(required = false) Integer companyId) {
     InvoiceSummary summary = repo.findSummary(number, companyId);
-    byte[] bytes = pdfService.render(number, summary.companyId(), lang);
+    byte[] basePdf = openHtmlPdfService.renderVisualPdf(number, summary.companyId(), lang);
+    ZugferdExportResult result = zugferdService.exportWithBasePdf(number, summary.companyId(), lang, basePdf, "openhtmltopdf-zugferd");
     return ResponseEntity.ok()
-      .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=rechnung-" + number + "-debug.pdf")
+      .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + result.filename())
+      .header("X-GAM-PDF-Engine", "OpenHTMLtoPDF-PDFUA-PDFA3-ZUGFeRD")
+      .header("X-GAM-E-Invoice", "ZUGFeRD/Factur-X")
+      .header("X-GAM-ZUGFeRD-Profile", result.profile())
+      .header("X-GAM-ZUGFeRD-Valid", Boolean.toString(result.valid()))
       .contentType(MediaType.APPLICATION_PDF)
-      .body(bytes);
+      .body(result.pdfBytes());
   }
 
   @GetMapping("/{number}/zugferd.xml")

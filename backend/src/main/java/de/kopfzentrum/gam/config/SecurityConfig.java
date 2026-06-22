@@ -40,7 +40,7 @@ public class SecurityConfig {
           "/api/ui-translations/**",
           "/api/invoices/lbd/preview",
           "/api/invoices/*/pdf",
-          "/api/invoices/*/pdf-debug",
+          "/api/invoices/*/pdf-openhtml",
           "/api/invoices/*/zugferd.xml",
           "/api/invoice-portal/**",
           "/actuator/health", "/api/tts/status"

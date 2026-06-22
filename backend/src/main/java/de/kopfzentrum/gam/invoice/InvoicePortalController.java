@@ -5,6 +5,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
+import de.kopfzentrum.gam.invoice.zugferd.ZugferdExportResult;
+import de.kopfzentrum.gam.invoice.zugferd.ZugferdExportService;
 
 import java.util.List;
 
@@ -12,12 +14,12 @@ import java.util.List;
 @RequestMapping("/api/invoice-portal")
 public class InvoicePortalController {
   private final InvoiceAccessTokenRepository tokens;
-  private final InvoicePdfService pdfService;
+  private final ZugferdExportService zugferdService;
   private final TranslationService translations;
   private final QrCodeService qrCodeService;
 
-  public InvoicePortalController(InvoiceAccessTokenRepository tokens, InvoicePdfService pdfService, TranslationService translations, QrCodeService qrCodeService) {
-    this.tokens = tokens; this.pdfService = pdfService; this.translations = translations; this.qrCodeService = qrCodeService;
+  public InvoicePortalController(InvoiceAccessTokenRepository tokens, ZugferdExportService zugferdService, TranslationService translations, QrCodeService qrCodeService) {
+    this.tokens = tokens; this.zugferdService = zugferdService; this.translations = translations; this.qrCodeService = qrCodeService;
   }
 
   @GetMapping(value="/{token}", produces=MediaType.TEXT_HTML_VALUE)
@@ -91,8 +93,8 @@ public class InvoicePortalController {
       .filter(i -> access.companyId() == null || java.util.Objects.equals(access.companyId(), i.companyId()))
       .findFirst()
       .orElseThrow(() -> new IllegalArgumentException("Rechnung gehoert nicht zu diesem Portalzugriff"));
-    byte[] bytes = pdfService.render(number, selected.companyId(), lang);
-    return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=rechnung-"+number+"-"+lang+".pdf").contentType(MediaType.APPLICATION_PDF).body(bytes);
+    ZugferdExportResult result = zugferdService.export(number, selected.companyId(), lang);
+    return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + result.filename()).contentType(MediaType.APPLICATION_PDF).body(result.pdfBytes());
   }
 
   private String title(String number, String lang) {
