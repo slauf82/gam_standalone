@@ -34,6 +34,21 @@ public class InventoryController {
     return repository.detail(source, id);
   }
 
+  @GetMapping("/branches")
+  public List<InventoryBranchOption> branches() {
+    return repository.branches();
+  }
+
+  @GetMapping("/companies")
+  public List<InventoryCompanyOption> companies() {
+    return repository.companies();
+  }
+
+  @GetMapping("/materials")
+  public List<InventoryMaterialOption> materials(@RequestParam(defaultValue = "") String q, @RequestParam(defaultValue = "200") int limit) {
+    return repository.materials(q, limit);
+  }
+
   @GetMapping("/stats")
   public InventoryStats stats() {
     return repository.stats();

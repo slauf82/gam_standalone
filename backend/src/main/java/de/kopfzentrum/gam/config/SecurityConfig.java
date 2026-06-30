@@ -36,6 +36,7 @@ public class SecurityConfig {
           "/api/auth/passkey/login/finish",
           "/api/system/status",
           "/api/system/startup-check",
+          "/api/communication/login-news",
           "/api/ui-translations",
           "/api/ui-translations/**",
           "/api/invoices/lbd/preview",
@@ -57,6 +58,7 @@ public class SecurityConfig {
         .requestMatchers("/api/inventory/**").authenticated()
         .requestMatchers("/api/warehouse/**").authenticated()
         .requestMatchers("/api/gam/**").authenticated()
+        .requestMatchers("/api/communication/**").authenticated()
 
         .anyRequest().authenticated())
       .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

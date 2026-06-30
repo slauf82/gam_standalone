@@ -35,7 +35,40 @@ public class InventoryRepository {
     String normalized = source == null ? "legacy" : source.trim().toLowerCase();
     InventoryDevice device = ("new".equals(normalized) || "geraete_neu".equals(normalized) || "geräte_neu".equals(normalized))
       ? findNew(id) : findLegacy(id);
-    return new InventoryDeviceDetail(device, assignmentsForNewDevice(normalized, id), consumablesForNewDevice(normalized, id), softwareForDevice(normalized, id));
+    return new InventoryDeviceDetail(device, assignmentsForDevice(normalized, id), consumablesForDevice(normalized, id), softwareForDevice(normalized, id));
+  }
+
+
+  public List<InventoryBranchOption> branches() {
+    return jdbc.query("""
+      SELECT `FILIALE_ID`, `FILIALEKUERZEL`, `FILIALENAME`
+      FROM `filiale`
+      ORDER BY `FILIALEKUERZEL`, `FILIALENAME`
+      """, (rs, row) -> new InventoryBranchOption(getInt(rs, "FILIALE_ID"), rs.getString("FILIALEKUERZEL"), rs.getString("FILIALENAME")));
+  }
+
+  public List<InventoryCompanyOption> companies() {
+    return jdbc.query("""
+      SELECT `id`, `gesellschaftsname`
+      FROM `rechnungsgesellschaft`
+      ORDER BY `gesellschaftsname`
+      """, (rs, row) -> new InventoryCompanyOption(getInt(rs, "id"), rs.getString("gesellschaftsname")));
+  }
+
+  public List<InventoryMaterialOption> materials(String q, int limit) {
+    int normalizedLimit = normalizeLimit(limit);
+    MapSqlParameterSource p = new MapSqlParameterSource().addValue("limit", normalizedLimit);
+    StringBuilder sql = new StringBuilder("""
+      SELECT `ID`, `Name`, `Eigenschaften`, `Anzahl`, `EMail_Hersteller`
+      FROM `verbrauchsmaterial`
+      WHERE 1=1
+      """);
+    if (q != null && !q.isBlank()) {
+      sql.append(" AND (`Name` LIKE :q OR `Eigenschaften` LIKE :q OR `EMail_Hersteller` LIKE :q) ");
+      p.addValue("q", "%" + q.trim() + "%");
+    }
+    sql.append(" ORDER BY `Name` LIMIT :limit");
+    return named.query(sql.toString(), p, (rs, row) -> new InventoryMaterialOption(getInt(rs,"ID"), rs.getString("Name"), rs.getString("Eigenschaften"), getInt(rs,"Anzahl"), rs.getString("EMail_Hersteller")));
   }
 
   public InventoryStats stats() {
@@ -121,7 +154,7 @@ public class InventoryRepository {
       """, (rs, row) -> mapNew(rs), id);
   }
 
-  private List<DeviceAssignment> assignmentsForNewDevice(String source, Integer id) {
+  private List<DeviceAssignment> assignmentsForDevice(String source, Integer id) {
     if (!("new".equals(source) || "geraete_neu".equals(source) || "geräte_neu".equals(source))) return List.of();
     return jdbc.query("""
       SELECT fg.`ID`, fg.`rfiliale_ID`, f.`FILIALEKUERZEL`, f.`FILIALENAME`, fg.`rgesellschafts_ID`, rg.`gesellschaftsname`
@@ -133,13 +166,13 @@ public class InventoryRepository {
       """, (rs, row) -> new DeviceAssignment(getInt(rs,"ID"), getInt(rs,"rfiliale_ID"), rs.getString("FILIALEKUERZEL"), rs.getString("FILIALENAME"), getInt(rs,"rgesellschafts_ID"), rs.getString("gesellschaftsname")), id);
   }
 
-  private List<DeviceConsumable> consumablesForNewDevice(String source, Integer id) {
+  private List<DeviceConsumable> consumablesForDevice(String source, Integer id) {
     if (!("new".equals(source) || "geraete_neu".equals(source) || "geräte_neu".equals(source))) return List.of();
     return jdbc.query("""
       SELECT gv.`ID`, gv.`VMID`, v.`Name`, v.`Eigenschaften`, v.`Anzahl`, v.`EMail_Hersteller`
       FROM `geräte_neu_vmaterial` gv
       LEFT JOIN `verbrauchsmaterial` v ON v.`ID` = gv.`VMID`
-      WHERE gv.`rgeräte_neu_id` = ?
+      WHERE gv.`GERÄTEID` = ?
       ORDER BY v.`Name` ASC
       """, (rs, row) -> new DeviceConsumable(getInt(rs,"ID"), getInt(rs,"VMID"), rs.getString("Name"), rs.getString("Eigenschaften"), getInt(rs,"Anzahl"), rs.getString("EMail_Hersteller")), id);
   }

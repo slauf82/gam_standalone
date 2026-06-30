@@ -63,16 +63,24 @@ public class UserApplicationRepository {
     modules.add("dashboard");
     for (UserApplicationAccess a : findByUsername(username)) {
       switch (a.application()) {
-        case "Rechnungsprogramm", "Preisliste" -> { modules.add("invoices"); modules.add("reports"); }
+        case "Rechnungsprogramm" -> {
+          modules.add("invoices");
+          if (a.isMainUser() || a.isAdmin()) modules.add("reports");
+        }
+        case "Preisliste" -> modules.add("priceList");
         case "Geraeteverzeichnis" -> modules.add("inventory");
         case "Lagerverwaltung" -> modules.add("warehouse");
+        case "Patientenverwaltung", "Patienten", "Adressen", "Adressverwaltung" -> modules.add("patients");
+        case "Terminverwaltung", "Termine", "Kalender" -> modules.add("appointments");
         case "Aufgabenverwaltung" -> modules.add("tasks");
         case "Freigabemanagement" -> modules.add("approvals");
+        case "Bestelltool" -> modules.add("orders");
+        case "Kommunikation" -> modules.add("communication");
+        case "Rechteverwaltung", "Benutzer/Rechte" -> modules.add("users");
         case "Personaldaten" -> modules.add("personnel");
         case "Kassenbuch" -> modules.add("cashbook");
         case "MOH Auswertung" -> modules.add("reports");
-        case "Arbeitsplatzausstattung" -> modules.add("inventory");
-        case "Bestelltool" -> modules.add("warehouse");
+        case "Arbeitsplatzausstattung", "Arbeitsplatz", "Arbeitsplätze" -> modules.add("workplace");
         default -> { }
       }
     }

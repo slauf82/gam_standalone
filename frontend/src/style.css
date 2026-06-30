@@ -334,3 +334,532 @@ tr.selected{background:#eef4ff}
 .invoice-result-list button.invoice-row-active{background:#dfeaff;border-color:#1f5eff;box-shadow:0 8px 20px rgba(31,94,255,.18), inset 4px 0 0 #1f5eff}
 .invoice-result-list button.invoice-row-active::after{content:"Ausgewählt";position:absolute;right:10px;top:10px;font-size:11px;font-weight:800;color:#1f5eff;background:#fff;border:1px solid #bdd0ff;border-radius:999px;padding:3px 7px}
 .invoice-result-list button.invoice-row-active small{color:#31415f}
+
+/* Schritt 38: kompakte Admin-Auswahlliste */
+.admin-row-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 360px;
+  overflow: auto;
+  margin-top: 0.75rem;
+}
+.admin-row-list button {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* Schritt 38d: vollständiges Geräteverzeichnis */
+.inventory-admin-grid {
+  grid-template-columns: minmax(520px, 1.2fr) minmax(420px, 0.8fr);
+  align-items: start;
+}
+.inventory-list-card table.compact-table {
+  font-size: 0.92rem;
+}
+.inventory-list-card .stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin: .75rem 0;
+}
+.inventory-list-card .stats span {
+  background: rgba(127,127,127,.12);
+  border: 1px solid rgba(127,127,127,.2);
+  border-radius: .6rem;
+  padding: .35rem .55rem;
+}
+.active-row, tr.active-row:hover {
+  outline: 2px solid rgba(88,166,255,.65);
+  background: rgba(88,166,255,.14) !important;
+}
+.inventory-form .wide {
+  grid-column: 1 / -1;
+}
+.inventory-form textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+.inventory-subcards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.inventory-subcards section {
+  border: 1px solid rgba(127,127,127,.22);
+  border-radius: .75rem;
+  padding: .75rem;
+  background: rgba(127,127,127,.06);
+}
+.inventory-subcards table {
+  font-size: .9rem;
+}
+@media (max-width: 1100px) {
+  .inventory-admin-grid, .inventory-subcards { grid-template-columns: 1fr; }
+}
+
+/* Schritt 38e2: Scrollbare Ergebnisbereiche und schnelle Formularnavigation */
+.scroll-table {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid rgba(127,127,127,.18);
+  border-radius: .75rem;
+  margin-top: .75rem;
+}
+.scroll-table table {
+  margin: 0;
+}
+.scroll-table-tall {
+  max-height: min(62vh, 720px);
+}
+.jump-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  margin: .5rem 0;
+}
+.inventory-detail-card,
+.warehouse-admin .detail,
+.admin-detail-card {
+  scroll-margin-top: 1rem;
+}
+.inventory-list-card .compact-table tbody tr,
+.warehouse-list-card tbody tr {
+  cursor: pointer;
+}
+.warehouse-list-card tbody tr:hover,
+.inventory-list-card .compact-table tbody tr:hover {
+  background: rgba(88,166,255,.10);
+}
+.admin-row-list {
+  max-height: min(54vh, 560px);
+}
+@media (max-width: 900px) {
+  .scroll-table-tall { max-height: 55vh; }
+  .jump-actions { justify-content: stretch; }
+  .jump-actions button { width: 100%; }
+}
+
+.admin-preview-table { max-height: min(42vh, 420px); }
+
+/* Schritt 38e3: GAM-1.0-ähnliche modale Bearbeitungsdialoge */
+.gam-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(2px);
+}
+.gam-modal-card {
+  position: fixed;
+  z-index: 9010;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1100px, calc(100vw - 48px));
+  max-height: min(88vh, 920px);
+  overflow: auto;
+  box-shadow: 0 24px 72px rgba(0,0,0,.38);
+  border: 1px solid rgba(255,255,255,.18);
+}
+.gam-modal-hidden {
+  display: none !important;
+}
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .75rem;
+}
+.modal-title-row h2 {
+  margin: 0;
+}
+.icon-only {
+  min-width: 38px;
+  width: 38px;
+  height: 38px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  border-radius: 999px;
+}
+@media (max-width: 720px) {
+  .gam-modal-card {
+    width: calc(100vw - 22px);
+    max-height: 92vh;
+  }
+}
+
+
+
+/* Schritt 38e8: Globale Topbar sauber oberhalb aller Modul-Sticky-Leisten */
+:root {
+  --gam-global-topbar-height: 58px;
+  --gam-sticky-toolbar-top: 62px;
+}
+body.gam-authenticated {
+  padding-top: var(--gam-global-topbar-height);
+}
+body.gam-authenticated main {
+  padding-top: 18px;
+}
+body.gam-authenticated header {
+  margin-top: 0;
+}
+
+/* Schritt 38e4: Globale GAM-Toast-Meldungen und Meldungsverlauf */
+.gam-notification-area {
+  position: fixed;
+  top: 10px;
+  right: 32px;
+  z-index: 12000;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  pointer-events: none;
+}
+.gam-notification-area > * { pointer-events: auto; }
+.gam-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  pointer-events: auto;
+}
+.gam-top-logout {
+  height: 38px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.14);
+  white-space: nowrap;
+}
+.gam-notification-menu {
+  background: #172033;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  padding: 8px 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  font-weight: 800;
+}
+.gam-toast-stack {
+  display: grid;
+  gap: 8px;
+  width: min(420px, calc(100vw - 64px));
+}
+.gam-toast {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 12px 42px 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.20);
+  box-shadow: 0 12px 36px rgba(0,0,0,.24);
+  color: #fff;
+  animation: gamToastIn .18s ease-out;
+}
+.gam-toast small { opacity: .82; font-size: .78rem; }
+.gam-toast span { font-weight: 750; line-height: 1.25; }
+.gam-toast button {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(255,255,255,.18);
+  color: inherit;
+}
+.gam-toast-success { background: #15803d; }
+.gam-toast-error { background: #b91c1c; }
+.gam-toast-warning { background: #b45309; }
+.gam-toast-info { background: #1d4ed8; }
+.gam-notification-history {
+  width: min(460px, calc(100vw - 64px));
+  max-height: min(70vh, 640px);
+  overflow: auto;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  color: #172033;
+  border: 1px solid rgba(15,23,42,.12);
+  box-shadow: 0 22px 70px rgba(0,0,0,.28);
+}
+.gam-notification-history .gam-toast {
+  box-shadow: none;
+  margin: 8px 0;
+}
+@keyframes gamToastIn {
+  from { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media(max-width:720px){
+  :root { --gam-global-topbar-height: 102px; --gam-sticky-toolbar-top: 106px; }
+  .gam-notification-area { top: 8px; right: 10px; left: 10px; justify-items: stretch; }
+  .gam-top-actions { justify-content: flex-end; flex-wrap: wrap; }
+  .gam-notification-menu { padding: 7px 10px; }
+}
+
+/* Schritt 38e5: Sticky Aktionsleisten für lange Verwaltungslisten */
+.sticky-actionbar {
+  position: sticky;
+  top: var(--gam-sticky-toolbar-top, 0);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+  padding: .75rem;
+  margin: .75rem -0.25rem .85rem -0.25rem;
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(127,127,127,.20);
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(15,23,42,.08);
+  backdrop-filter: blur(8px);
+}
+.sticky-actionbar label {
+  min-width: 220px;
+  flex: 1 1 260px;
+}
+.sticky-actionbar select {
+  min-width: 160px;
+}
+.sticky-actionbar button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.sticky-actionbar .toggle-field {
+  flex: 0 0 auto;
+  min-width: auto;
+  white-space: nowrap;
+}
+.scroll-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: #f8fafc;
+  box-shadow: 0 1px 0 rgba(15,23,42,.08);
+}
+.admin-row-list {
+  padding-top: .25rem;
+}
+@media(max-width:720px){
+  .sticky-actionbar { position: sticky; top: var(--gam-sticky-toolbar-top, 0); }
+  .sticky-actionbar label, .sticky-actionbar select, .sticky-actionbar button { width: 100%; }
+}
+
+/* Schritt 38e6: GAM UI Foundation */
+body.gam-modal-open {
+  overflow: hidden;
+}
+.gam-dialog {
+  max-height: min(88vh, 900px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.gam-dialog-small { width: min(520px, calc(100vw - 32px)); }
+.gam-dialog-medium { width: min(760px, calc(100vw - 32px)); }
+.gam-dialog-large { width: min(980px, calc(100vw - 32px)); }
+.gam-dialog-wide { width: min(1180px, calc(100vw - 32px)); }
+.gam-dialog-body {
+  overflow: auto;
+  padding-right: .15rem;
+}
+.gam-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  padding-top: .85rem;
+  margin-top: .85rem;
+  border-top: 1px solid rgba(127,127,127,.20);
+}
+.gam-sticky-toolbar {
+  isolation: isolate;
+}
+.gam-scroll-area {
+  overscroll-behavior: contain;
+}
+
+/* Schritt 38g2: Tabellenzeilen direkt als Bearbeitungsaktion nutzbar */
+.clickable-row {
+  cursor: pointer;
+}
+.clickable-row:hover td {
+  background: rgba(80, 140, 255, 0.10);
+}
+.compact-table .clickable-row button {
+  cursor: pointer;
+}
+
+/* Schritt 38g4: anklickbare Meldungen mit Änderungsdetails */
+.gam-toast-clickable {
+  cursor: pointer;
+}
+.gam-toast-clickable em {
+  display: block;
+  margin-top: .25rem;
+  font-size: .78rem;
+  font-style: normal;
+  opacity: .8;
+}
+.gam-notification-history .gam-toast {
+  width: 100%;
+  text-align: left;
+  border: 0;
+}
+.change-detail-card {
+  width: min(900px, calc(100vw - 3rem));
+  max-height: calc(100vh - 5rem);
+  overflow: auto;
+}
+.change-details-table td {
+  vertical-align: top;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+
+/* Schritt 38i6: Benutzer/Rechte – Rechte-Tabelle breit oben, Felder darunter */
+.rights-editor-stack {
+  display: flex;
+  flex-direction: column;
+  gap: .9rem;
+}
+.rights-table-panel {
+  width: 100%;
+  min-width: 0;
+}
+.rights-table {
+  width: 100%;
+  table-layout: auto;
+}
+.rights-table th:nth-child(1),
+.rights-table td:nth-child(1) {
+  width: 72px;
+}
+.rights-table th:nth-child(3),
+.rights-table td:nth-child(3) {
+  width: 140px;
+}
+.rights-table th:nth-child(4),
+.rights-table td:nth-child(4) {
+  width: 180px;
+}
+.rights-table th:nth-child(5),
+.rights-table td:nth-child(5) {
+  width: 210px;
+}
+.rights-fields-below {
+  width: 100%;
+}
+
+.rights-editor-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 1rem;
+  row-gap: .9rem;
+  align-items: end;
+}
+.rights-editor-grid > *,
+.rights-editor-grid label,
+.rights-editor-grid input,
+.rights-editor-grid select,
+.rights-editor-grid textarea {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.rights-editor-grid .wide-field {
+  grid-column: 1 / -1;
+}
+.rights-application-field {
+  grid-column: span 4;
+}
+.rights-manual-application-field {
+  grid-column: span 4;
+}
+.rights-company-field {
+  grid-column: span 2;
+}
+.rights-role-field {
+  grid-column: span 2;
+}
+.rights-company-field,
+.rights-role-field,
+.rights-application-field,
+.rights-manual-application-field {
+  position: relative;
+  z-index: 1;
+}
+.rights-company-field input[type="number"],
+.rights-role-field select,
+.rights-application-field select,
+.rights-manual-application-field input {
+  width: 100%;
+  min-width: 0;
+}
+.rights-company-field input[type="number"] {
+  padding-right: 1.25rem;
+}
+.rights-action-row,
+.rights-assignment-actions {
+  display: flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.rights-action-row button,
+.rights-assignment-actions button {
+  width: auto;
+  min-width: 150px;
+  justify-content: center;
+}
+.compact-table td:last-child {
+  white-space: nowrap;
+}
+.compact-table td:last-child button + button {
+  margin-left: .35rem;
+}
+@media(max-width:1150px){
+  .rights-application-field,
+  .rights-manual-application-field { grid-column: span 6; }
+  .rights-company-field,
+  .rights-role-field { grid-column: span 6; }
+}
+@media(max-width:720px){
+  .rights-editor-grid { grid-template-columns: 1fr; }
+  .rights-editor-grid > *,
+  .rights-editor-grid .wide-field,
+  .rights-application-field,
+  .rights-manual-application-field,
+  .rights-company-field,
+  .rights-role-field { grid-column: 1 / -1; }
+  .rights-action-row button,
+  .rights-assignment-actions button { width: 100%; }
+}
+
+
+/* Schritt 38p4 Prüfungs-Frühwarnsystem */
+.stat-button{background:#f7f7fb;border:1px solid #e4e4ef;border-radius:12px;padding:.7rem;text-align:left;cursor:pointer;color:#697386}
+.stat-button.active{outline:2px solid #9ca3af}
+.stat-button.danger-stat{border-color:#dc2626;background:#fef2f2;color:#7f1d1d}
+.stat-button.warning-stat{border-color:#d97706;background:#fffbeb;color:#78350f}
+.note.overdue-note{border-left-color:#dc2626;background:#fef2f2;cursor:pointer;color:#7f1d1d}
+.note.soon-note{border-left-color:#d97706;background:#fffbeb;cursor:pointer;color:#78350f}
+.note.overdue-note small,.note.soon-note small{display:block;margin-top:.35rem}
+.compact-table tr.due-overdue td{background:#fff1f2}
+.compact-table tr.due-soon td{background:#fffbeb}
+
+/* Schritt 38q: interne Termin-Frühwarnungen */
+.appointment-warning-panel { margin: 12px 0; display: grid; gap: 10px; }
+.appointment-warning-panel .note { cursor: pointer; }
+.internal-overdue { border-left: 6px solid #dc2626; background: rgba(220, 38, 38, 0.12); }
+.internal-soon { border-left: 6px solid #f59e0b; background: rgba(245, 158, 11, 0.14); }
+.appointment-overdue td:first-child { border-left: 4px solid #dc2626; }
+.appointment-soon td:first-child { border-left: 4px solid #f59e0b; }

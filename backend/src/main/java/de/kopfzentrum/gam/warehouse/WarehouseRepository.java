@@ -43,6 +43,53 @@ public class WarehouseRepository {
     return updateStock(kind, id, next);
   }
 
+
+
+  public WarehouseItem create(String kind, WarehouseItemRequest request) {
+    String normalized = normalizeKind(kind == null || kind.isBlank() ? request.kind() : kind);
+    if ("verbrauchsmaterial".equals(normalized)) {
+      String name = text(request.name(), request.description());
+      if (name == null || name.isBlank()) throw new IllegalArgumentException("Materialname fehlt.");
+      jdbc.update("INSERT INTO `verbrauchsmaterial` (`Name`,`Eigenschaften`,`Anzahl`,`EMail_Hersteller`) VALUES (?,?,?,?)",
+        name, blankToNull(request.properties()), request.quantity() == null ? null : request.quantity().intValue(), emailOrDefault(request.manufacturerEmail()));
+      Integer id = jdbc.queryForObject("SELECT LAST_INSERT_ID()", Integer.class);
+      return findConsumable(id);
+    }
+    String description = text(request.description(), request.name());
+    if (description == null || description.isBlank()) throw new IllegalArgumentException("Beschreibung fehlt.");
+    jdbc.update("INSERT INTO `lager` (`BESCHREIBUNG`,`LAGERORT`,`MENGE`) VALUES (?,?,?)",
+      description, blankToNull(request.location()), request.quantity());
+    Integer id = jdbc.queryForObject("SELECT LAST_INSERT_ID()", Integer.class);
+    return findStorage(id);
+  }
+
+  public WarehouseItem update(String kind, Integer id, WarehouseItemRequest request) {
+    if (id == null) throw new IllegalArgumentException("Lager-/Material-ID fehlt.");
+    String normalized = normalizeKind(kind == null || kind.isBlank() ? request.kind() : kind);
+    if ("verbrauchsmaterial".equals(normalized)) {
+      String name = text(request.name(), request.description());
+      if (name == null || name.isBlank()) throw new IllegalArgumentException("Materialname fehlt.");
+      jdbc.update("UPDATE `verbrauchsmaterial` SET `Name`=?, `Eigenschaften`=?, `Anzahl`=?, `EMail_Hersteller`=? WHERE `ID`=?",
+        name, blankToNull(request.properties()), request.quantity() == null ? null : request.quantity().intValue(), emailOrDefault(request.manufacturerEmail()), id);
+      return findConsumable(id);
+    }
+    String description = text(request.description(), request.name());
+    if (description == null || description.isBlank()) throw new IllegalArgumentException("Beschreibung fehlt.");
+    jdbc.update("UPDATE `lager` SET `BESCHREIBUNG`=?, `LAGERORT`=?, `MENGE`=? WHERE `CODE`=?",
+      description, blankToNull(request.location()), request.quantity(), id);
+    return findStorage(id);
+  }
+
+  public void delete(String kind, Integer id) {
+    if (id == null) throw new IllegalArgumentException("Lager-/Material-ID fehlt.");
+    String normalized = normalizeKind(kind);
+    if ("verbrauchsmaterial".equals(normalized)) {
+      jdbc.update("DELETE FROM `geräte_neu_vmaterial` WHERE `VMID`=?", id);
+      jdbc.update("DELETE FROM `verbrauchsmaterial` WHERE `ID`=?", id);
+      return;
+    }
+    jdbc.update("DELETE FROM `lager` WHERE `CODE`=?", id);
+  }
   public WarehouseStats stats() {
     long storageCount = count("SELECT COUNT(*) FROM `lager`");
     long consumableCount = count("SELECT COUNT(*) FROM `verbrauchsmaterial`");
@@ -56,8 +103,8 @@ public class WarehouseRepository {
 
   public WarehouseItem updateStock(String kind, Integer id, Double quantity) {
     if (quantity == null) throw new IllegalArgumentException("Menge fehlt.");
-    String normalized = kind == null ? "lager" : kind.trim().toLowerCase();
-    if ("verbrauch".equals(normalized) || "verbrauchsmaterial".equals(normalized) || "consumable".equals(normalized)) {
+    String normalized = normalizeKind(kind);
+    if ("verbrauchsmaterial".equals(normalized)) {
       jdbc.update("UPDATE `verbrauchsmaterial` SET `Anzahl` = ? WHERE `ID` = ?", quantity.intValue(), id);
       return findConsumable(id);
     }
@@ -124,6 +171,15 @@ public class WarehouseRepository {
     return new WarehouseItem(getInt(rs, "ID"), "verbrauchsmaterial", rs.getString("Name"), rs.getString("Name"), null, getDouble(rs,"Anzahl"), rs.getString("Eigenschaften"), rs.getString("EMail_Hersteller"), getLong(rs,"linked_devices"));
   }
 
+  private String normalizeKind(String kind) {
+    String normalized = kind == null ? "lager" : kind.trim().toLowerCase();
+    if ("verbrauch".equals(normalized) || "verbrauchsmaterial".equals(normalized) || "consumable".equals(normalized) || "material".equals(normalized)) return "verbrauchsmaterial";
+    return "lager";
+  }
+
+  private static String blankToNull(String value) { return value == null || value.isBlank() ? null : value.trim(); }
+  private static String text(String primary, String fallback) { return primary != null && !primary.isBlank() ? primary.trim() : blankToNull(fallback); }
+  private static String emailOrDefault(String value) { return value == null || value.isBlank() ? "kopfzentrum@prosoft-krippner.com" : value.trim(); }
   private long count(String sql) { Long c = jdbc.queryForObject(sql, Long.class); return c == null ? 0 : c; }
   private int normalizeLimit(int requested) { return Math.min(Math.max(requested <= 0 ? 100 : requested, 1), 500); }
   private static Integer getInt(ResultSet rs, String col) throws SQLException { int v = rs.getInt(col); return rs.wasNull() ? null : v; }

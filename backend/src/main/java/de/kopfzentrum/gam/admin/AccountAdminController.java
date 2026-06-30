@@ -26,6 +26,14 @@ public class AccountAdminController {
     return accounts.findAll(q, limit).stream().map(AccountAdminDto::from).toList();
   }
 
+  @PostMapping
+  public AccountAdminDto create(@AuthenticationPrincipal AuthenticatedUser user,
+                                @RequestBody AccountCreateRequest request) {
+    requireAdmin(user);
+    if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Leere Anfrage");
+    return AccountAdminDto.from(accounts.create(request.username(), request.password(), request.fullname(), request.role(), request.email()));
+  }
+
   @PatchMapping("/{id}")
   public AccountAdminDto update(@AuthenticationPrincipal AuthenticatedUser user,
                                 @PathVariable int id,
@@ -33,6 +41,27 @@ public class AccountAdminController {
     requireAdmin(user);
     if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Leere Anfrage");
     return AccountAdminDto.from(accounts.updateMetadata(id, request.fullname(), request.role(), request.email(), request.secretkey()));
+  }
+
+  @PatchMapping("/{id}/password")
+  public AccountAdminDto password(@AuthenticationPrincipal AuthenticatedUser user,
+                                  @PathVariable int id,
+                                  @RequestBody AccountPasswordRequest request) {
+    requireAdmin(user);
+    if (request == null || request.password() == null || request.password().isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwort fehlt");
+    }
+    return AccountAdminDto.from(accounts.updatePassword(id, request.password()));
+  }
+
+  @DeleteMapping("/{id}")
+  public void delete(@AuthenticationPrincipal AuthenticatedUser user,
+                     @PathVariable int id) {
+    requireAdmin(user);
+    if (user.account().id() != null && user.account().id() == id) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der eigene Benutzer darf nicht gelöscht werden");
+    }
+    accounts.deleteById(id);
   }
 
   private void requireAdmin(AuthenticatedUser user) {

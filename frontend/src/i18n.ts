@@ -44,6 +44,7 @@ appTitle: "GAM 2.0",
     tasks: "Aufgabenverwaltung",
     approval: "Freigabemanagement",
     orders: "Bestelltool",
+    communication: "Kommunikation",
     personnel: "Personaldaten",
     workplace: "Arbeitsplatzausstattung",
     price: "Preisliste",
@@ -72,6 +73,7 @@ appTitle: "GAM 2.0",
     tasks: "Task management",
     approval: "Approval management",
     orders: "Ordering tool",
+    communication: "Communication",
     personnel: "Personnel data",
     workplace: "Workplace equipment",
     price: "Price list",
@@ -100,6 +102,7 @@ appTitle: "GAM 2.0",
     tasks: "Gestion des tâches",
     approval: "Gestion des validations",
     orders: "Outil de commande",
+    communication: "Communication",
     personnel: "Données du personnel",
     workplace: "Équipement du poste",
     price: "Liste de prix",
@@ -128,6 +131,7 @@ appTitle: "GAM 2.0",
     tasks: "Керування завданнями",
     approval: "Керування погодженнями",
     orders: "Інструмент замовлень",
+    communication: "Комунікація",
     personnel: "Дані персоналу",
     workplace: "Оснащення робочого місця",
     price: "Прайс-лист",
@@ -140,16 +144,16 @@ appTitle: "GAM 2.0",
     invoiceLanguageHint: "Мова PDF-рахунку налаштовується окремо від мови інтерфейсу.",
   },
   it: {
-    appTitle: "GAM 2.0", loginTitle: "Accesso", uiLanguage: "Lingua interfaccia", application: "Applicazione", username: "Nome utente", password: "Password", login: "Accedi", logout: "Esci", dashboard: "Dashboard", invoice: "Fatturazione", inventory: "Dispositivi", warehouse: "Magazzino", cashbook: "Cassa", tasks: "Attività", approval: "Approvazioni", orders: "Ordini", personnel: "Personale", workplace: "Postazione", price: "Listino prezzi", reports: "Report", admin: "Amministrazione", readOnly: "Sola lettura", modulePreview: "Panoramica moduli", comingSoon: "Questo modulo è preparato come anteprima in sola lettura.", pdfLanguage: "Lingua PDF", invoiceLanguageHint: "La lingua del PDF rimane separata dalla lingua dell’interfaccia.",
+    appTitle: "GAM 2.0", loginTitle: "Accesso", uiLanguage: "Lingua interfaccia", application: "Applicazione", username: "Nome utente", password: "Password", login: "Accedi", logout: "Esci", dashboard: "Dashboard", invoice: "Fatturazione", inventory: "Dispositivi", warehouse: "Magazzino", cashbook: "Cassa", tasks: "Attività", approval: "Approvazioni", orders: "Ordini", communication: "Comunicazione", personnel: "Personale", workplace: "Postazione", price: "Listino prezzi", reports: "Report", admin: "Amministrazione", readOnly: "Sola lettura", modulePreview: "Panoramica moduli", comingSoon: "Questo modulo è preparato come anteprima in sola lettura.", pdfLanguage: "Lingua PDF", invoiceLanguageHint: "La lingua del PDF rimane separata dalla lingua dell’interfaccia.",
   },
   sv: {
-    appTitle: "GAM 2.0", loginTitle: "Inloggning", uiLanguage: "Gränssnittsspråk", application: "Applikation", username: "Användarnamn", password: "Lösenord", login: "Logga in", logout: "Logga ut", dashboard: "Dashboard", invoice: "Fakturering", inventory: "Enheter", warehouse: "Lager", cashbook: "Kassabok", tasks: "Uppgifter", approval: "Godkännanden", orders: "Beställningar", personnel: "Personal", workplace: "Arbetsplats", price: "Prislista", reports: "Rapporter", admin: "Administration", readOnly: "Skrivskyddat", modulePreview: "Modulöversikt", comingSoon: "Denna modul är förberedd som skrivskyddad förhandsvisning.", pdfLanguage: "PDF-språk", invoiceLanguageHint: "Faktura-PDF-språket är separat från gränssnittsspråket.",
+    appTitle: "GAM 2.0", loginTitle: "Inloggning", uiLanguage: "Gränssnittsspråk", application: "Applikation", username: "Användarnamn", password: "Lösenord", login: "Logga in", logout: "Logga ut", dashboard: "Dashboard", invoice: "Fakturering", inventory: "Enheter", warehouse: "Lager", cashbook: "Kassabok", tasks: "Uppgifter", approval: "Godkännanden", orders: "Beställningar", communication: "Kommunikation", personnel: "Personal", workplace: "Arbetsplats", price: "Prislista", reports: "Rapporter", admin: "Administration", readOnly: "Skrivskyddat", modulePreview: "Modulöversikt", comingSoon: "Denna modul är förberedd som skrivskyddad förhandsvisning.", pdfLanguage: "PDF-språk", invoiceLanguageHint: "Faktura-PDF-språket är separat från gränssnittsspråket.",
   },
   tr: {
-    appTitle: "GAM 2.0", loginTitle: "Giriş", uiLanguage: "Arayüz dili", application: "Uygulama", username: "Kullanıcı adı", password: "Parola", login: "Giriş yap", logout: "Çıkış", dashboard: "Panel", invoice: "Faturalama", inventory: "Cihazlar", warehouse: "Depo", cashbook: "Kasa defteri", tasks: "Görevler", approval: "Onaylar", orders: "Siparişler", personnel: "Personel", workplace: "Çalışma yeri", price: "Fiyat listesi", reports: "Raporlar", admin: "Yönetim", readOnly: "Salt okunur", modulePreview: "Modül özeti", comingSoon: "Bu modül salt okunur önizleme olarak hazırlandı.", pdfLanguage: "PDF dili", invoiceLanguageHint: "Fatura PDF dili arayüz dilinden ayrıdır.",
+    appTitle: "GAM 2.0", loginTitle: "Giriş", uiLanguage: "Arayüz dili", application: "Uygulama", username: "Kullanıcı adı", password: "Parola", login: "Giriş yap", logout: "Çıkış", dashboard: "Panel", invoice: "Faturalama", inventory: "Cihazlar", warehouse: "Depo", cashbook: "Kasa defteri", tasks: "Görevler", approval: "Onaylar", orders: "Siparişler", communication: "İletişim", personnel: "Personel", workplace: "Çalışma yeri", price: "Fiyat listesi", reports: "Raporlar", admin: "Yönetim", readOnly: "Salt okunur", modulePreview: "Modül özeti", comingSoon: "Bu modül salt okunur önizleme olarak hazırlandı.", pdfLanguage: "PDF dili", invoiceLanguageHint: "Fatura PDF dili arayüz dilinden ayrıdır.",
   },
   ru: {
-    appTitle: "GAM 2.0", loginTitle: "Вход", uiLanguage: "Язык интерфейса", application: "Приложение", username: "Имя пользователя", password: "Пароль", login: "Войти", logout: "Выйти", dashboard: "Панель", invoice: "Счета", inventory: "Устройства", warehouse: "Склад", cashbook: "Кассовая книга", tasks: "Задачи", approval: "Согласования", orders: "Заказы", personnel: "Персонал", workplace: "Рабочее место", price: "Прайс-лист", reports: "Отчеты", admin: "Администрирование", readOnly: "Только чтение", modulePreview: "Обзор модулей", comingSoon: "Этот модуль подготовлен как область предварительного просмотра только для чтения.", pdfLanguage: "Язык PDF", invoiceLanguageHint: "Язык PDF-счета настраивается отдельно от языка интерфейса.",
+    appTitle: "GAM 2.0", loginTitle: "Вход", uiLanguage: "Язык интерфейса", application: "Приложение", username: "Имя пользователя", password: "Пароль", login: "Войти", logout: "Выйти", dashboard: "Панель", invoice: "Счета", inventory: "Устройства", warehouse: "Склад", cashbook: "Кассовая книга", tasks: "Задачи", approval: "Согласования", orders: "Заказы", communication: "Коммуникация", personnel: "Персонал", workplace: "Рабочее место", price: "Прайс-лист", reports: "Отчеты", admin: "Администрирование", readOnly: "Только чтение", modulePreview: "Обзор модулей", comingSoon: "Этот модуль подготовлен как область предварительного просмотра только для чтения.", pdfLanguage: "Язык PDF", invoiceLanguageHint: "Язык PDF-счета настраивается отдельно от языка интерфейса.",
   },
 };
 
@@ -175,9 +179,12 @@ export function iconForModule(key: string): string {
   if (normalized.includes("aufgabe")) return "/icons/tasks.svg";
   if (normalized.includes("freigabe")) return "/icons/approval.svg";
   if (normalized.includes("bestell")) return "/icons/orders.svg";
+  if (normalized.includes("kommunikation") || normalized.includes("communication") || normalized.includes("gcs")) return "/icons/communication.svg";
+  if (normalized.includes("recht") || normalized.includes("permission")) return "/icons/admin.svg";
   if (normalized.includes("personal")) return "/icons/personnel.svg";
   if (normalized.includes("arbeitsplatz")) return "/icons/workplace.svg";
   if (normalized.includes("preis")) return "/icons/price.svg";
+  if (normalized.includes("prüf") || normalized.includes("pruef") || normalized.includes("check") || normalized.includes("compliance")) return "/icons/admin.svg";
   if (normalized.includes("report") || normalized.includes("bericht")) return "/icons/reports.svg";
   if (normalized.includes("admin")) return "/icons/admin.svg";
   return "/icons/invoice.svg";
@@ -192,9 +199,12 @@ export function moduleKeyFromLabel(label: string): string {
   if (normalized.includes("aufgabe")) return "tasks";
   if (normalized.includes("freigabe")) return "approval";
   if (normalized.includes("bestell")) return "orders";
+  if (normalized.includes("kommunikation") || normalized.includes("communication") || normalized.includes("gcs")) return "communication";
+  if (normalized.includes("recht") || normalized.includes("permission")) return "permissions";
   if (normalized.includes("personal")) return "personnel";
   if (normalized.includes("arbeitsplatz")) return "workplace";
   if (normalized.includes("preis")) return "price";
+  if (normalized.includes("prüf") || normalized.includes("pruef") || normalized.includes("check") || normalized.includes("compliance")) return "compliance";
   if (normalized.includes("report") || normalized.includes("bericht")) return "reports";
   if (normalized.includes("admin")) return "admin";
   return "invoice";

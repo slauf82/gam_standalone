@@ -103,10 +103,22 @@ export const loadZugferdStatus = () => request<ZugferdStatus>("/invoices/zugferd
 export type RoleDto = { key: string; label: string; administrative: boolean; modules: string[] };
 export type AccountAdminDto = { id: number; username: string; fullname?: string; role?: string; email?: string; twoFactorConfigured: boolean; passwordPresent: boolean };
 export type AccountUpdateRequest = { fullname?: string; role?: string; email?: string; secretkey?: string };
+export type AccountCreateRequest = { username:string; password?:string; fullname?:string; role?:string; email?:string };
+export type PermissionAccessDto = { id:number; username:string; application:string; companyId?:number; role?:string };
+export type PermissionApplicationDto = { application:string; selectable?:boolean };
+export type PermissionAccessRequest = { username:string; application:string; companyId?:number|null; role?:string };
 export const loadMenu = () => request<RoleDto>("/auth/menu");
 export const loadRoles = () => request<RoleDto[]>("/admin/roles");
 export const loadAccounts = (q = "", limit = 100) => request<AccountAdminDto[]>(`/admin/accounts?q=${encodeURIComponent(q)}&limit=${limit}`);
 export const updateAccount = (id: number, payload: AccountUpdateRequest) => request<AccountAdminDto>(`/admin/accounts/${id}`, {method:"PATCH", body: JSON.stringify(payload)});
+export const createAccount = (payload: AccountCreateRequest) => request<AccountAdminDto>("/admin/accounts", {method:"POST", body: JSON.stringify(payload)});
+export const updateAccountPassword = (id: number, password: string) => request<AccountAdminDto>(`/admin/accounts/${id}/password`, {method:"PATCH", body: JSON.stringify({password})});
+export const deleteAccount = (id: number) => request<void>(`/admin/accounts/${id}`, {method:"DELETE"});
+export const loadPermissionAccess = (q = "", limit = 200) => request<PermissionAccessDto[]>(`/admin/permissions?q=${encodeURIComponent(q)}&limit=${limit}`);
+export const loadPermissionApplications = () => request<PermissionApplicationDto[]>("/admin/permissions/applications");
+export const createPermissionAccess = (payload: PermissionAccessRequest) => request<PermissionAccessDto>("/admin/permissions", {method:"POST", body: JSON.stringify(payload)});
+export const updatePermissionAccess = (id:number, payload: PermissionAccessRequest) => request<PermissionAccessDto>(`/admin/permissions/${id}`, {method:"PATCH", body: JSON.stringify(payload)});
+export const deletePermissionAccess = (id:number) => request<void>(`/admin/permissions/${id}`, {method:"DELETE"});
 
 
 export type InventoryDevice = { id:number; source:string; name?:string; type?:string; serialNumber?:string; inventoryNumber?:string; manufacturer?:string; ip?:string; location?:string; branchId?:number; branchCode?:string; branchName?:string; medicalDevice?:boolean; electricalDevice?:boolean; inventoryRelevant?:boolean; active?:boolean; inUse?:boolean; acquiredAt?:string; note?:string };
@@ -120,11 +132,15 @@ export const loadInventoryDevice = (source: string, id: number) => request<Inven
 export const loadInventoryStats = () => request<InventoryStats>("/inventory/stats");
 
 export type WarehouseItem = { id:number; kind:string; name?:string; description?:string; location?:string; quantity?:number; properties?:string; manufacturerEmail?:string; linkedDeviceCount?:number };
+export type WarehouseItemRequest = { kind?:string; name?:string; description?:string; location?:string; quantity?:number; properties?:string; manufacturerEmail?:string };
 export type WarehouseStats = { storageItemCount:number; consumableCount:number; consumablesWithStock:number; consumablesWithoutStock:number; deviceConsumableLinks:number; totalStorageQuantity:number; totalConsumableQuantity:number };
 export type StockChangeRequest = { kind?:string; id?:number; quantity:number; reason?:string };
 export const loadWarehouseItems = (q = "", kind = "all", onlyWithStock = false, limit = 100) => request<WarehouseItem[]>(`/warehouse/items?q=${encodeURIComponent(q)}&kind=${encodeURIComponent(kind)}&onlyWithStock=${onlyWithStock}&limit=${limit}`);
 export const loadWarehouseItem = (kind: string, id: number) => request<WarehouseItem>(`/warehouse/items/${encodeURIComponent(kind)}/${id}`);
 export const loadWarehouseStats = () => request<WarehouseStats>("/warehouse/stats");
+export const createWarehouseItem = (kind: string, payload: WarehouseItemRequest) => request<WarehouseItem>(`/warehouse/items/${encodeURIComponent(kind)}`, {method:"POST", body: JSON.stringify({...payload, kind})});
+export const updateWarehouseItem = (kind: string, id: number, payload: WarehouseItemRequest) => request<WarehouseItem>(`/warehouse/items/${encodeURIComponent(kind)}/${id}`, {method:"PUT", body: JSON.stringify({...payload, kind})});
+export const deleteWarehouseItem = (kind: string, id: number) => request<void>(`/warehouse/items/${encodeURIComponent(kind)}/${id}`, {method:"DELETE"});
 export const updateWarehouseStock = (kind: string, id: number, quantity: number, reason = "") => request<WarehouseItem>(`/warehouse/items/${encodeURIComponent(kind)}/${id}/stock`, {method:"PATCH", body: JSON.stringify({kind,id,quantity,reason})});
 
 
@@ -135,6 +151,21 @@ export const loadGamTasks = (limit=100) => request<ModuleRecord[]>(`/gam/tasks?l
 export const loadGamApprovals = (limit=100) => request<ModuleRecord[]>(`/gam/approvals?limit=${limit}`);
 export const loadGamPersonnel = (limit=150) => request<ModuleRecord[]>(`/gam/personnel?limit=${limit}`);
 export const loadGamCashbook = (limit=100) => request<ModuleRecord[]>(`/gam/cashbook?limit=${limit}`);
+
+export type WorkflowTask = { id?:number; username?:string; date?:string; branchCode?:string; branchId?:number; department?:string; task?:string; responsible?:string; priority?:string; status?:string; dueDate?:string; doneBy?:string; note?:string };
+export type WorkflowTaskRequest = { username?:string; branchCode?:string; branchId?:number; department?:string; task?:string; responsible?:string; priority?:string; status?:string; dueDate?:string; doneBy?:string; note?:string };
+export type WorkflowApproval = { id?:number; date?:string; creator?:string; description?:string; companyId?:number; branchId?:number; status?:string; note?:string };
+export type WorkflowApprovalRequest = { creator?:string; description?:string; companyId?:number; branchId?:number; status?:string; note?:string };
+export type WorkflowStats = { tasksOpen:number; tasksDone:number; approvalsOpen:number; approvalsDone:number };
+export const loadWorkflowTasks = (q='', status='all', branchId?:number, limit=150) => { const p = new URLSearchParams(); p.set('q', q); p.set('status', status); p.set('limit', String(limit)); if(branchId) p.set('branchId', String(branchId)); return request<WorkflowTask[]>(`/workflow/tasks?${p}`); };
+export const createWorkflowTask = (payload: WorkflowTaskRequest) => request<WorkflowTask>('/workflow/tasks', {method:'POST', body: JSON.stringify(payload)});
+export const updateWorkflowTask = (id:number, payload: WorkflowTaskRequest) => request<WorkflowTask>(`/workflow/tasks/${id}`, {method:'PUT', body: JSON.stringify(payload)});
+export const deleteWorkflowTask = (id:number) => request<void>(`/workflow/tasks/${id}`, {method:'DELETE'});
+export const loadWorkflowApprovals = (q='', status='all', branchId?:number, limit=150) => { const p = new URLSearchParams(); p.set('q', q); p.set('status', status); p.set('limit', String(limit)); if(branchId) p.set('branchId', String(branchId)); return request<WorkflowApproval[]>(`/workflow/approvals?${p}`); };
+export const createWorkflowApproval = (payload: WorkflowApprovalRequest) => request<WorkflowApproval>('/workflow/approvals', {method:'POST', body: JSON.stringify(payload)});
+export const updateWorkflowApproval = (id:number, payload: WorkflowApprovalRequest) => request<WorkflowApproval>(`/workflow/approvals/${id}`, {method:'PUT', body: JSON.stringify(payload)});
+export const deleteWorkflowApproval = (id:number) => request<void>(`/workflow/approvals/${id}`, {method:'DELETE'});
+export const loadWorkflowStats = () => request<WorkflowStats>('/workflow/stats');
 export const loadGamCompliance = (limit=100) => request<Record<string, ModuleRecord[]>>(`/gam/compliance?limit=${limit}`);
 export const loadGamFolders = (limit=100) => request<ModuleRecord[]>(`/gam/folders?limit=${limit}`);
 export const loadGamNews = (limit=50) => request<ModuleRecord[]>(`/gam/news?limit=${limit}`);
@@ -180,3 +211,54 @@ export const loadUiTranslations = (language: string, entries: Record<string, str
 
 export const loadUiTranslationsLive = (language: string, entries: Record<string, string>) =>
   request<Record<string, string>>("/ui-translations/live", {method:"POST", body: JSON.stringify({language, entries, knownTranslations: {}})});
+
+// Schritt 38: Administrationsbereiche außerhalb des Rechnungsmoduls
+export type MasterDataCatalog = { key:string; label:string; module:string; tableName:string; primaryKey:string; fields:string[]; searchFields:string[]; note?:string };
+export type MasterDataRows = { catalog: MasterDataCatalog; rows: Record<string, unknown>[] };
+export const loadMasterDataCatalogs = () => request<MasterDataCatalog[]>('/gam/admin/masterdata/catalogs');
+export const loadMasterDataRows = (key:string, q='', limit=150) => request<MasterDataRows>(`/gam/admin/masterdata/${encodeURIComponent(key)}?q=${encodeURIComponent(q)}&limit=${limit}`);
+export const createMasterDataRow = (key:string, payload:Record<string, unknown>) => request<Record<string, unknown>>(`/gam/admin/masterdata/${encodeURIComponent(key)}`, {method:'POST', body: JSON.stringify(payload)});
+export const updateMasterDataRow = (key:string, id:number|string, payload:Record<string, unknown>) => request<Record<string, unknown>>(`/gam/admin/masterdata/${encodeURIComponent(key)}/${encodeURIComponent(String(id))}`, {method:'PUT', body: JSON.stringify(payload)});
+export const deleteMasterDataRow = (key:string, id:number|string) => request<Record<string, unknown>>(`/gam/admin/masterdata/${encodeURIComponent(key)}/${encodeURIComponent(String(id))}`, {method:'DELETE'});
+
+// Schritt 38d: Geräteverzeichnis vollständig
+export type InventoryBranchOption = { id:number; code?:string; name?:string };
+export type InventoryCompanyOption = { id:number; name?:string };
+export type InventoryMaterialOption = { id:number; name?:string; properties?:string; stock?:number; manufacturerEmail?:string };
+export type InventoryDeviceUpdateRequest = { name?:string; type?:string; serialNumber?:string; inventoryNumber?:string; manufacturer?:string; ip?:string; location?:string; branchId?:number; medicalDevice?:boolean; electricalDevice?:boolean; inventory?:boolean; active?:boolean; inUse?:boolean; acquisitionDate?:string; note?:string };
+export const loadInventoryBranches = () => request<InventoryBranchOption[]>('/inventory/branches');
+export const loadInventoryCompanies = () => request<InventoryCompanyOption[]>('/inventory/companies');
+export const loadInventoryMaterials = (q='', limit=200) => request<InventoryMaterialOption[]>(`/inventory/materials?q=${encodeURIComponent(q)}&limit=${limit}`);
+export const createInventoryDevice = (payload: InventoryDeviceUpdateRequest) => request<InventoryDeviceDetail>('/inventory/devices/new', {method:'POST', body: JSON.stringify(payload)});
+export const updateInventoryDevice = (source:string, id:number, payload: InventoryDeviceUpdateRequest) => request<InventoryDeviceDetail>(`/inventory/devices/${encodeURIComponent(source)}/${id}`, {method:'PUT', body: JSON.stringify(payload)});
+export const deleteInventoryDevice = (id:number) => request<Record<string, unknown>>(`/inventory/devices/new/${id}`, {method:'DELETE'});
+export const setInventoryDeviceAssignment = (id:number, branchId?:number, companyId?:number) => request<InventoryDeviceDetail>(`/inventory/devices/new/${id}/assignments`, {method:'POST', body: JSON.stringify({branchId, companyId})});
+export const addInventoryDeviceMaterial = (id:number, materialId:number) => request<InventoryDeviceDetail>(`/inventory/devices/new/${id}/materials`, {method:'POST', body: JSON.stringify({materialId})});
+export const removeInventoryDeviceMaterial = (id:number, linkId:number) => request<InventoryDeviceDetail>(`/inventory/devices/new/${id}/materials/${linkId}`, {method:'DELETE'});
+
+// Schritt 38g6: direkter Bestell-E-Mailversand
+export type OrderEmailLineRequest = { materialId?:number; name?:string; stock?:number; quantity:number };
+export type OrderSmtpConfig = { host?:string; port?:number; username?:string; password?:string; from?:string; fromName?:string; replyTo?:string; startTls?:boolean; ssl?:boolean };
+export type OrderEmailRequest = { to:string; subject:string; text:string; draftId?:number; workflowTaskId?:number; lines?:OrderEmailLineRequest[]; smtp?:OrderSmtpConfig };
+export type OrderEmailResponse = { sent:boolean; message:string; to:string; subject:string; sentAt:string };
+export const sendOrderEmail = (payload: OrderEmailRequest) => request<OrderEmailResponse>('/orders/send-email', {method:'POST', body: JSON.stringify(payload)});
+
+// Schritt 38g7: Kommunikationsassistent und Login-News
+export type CommunicationSettings = {
+  mailEnabled:boolean;
+  smtpHost:string;
+  smtpPort:number;
+  smtpUsername:string;
+  smtpPasswordConfigured:boolean;
+  defaultFrom:string;
+  defaultRecipient:string;
+  defaultSubject:string;
+  defaultText:string;
+  loginNewsEnabled:boolean;
+  loginNewsTitle:string;
+  loginNewsText:string;
+  loginNewsSeverity:string;
+};
+export type LoginNews = { enabled:boolean; title:string; text:string; severity:string };
+export const loadCommunicationSettings = () => request<CommunicationSettings>('/communication/settings');
+export const loadLoginNews = () => request<LoginNews>('/communication/login-news');

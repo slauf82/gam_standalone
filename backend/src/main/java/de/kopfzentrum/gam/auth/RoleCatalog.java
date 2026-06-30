@@ -16,22 +16,18 @@ public class RoleCatalog {
   }
   public List<RoleDto> roles() {
     return List.of(
-      new RoleDto("admin", "Administration", true, List.of("dashboard", "invoices", "inventory", "warehouse", "users", "tasks", "approvals", "personnel", "cashbook", "compliance", "reports", "admin")),
-      new RoleDto("administrator", "Administration", true, List.of("dashboard", "invoices", "inventory", "warehouse", "users", "tasks", "approvals", "personnel", "cashbook", "compliance", "reports", "admin")),
-      new RoleDto("superadmin", "Super-Administration", true, List.of("dashboard", "invoices", "inventory", "warehouse", "users", "tasks", "approvals", "personnel", "cashbook", "compliance", "reports", "admin")),
-      new RoleDto("rechnung", "Rechnungen", false, List.of("dashboard", "invoices", "reports")),
-      new RoleDto("lager", "Lager", false, List.of("dashboard", "warehouse", "reports")),
-      new RoleDto("inventar", "Inventar", false, List.of("dashboard", "inventory", "warehouse", "reports")),
-      new RoleDto("personal", "Personal", false, List.of("dashboard", "personnel", "tasks")),
-      new RoleDto("user", "Benutzer", false, List.of("dashboard", "tasks")),
-      new RoleDto("viewer", "Nur Lesen", false, List.of("dashboard", "reports"))
+      new RoleDto("user", "Benutzer", false, List.of("dashboard")),
+      new RoleDto("mainuser", "Hauptbenutzer", false, List.of("dashboard", "reports")),
+      new RoleDto("admin", "Admin", true, List.of("dashboard", "invoices", "inventory", "warehouse", "patients", "appointments", "users", "tasks", "approvals", "orders", "communication", "personnel", "cashbook", "workplace", "priceList", "compliance", "reports", "admin")),
+      new RoleDto("superadmin", "Superadmin", true, List.of("dashboard", "invoices", "inventory", "warehouse", "patients", "appointments", "users", "tasks", "approvals", "orders", "communication", "personnel", "cashbook", "workplace", "priceList", "compliance", "reports", "admin")),
+      new RoleDto("viewer", "Nur Lesen", false, List.of("dashboard"))
     );
   }
 
   public boolean isAdmin(Account account) {
     if (account == null) return false;
     String r = account.normalizedRole();
-    return r.equals("admin") || r.equals("administrator") || r.equals("superadmin");
+    return r.equals("admin") || r.equals("superadmin");
   }
 
   public RoleDto describe(Account account) {

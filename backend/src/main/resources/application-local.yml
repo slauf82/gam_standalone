@@ -6,6 +6,17 @@ spring:
     url: ${GAM_DB_URL:jdbc:mariadb://localhost:3306/kopfzentruminventardb}
     username: ${GAM_DB_USER:root}
     password: ${GAM_DB_PASSWORD:}
+  mail:
+    host: ${SPRING_MAIL_HOST:mail.gmx.net}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:neu.gam@gmx.de}
+    password: "${SPRING_MAIL_PASSWORD:GAM.neu#v-20}"
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${SPRING_MAIL_STARTTLS_ENABLE:true}
 logging:
   level:
     de.kopfzentrum.gam: DEBUG
@@ -69,3 +80,38 @@ app:
 
 zugferd:
   enabled: true
+
+# Schritt 38g6: direkter Bestell-E-Mailversand.
+# Standardmäßig deaktiviert, damit GAM ohne Mailkonto weiter startet.
+# Aktivierung z.B. per Umgebungsvariablen:
+#   GAM_ORDERS_MAIL_ENABLED=true
+#   SPRING_MAIL_HOST=smtp.example.de
+#   SPRING_MAIL_PORT=587
+#   SPRING_MAIL_USERNAME=<mailkonto>
+#   SPRING_MAIL_PASSWORD=<app-passwort>
+#   GAM_ORDERS_MAIL_FROM=<mailkonto>
+gam:
+  orders:
+    mail:
+      enabled: ${GAM_ORDERS_MAIL_ENABLED:true}
+      from: ${GAM_ORDERS_MAIL_FROM:${SPRING_MAIL_USERNAME:neu.gam@gmx.de}}
+      from-name: ${GAM_ORDERS_MAIL_FROM_NAME:GAM 2.0}
+      default-recipient: ${GAM_ORDERS_MAIL_DEFAULT_RECIPIENT:${SPRING_MAIL_USERNAME:neu.gam@gmx.de}}
+      default-subject: ${GAM_ORDERS_MAIL_DEFAULT_SUBJECT:Materialbestellung GAM}
+      default-text: ${GAM_ORDERS_MAIL_DEFAULT_TEXT:Hallo,\n\nbitte liefern Sie die folgenden Materialien.\n\nVielen Dank.}
+  login:
+    news:
+      enabled: ${GAM_LOGIN_NEWS_ENABLED:false}
+      title: ${GAM_LOGIN_NEWS_TITLE:Wichtiger Hinweis}
+      text: ${GAM_LOGIN_NEWS_TEXT:}
+      severity: ${GAM_LOGIN_NEWS_SEVERITY:info}
+
+# Schritt 38g7: Kommunikationsassistent.
+# GMX-Standardwerte sind bewusst vorbelegt; Benutzername/Passwort bleiben lokal/secret.
+# Beispiel:
+#   SPRING_MAIL_HOST=mail.gmx.net
+#   SPRING_MAIL_PORT=587
+#   SPRING_MAIL_USERNAME=<vorbereitete-gmx-adresse>
+#   SPRING_MAIL_PASSWORD=<app-passwort>
+#   SPRING_MAIL_STARTTLS_ENABLE=true
+#   SPRING_MAIL_SMTP_AUTH=true

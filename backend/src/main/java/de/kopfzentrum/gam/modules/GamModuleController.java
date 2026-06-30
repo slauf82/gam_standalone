@@ -32,7 +32,9 @@ public class GamModuleController {
       overview("approvals", "Freigaben", "freigabe", "Freigabe-/Entscheidungsmodul"),
       overview("personnel", "Personal", "personal", "Mitarbeiter, Konten und interne Zuordnungen"),
       overview("cashbook", "Kassenbuch", "kassenbuch", "Kassenbuch und Mandantenbezug"),
-      overview("compliance", "Pruefungen/Einweisungen", "kontrolle", "STK/MTK/BGV-A3, Inbetriebnahme, Einweisung"),
+      overview("workplace", "Arbeitsplatzausstattung", "arbeitsplatz", "Arbeitsplätze, Einrichtung und Arbeitsplatzstatus"),
+      overview("priceList", "Preisliste", "preisliste", "Preislisten- und Lieferantenpreise"),
+      overview("compliance", "Prüfungen", "kontrolle/inbetriebnahme/einweisung", "Prüfungen, Inbetriebnahmen und Einweisungen als GDS-Modul"),
       overview("folders", "Ordnerfreigaben", "ordnerfreigabe", "Arbeitsplatz- und Ordnerfreigaben"),
       overview("news", "News", "news", "Startseiten-/Informationsmodul"),
       overview("reports", "Reports/Exporte", "rechnung", "Berichte aus Rechnungen, Inventar, Lager und Aufgaben")

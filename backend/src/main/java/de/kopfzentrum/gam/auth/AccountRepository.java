@@ -81,7 +81,40 @@ public class AccountRepository {
       """, blankToNull(secretkey), id);
     return findById(id).orElseThrow();
   }
+  public Account create(String username, String rawPassword, String fullname, String role, String email) {
+    String u = blankToNull(username);
+    if (u == null) throw new IllegalArgumentException("Benutzername fehlt");
+    String hash = sha256(blankToNull(rawPassword) == null ? "changeme" : rawPassword);
+    jdbc.update("""
+      INSERT INTO accounts (username, password, fullname, role, email, secretkey)
+      VALUES (?, ?, ?, ?, ?, NULL)
+      """, u, hash, blankToNull(fullname), blankToNull(role) == null ? "user" : blankToNull(role), blankToNull(email));
+    return findByUsername(u).orElseThrow();
+  }
 
+  public Account updatePassword(int id, String rawPassword) {
+    String pw = blankToNull(rawPassword);
+    if (pw == null) throw new IllegalArgumentException("Passwort fehlt");
+    jdbc.update("""
+      UPDATE accounts
+      SET password = ?
+      WHERE id = ?
+      """, sha256(pw), id);
+    return findById(id).orElseThrow();
+  }
+
+  public void deleteById(int id) {
+    jdbc.update("DELETE FROM accounts WHERE id = ?", id);
+  }
+
+  private String sha256(String value) {
+    try {
+      java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+      return java.util.HexFormat.of().formatHex(md.digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    } catch (Exception e) {
+      throw new IllegalStateException("Passwort konnte nicht verschluesselt werden", e);
+    }
+  }
 
 
   public Account updateSecretKeyByUsername(String username, String secretkey) {
