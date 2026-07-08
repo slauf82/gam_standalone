@@ -9,7 +9,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,13 +25,15 @@ public class SecurityConfig {
       .cors(cors -> {})
       .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
-        // Schritt 39m: Passkey/WebAuthn muss auch ohne bestehende JWT-Sitzung und mit Browser-Preflight laufen.
-        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-        .requestMatchers("/api/auth/passkey/**").permitAll()
         .requestMatchers(
           "/api/auth/login", "/api/tts/status",
           "/api/auth/totp/setup",
           "/api/auth/totp/confirm",
+          "/api/auth/passkey/status",
+          "/api/auth/passkey/register/options",
+          "/api/auth/passkey/register/finish",
+          "/api/auth/passkey/login/options",
+          "/api/auth/passkey/login/finish",
           "/api/system/status",
           "/api/system/startup-check",
           "/api/communication/login-news",
@@ -67,12 +68,9 @@ public class SecurityConfig {
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration cfg = new CorsConfiguration();
-    // Schritt 39m: lokale Tests laufen je nach Rechner/Startskript auf 5173, 5174, 8080, localhost oder 127.0.0.1.
-    // Feste Origins fuehren bei Passkey-Preflights leicht zu HTTP 403.
-    cfg.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*", "https://localhost:*", "https://127.0.0.1:*"));
+    cfg.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
     cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    cfg.setAllowedHeaders(List.of("*"));
-    cfg.setExposedHeaders(List.of("Retry-After", "Content-Type"));
+    cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     cfg.setAllowCredentials(true);
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", cfg);

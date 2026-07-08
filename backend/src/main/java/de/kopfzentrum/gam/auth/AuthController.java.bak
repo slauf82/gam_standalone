@@ -4,7 +4,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -77,11 +76,11 @@ public class AuthController {
   }
 
   @PostMapping("/passkey/register/options")
-  public PasskeyOptionsResponse passkeyRegisterOptions(@RequestBody PasskeyUsernameRequest request, HttpServletRequest servletRequest) {
+  public PasskeyOptionsResponse passkeyRegisterOptions(@RequestBody PasskeyUsernameRequest request) {
     Account account = accounts.findByUsername(request.username()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Benutzer nicht gefunden"));
     String challenge = randomBase64Url(32);
     PASSKEY_CHALLENGES.put("register:" + account.username(), challenge);
-    return new PasskeyOptionsResponse(account.username(), Integer.toString(account.id()), challenge, passkeyRpId(servletRequest), "GAM 2.0", passkeys.findCredentialIdsByUsername(account.username()));
+    return new PasskeyOptionsResponse(account.username(), Integer.toString(account.id()), challenge, "localhost", "GAM 2.0", passkeys.findCredentialIdsByUsername(account.username()));
   }
 
   @PostMapping("/passkey/register/finish")
@@ -99,11 +98,11 @@ public class AuthController {
   }
 
   @PostMapping("/passkey/login/options")
-  public PasskeyOptionsResponse passkeyLoginOptions(@RequestBody PasskeyUsernameRequest request, HttpServletRequest servletRequest) {
+  public PasskeyOptionsResponse passkeyLoginOptions(@RequestBody PasskeyUsernameRequest request) {
     Account account = accounts.findByUsername(request.username()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Benutzer nicht gefunden"));
     String challenge = randomBase64Url(32);
     PASSKEY_CHALLENGES.put("login:" + account.username(), challenge);
-    return new PasskeyOptionsResponse(account.username(), Integer.toString(account.id()), challenge, passkeyRpId(servletRequest), "GAM 2.0", passkeys.findCredentialIdsByUsername(account.username()));
+    return new PasskeyOptionsResponse(account.username(), Integer.toString(account.id()), challenge, "localhost", "GAM 2.0", passkeys.findCredentialIdsByUsername(account.username()));
   }
 
   @PostMapping("/passkey/login/finish")
@@ -122,23 +121,6 @@ public class AuthController {
       LoginMode.PASSKEY.name(),
       jwtService.jwtMinutes()
     );
-  }
-
-  private String passkeyRpId(HttpServletRequest request) {
-    String host = request.getHeader("X-Forwarded-Host");
-    if (host == null || host.isBlank()) {
-      host = request.getHeader("Host");
-    }
-    if (host == null || host.isBlank()) {
-      return "localhost";
-    }
-    int colon = host.indexOf(':');
-    String rpId = (colon >= 0 ? host.substring(0, colon) : host).trim().toLowerCase(Locale.ROOT);
-    if (rpId.isBlank()) {
-      return "localhost";
-    }
-    // Fuer lokale Entwicklung sind localhost und 127.0.0.1 die relevanten WebAuthn-RP-IDs.
-    return rpId;
   }
 
   private String randomBase64Url(int bytes) {
