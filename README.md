@@ -1,46 +1,40 @@
-# GAM 2.0 Standalone
+# GAM Standalone
 
-Moderne Praxis-, Verwaltungs- und Rechnungsplattform auf Basis von Spring Boot, React, MariaDB, OpenHTMLtoPDF und PDFBox 3 mit Unterstützung für PDF/A-3, ZUGFeRD, PDF/UA und WCAG.
+## Schritt 36a – Piper Verfügbarkeits- und UI-Fix
+
+Diese Version korrigiert die Piper-Erkennung: Das Backend sucht `piper.exe` und `voices` nun über mehrere plausible Pfade und meldet den tatsächlich gefundenen Pfad in `/api/tts/status`. Die Oberfläche graut Piper nicht mehr hart aus, wenn eine unterstützte Sprache noch per Auto-Download/Fallback verarbeitet werden kann.
+
+Siehe: `SCHRITT_36A_PIPER_VERFUEGBARKEIT_UI_FIX_STATUS.md`
+
 
 Modernisierung des alten JSF-/GlassFish-GAM-Projekts zu Spring Boot + React/TypeScript + MariaDB.
 
 ## Aktueller Stand
 
-GAM 2.0 hat sich von einer reinen Modernisierung des historischen Rechnungssystems zu einer modularen Verwaltungsplattform entwickelt.
+Dieses Paket enthält Phase 1A + Phase 1B/1C sowie Schritt 1–4:
 
-Der aktuelle Funktionsumfang umfasst:
+- kompatibler Login über bestehende `accounts`-Tabelle
+- vorbereitete Passwort-/2FA-Kompatibilität
+- JWT-Session-Grundlage
+- `.lbd`-Empfängerdatei-Suche und Vorschau
+- Rechnungsübersicht aus Bestandsdaten
+- Produktliste aus `rechnungsdaten`
+- neue Rechnung anlegen
+- Speichern in `rechnungsdetails` und `rechnung`
+- ZUGFeRD/Factur-X-E-Rechnungs-Export als primärer PDF-Export
+- Benutzer-/Rechteverwaltung mit Rollenmenü
+- Inventar-/Gerätemodul aus `geräte` und `geräte_neu`
+- Lager-/Materialmodul aus `lager` und `verbrauchsmaterial`
 
-* Benutzeranmeldung mit Rollen- und Rechteverwaltung
-* JWT-basierte Sitzungsverwaltung
-* Vorbereitete Passwort-, 2FA- und Passkey-Unterstützung
-* Rechnungsverwaltung mit Vorschau und PDF-Erzeugung
-* ZUGFeRD-/Factur-X-E-Rechnungen
-* PDF/A-3-konforme Dokumente
-* PDF/UA-konforme Dokumente
-* WCAG-konforme Dokumente
-* Mehrsprachige Rechnungen
-* Live-Übersetzung von Produktbeschreibungen
-* QR-Code-basiertes Rechnungsportal
-* LBD-Empfängerverwaltung mit manueller Adressbearbeitung
-* Inventar- und Gerätemanagement
-* Lager- und Materialverwaltung
-* Report- und Exportfunktionen
-* DATEV-nahe Exportformate
-* Mehrsprachige Benutzeroberfläche
-* PiperTTS-basierte Vorlesefunktion
-* Automatische Datenbankerkennung für lokale Installationen
-* Vollständig lokale Nutzung ohne Cloud-Abhängigkeit
+Details stehen in:
 
-Besondere Schwerpunkte von GAM 2.0 sind:
-
-* Datenschutz und lokaler Betrieb
-* Barrierefreiheit
-* Offene Standards
-* Langfristige Archivierung
-* Erweiterbarkeit und Wartbarkeit
-* Kompatibilität mit bestehenden GAM-Datenbeständen
-
-Detaillierte Informationen zu den einzelnen Entwicklungsständen befinden sich in den jeweiligen Statusdokumenten von Phase 1A bis Schritt 37I4.
+- `PHASE_1A_STATUS.md`
+- `PHASE_1B_1C_STATUS.md`
+- `PHASE_1C_ZUGFERD_STATUS.md`
+- `SCHRITT_1_RECHNUNGSMODUL_STATUS.md`
+- `SCHRITT_2_BENUTZER_RECHTE_STATUS.md`
+- `SCHRITT_3_INVENTAR_GERAETE_STATUS.md`
+- `SCHRITT_4_LAGER_MATERIAL_STATUS.md`
 
 ## Backend starten
 
@@ -474,52 +468,19 @@ start-backend.bat
 start-frontend.bat
 ```
 
-## GAM 2.0 v1.7.3 / Schritt 36W – Stabilisierung von PDF/UA, ZUGFeRD und Rechnungsworkflow
+## GAM 2.0 v1.7.3 / Schritt 36i – PDF/UA + ZUGFeRD
 
-Schritt 36W konsolidiert die Arbeiten aus den Schritten 36F bis 36V und stellt einen stabilen Zwischenstand für die weitere Modernisierung der PDF-Erzeugung bereit.
+Schritt 36i ergänzt die Rechnungserzeugung um PDF/UA-orientierte Barrierefreiheitsinformationen, ohne den ZUGFeRD/Factur-X-Export zu entfernen.
 
 Enthalten:
 
-- Unterstützung für manuelle Rechnungsadressen und LBD-Empfänger
-- Konsistente Verwendung der Rechnungsdaten in Vorschau, PDF, XML und Patientenportal
-- Automatische Datenbankerkennung und vereinfachter Erststart
-- PiperTTS als Standard-Vorlesetechnik
-- Mehrsprachige Produktbeschreibungen mit Live-Übersetzung
-- Verbesserte PDF-Metadaten
-- PDF/UA-Grundlagen für Barrierefreiheit
-- ZUGFeRD/Factur-X-Einbettung
-- Stabilisierungen im Rechnungs- und Exportworkflow
+- Dokumentensprache und PDF-Metadaten
+- PDF/UA-XMP-Kennung
+- MarkInfo und Tagged-PDF-Aktivierung, soweit von OpenPDF unterstützt
+- Rollen für Tabellen, Tabellenzellen und Bilder
+- Alternativtexte für Logo und QR-Code
+- ZUGFeRD/Factur-X bleibt weiterhin eingebettet
 
-Statusdatei:
+Für die finale Freigabe wird eine Prüfung mit PAC 2024 oder Adobe Acrobat Preflight empfohlen. Weitere Hinweise siehe:
 
-`SCHRITT_36W_STABILISIERUNG_LBD_MANUELL_PDF_BENUTZER_RAUS_STATUS.md`
-
-## GAM 2.0 v1.7.4 / Schritt 37I4 – OpenHTMLtoPDF, PDF/A-3, ZUGFeRD und PDF/UA
-
-Mit Version 1.7.4 wurde die komplette PDF-Infrastruktur modernisiert und auf OpenHTMLtoPDF umgestellt.
-
-Highlights:
-
-- OpenPDF vollständig entfernt
-- OpenHTMLtoPDF als alleiniger PDF-Renderer
-- PDFBox 3 als zentrale PDF-Technologie
-- PDF/A-3-Unterstützung
-- ZUGFeRD/Factur-X-Einbettung
-- PDF/UA-konforme Dokumente
-- WCAG-konforme Dokumente
-- XMP-Metadaten
-- PDF/UA-Identifier
-- Dokumenttitel und DisplayDocTitle
-- Bookmarks und Navigationsstruktur
-- Optimierte Dokumentstruktur für Screenreader
-- Erfolgreiche Validierung mit:
-  - PAC PDF/UA
-  - WCAG-Prüfung
-  - PDF Quality Check
-  - AI Accessibility Check
-
-Damit erzeugt GAM 2.0 barrierefreie, archivierungsfähige und ZUGFeRD-konforme Rechnungen vollständig lokal ohne Cloud-Abhängigkeit.
-
-Statusdatei:
-
-`SCHRITT_37I_OPENPDF_ENTFERNT_OPENHTML_STANDARD_STATUS.md`
+`tools/pdfua/README_PDF_UA_ZUGFERD.md`

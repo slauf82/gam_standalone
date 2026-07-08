@@ -7,6 +7,7 @@ import de.kopfzentrum.gam.translation.UiTranslationService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -28,16 +29,18 @@ public class InvoiceOpenHtmlPdfService {
   private final UiTranslationService liveTranslations;
   private final InvoiceAccessTokenRepository accessTokens;
   private final QrCodeService qrCodeService;
+  private final JdbcTemplate jdbc;
   private final String portalBaseUrl;
   private static final NumberFormat EUR = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
-  public InvoiceOpenHtmlPdfService(InvoiceRepository repo, LbdService lbdService, TranslationService translations, UiTranslationService liveTranslations, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
+  public InvoiceOpenHtmlPdfService(InvoiceRepository repo, LbdService lbdService, TranslationService translations, UiTranslationService liveTranslations, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, JdbcTemplate jdbc, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
     this.repo = repo;
     this.lbdService = lbdService;
     this.translations = translations;
     this.liveTranslations = liveTranslations;
     this.accessTokens = accessTokens;
     this.qrCodeService = qrCodeService;
+    this.jdbc = jdbc;
     this.portalBaseUrl = portalBaseUrl;
   }
 
@@ -123,10 +126,11 @@ public class InvoiceOpenHtmlPdfService {
       }
     }
 
-    String salutation = invoiceText("invoiceSalutationLabel0", lang, summary, company, recipient);
-    String invoiceText = invoiceText("invoiceInvoiceTextLabel0", lang, summary, company, recipient);
-    String lawHint = invoiceText("invoiceLawHintLabel0", lang, summary, company, recipient);
-    String greetings = invoiceText("invoiceGreetingsLabel0", lang, summary, company, recipient);
+    Integer resolvedCompanyId = summary.companyId() != null ? summary.companyId() : (companyId != null ? companyId : findCompanyIdByInvoice(summary));
+    String salutation = invoiceAdminText(resolvedCompanyId, "salutation", "rechnungsanrede", "invoiceSalutationLabel0", lang, summary, company, recipient);
+    String invoiceText = invoiceAdminText(resolvedCompanyId, "invoiceText", "rechnungstext", "invoiceInvoiceTextLabel0", lang, summary, company, recipient);
+    String lawHint = invoiceAdminText(resolvedCompanyId, "legalNote", "rechnungsrechtlicherhinweis", "invoiceLawHintLabel0", lang, summary, company, recipient);
+    String greetings = invoiceAdminText(resolvedCompanyId, "greeting", "rechnungsgrussformel", "invoiceGreetingsLabel0", lang, summary, company, recipient);
     String adjustments = commercialAdjustments(summary, lines, totals, lang);
     String bank = bankBlock(company, lang);
     String portal = portalBlock(summary, lang);
@@ -282,6 +286,79 @@ public class InvoiceOpenHtmlPdfService {
       .trim();
   }
 
+  private String invoiceAdminText(Integer companyId, String logicalKey, String table, String translationKey, String language, InvoiceSummary summary, InvoiceCompany company, LbdRecipient recipient) {
+    String selected = selectedCompanyText(companyId, logicalKey);
+    String text = selected == null || selected.isBlank() ? systemFallbackText(table) : selected;
+    if (text == null || text.isBlank()) text = hardcodedFallback(logicalKey, translations.invoice(translationKey, language));
+    return replacePlaceholders(text, language, summary, company, recipient)
+      .replace("-br-", "\n")
+      .replace("  ", " ")
+      .trim();
+  }
+
+  private String selectedCompanyText(Integer companyId, String logicalKey) {
+    if (companyId == null) return null;
+    String column = switch (logicalKey) {
+      case "salutation" -> "a.TEXT";
+      case "invoiceText" -> "t.TEXT";
+      case "legalNote" -> "h.TEXT";
+      case "greeting" -> "g.TEXT";
+      default -> null;
+    };
+    if (column == null) return null;
+    try {
+      ensureInvoiceTextFallbackRows();
+      String sql = """
+        SELECT %s
+          FROM rechnungstext_gesellschaft_zuordnung z
+          LEFT JOIN rechnungsanrede a ON a.ID=z.ANREDE_ID
+          LEFT JOIN rechnungstext t ON t.ID=z.RECHNUNGSTEXT_ID
+          LEFT JOIN rechnungsrechtlicherhinweis h ON h.ID=z.RECHTLICHER_HINWEIS_ID
+          LEFT JOIN rechnungsgrussformel g ON g.ID=z.GRUSSFORMEL_ID
+         WHERE z.RGESELLSCHAFTS_ID=?
+         LIMIT 1
+        """.formatted(column);
+      return jdbc.queryForObject(sql, String.class, companyId);
+    } catch (Exception ignored) { return null; }
+  }
+
+  private String systemFallbackText(String table) {
+    try {
+      ensureInvoiceTextFallbackRows();
+      return jdbc.queryForObject("SELECT `TEXT` FROM `" + table + "` WHERE `ID`=0 LIMIT 1", String.class);
+    } catch (Exception ignored) { return null; }
+  }
+
+  private void ensureInvoiceTextFallbackRows() {
+    try {
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungsanrede` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungstext` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungsrechtlicherhinweis` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungsgrussformel` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      jdbc.execute("SET SESSION sql_mode = CONCAT_WS(',', @@sql_mode, 'NO_AUTO_VALUE_ON_ZERO')");
+      jdbc.update("INSERT IGNORE INTO `rechnungsanrede` (`ID`, `TEXT`) VALUES (0, ?)", "Sehr geehrte Damen und Herren,");
+      jdbc.update("INSERT IGNORE INTO `rechnungstext` (`ID`, `TEXT`) VALUES (0, ?)", "Wir erlauben uns folgende Leistungen in Rechnung zu stellen.");
+      jdbc.update("INSERT IGNORE INTO `rechnungsrechtlicherhinweis` (`ID`, `TEXT`) VALUES (0, ?)", "Bitte begleichen Sie den Rechnungsbetrag innerhalb der angegebenen Frist.");
+      jdbc.update("INSERT IGNORE INTO `rechnungsgrussformel` (`ID`, `TEXT`) VALUES (0, ?)", "Mit freundlichen Grüßen");
+    } catch (Exception ignored) { }
+  }
+
+  private String hardcodedFallback(String logicalKey, String translationFallback) {
+    return switch (logicalKey) {
+      case "salutation" -> "Sehr geehrte Damen und Herren,";
+      case "invoiceText" -> "Wir erlauben uns folgende Leistungen in Rechnung zu stellen.";
+      case "legalNote" -> "Bitte begleichen Sie den Rechnungsbetrag innerhalb der angegebenen Frist.";
+      case "greeting" -> "Mit freundlichen Grüßen";
+      default -> translationFallback == null ? "" : translationFallback;
+    };
+  }
+
+  private Integer findCompanyIdByInvoice(InvoiceSummary summary) {
+    if (summary == null || summary.number() == null || summary.number().isBlank()) return null;
+    try { return jdbc.queryForObject("SELECT RGESELLSCHAFTS_ID FROM rechnungen WHERE NUMMER=? LIMIT 1", Integer.class, summary.number()); }
+    catch (Exception ignored) { return null; }
+  }
+
   private String replacePlaceholders(String text, String language, InvoiceSummary summary, InvoiceCompany company, LbdRecipient recipient) {
     if (text == null) return "";
     String result = text;
@@ -338,10 +415,18 @@ public class InvoiceOpenHtmlPdfService {
 
   private static String companyLogoBlock(InvoiceCompany company) {
     try {
-      ClassPathResource res = new ClassPathResource("static/images/" + companyLogoFile(company));
+      String logo = companyLogoFile(company);
+      if (blank(logo)) return "";
+      if (logo.startsWith("http://") || logo.startsWith("https://")) {
+        return "<div class='logo' style=\"background-image:url('" + escape(logo) + "')\"></div>";
+      }
+      String path = logo.startsWith("/images/") ? logo.substring("/images/".length()) : logo;
+      if (path.startsWith("images/")) path = path.substring("images/".length());
+      ClassPathResource res = new ClassPathResource("static/images/" + path);
       if (!res.exists()) return "";
       byte[] data = res.getInputStream().readAllBytes();
-      String mime = companyLogoFile(company).toLowerCase(Locale.ROOT).endsWith(".jpg") || companyLogoFile(company).toLowerCase(Locale.ROOT).endsWith(".jpeg") ? "image/jpeg" : "image/png";
+      String lower = path.toLowerCase(Locale.ROOT);
+      String mime = lower.endsWith(".jpg") || lower.endsWith(".jpeg") ? "image/jpeg" : lower.endsWith(".webp") ? "image/webp" : lower.endsWith(".gif") ? "image/gif" : "image/png";
       String uri = "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(data);
       return "<div class='logo' style=\"background-image:url('" + uri + "')\"></div>";
     } catch (Exception ignored) {
@@ -350,6 +435,7 @@ public class InvoiceOpenHtmlPdfService {
   }
 
   private static String companyLogoFile(InvoiceCompany company) {
+    if (company != null && !blank(company.logoUrl())) return company.logoUrl();
     int id = company == null || company.id() == null ? -1 : company.id();
     return switch (id) {
       case 1 -> "logo_AMAE_blau.png";

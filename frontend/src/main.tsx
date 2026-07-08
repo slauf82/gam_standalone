@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Download, FilePlus2, FileText, LogOut, Search, ShieldCheck, UserRound, UsersRound, LayoutDashboard, Package, Warehouse, CheckSquare, ClipboardCheck, BriefcaseBusiness, Landmark, FileBarChart, ClipboardList, KeyRound, QrCode, Smartphone, CalendarDays} from 'lucide-react';
 import {QRCodeSVG} from 'qrcode.react';
-import {AccountAdminDto, AccountDto, ModuleRecord, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, createAccount, deleteAccount, updateAccountPassword, loadPermissionAccess, loadPermissionApplications, createPermissionAccess, updatePermissionAccess, deletePermissionAccess, PermissionAccessDto, PermissionApplicationDto, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamNews, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadInventoryBranches, loadInventoryCompanies, loadInventoryMaterials, createInventoryDevice, updateInventoryDevice, deleteInventoryDevice, setInventoryDeviceAssignment, addInventoryDeviceMaterial, removeInventoryDeviceMaterial, loadWarehouseItems, loadWarehouseStats, createWarehouseItem, updateWarehouseItem, deleteWarehouseItem, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary, InvoiceTotals, loadTtsAudio, loadTtsStatus, loadUiTranslations, loadUiTranslationsLive, MasterDataCatalog, loadMasterDataCatalogs, loadMasterDataRows, createMasterDataRow, updateMasterDataRow, deleteMasterDataRow, WorkflowTask, WorkflowApproval, WorkflowStats, loadWorkflowTasks, createWorkflowTask, updateWorkflowTask, deleteWorkflowTask, loadWorkflowApprovals, createWorkflowApproval, updateWorkflowApproval, deleteWorkflowApproval, loadWorkflowStats, sendOrderEmail, loadCommunicationSettings, loadLoginNews, CommunicationSettings, LoginNews} from './api/client';
+import {AccountAdminDto, AccountDto, ModuleRecord, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, createAccount, deleteAccount, updateAccountPassword, loadPermissionAccess, loadPermissionApplications, createPermissionAccess, updatePermissionAccess, deletePermissionAccess, PermissionAccessDto, PermissionApplicationDto, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamNews, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadInventoryBranches, loadInventoryCompanies, loadInventoryMaterials, createInventoryDevice, updateInventoryDevice, deleteInventoryDevice, setInventoryDeviceAssignment, addInventoryDeviceMaterial, removeInventoryDeviceMaterial, loadWarehouseItems, loadWarehouseStats, createWarehouseItem, updateWarehouseItem, deleteWarehouseItem, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary, InvoiceTotals, loadTtsAudio, loadTtsStatus, loadUiTranslations, loadUiTranslationsLive, MasterDataCatalog, loadMasterDataCatalogs, loadMasterDataRows, createMasterDataRow, updateMasterDataRow, deleteMasterDataRow, WorkflowTask, WorkflowApproval, WorkflowStats, loadWorkflowTasks, createWorkflowTask, updateWorkflowTask, deleteWorkflowTask, loadWorkflowApprovals, createWorkflowApproval, updateWorkflowApproval, deleteWorkflowApproval, loadWorkflowStats, sendOrderEmail, loadCommunicationSettings, loadLoginNews, CommunicationSettings, LoginNews, uploadInvoiceLogo} from './api/client';
 import './style.css';
 import { UI_LANGUAGES, normalizeUiLanguage, tUi, iconForModule, moduleKeyFromLabel, germanUiEntries, type UiLanguage } from "./i18n";
 
@@ -136,6 +136,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     passkeyRegister: "Passkey registrieren",
     passkeyLogin: "Passkey-Login",
     invoice: "Rechnungsprogramm",
+    invoiceAdmin: "Rechnungsadministration",
     inventory: "Geräteverzeichnis",
     warehouse: "Lagerverwaltung",
     cashbook: "Kassenbuch",
@@ -283,6 +284,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     passkeyRegister: "Register passkey",
     passkeyLogin: "Passkey login",
     invoice: "Invoicing",
+    invoiceAdmin: "Invoice administration",
     inventory: "Device directory",
     warehouse: "Warehouse",
     cashbook: "Cashbook",
@@ -431,6 +433,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     passkeyRegister: "Enregistrer une passkey",
     passkeyLogin: "Connexion par passkey",
     invoice: "Facturation",
+    invoiceAdmin: "Administration des factures",
     inventory: "Répertoire des appareils",
     warehouse: "Gestion du stock",
     cashbook: "Livre de caisse",
@@ -577,6 +580,7 @@ const UI_LABELS: Record<string, Record<string, string>> = {
     passkeyRegister: "Зареєструвати passkey",
     passkeyLogin: "Вхід через passkey",
     invoice: "Рахунки",
+    invoiceAdmin: "Адміністрування рахунків",
     inventory: "Каталог пристроїв",
     warehouse: "Склад",
     cashbook: "Касова книга",
@@ -810,12 +814,14 @@ const moduleKey = (labelOrKey: string) => {
   const raw = labelOrKey || "";
   const v = raw.toLowerCase().trim();
   if (v === "invoices") return "invoice";
+  if (v === "invoiceadmin" || v === "rechnungverwaltung" || v === "rechnungsverwaltung") return "invoiceAdmin";
   if (v === "patients" || v === "patient" || v === "patientenverwaltung") return "patients";
   if (v === "appointments" || v === "appointment" || v === "terminverwaltung") return "appointments";
   if (v === "users" || v === "usersrights" || v === "users/rights" || v === "benutzer/rechte") return "usersRights";
   if (v === "pricelist") return "price";
   if (v === "approvals") return "approval";
-  if (["invoice","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard","checks","usersRights","compliance","communication","patients","appointments"].includes(v)) return v;
+  if (["invoice","invoiceAdmin","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard","checks","usersRights","compliance","communication","patients","appointments"].includes(v)) return v;
+  if (v.includes("rechnungsverwaltung") || v.includes("rechnungsadministration") || v.includes("rechnung admin") || v.includes("invoice admin")) return "invoiceAdmin";
   if (v.includes("rechnung")) return "invoice";
   if (v.includes("gerät") || v.includes("geraet") || v.includes("device")) return "inventory";
   if (v.includes("lager") || v.includes("warehouse")) return "warehouse";
@@ -1357,7 +1363,8 @@ const gamUi = (key: string) => {
 
 const gamModuleKey = (labelOrKey: string) => {
   const value = (labelOrKey || "").toLowerCase();
-  if (["invoice","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard","checks","usersRights","compliance"].includes(value)) return value;
+  if (value === "invoiceadmin" || value.includes("rechnungsverwaltung") || value.includes("rechnungsadministration") || value.includes("rechnung admin") || value.includes("invoice admin")) return "invoiceAdmin";
+  if (["invoice","inventory","warehouse","cashbook","tasks","approval","orders","personnel","workplace","price","reports","admin","dashboard","checks","compliance"].includes(value)) return value;
   if (value.includes("rechnung")) return "invoice";
   if (value.includes("gerät") || value.includes("geraet") || value.includes("device")) return "inventory";
   if (value.includes("lager") || value.includes("warehouse")) return "warehouse";
@@ -1422,7 +1429,7 @@ class ModuleErrorBoundary extends React.Component<{children: React.ReactNode; ti
   }
 }
 
-type Page = 'dashboard'|'invoices'|'inventory'|'warehouse'|'patients'|'appointments'|'users'|'tasks'|'approvals'|'personnel'|'cashbook'|'compliance'|'reports'|'orders'|'priceList'|'workplace'|'communication'|'permissions'|'moduleAdmin';
+type Page = 'dashboard'|'invoices'|'invoiceAdmin'|'inventory'|'warehouse'|'patients'|'appointments'|'users'|'tasks'|'approvals'|'personnel'|'cashbook'|'compliance'|'reports'|'orders'|'priceList'|'workplace'|'communication'|'permissions'|'moduleAdmin';
 type GamLanguage = 'de'|'en'|'fr'|'uk'|'it'|'sv'|'tr'|'ru'|'es'|'pt'|'nl'|'pl'|'cs';
 const LANGUAGES: {value: GamLanguage; label: string}[] = [
   {value:'de', label:'Deutsch'},
@@ -1439,10 +1446,12 @@ const LANGUAGES: {value: GamLanguage; label: string}[] = [
   {value:'ru', label:'Русский'},
   {value:'uk', label:'Українська'},
 ];
-const LOGIN_APPLICATIONS = ['Rechnungsprogramm','Geräteverzeichnis','Lagerverwaltung','Patientenverwaltung','Terminverwaltung','Kassenbuch','Aufgabenverwaltung','Freigabemanagement','Bestelltool','Kommunikation','Benutzer/Rechte','Personaldaten','Arbeitsplatzausstattung','Preisliste','Prüfungen','Reports','Administration'];
+const LOGIN_APPLICATIONS = ['Rechnungsprogramm','Rechnungsadministration','Geräteverzeichnis','Lagerverwaltung','Patientenverwaltung','Terminverwaltung','Kassenbuch','Aufgabenverwaltung','Freigabemanagement','Bestelltool','Kommunikation','Benutzer/Rechte','Personaldaten','Arbeitsplatzausstattung','Preisliste','Prüfungen','Reports','Administration'];
 
 const LOGIN_APPLICATION_TO_PAGE: Record<string, Page> = {
   'Rechnungsprogramm': 'invoices',
+  'Rechnungsadministration': 'invoiceAdmin',
+  'Rechnungsverwaltung': 'invoiceAdmin',
   'Geräteverzeichnis': 'inventory',
   'Lagerverwaltung': 'warehouse',
   'Patientenverwaltung': 'patients',
@@ -1461,7 +1470,7 @@ const LOGIN_APPLICATION_TO_PAGE: Record<string, Page> = {
   'Administration': 'moduleAdmin',
 };
 
-const HARD_LOGIN_TARGET_PAGES: Page[] = ['dashboard','invoices','inventory','warehouse','patients','appointments','tasks','approvals','orders','communication','users','personnel','cashbook','workplace','priceList','compliance','reports','moduleAdmin'];
+const HARD_LOGIN_TARGET_PAGES: Page[] = ['dashboard','invoices','invoiceAdmin','inventory','warehouse','patients','appointments','tasks','approvals','orders','communication','users','personnel','cashbook','workplace','priceList','compliance','reports','moduleAdmin'];
 const HARD_LOGIN_APPLICATION_ALIASES: Record<string, Page> = {
   'patientenverwaltung': 'patients',
   'patienten': 'patients',
@@ -1483,6 +1492,13 @@ const HARD_LOGIN_APPLICATION_ALIASES: Record<string, Page> = {
   'checks': 'compliance',
   'module.compliance': 'compliance',
   'module.checks': 'compliance',
+  'rechnungsverwaltung': 'invoiceAdmin',
+  'rechnungsadministration': 'invoiceAdmin',
+  'rechnung admin': 'invoiceAdmin',
+  'rechnungsadmin': 'invoiceAdmin',
+  'invoiceadmin': 'invoiceAdmin',
+  'invoice admin': 'invoiceAdmin',
+  'module.invoiceAdmin': 'invoiceAdmin',
 };
 function hardLoginPage(value?: string | null): Page | undefined {
   const raw = String(value ?? '').trim();
@@ -1575,6 +1591,12 @@ function normalizeStartPage(raw: string | null | undefined): Page {
     invoice: 'invoices',
     rechnung: 'invoices',
     rechnungsprogramm: 'invoices',
+    rechnungsverwaltung: 'invoiceAdmin',
+    rechnungsadministration: 'invoiceAdmin',
+    rechnungsadmin: 'invoiceAdmin',
+    invoiceadmin: 'invoiceAdmin',
+    'invoice admin': 'invoiceAdmin',
+    'module.invoiceAdmin': 'invoiceAdmin',
     patient: 'patients',
     patienten: 'patients',
     patientenverwaltung: 'patients',
@@ -1599,7 +1621,7 @@ function normalizeStartPage(raw: string | null | undefined): Page {
     'module.checks': 'compliance',
     usersRights: 'users' as Page
   };
-  const allowed: Page[] = ['dashboard','invoices','inventory','warehouse','patients','appointments','users','tasks','approvals','personnel','cashbook','compliance','reports','orders','priceList','workplace','communication','moduleAdmin'];
+  const allowed: Page[] = ['dashboard','invoices','invoiceAdmin','inventory','warehouse','patients','appointments','users','tasks','approvals','personnel','cashbook','compliance','reports','orders','priceList','workplace','communication','moduleAdmin'];
   if (allowed.includes(value as Page)) return value as Page;
   const lower = value.toLowerCase();
   return aliases[value] ?? aliases[lower] ?? 'dashboard';
@@ -1667,6 +1689,7 @@ function collectUiTranslationEntries(): Record<string, string> {
     ['module.dashboard', 'Dashboard'],
     ['module.invoice', 'Rechnungsprogramm'],
     ['module.invoices', 'Rechnungsprogramm'],
+    ['module.invoiceAdmin', 'Rechnungsadministration'],
     ['module.inventory', 'Geräteverzeichnis'],
     ['module.warehouse', 'Lagerverwaltung'],
     ['module.patients', 'Patientenverwaltung'],
@@ -1754,6 +1777,7 @@ function collectKnownTargetTranslations(language: GamLanguage | string): Record<
     ['module.dashboard', moduleText(lang, 'dashboard')],
     ['module.invoice', moduleText(lang, 'invoice')],
     ['module.invoices', moduleText(lang, 'invoices')],
+    ['module.invoiceAdmin', moduleText(lang, 'invoiceAdmin')],
     ['module.inventory', moduleText(lang, 'inventory')],
     ['module.warehouse', moduleText(lang, 'warehouse')],
     ['module.patients', moduleText(lang, 'patients')],
@@ -2151,6 +2175,7 @@ function speechLang(lang: GamLanguage): string {
 function companyLogoSrc(company?: InvoiceCompany): string {
   const id = company?.id;
   const name = (company?.name ?? '').toLowerCase();
+  if (company?.logoUrl) return company.logoUrl;
   if (id === 1 || name.includes('amae')) return '/images/logo_AMAE_blau.png';
   if (id === 2 || id === 3 || name.includes('acqua') || name.includes('aqua')) return '/images/logo_ACQUA_blau.png';
   if (id === 6 || name.includes('healthcode')) return '/images/Healthcode_logo_blau.png';
@@ -2759,7 +2784,7 @@ function App(){
 }
 
 function effectiveModules(account: AccountDto|null, menu: RoleDto|null): string[] {
-  const fallback = ['dashboard','invoices','inventory','warehouse','patients','appointments','tasks','approvals','orders','personnel','cashbook','workplace','priceList','compliance','reports','communication','users'];
+  const fallback = ['dashboard','invoices','invoiceAdmin','inventory','warehouse','patients','appointments','tasks','approvals','orders','personnel','cashbook','workplace','priceList','compliance','reports','communication','users'];
   const roleText = `${account?.role ?? ''} ${menu?.label ?? ''}`.toLowerCase();
   const isSuperAdmin = roleText.includes('superadmin') || roleText.includes('super-administrator');
   const fromMenu = menu?.modules ?? [];
@@ -2771,7 +2796,7 @@ function effectiveModules(account: AccountDto|null, menu: RoleDto|null): string[
 function fallbackSuperadminMenu(): RoleDto {
   return {
     label: 'Super-Administration',
-    modules: ['dashboard','invoices','inventory','warehouse','patients','appointments','tasks','approvals','orders','personnel','cashbook','workplace','priceList','compliance','reports','communication','users']
+    modules: ['dashboard','invoices','invoiceAdmin','inventory','warehouse','patients','appointments','tasks','approvals','orders','personnel','cashbook','workplace','priceList','compliance','reports','communication','users']
   } as RoleDto;
 }
 
@@ -2779,7 +2804,7 @@ function Shell({onLogout,uiLanguage,initialPage}:{onLogout:()=>void; uiLanguage:
  useEffect(()=>{
    // Schritt 38k6: harte Login-Zielmodule sofort setzen, bevor Rollen-/Menü-Fallbacks greifen.
    const desired = readHardStartPage();
-   if (['patients','appointments','inventory','warehouse','invoices','personnel'].includes(desired)) setPage(desired);
+   if (['patients','appointments','inventory','warehouse','invoices','invoiceAdmin','personnel'].includes(desired)) setPage(desired);
  },[initialPage]);
  useUiTranslationCache(uiLanguage, true, 0);
  useEffect(()=>{
@@ -2807,9 +2832,334 @@ function Shell({onLogout,uiLanguage,initialPage}:{onLogout:()=>void; uiLanguage:
    loadMenu().then(m=>{setMenu(m); selectStartPage(m);}).catch(()=>{const fallback=fallbackSuperadminMenu(); setMenu(fallback); selectStartPage(fallback);})
  },[initialPage]);
  const modules=effectiveModules(account, menu);
- const nav=[['dashboard','Dashboard',LayoutDashboard],['invoices','Rechnungsprogramm',FileText],['inventory','Geräteverzeichnis',Package],['warehouse','Lagerverwaltung',Warehouse],['patients','Patientenverwaltung',UserRound],['appointments','Terminverwaltung',CalendarDays],['tasks','Aufgabenverwaltung',CheckSquare],['approvals','Freigabemanagement',ClipboardCheck],['orders','Bestelltool',ClipboardList],['personnel','Personaldaten',BriefcaseBusiness],['cashbook','Kassenbuch',Landmark],['workplace','Arbeitsplatzausstattung',Package],['priceList','Preisliste',FileText],['compliance','Prüfungen',ClipboardList],['reports','Reports',FileBarChart],['communication','Kommunikation',ClipboardList],['moduleAdmin','Modul-Admin',ShieldCheck],['users','Benutzer/Rechte',UsersRound]] as const;
- return <main><header><div><h1>GAM 2.0</h1><span>{account?.fullname||account?.username} · {ui('role', uiLanguage)}: {menu?.label||account?.role||'—'} · {ui('step31ModuleOverviewShort', uiLanguage)}</span></div></header><nav className="tabs module-tabs">{nav.map(([key,label,Icon])=><button key={key} className={page===key?'active':''} onClick={()=>setPage(key as Page)}><img src={iconForModule(label)} alt="" className="module-button-icon nav-module-icon" />{moduleText(uiLanguage, label)}</button>)}</nav>{page==='dashboard'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'dashboard')}><DashboardHome/></ModuleErrorBoundary>}{page==='invoices'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'invoices')}><InvoicesPage/></ModuleErrorBoundary>}{page==='users'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'admin')}><UsersPage/></ModuleErrorBoundary>}{page==='inventory'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'inventory')}><InventoryPage/></ModuleErrorBoundary>}{page==='warehouse'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'warehouse')}><><WarehousePage/><InventoryWarehousePage/></></ModuleErrorBoundary>}{page==='patients'&&<ModuleErrorBoundary title='Patientenverwaltung'><PatientsPage/></ModuleErrorBoundary>}{page==='appointments'&&<ModuleErrorBoundary title='Terminverwaltung'><AppointmentsPage account={account}/></ModuleErrorBoundary>}{page==='tasks'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'tasks')}><WorkflowTasksPage/></ModuleErrorBoundary>} {page==='approvals'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'approval')}><WorkflowApprovalsPage/></ModuleErrorBoundary>} {page==='orders'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'orders')}><OrdersPage/></ModuleErrorBoundary>}{page==='personnel'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'personnel')}><PersonnelPage account={account}/></ModuleErrorBoundary>} {page==='cashbook'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'cashbook')}><CashbookPage/></ModuleErrorBoundary>} {page==='workplace'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'workplace')}><WorkplacePage/></ModuleErrorBoundary>}{page==='priceList'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'price')}><PriceListPage/></ModuleErrorBoundary>}{page==='compliance'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'checks')}><CompliancePage/></ModuleErrorBoundary>} {page==='reports'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'reports')}><ReportsPage/></ModuleErrorBoundary>}{page==='communication'&&<ModuleErrorBoundary title='Kommunikation'><CommunicationCenterPage/></ModuleErrorBoundary>}{page==='moduleAdmin'&&<ModuleErrorBoundary title='Modul-Administration'><ModuleAdminPage/></ModuleErrorBoundary>}</main>}
+ const nav=[['dashboard','Dashboard',LayoutDashboard],['invoices','Rechnungsprogramm',FileText],['invoiceAdmin','Rechnungsadministration',FileText],['inventory','Geräteverzeichnis',Package],['warehouse','Lagerverwaltung',Warehouse],['patients','Patientenverwaltung',UserRound],['appointments','Terminverwaltung',CalendarDays],['tasks','Aufgabenverwaltung',CheckSquare],['approvals','Freigabemanagement',ClipboardCheck],['orders','Bestelltool',ClipboardList],['personnel','Personaldaten',BriefcaseBusiness],['cashbook','Kassenbuch',Landmark],['workplace','Arbeitsplatzausstattung',Package],['priceList','Preisliste',FileText],['compliance','Prüfungen',ClipboardList],['reports','Reports',FileBarChart],['communication','Kommunikation',ClipboardList],['moduleAdmin','Modul-Admin',ShieldCheck],['users','Benutzer/Rechte',UsersRound]] as const;
+ return <main><header><div><h1>GAM 2.0</h1><span>{account?.fullname||account?.username} · {ui('role', uiLanguage)}: {menu?.label||account?.role||'—'} · {ui('step31ModuleOverviewShort', uiLanguage)}</span></div></header><nav className="tabs module-tabs">{nav.map(([key,label,Icon])=><button key={key} className={page===key?'active':''} onClick={()=>setPage(key as Page)}><img src={iconForModule(label)} alt="" className="module-button-icon nav-module-icon" />{moduleText(uiLanguage, label)}</button>)}</nav>{page==='dashboard'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'dashboard')}><DashboardHome/></ModuleErrorBoundary>}{page==='invoices'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'invoices')}><InvoicesPage/></ModuleErrorBoundary>}{page==='invoiceAdmin'&&<ModuleErrorBoundary title='Rechnungsadministration'><InvoiceAdminPage/></ModuleErrorBoundary>}{page==='users'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'admin')}><UsersPage/></ModuleErrorBoundary>}{page==='inventory'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'inventory')}><InventoryPage/></ModuleErrorBoundary>}{page==='warehouse'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'warehouse')}><><WarehousePage/><InventoryWarehousePage/></></ModuleErrorBoundary>}{page==='patients'&&<ModuleErrorBoundary title='Patientenverwaltung'><PatientsPage/></ModuleErrorBoundary>}{page==='appointments'&&<ModuleErrorBoundary title='Terminverwaltung'><AppointmentsPage account={account}/></ModuleErrorBoundary>}{page==='tasks'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'tasks')}><WorkflowTasksPage/></ModuleErrorBoundary>} {page==='approvals'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'approval')}><WorkflowApprovalsPage/></ModuleErrorBoundary>} {page==='orders'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'orders')}><OrdersPage/></ModuleErrorBoundary>}{page==='personnel'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'personnel')}><PersonnelPage account={account}/></ModuleErrorBoundary>} {page==='cashbook'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'cashbook')}><CashbookPage/></ModuleErrorBoundary>} {page==='workplace'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'workplace')}><WorkplacePage/></ModuleErrorBoundary>}{page==='priceList'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'price')}><PriceListPage/></ModuleErrorBoundary>}{page==='compliance'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'checks')}><CompliancePage/></ModuleErrorBoundary>} {page==='reports'&&<ModuleErrorBoundary title={moduleText(uiLanguage,'reports')}><ReportsPage/></ModuleErrorBoundary>}{page==='communication'&&<ModuleErrorBoundary title='Kommunikation'><CommunicationCenterPage/></ModuleErrorBoundary>}{page==='moduleAdmin'&&<ModuleErrorBoundary title='Modul-Administration'><ModuleAdminPage/></ModuleErrorBoundary>}</main>}
 function Placeholder({title,text}:{title:string;text:string}){return <section className="card"><h2>{title}</h2><p className="muted">{text}</p></section>}
+
+const INVOICE_ADMIN_CATALOGS = [
+  {key:'invoice-companies', label:'Gesellschaften'},
+  {key:'invoice-products', label:'Produkte / Preise / MwSt'},
+  {key:'company-branch-links', label:'Gesellschaft/Filiale'},
+  {key:'invoice-salutations', label:'Anreden'},
+  {key:'invoice-texts', label:'Rechnungstexte'},
+  {key:'invoice-legal-notes', label:'Rechtliche Hinweise'},
+  {key:'invoice-greetings', label:'Grußformeln'},
+  {key:'invoice-text-assignments', label:'Textzuordnung Gesellschaft'},
+  {key:'invoice-logos', label:'Logos'}
+];
+
+const invoiceAdminHints: Record<string,string> = {
+  'invoice-products': 'GAM-1.0-nahe Produktpflege: Produkt anlegen/bearbeiten, Preiswechsel, MwSt-Wechsel sowie Angebot sichtbar ab/bis. Die Rechnungserfassung nutzt diese Werte stichtagsbezogen.',
+  'invoice-companies': 'Rechnungsrelevante Gesellschaftsdaten inklusive Steuer-, Kontakt-, Bankdaten und Logo-Zuordnung. Logos werden nur einmal hochgeladen und hier ausgewählt.',
+  'invoice-salutations': 'Anreden werden als einzelne wiederverwendbare Textbausteine gepflegt.',
+  'invoice-texts': 'Rechnungstexte werden als einzelne wiederverwendbare Textbausteine gepflegt.',
+  'invoice-legal-notes': 'Rechtliche Hinweise werden als einzelne wiederverwendbare Textbausteine gepflegt.',
+  'invoice-greetings': 'Grußformeln werden als einzelne wiederverwendbare Textbausteine gepflegt.',
+  'invoice-text-assignments': 'Hier wird je Gesellschaft ausgewählt, welche vorhandene Anrede, welcher Rechnungstext, welcher rechtliche Hinweis und welche Grußformel verwendet werden.',
+  'company-branch-links': 'Zuordnung von Rechnungsgesellschaften zu Filialen.',
+};
+
+function invoiceAdminFieldType(name:string){
+  const n=name.toLowerCase();
+  if(n.includes('datum') || n.includes('gueltig') || n.includes('gültig')) return 'date';
+  if(n.includes('preis') || n.includes('mwst') || n.includes('konto') || n.endsWith('_id') || n==='id' || n.includes('filiale')) return 'number';
+  if(n.includes('email')) return 'email';
+  return 'text';
+}
+function invoiceAdminLabel(row:Record<string,unknown>, catalog?:MasterDataCatalog|null){
+  if(!row) return 'Datensatz';
+  return String(row['gesellschaftsname'] ?? row['beschreibung'] ?? row['code'] ?? row['NAME'] ?? row['name'] ?? row['RECHNUNGSTEXT'] ?? row['ANREDE'] ?? row['TEXT'] ?? row['URL'] ?? row[catalog?.primaryKey || 'ID'] ?? 'Datensatz');
+}
+function invoiceAdminLongField(name:string){
+  const n=name.toLowerCase();
+  return (n.includes('text') && !n.endsWith('_id')) || n.includes('beschreibung') || n.includes('adresse') || (n.includes('hinweis') && !n.endsWith('_id')) || (n.includes('anrede') && !n.endsWith('_id')) || n.includes('gruss') || n.includes('gruß');
+}
+function invoiceAdminEmpty(fields:string[]){ const row:Record<string,unknown>={}; fields.forEach(f=>row[f]=''); return row; }
+function parseInvoiceAdminValue(key:string, value:unknown){
+  const type=invoiceAdminFieldType(key);
+  const raw=String(value ?? '').trim();
+  if(raw==='') return null;
+  if(type==='number'){
+    const n=Number(raw.replace(',','.'));
+    return Number.isFinite(n) ? n : raw;
+  }
+  return raw;
+}
+const INVOICE_TEXT_ADMIN_CATALOGS = new Set(['invoice-salutations','invoice-texts','invoice-legal-notes','invoice-greetings']);
+const INVOICE_TEXT_ASSIGNMENT_CATALOG = 'invoice-text-assignments';
+const INVOICE_LOGO_CATALOG = 'invoice-logos';
+
+type InvoiceAdminOption = { id:string; label:string; companyId?:string; url?:string };
+function invoiceAdminName(row:Record<string,unknown>, keys:string[], fallback:string){
+  for(const k of keys){ const v=row[k]; if(v!==undefined && v!==null && String(v).trim()!=='') return String(v).trim(); }
+  return fallback;
+}
+function invoiceAdminOptionId(row:Record<string,unknown>, keys:string[]){
+  for(const k of keys){ const v=row[k]; if(v!==undefined && v!==null && String(v).trim()!=='') return String(v).trim(); }
+  return '';
+}
+function buildInvoiceCompanyOptions(rows:Record<string,unknown>[]):InvoiceAdminOption[]{
+  return rows.map(r=>{
+    const id=invoiceAdminOptionId(r,['id','ID','GESELLSCHAFTS_ID','gesellschafts_id']);
+    const name=invoiceAdminName(r,['gesellschaftsname','GESELLSCHAFTSNAME','name','Name'],id||'Gesellschaft');
+    const short=invoiceAdminName(r,['gesellschaftskürzel','GESELLSCHAFTSKUERZEL','gesellschaftskürzel'], '');
+    const place=invoiceAdminName(r,['post_plz_ort','POST_PLZ_ORT','ORT'], '');
+    return {id, label:[name, short && short!==name ? short : '', place && place!==name ? place : ''].filter(Boolean).join(' · ')};
+  }).filter(o=>o.id).sort((a,b)=>a.label.localeCompare(b.label,'de'));
+}
+function buildInvoiceBranchOptions(rows:Record<string,unknown>[], links:Record<string,unknown>[]):InvoiceAdminOption[]{
+  const companyByBranch=new Map<string,string>();
+  links.forEach(l=>{
+    const branch=invoiceAdminOptionId(l,['FILIALE_ID','filiale_id']);
+    const company=invoiceAdminOptionId(l,['RGESELLSCHAFTS_ID','rgesellschafts_id','GESELLSCHAFT_ID','gesellschaft_id']);
+    if(branch && company && !companyByBranch.has(branch)) companyByBranch.set(branch, company);
+  });
+  return rows.map(r=>{
+    const id=invoiceAdminOptionId(r,['FILIALE_ID','filiale_id','id','ID']);
+    const name=invoiceAdminName(r,['FILIALENAME','filialename','name','Name'],id||'Filiale');
+    const short=invoiceAdminName(r,['FILIALEKUERZEL','filialekuerzel'], '');
+    const place=invoiceAdminName(r,['ORT','ort'], '');
+    return {id, label:[name, short && short!==name ? short : '', place && place!==name ? place : ''].filter(Boolean).join(' · '), companyId:companyByBranch.get(id)};
+  }).filter(o=>o.id).sort((a,b)=>a.label.localeCompare(b.label,'de'));
+}
+
+function buildInvoiceTextOptions(rows:Record<string,unknown>[]):InvoiceAdminOption[]{
+  return rows.map(r=>{
+    const id=invoiceAdminOptionId(r,['ID','id']);
+    const text=invoiceAdminName(r,['TEXT','text'], id||'Textbaustein');
+    const short=text.length>120 ? text.slice(0,117)+'…' : text;
+    return {id, label:id==='0' ? `🔒 Systemstandard · ${short}` : short};
+  }).filter(o=>o.id).sort((a,b)=>a.id==='0'?-1:b.id==='0'?1:a.label.localeCompare(b.label,'de'));
+}
+function buildInvoiceLogoOptions(rows:Record<string,unknown>[]):InvoiceAdminOption[]{
+  return rows.map(r=>{
+    const id=invoiceAdminOptionId(r,['ID','id']);
+    const url=invoiceAdminName(r,['URL','url'], '');
+    const name=invoiceAdminName(r,['NAME','name'], '');
+    const file=(url || id || 'Logo').split('/').filter(Boolean).pop() || url || id || 'Logo';
+    const rawLabel=name || file;
+    const label=id==='0' ? `🔒 Systemstandard · ${rawLabel}` : rawLabel;
+    return {id, url, label:label.length>100 ? label.slice(0,97)+'…' : label};
+  }).filter(o=>o.id).sort((a,b)=>a.id==='0'?-1:b.id==='0'?1:a.label.localeCompare(b.label,'de'));
+}
+function invoiceLogoPreviewUrlById(options:InvoiceAdminOption[], value:unknown){
+  const id=String(value??'');
+  const opt=options.find(o=>String(o.id)===id);
+  return opt?.url || '';
+}
+function invoiceLogoImage(src:string, alt='Logo-Vorschau', small=false){
+  if(!src) return null;
+  return <img src={src} alt={alt} onError={(e)=>{(e.currentTarget as HTMLImageElement).style.display='none';}} style={{maxWidth:small?'120px':'280px',maxHeight:small?'54px':'120px',objectFit:'contain',background:'#fff',padding:'6px',borderRadius:'6px',border:'1px solid #d0d7de',marginTop:'6px'}}/>;
+}
+function isInvoiceCompanyField(name:string){ const n=name.toLowerCase(); return n==='rgesellschafts_id' || n==='rgesellschaft_id' || n==='gesellschaft_id'; }
+function isInvoiceBranchField(name:string){ return name.toLowerCase()==='filiale_id'; }
+function invoiceAdminOptionLabel(options:InvoiceAdminOption[], value:unknown){ const id=String(value??''); return options.find(o=>String(o.id)===id)?.label || (id ? `ID ${id}` : ''); }
+function invoiceAdminFriendlyField(name:string){
+  const labels:Record<string,string>={anrede_id:'Anrede', rechnungstext_id:'Rechnungstext', rechtlicher_hinweis_id:'Rechtlicher Hinweis', grussformel_id:'Grußformel', LOGO_ID:'Logo', logo_id:'Logo', rdaten_id:'Produkt-ID',filiale_id:'Filiale',code:'Produktcode',beschreibung:'Produktdetails / Rechnungstext', 'abkürzung':'Abkürzung', kategorie:'Kategorie', preis1:'Aktueller Preis', preisneu:'Neuer Preis', preisalt:'Alter Preis', preis_gueltigab:'Neuer Preis gültig ab', mwst:'Aktuelle MwSt', mwstalt:'Alte MwSt', mwst_gueltigab:'Neue MwSt gültig ab', konto:'Buchungskonto', rgesellschafts_id:'Rechnungsgesellschaft', rgesellschaft_id:'Rechnungsgesellschaft', gesellschaft_id:'Gesellschaft', auftraggeber:'Auftraggeber', 'durchführender':'Durchführender', 'gültig_ab':'Produkt sichtbar / verkaufbar ab', 'gültig_bis':'Produkt sichtbar / verkaufbar bis', text:'Text', name:'Name', url:'Logo-/Bildpfad', anrede:'Anrede', rechnungstext:'Rechnungstext', rechtlicher_hinweis:'Rechtlicher Hinweis', grussformel:'Grußformel'};
+  return labels[name.toLowerCase()] ?? name;
+}
+function invoiceAdminSectionForField(name:string){
+  const n=name.toLowerCase();
+  if(['code','beschreibung','abkürzung','kategorie','filiale_id','rgesellschafts_id','auftraggeber','durchführender'].includes(n)) return 'Produkt';
+  if(n.includes('preis')) return 'Preise';
+  if(n.includes('mwst') || n.includes('konto')) return 'Steuer / Konto';
+  if(n.includes('gültig') || n.includes('gueltig')) return 'Angebotszeitraum';
+  return 'Weitere Felder';
+}
+
+function invoiceAdminEditorFieldClass(key:string){
+  const n=key.toLowerCase();
+  const parts=['invoice-admin-editor-field'];
+  if(invoiceAdminLongField(key) || n.includes('rechnungstext') || n.includes('rechtlicher') || n.includes('hinweis')) parts.push('invoice-admin-field-long');
+  else if(n.includes('anrede') || n.includes('gruss') || n.includes('gruß')) parts.push('invoice-admin-field-medium');
+  else if(isInvoiceCompanyField(key) || isInvoiceBranchField(key)) parts.push('invoice-admin-field-medium');
+  else parts.push('invoice-admin-field-short');
+  return parts.join(' ');
+}
+function invoiceAdminIsTextCatalog(key:string){ return INVOICE_TEXT_ADMIN_CATALOGS.has(key); }
+function invoiceAdminIsLogoCatalog(key:string){ return key==='invoice-logos'; }
+function invoiceAdminIsProtectedSystemFallback(selected:string, row:Record<string,unknown>, catalog?:MasterDataCatalog|null){ return (invoiceAdminIsTextCatalog(selected) || invoiceAdminIsLogoCatalog(selected)) && String(rowValue(row, catalog?.primaryKey || 'ID'))==='0'; }
+async function translateInvoiceAdminTextIfNeeded(catalogKey:string, saved:Record<string,unknown>){
+  if(!invoiceAdminIsTextCatalog(catalogKey)) return;
+  const entries:Record<string,string>={};
+  const baseId=String(saved?.ID ?? saved?.id ?? Date.now());
+  const text=String(saved?.TEXT ?? saved?.text ?? '').trim();
+  if(text) entries[`invoiceAdmin.${catalogKey}.${baseId}`]=text;
+  if(!Object.keys(entries).length) return;
+  const lang=currentUiLanguage();
+  if(lang==='de') return;
+  try{ await loadUiTranslationsLive(lang, entries); gamNotify('info', `Text wurde für ${lang.toUpperCase()} übersetzt.`); }catch{ gamNotify('warning', 'Text gespeichert; automatische Übersetzung konnte nicht sofort abgeschlossen werden.'); }
+}
+function InvoiceAdminPage(){
+  const [selected,setSelected]=useState(INVOICE_ADMIN_CATALOGS[0].key);
+  const [catalog,setCatalog]=useState<MasterDataCatalog|null>(null);
+  const [rows,setRows]=useState<Record<string,unknown>[]>([]);
+  const [q,setQ]=useState('');
+  const [err,setErr]=useState('');
+  const [open,setOpen]=useState(false);
+  const [form,setForm]=useState<Record<string,unknown>>({});
+  const [companyOptions,setCompanyOptions]=useState<InvoiceAdminOption[]>([]);
+  const [branchOptions,setBranchOptions]=useState<InvoiceAdminOption[]>([]);
+  const [salutationOptions,setSalutationOptions]=useState<InvoiceAdminOption[]>([]);
+  const [invoiceTextOptions,setInvoiceTextOptions]=useState<InvoiceAdminOption[]>([]);
+  const [legalNoteOptions,setLegalNoteOptions]=useState<InvoiceAdminOption[]>([]);
+  const [greetingOptions,setGreetingOptions]=useState<InvoiceAdminOption[]>([]);
+  const [logoOptions,setLogoOptions]=useState<InvoiceAdminOption[]>([]);
+  const firstRef=useRef<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement|null>(null);
+  async function reloadReferences(){
+    try{
+      const [companies, branches, links, salutations, invoiceTexts, legalNotes, greetings, logos] = await Promise.all([
+        loadMasterDataRows('invoice-companies','',500),
+        loadMasterDataRows('branches','',500),
+        loadMasterDataRows('company-branch-links','',500).catch(()=>({rows:[]} as any)),
+        loadMasterDataRows('invoice-salutations','',500).catch(()=>({rows:[]} as any)),
+        loadMasterDataRows('invoice-texts','',500).catch(()=>({rows:[]} as any)),
+        loadMasterDataRows('invoice-legal-notes','',500).catch(()=>({rows:[]} as any)),
+        loadMasterDataRows('invoice-greetings','',500).catch(()=>({rows:[]} as any)),
+        loadMasterDataRows('invoice-logos','',500).catch(()=>({rows:[]} as any))
+      ]);
+      setCompanyOptions(buildInvoiceCompanyOptions(companies.rows||[]));
+      setBranchOptions(buildInvoiceBranchOptions(branches.rows||[], links.rows||[]));
+      setSalutationOptions(buildInvoiceTextOptions(salutations.rows||[]));
+      setInvoiceTextOptions(buildInvoiceTextOptions(invoiceTexts.rows||[]));
+      setLegalNoteOptions(buildInvoiceTextOptions(legalNotes.rows||[]));
+      setGreetingOptions(buildInvoiceTextOptions(greetings.rows||[]));
+      setLogoOptions(buildInvoiceLogoOptions(logos.rows||[]));
+    }catch{
+      // Die Rechnungsadministration bleibt bedienbar; im Fehlerfall fallen die Felder auf ID-Anzeige zurück.
+    }
+  }
+  async function reload(search=q){
+    setErr('');
+    setRows([]);
+    setCatalog(null);
+    try{
+      const relationSearch=['invoice-products','company-branch-links','invoice-text-assignments'].includes(selected) && !!search.trim();
+      const data=await loadMasterDataRows(selected, relationSearch ? '' : search, 400);
+      let nextRows=data.rows||[];
+      if(relationSearch){
+        const needle=search.trim().toLowerCase();
+        nextRows=nextRows.filter(row=>{
+          const text=Object.entries(row).map(([k,v])=>String(renderInvoiceAdminCell(k,v))).join(' ').toLowerCase();
+          return text.includes(needle);
+        });
+      }
+      setCatalog(data.catalog); setRows(nextRows);
+    }
+    catch(e:any){ setErr(e.message??'Rechnungsverwaltung konnte nicht geladen werden'); }
+  }
+  useEffect(()=>{ setOpen(false); setForm({}); setQ(''); reload(''); reloadReferences(); },[selected]);
+  const fields = catalog ? [catalog.primaryKey, ...catalog.fields] : [];
+  const editable = catalog ? catalog.fields : [];
+  function startNew(){ setForm(invoiceAdminEmpty(editable)); setOpen(true); setTimeout(()=>firstRef.current?.focus(),120); }
+  function startEdit(row:Record<string,unknown>){ setForm(row); setOpen(true); setTimeout(()=>firstRef.current?.focus(),120); }
+  function setField(key:string,value:unknown){
+    setForm(prev=>{
+      const next={...prev,[key]:value};
+      if(isInvoiceCompanyField(key)){
+        const branchKey=Object.keys(next).find(isInvoiceBranchField);
+        if(branchKey){
+          const currentBranch=String(next[branchKey]??'');
+          const branch=branchOptions.find(o=>o.id===currentBranch);
+          if(branch?.companyId && String(branch.companyId)!==String(value??'')) next[branchKey]='';
+        }
+      }
+      return next;
+    });
+  }
+  function invoiceAdminVisibleBranches(){
+    const companyKey=Object.keys(form).find(isInvoiceCompanyField);
+    const companyId=companyKey ? String(form[companyKey]??'') : '';
+    if(!companyId) return branchOptions;
+    const filtered=branchOptions.filter(o=>!o.companyId || String(o.companyId)===companyId);
+    return filtered.length ? filtered : branchOptions;
+  }
+  function renderInvoiceAdminCell(key:string, value:unknown){
+    if(isInvoiceCompanyField(key)) return invoiceAdminOptionLabel(companyOptions,value);
+    if(isInvoiceBranchField(key)) return invoiceAdminOptionLabel(branchOptions,value);
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='ANREDE_ID') return invoiceAdminOptionLabel(salutationOptions,value);
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='RECHNUNGSTEXT_ID') return invoiceAdminOptionLabel(invoiceTextOptions,value);
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='RECHTLICHER_HINWEIS_ID') return invoiceAdminOptionLabel(legalNoteOptions,value);
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='GRUSSFORMEL_ID') return invoiceAdminOptionLabel(greetingOptions,value);
+    if(selected==='invoice-companies' && key.toUpperCase()==='LOGO_ID') {
+      const preview=invoiceLogoPreviewUrlById(logoOptions,value);
+      return <><span>{invoiceAdminOptionLabel(logoOptions,value)}</span>{preview&&<br/>}{preview&&invoiceLogoImage(preview,'Logo',true)}</>;
+    }
+    if((invoiceAdminIsTextCatalog(selected) || invoiceAdminIsLogoCatalog(selected)) && key.toLowerCase()==='id' && String(value??'')==='0') return '0 · 🔒 Systemstandard';
+    if(invoiceAdminIsLogoCatalog(selected) && key.toLowerCase()==='url' && value) return <><span>{formatCell(value)}</span><br/>{invoiceLogoImage(String(value),'Logo',true)}</>;
+    return formatCell(value);
+  }
+  async function handleInvoiceLogoUpload(file?:File|null){
+    if(!file) return;
+    try{
+      const uploaded=await uploadInvoiceLogo(file);
+      setField('URL', uploaded.url);
+      const currentName=String(form['NAME']??'').trim();
+      if(selected==='invoice-logos' && !currentName) setField('NAME', uploaded.filename || 'Logo');
+      await reloadReferences();
+      gamNotify('success','Logo hochgeladen und in den Datensatz übernommen.');
+    }catch(e:any){ const m=e.message||'Logo-Upload fehlgeschlagen'; setErr(m); gamNotify('error',m,0); }
+  }
+
+  async function handleCompanyLogoUploadAndSelect(file?:File|null){
+    if(!file) return;
+    try{
+      const uploaded=await uploadInvoiceLogo(file);
+      const saved=await createMasterDataRow('invoice-logos', {NAME: uploaded.filename || 'Logo', URL: uploaded.url});
+      const id=String(saved?.ID ?? saved?.id ?? '');
+      await reloadReferences();
+      if(id) setField('LOGO_ID', id);
+      gamNotify('success','Logo einmalig im Logokatalog angelegt und dieser Gesellschaft zugeordnet.');
+    }catch(e:any){ const m=e.message||'Logo-Upload fehlgeschlagen'; setErr(m); gamNotify('error',m,0); }
+  }
+  function renderInvoiceAdminSelect(key:string, idx:number, options:InvoiceAdminOption[], placeholder:string){
+    return <select ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}><option value="">{placeholder}</option>{options.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}</select>;
+  }
+  function renderInvoiceAdminEditor(key:string, idx:number){
+    if(isInvoiceCompanyField(key)) return <select ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}><option value="">Bitte Gesellschaft wählen</option>{companyOptions.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}</select>;
+    if(isInvoiceBranchField(key)){ const options=invoiceAdminVisibleBranches(); return <select ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}><option value="">Bitte Filiale wählen</option>{options.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}</select>; }
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='ANREDE_ID') return renderInvoiceAdminSelect(key, idx, salutationOptions, 'Bitte Anrede wählen');
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='RECHNUNGSTEXT_ID') return renderInvoiceAdminSelect(key, idx, invoiceTextOptions, 'Bitte Rechnungstext wählen');
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='RECHTLICHER_HINWEIS_ID') return renderInvoiceAdminSelect(key, idx, legalNoteOptions, 'Bitte rechtlichen Hinweis wählen');
+    if(selected===INVOICE_TEXT_ASSIGNMENT_CATALOG && key==='GRUSSFORMEL_ID') return renderInvoiceAdminSelect(key, idx, greetingOptions, 'Bitte Grußformel wählen');
+    if(selected==='invoice-companies' && key.toUpperCase()==='LOGO_ID') {
+      const preview=invoiceLogoPreviewUrlById(logoOptions, form[key]);
+      return <div className="wide-field">
+        {renderInvoiceAdminSelect(key, idx, logoOptions, 'Vorhandenes Logo wählen')}
+        {preview ? invoiceLogoImage(preview,'Ausgewähltes Logo') : <small className="muted">Kein Logo ausgewählt – es wird der Systemstandard ID 0/Fallback verwendet.</small>}
+        <small className="muted">Vorhandene Logos können mehrfach verwendet werden. Neues Logo nur hochladen, wenn es noch nicht im Logokatalog existiert.</small>
+        <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={e=>handleCompanyLogoUploadAndSelect(e.target.files?.[0])}/>
+      </div>;
+    }
+    if(invoiceAdminIsLogoCatalog(selected) && key.toLowerCase()==='url') return <div className="wide-field"><input ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)} placeholder="/images/uploads/logo.png oder http://..."/><input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={e=>handleInvoiceLogoUpload(e.target.files?.[0])}/>{form[key]&&invoiceLogoImage(String(form[key]),'Logo-Vorschau')}<small className="muted">Dieses Logo wird im Logokatalog gespeichert und kann anschließend in mehreren Gesellschaften ausgewählt werden.</small></div>;
+    return invoiceAdminLongField(key)?<textarea ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>:<input ref={idx===0?firstRef:undefined} type={invoiceAdminFieldType(key)} step={invoiceAdminFieldType(key)==='number'?'0.01':undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>;
+  }
+  async function save(){
+    if(!catalog) return;
+    setErr('');
+    const id=rowValue(form,catalog.primaryKey);
+    if(id && invoiceAdminIsProtectedSystemFallback(selected, form, catalog)){ gamNotify('warning','Systemstandard ID 0 darf nicht geändert werden.'); return; }
+    const payload:Record<string,unknown>={};
+    editable.forEach(f=>payload[f]=parseInvoiceAdminValue(f, form[f]));
+    try{
+      const before=id ? rows.find(r=>String(rowValue(r,catalog.primaryKey))===String(id)) : undefined;
+      const saved=id ? await updateMasterDataRow(selected, String(id), payload) : await createMasterDataRow(selected, payload);
+      notifySaved(id?'Rechnungs-Stammdatum gespeichert.':'Rechnungs-Stammdatum angelegt.', buildChangeDetails('Rechnungsadministration', id?'Datensatz gespeichert':'Datensatz angelegt', before, saved, {}, invoiceAdminLabel(saved,catalog)));
+      await translateInvoiceAdminTextIfNeeded(selected, saved);
+      setOpen(false); await reload(q);
+    }catch(e:any){ const m=e.message??'Speichern fehlgeschlagen'; setErr(m); gamNotify('error',m,0); }
+  }
+  async function remove(){
+    if(!catalog) return; const id=rowValue(form,catalog.primaryKey); if(!id) return;
+    if(invoiceAdminIsProtectedSystemFallback(selected, form, catalog)){ gamNotify('warning','Systemstandard ID 0 darf nicht gelöscht werden.'); return; }
+    if(!confirm(`Datensatz wirklich löschen?\n\n${invoiceAdminLabel(form,catalog)}`)) return;
+    try{ await deleteMasterDataRow(selected,String(id)); notifySaved('Rechnungs-Stammdatum gelöscht.'); setOpen(false); await reload(q); }
+    catch(e:any){ const m=e.message??'Löschen fehlgeschlagen'; setErr(m); gamNotify('error',m,0); }
+  }
+  const activeMeta=INVOICE_ADMIN_CATALOGS.find(c=>c.key===selected);
+  return <section className="card"><h2>Rechnungsadministration</h2><p className="muted">Schritt 39k: GAM-1.0-nahe finale Rechnungsadministration des Rechnungsprogramms als eigenes Modul. Produkte, Preise, MwSt, Angebotszeiträume und Rechnungstexte werden hier gepflegt; die Rechnungserfassung nutzt diese Daten nur stichtagsbezogen.</p>{err&&<b className="error">{err}</b>}<div className="tabs sub-tabs">{INVOICE_ADMIN_CATALOGS.map(c=><button key={c.key} className={selected===c.key?'active':''} type="button" onClick={()=>{setRows([]); setCatalog(null); setOpen(false); setSelected(c.key); setQ(''); setForm({});}}>{c.label}</button>)}</div>{catalog&&<p className="note"><b>{activeMeta?.label||catalog.label}</b> · Tabelle <code>{catalog.tableName}</code> · Primärschlüssel <code>{catalog.primaryKey}</code><br/>{invoiceAdminHints[selected] || catalog.note}</p>}{selected==='invoice-products'&&<div className="note warn"><b>Stichtagslogik:</b> Preiswechsel über <code>preisneu</code> + <code>preis_gueltigab</code>, MwSt-Wechsel über <code>mwst</code>/<code>mwstalt</code> + <code>mwst_gueltigab</code>, Verkaufbarkeit über <code>gültig_ab</code> und <code>gültig_bis</code>. Zeitpunkte gelten ab 00:00 Uhr beziehungsweise zum angegebenen Datum/Uhrzeit-Wert.</div>} {invoiceAdminIsTextCatalog(selected)&&<div className="note ok"><b>Normalisierte Textbausteine:</b> Jeder Text wird nur einmal angelegt. ID 0 ist der geschützte Systemstandard und dient als Fallback, falls keine Gesellschaftszuordnung vorhanden ist.</div>}{selected===INVOICE_TEXT_ASSIGNMENT_CATALOG&&<div className="note ok"><b>Gesellschaftszuordnung:</b> Pro Gesellschaft werden vorhandene Bausteine ausgewählt. Fehlt eine Zuordnung oder verweist sie auf gelöschte Texte, verwendet GAM automatisch den Systemstandard ID 0 und erst im absoluten Notfall den internen Notfalltext.</div>}{invoiceAdminIsLogoCatalog(selected)&&<div className="note ok"><b>Logo-Normalisierung:</b> Logos werden einmal im Logokatalog angelegt und können anschließend von beliebig vielen Gesellschaften ausgewählt werden. ID 0 ist der Systemstandard/Fallback.</div>}<GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> {selected==='invoice-products'?'Neues Produkt':'Neuer Datensatz'}</button><label><Search size={16}/><input placeholder={selected==='invoice-products'?'Produktcode, Beschreibung, Kategorie, Gesellschaft, Filiale suchen':'Suchen'} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button></GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr>{fields.map(k=><th key={k}>{invoiceAdminFriendlyField(k)}</th>)}<th>Aktion</th></tr></thead><tbody>{rows.length?rows.map((r,idx)=><tr key={String(rowValue(r,catalog?.primaryKey||'ID')||idx)} className="clickable-row" onClick={()=>startEdit(r)}>{fields.map(k=><td key={k}>{renderInvoiceAdminCell(k,rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>):<tr><td colSpan={fields.length+1} className="muted">Keine Daten gefunden.</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={invoiceAdminLabel(form,catalog)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,catalog?.primaryKey||'')?'Änderungen speichern':'Datensatz anlegen'}</button>{rowValue(form,catalog?.primaryKey||'')&&!invoiceAdminIsProtectedSystemFallback(selected, form, catalog)&&<button className="danger" type="button" onClick={remove}>Datensatz löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid invoice-admin-editor-grid">{editable.map((key,idx)=><label key={key} className={invoiceAdminEditorFieldClass(key)}><span>{invoiceAdminFriendlyField(key)}</span>{selected==='invoice-products'&&<small>{invoiceAdminSectionForField(key)}</small>}{renderInvoiceAdminEditor(key,idx)}</label>)}</div></GamDialog></section>;
+}
+
 function DashboardHome(){const [status,setStatus]=useState<SystemStatus|null>(null); useEffect(()=>{loadSystemStatus().then(setStatus).catch(()=>{})},[]); return <section className="card"><h2>{ui("dashboard")}</h2>{status?<p><b>{ui('db')}:</b> {status.databaseAvailable?ui('connected'):ui('notConnected')} · <b>{ui('accounts')}:</b> {status.accountCount} · <b>{ui('lbd')}:</b> {status.lbdAvailable?ui('found'):ui('notFound')}</p>:<p className="muted">{ui("statusLoading")}</p>}<p>{ui("step31ModuleOverview")}</p><HistoricalModuleOverview/><ModuleTiles/></section>}
 const UI_TEXT: Record<string, Record<string,string>> = {
   de: {
@@ -3238,7 +3588,7 @@ function InvoicesPage(){
  const invoiceRowKey=(r:InvoiceSummary)=>`${r.companyId ?? searchCompanyId ?? ''}:${r.number}`;
  async function refresh(q=filter){if(!searchCompanyId){setRows([]); setSelected(null); setSelectedRowKey(''); setSearchInfo(ui('pleaseSelectCompany')); return;} setSearchInfo(''); const r=await loadInvoices(100,q,searchCompanyId); setRows(r); if(r[0]){setSelectedRowKey(invoiceRowKey(r[0])); setSelected(await loadInvoice(r[0].number, r[0].companyId));} else {setSelected(null); setSelectedRowKey('');}}
  async function select(number:string){const row=rows.find(r=>r.number===number); if(row) setSelectedRowKey(invoiceRowKey(row)); const detail=await loadInvoice(number, row?.companyId ?? searchCompanyId); setSelected(detail); setSelectedRowKey(`${detail.summary.companyId ?? row?.companyId ?? searchCompanyId ?? ''}:${detail.summary.number}`);}
- useEffect(()=>{loadCompanies().then(cs=>{setCompanies(cs); if(cs[0]) setSearchCompanyId(cs[0].id)}).catch(()=>{}); loadProducts('',200).then(setProducts).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null));},[]);
+ useEffect(()=>{loadCompanies().then(cs=>{setCompanies(cs); if(cs[0]) setSearchCompanyId(cs[0].id)}).catch(()=>{}); loadProducts('',200, new Date().toISOString().slice(0,10)).then(setProducts).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null));},[]);
  useEffect(()=>{if(selected) loadInvoiceTextPreview(selected.summary.companyId,pdfLanguage,selected.summary.invoiceDate??'',lbd?.file??'').then(setTextPreview).catch(()=>setTextPreview(null)); else setTextPreview(null)},[selected?.summary.number,selected?.summary.companyId,pdfLanguage,lbd?.file]);
  return <>
   <section className="toolbar invoice-menu">
@@ -3266,7 +3616,7 @@ function InvoiceStatusActions({detail,onChanged,onCreated}:{detail:InvoiceDetail
 function ExportCheck({number,companyId}:{number:string; companyId?:number}){const [check,setCheck]=useState<any|null>(null); useEffect(()=>{loadExportCheck(number, companyId).then(setCheck).catch(()=>setCheck(null))},[number,companyId]); if(!check) return <p className="muted">{ui("exportCheckLoading")}</p>; return <div className={check.exportable?'note ok':'note warn'}>{check.exportable?ui('zugferdReady'):ui('zugferdIssues')}{check.issues?.length?<ul>{check.issues.map((i:any,idx:number)=>{const msg=String(i.message??''); const translatedMsg=msg.includes('.lbd-Empfängerdatei')?ui('lbdMissingPlaceholder'):msg; const sev=String(i.severity??''); return <li key={idx}>{sev==='WARN'?'WARN':sev}: {i.field} – {translatedMsg}</li>})}</ul>:null}</div>}
 
 function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDetail; initialCompanyId?:number; onSaved:(r:any)=>void}){const [products,setProducts]=useState<ProductDto[]>([]); const [productDescTranslations,setProductDescTranslations]=useState<Record<string,string>>({}); const [companies,setCompanies]=useState<InvoiceCompany[]>([]); const [companyId,setCompanyId]=useState(existing?.summary.companyId??initialCompanyId??2); const [productId,setProductId]=useState<number|undefined>(); const [qty,setQty]=useState(1); const [invoiceDate,setInvoiceDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [treatmentDate,setTreatmentDate]=useState(toInputDate(existing?.summary.invoiceDate)); const [paymentMethod,setPaymentMethod]=useState('unbekannt'); const [pdfLanguage,setPdfLanguage]=useState<GamLanguage>('de'); const [reason,setReason]=useState(''); const [remark,setRemark]=useState(''); const [voucherEnabled,setVoucherEnabled]=useState(false); const [couponText,setCouponText]=useState(''); const [couponAmount,setCouponAmount]=useState(0); const [discountEnabled,setDiscountEnabled]=useState(false); const [discountType,setDiscountType]=useState<'percent'|'amount'>('percent'); const [discountValue,setDiscountValue]=useState(0); const [installmentsEnabled,setInstallmentsEnabled]=useState(false); const [installments,setInstallments]=useState(1); const [err,setErr]=useState(''); const [next,setNext]=useState(existing?.summary.number??''); const [lbd,setLbd]=useState<LbdRecipient|null>(null); const [textPreview,setTextPreview]=useState<InvoiceTextPreview|null>(null); const [lines,setLines]=useState<InvoiceCreateLineRequest[]>(existing?.lines.map(l=>({productId:l.productId,quantity:l.quantity,price:l.price,vat:l.vat,branchId:l.branchId,client:l.client,performer:l.performer}))??[]); const [totals,setTotals]=useState<any>(null); const [recipientMode,setRecipientMode]=useState<'lbd'|'manual'>('lbd'); const [recSalutation,setRecSalutation]=useState(''); const [recTitle,setRecTitle]=useState(''); const [recFirstName,setRecFirstName]=useState(''); const [recLastName,setRecLastName]=useState(''); const [recStreet,setRecStreet]=useState(''); const [recPostalCode,setRecPostalCode]=useState(''); const [recCity,setRecCity]=useState(''); const [recCountry,setRecCountry]=useState('Deutschland'); const [recEmail,setRecEmail]=useState('');
- useEffect(()=>{loadProducts('',120).then(ps=>{setProducts(ps); if(ps[0]) setProductId(ps[0].id)}); loadCompanies().then(cs=>{setCompanies(cs); if(!existing && cs[0]) setCompanyId(cs[0].id)}).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null)); if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{});},[]);
+ useEffect(()=>{loadProducts('',120,invoiceDate).then(ps=>{setProducts(ps); if(ps[0]) setProductId(ps[0].id)}); loadCompanies().then(cs=>{setCompanies(cs); if(!existing && cs[0]) setCompanyId(cs[0].id)}).catch(()=>{}); loadLbdPreview().then(setLbd).catch(()=>setLbd(null)); if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{});},[]);
  useEffect(()=>{
    if(!lbd?.found || recipientMode !== 'lbd') return;
    setRecSalutation(lbd.salutation || ''); setRecTitle(lbd.title || ''); setRecFirstName(lbd.firstName || ''); setRecLastName(lbd.lastName || '');
@@ -3286,6 +3636,7 @@ function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDet
    return ()=>{ cancelled = true; };
  }, [pdfLanguage, JSON.stringify((products ?? []).map(p=>[p.id,p.code,p.description]))]);
  useEffect(()=>{if(!existing) loadNextInvoiceNumber(companyId).then(n=>setNext(n.nextNumber)).catch(()=>{})},[companyId]);
+ useEffect(()=>{loadProducts('',120,invoiceDate).then(ps=>{setProducts(ps); if(ps.length && !ps.some(p=>p.id===productId)) setProductId(ps[0].id);}).catch(()=>{});},[invoiceDate]);
  useEffect(()=>{if(lines.length) loadCalculate(lines,setTotals).catch(()=>{}); else setTotals(null)},[JSON.stringify(lines)]);
  useEffect(()=>{loadInvoiceTextPreview(companyId,pdfLanguage,treatmentDate,lbd?.file??'').then(setTextPreview).catch(()=>setTextPreview(null));},[companyId,pdfLanguage,treatmentDate,lbd?.file]);
  const editableRecipient = {found: true, file: recipientMode==='lbd' ? (lbd?.file||'') : '', salutation: recSalutation, title: recTitle, firstName: recFirstName, lastName: recLastName, street: recStreet, postalCode: recPostalCode, city: recCity, country: recCountry, rawFields:{email:recEmail}} as any as LbdRecipient;
@@ -3298,7 +3649,7 @@ function InvoiceEditor({existing,initialCompanyId,onSaved}:{existing?:InvoiceDet
  async function submitProforma(){setErr(''); try{const payload=buildPayload(); const res=await createProformaInvoice({...payload, number: undefined, paymentAdvice: true, reason: reason || 'Proforma-Rechnung'}); gamNotify('success','Proforma erfolgreich erstellt.'); onSaved(res);}catch(ex:any){const m=ex.message??ui('proformaFailed'); setErr(m); gamNotify('error',m,0);}}
  const previewSummary = {id:0, number: next, invoiceDate, companyId, companyName: companies.find(c=>c.id===companyId)?.name, couponAmount: voucherEnabled ? couponAmount : undefined, discountPercent: discountEnabled && discountType==='percent' ? discountValue : undefined, discountRemark: (voucherEnabled && couponText) ? couponText : undefined, installments: installmentsEnabled ? installments : undefined} as InvoiceSummary;
  const translatedProductDescription = (p?:ProductDto, fallbackId?:number|string, lineDescription?:string) => productDescriptionForLanguage(pdfLanguage, p, fallbackId, lineDescription, productDescTranslations);
- return <section className="invoice-editor-layout"><section className="card new invoice-editor"><div className="row"><div><h2>{existing?ui('invoiceEdit'):ui('newInvoice')}</h2><p className="muted">Nummer: <b>{next||ui('loadingNumber')}</b> · {ui('mandatoryZugferd')}</p></div><div className="lbd-compact"><UserRound size={16}/><div><b>{[recSalutation,recTitle,recFirstName,recLastName].filter(Boolean).join(' ')||'Manuelle Adresse'}</b><br/><small>{recStreet} · {[recPostalCode,recCity].filter(Boolean).join(' ')}</small></div></div></div><form onSubmit={submit} className="newgrid"><label>Adresse<input type="radio" checked={recipientMode==='lbd'} onChange={()=>setRecipientMode('lbd')}/> LBD <input type="radio" checked={recipientMode==='manual'} onChange={()=>setRecipientMode('manual')}/> Manuell</label><label>Anrede<input value={recSalutation} onChange={e=>setRecSalutation(e.target.value)}/></label><label>Titel<input value={recTitle} onChange={e=>setRecTitle(e.target.value)}/></label><label>Vorname<input value={recFirstName} onChange={e=>setRecFirstName(e.target.value)}/></label><label>Nachname<input value={recLastName} onChange={e=>setRecLastName(e.target.value)}/></label><label>Straße<input value={recStreet} onChange={e=>setRecStreet(e.target.value)}/></label><label>PLZ<input value={recPostalCode} onChange={e=>setRecPostalCode(e.target.value)}/></label><label>Ort<input value={recCity} onChange={e=>setRecCity(e.target.value)}/></label><label>Land<input value={recCountry} onChange={e=>setRecCountry(e.target.value)}/></label><label>E-Mail<input value={recEmail} onChange={e=>setRecEmail(e.target.value)}/></label><label>{ui("invoiceDate")}<input type="date" value={invoiceDate} onChange={e=>setInvoiceDate(e.target.value)}/><small>{formatGamDate(invoiceDate,currentUiLanguage())}</small></label><label>{ui("treatmentDate")}<input type="date" value={treatmentDate} onChange={e=>setTreatmentDate(e.target.value)}/><small>{formatGamDate(treatmentDate,currentUiLanguage())}</small></label><label>{ui("company")}<select value={companyId} onChange={e=>setCompanyId(Number(e.target.value))}>{companies.map(c=><option key={c.id} value={c.id}>{c.name??c.code??c.id}</option>)}</select></label><label>{ui("paymentMethod")}<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="unbekannt">{ui("paymentUnknown")}</option><option value="Barzahlung">{ui("paymentCash")}</option><option value="Kartenzahlung">{ui("paymentCard")}</option><option value="Überweisung">{ui("paymentTransfer")}</option></select></label><label>{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><label>{ui("reason")}<input value={reason} onChange={e=>setReason(e.target.value)}/></label><label>{ui("remark")}<input value={remark} onChange={e=>setRemark(e.target.value)}/></label><label className="toggle-field"><input type="checkbox" checked={voucherEnabled} onChange={e=>setVoucherEnabled(e.target.checked)}/> {ui("voucherEnable")}</label>{voucherEnabled&&<><label>{ui("voucherText")}<input value={couponText} onChange={e=>setCouponText(e.target.value)} placeholder={ui("voucher")}/></label><label>{ui("voucherAmount")}<input type="number" step="0.01" value={couponAmount} onChange={e=>setCouponAmount(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={discountEnabled} onChange={e=>setDiscountEnabled(e.target.checked)}/> {ui("discountEnable")}</label>{discountEnabled&&<><label>{ui("discountType")}<select value={discountType} onChange={e=>setDiscountType(e.target.value as any)}><option value="percent">{ui("percent")}</option><option value="amount">{ui("amount")}</option></select></label><label>{ui("discountValue")}<input type="number" step="0.01" value={discountValue} onChange={e=>setDiscountValue(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={installmentsEnabled} onChange={e=>setInstallmentsEnabled(e.target.checked)}/> {ui("installmentsEnable")}</label>{installmentsEnabled&&<label>{ui("installmentCount")}<select value={installments} onChange={e=>setInstallments(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} {n>1?ui('ratePlural'):ui('rateSingular')}</option>)}</select></label>}<label className="product-field">{ui("product")}<select value={productId??''} onChange={e=>setProductId(Number(e.target.value))}>{products.map(p=><option key={p.id} value={p.id}>{p.code} · {translatedProductDescription(p)} · {money(p.price)}</option>)}</select></label><label className="quantity-field">{ui("quantity")}<input type="number" step="0.1" value={qty} onChange={e=>setQty(Number(e.target.value))}/></label><button type="button" className="secondary add-position" onClick={addLine}>{ui("addPosition")}</button><button className="save-invoice">{existing?ui('editChangesSave'):ui('saveInvoice')}</button>{!existing&&<button type="button" className="secondary" onClick={submitProforma}>Proforma +P</button>}</form>{lines.length>0&&<table><thead><tr><th>{ui("quantity")}</th><th>{ui("product")}</th><th>{ui('tax')}</th><th>{ui('price')}</th><th></th></tr></thead><tbody>{lines.map((l,idx)=>{const prod=products.find(p=>p.id===l.productId); return <tr key={idx}><td><input type="number" step="0.1" value={l.quantity??1} onChange={e=>updateLine(idx,{quantity:Number(e.target.value)})}/></td><td className="product-cell"><b>{prod?.code??l.productId}</b><br/><span>{translatedProductDescription(prod, l.productId, (l as any).description)}</span></td><td><input type="number" value={l.vat??0} onChange={e=>updateLine(idx,{vat:Number(e.target.value)})}/></td><td><input type="number" step="0.01" value={l.price??0} onChange={e=>updateLine(idx,{price:Number(e.target.value)})}/></td><td><button type="button" className="danger" onClick={()=>removeLine(idx)}>{ui("remove")}</button></td></tr>})}</tbody></table>}{commercialRows(previewSummary, totals, lines, pdfLanguage)}{totals&&<p className="note ok">{ui('net')} {money(totals.net)} · {ui('tax')} {money(totals.vat)} · {ui('gross')} <b>{money(totals.gross)}</b></p>}{err&&<b className="error">{err}</b>}</section><InvoiceTextPreviewPanel preview={textPreview} lines={lines} products={products} company={companies.find(c=>c.id===companyId)} number={next} totals={totals} lang={pdfLanguage} summary={previewSummary} recipient={editableRecipient} invoiceDate={invoiceDate} treatmentDate={treatmentDate} paymentMethod={paymentMethod}/></section>}
+ return <section className="invoice-editor-layout"><section className="card new invoice-editor"><div className="row"><div><h2>{existing?ui('invoiceEdit'):ui('newInvoice')}</h2><p className="muted">Nummer: <b>{next||ui('loadingNumber')}</b> · {ui('mandatoryZugferd')}</p></div><div className="lbd-compact"><UserRound size={16}/><div><b>{[recSalutation,recTitle,recFirstName,recLastName].filter(Boolean).join(' ')||'Manuelle Adresse'}</b><br/><small>{recStreet} · {[recPostalCode,recCity].filter(Boolean).join(' ')}</small></div></div></div><form onSubmit={submit} className="newgrid"><label>Adresse<input type="radio" checked={recipientMode==='lbd'} onChange={()=>setRecipientMode('lbd')}/> LBD <input type="radio" checked={recipientMode==='manual'} onChange={()=>setRecipientMode('manual')}/> Manuell</label><label>Anrede<input value={recSalutation} onChange={e=>setRecSalutation(e.target.value)}/></label><label>Titel<input value={recTitle} onChange={e=>setRecTitle(e.target.value)}/></label><label>Vorname<input value={recFirstName} onChange={e=>setRecFirstName(e.target.value)}/></label><label>Nachname<input value={recLastName} onChange={e=>setRecLastName(e.target.value)}/></label><label>Straße<input value={recStreet} onChange={e=>setRecStreet(e.target.value)}/></label><label>PLZ<input value={recPostalCode} onChange={e=>setRecPostalCode(e.target.value)}/></label><label>Ort<input value={recCity} onChange={e=>setRecCity(e.target.value)}/></label><label>Land<input value={recCountry} onChange={e=>setRecCountry(e.target.value)}/></label><label>E-Mail<input value={recEmail} onChange={e=>setRecEmail(e.target.value)}/></label><label>{ui("invoiceDate")}<input type="date" value={invoiceDate} onChange={e=>setInvoiceDate(e.target.value)}/><small>{formatGamDate(invoiceDate,currentUiLanguage())}</small></label><label>{ui("treatmentDate")}<input type="date" value={treatmentDate} onChange={e=>setTreatmentDate(e.target.value)}/><small>{formatGamDate(treatmentDate,currentUiLanguage())}</small></label><label>{ui("company")}<select value={companyId} onChange={e=>setCompanyId(Number(e.target.value))}>{companies.map(c=><option key={c.id} value={c.id}>{c.name??c.code??c.id}</option>)}</select></label><label>{ui("paymentMethod")}<select value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="unbekannt">{ui("paymentUnknown")}</option><option value="Barzahlung">{ui("paymentCash")}</option><option value="Kartenzahlung">{ui("paymentCard")}</option><option value="Überweisung">{ui("paymentTransfer")}</option></select></label><label>{ui("pdfLanguage")}<select value={pdfLanguage} onChange={e=>setPdfLanguage(e.target.value as GamLanguage)}>{LANGUAGES.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}</select></label><label>{ui("reason")}<input value={reason} onChange={e=>setReason(e.target.value)}/></label><label>{ui("remark")}<input value={remark} onChange={e=>setRemark(e.target.value)}/></label><label className="toggle-field"><input type="checkbox" checked={voucherEnabled} onChange={e=>setVoucherEnabled(e.target.checked)}/> {ui("voucherEnable")}</label>{voucherEnabled&&<><label>{ui("voucherText")}<input value={couponText} onChange={e=>setCouponText(e.target.value)} placeholder={ui("voucher")}/></label><label>{ui("voucherAmount")}<input type="number" step="0.01" value={couponAmount} onChange={e=>setCouponAmount(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={discountEnabled} onChange={e=>setDiscountEnabled(e.target.checked)}/> {ui("discountEnable")}</label>{discountEnabled&&<><label>{ui("discountType")}<select value={discountType} onChange={e=>setDiscountType(e.target.value as any)}><option value="percent">{ui("percent")}</option><option value="amount">{ui("amount")}</option></select></label><label>{ui("discountValue")}<input type="number" step="0.01" value={discountValue} onChange={e=>setDiscountValue(Number(e.target.value))}/></label></>}<label className="toggle-field"><input type="checkbox" checked={installmentsEnabled} onChange={e=>setInstallmentsEnabled(e.target.checked)}/> {ui("installmentsEnable")}</label>{installmentsEnabled&&<label>{ui("installmentCount")}<select value={installments} onChange={e=>setInstallments(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} {n>1?ui('ratePlural'):ui('rateSingular')}</option>)}</select></label>}<label className="product-field">{ui("product")}<select value={productId??''} onChange={e=>setProductId(Number(e.target.value))}>{products.map(p=><option key={p.id} value={p.id}>{p.code} · {translatedProductDescription(p)} · {money(p.price)} · {p.vat??0}%{p.effectiveNote?` · ${p.effectiveNote}`:''}</option>)}</select></label><label className="quantity-field">{ui("quantity")}<input type="number" step="0.1" value={qty} onChange={e=>setQty(Number(e.target.value))}/></label><button type="button" className="secondary add-position" onClick={addLine}>{ui("addPosition")}</button><button className="save-invoice">{existing?ui('editChangesSave'):ui('saveInvoice')}</button>{!existing&&<button type="button" className="secondary" onClick={submitProforma}>Proforma +P</button>}</form>{lines.length>0&&<table><thead><tr><th>{ui("quantity")}</th><th>{ui("product")}</th><th>{ui('tax')}</th><th>{ui('price')}</th><th></th></tr></thead><tbody>{lines.map((l,idx)=>{const prod=products.find(p=>p.id===l.productId); return <tr key={idx}><td><input type="number" step="0.1" value={l.quantity??1} onChange={e=>updateLine(idx,{quantity:Number(e.target.value)})}/></td><td className="product-cell"><b>{prod?.code??l.productId}</b><br/><span>{translatedProductDescription(prod, l.productId, (l as any).description)}</span></td><td><input type="number" value={l.vat??0} onChange={e=>updateLine(idx,{vat:Number(e.target.value)})}/></td><td><input type="number" step="0.01" value={l.price??0} onChange={e=>updateLine(idx,{price:Number(e.target.value)})}/></td><td><button type="button" className="danger" onClick={()=>removeLine(idx)}>{ui("remove")}</button></td></tr>})}</tbody></table>}{commercialRows(previewSummary, totals, lines, pdfLanguage)}{totals&&<p className="note ok">{ui('net')} {money(totals.net)} · {ui('tax')} {money(totals.vat)} · {ui('gross')} <b>{money(totals.gross)}</b></p>}{err&&<b className="error">{err}</b>}</section><InvoiceTextPreviewPanel preview={textPreview} lines={lines} products={products} company={companies.find(c=>c.id===companyId)} number={next} totals={totals} lang={pdfLanguage} summary={previewSummary} recipient={editableRecipient} invoiceDate={invoiceDate} treatmentDate={treatmentDate} paymentMethod={paymentMethod}/></section>}
 
 
 function InvoiceTextPreviewPanel({preview,lines,products,company,number,totals,lang,summary,recipient,invoiceDate,treatmentDate,paymentMethod}:{preview:InvoiceTextPreview|null; lines:InvoiceCreateLineRequest[]; products:ProductDto[]; company?:InvoiceCompany; number:string; totals:any; lang:GamLanguage; summary:InvoiceSummary; recipient:LbdRecipient|null; invoiceDate:string; treatmentDate?:string; paymentMethod:string}){
@@ -3925,7 +4276,7 @@ function CashbookPage(){
    try{ await deleteMasterDataRow(CASHBOOK_CATALOG_KEY, String(id)); setOpen(false); await reload(q); gamNotify('success','Kassenbucheintrag gelöscht.'); }
    catch(e:any){ gamNotify('error', e.message??'Kassenbucheintrag konnte nicht gelöscht werden', 0); }
  }
- return <section className="card"><h2>Kassenbuch</h2><p className="muted">Schritt 38m: Kassenbuch als bearbeitbares GDS-Modul auf Basis der bestehenden Tabelle <code>kassenbuch</code>. Neu, Bearbeiten, Löschen, Suche, Toasts und Änderungsdetails sind aktiv.</p>{err&&<b className="error">{err}</b>}<div className="stats"><span>Datensätze<br/><b>{rows.length}</b></span><span>Einnahmen<br/><b>{money(totals.in)}</b></span><span>Ausgaben<br/><b>{money(totals.out)}</b></span><span>Saldo Auswahl<br/><b>{money(totals.in-totals.out)}</b></span></div><GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> Neuer Kassenbucheintrag</button><label><Search size={16}/><input placeholder="Geschäftsvorgang oder Gegenkonto suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button></GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr>{fields.map(k=><th key={k}>{cashbookColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{rows.length?rows.map((r,idx)=><tr key={String(rowValue(r,CASHBOOK_PRIMARY_KEY)||idx)} className="clickable-row" onClick={()=>startEdit(r)}>{fields.map(k=><td key={k}>{formatCell(rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>):<tr><td colSpan={fields.length+1} className="muted">Keine Kassenbucheinträge gefunden.</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={cashbookLabel(form)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,CASHBOOK_PRIMARY_KEY)?'Änderungen speichern':'Kassenbucheintrag anlegen'}</button>{rowValue(form,CASHBOOK_PRIMARY_KEY)&&<button className="danger" type="button" onClick={remove}>Kassenbucheintrag löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key} className={key==='GESCHÄFTSVORGANG'?'wide-field':undefined}>{cashbookColumnLabels[key]||key}{key==='GESCHÄFTSVORGANG'?<textarea ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>:<input ref={idx===0?firstRef:undefined} type={cashbookFieldType(key)} step={cashbookFieldType(key)==='number'?'0.01':undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></section>;
+ return <section className="card"><h2>Kassenbuch</h2><p className="muted">Schritt 38m: Kassenbuch als bearbeitbares GDS-Modul auf Basis der bestehenden Tabelle <code>kassenbuch</code>. Neu, Bearbeiten, Löschen, Suche, Toasts und Änderungsdetails sind aktiv.</p>{err&&<b className="error">{err}</b>}<div className="stats"><span>Datensätze<br/><b>{rows.length}</b></span><span>Einnahmen<br/><b>{money(totals.in)}</b></span><span>Ausgaben<br/><b>{money(totals.out)}</b></span><span>Saldo Auswahl<br/><b>{money(totals.in-totals.out)}</b></span></div><GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> Neuer Kassenbucheintrag</button><label><Search size={16}/><input placeholder="Geschäftsvorgang oder Gegenkonto suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button></GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr>{fields.map(k=><th key={k}>{cashbookColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{rows.length?rows.map((r,idx)=><tr key={String(rowValue(r,CASHBOOK_PRIMARY_KEY)||idx)} className="clickable-row" onClick={()=>startEdit(r)}>{fields.map(k=><td key={k}>{renderInvoiceAdminCell(k,rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>):<tr><td colSpan={fields.length+1} className="muted">Keine Kassenbucheinträge gefunden.</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={cashbookLabel(form)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,CASHBOOK_PRIMARY_KEY)?'Änderungen speichern':'Kassenbucheintrag anlegen'}</button>{rowValue(form,CASHBOOK_PRIMARY_KEY)&&<button className="danger" type="button" onClick={remove}>Kassenbucheintrag löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key} className={key==='GESCHÄFTSVORGANG'?'wide-field':undefined}>{cashbookColumnLabels[key]||key}{key==='GESCHÄFTSVORGANG'?<textarea ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>:<input ref={idx===0?firstRef:undefined} type={cashbookFieldType(key)} step={cashbookFieldType(key)==='number'?'0.01':undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></section>;
 }
 
 
@@ -4009,7 +4360,7 @@ function WorkplacePage(){
  }
  const ready=rows.filter(r=>String(rowValue(r,'FERTIGGESTELLT')??'').toLowerCase()==='true' || String(rowValue(r,'FERTIGGESTELLT')??'')==='1').length;
  const withPhone=rows.filter(r=>String(rowValue(r,'TELEFON')??'').toLowerCase()==='true' || String(rowValue(r,'TELEFON')??'')==='1').length;
- return <section className="card"><h2>Arbeitsplatzausstattung</h2><p className="muted">Schritt 38n: Arbeitsplatzausstattung als bearbeitbares GDS-Modul auf Basis der bestehenden Tabelle <code>arbeitsplatz</code>. Tabelle und Dialog nutzen alle verfügbaren Arbeitsplatz-Spalten.</p>{err&&<b className="error">{err}</b>}<div className="stats"><span>Datensätze<br/><b>{rows.length}</b></span><span>Mit Telefon<br/><b>{withPhone}</b></span><span>Fertiggestellt<br/><b>{ready}</b></span><span>Tabelle<br/><b>{catalog?.tableName||'arbeitsplatz'}</b></span></div><GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> Neuer Arbeitsplatz</button><label><Search size={16}/><input placeholder="Arbeitsplatz oder Mitarbeiter suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button></GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr>{fields.map(k=><th key={k}>{workplaceColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{rows.length?rows.map((r,idx)=><tr key={String(rowValue(r,WORKPLACE_PRIMARY_KEY)||idx)} className="clickable-row" onClick={()=>startEdit(r)}>{fields.map(k=><td key={k}>{formatCell(rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>):<tr><td colSpan={fields.length+1} className="muted">Keine Arbeitsplatzausstattung gefunden.</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={workplaceLabel(form)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,WORKPLACE_PRIMARY_KEY)?'Änderungen speichern':'Arbeitsplatz anlegen'}</button>{rowValue(form,WORKPLACE_PRIMARY_KEY)&&<button className="danger" type="button" onClick={remove}>Arbeitsplatz löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key}>{workplaceColumnLabels[key]||key}{workplaceFieldType(key)==='boolean'?<select value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}><option value="">—</option><option value="1">Ja</option><option value="0">Nein</option></select>:<input ref={idx===0?firstRef:undefined} type={workplaceFieldType(key)} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></section>;
+ return <section className="card"><h2>Arbeitsplatzausstattung</h2><p className="muted">Schritt 38n: Arbeitsplatzausstattung als bearbeitbares GDS-Modul auf Basis der bestehenden Tabelle <code>arbeitsplatz</code>. Tabelle und Dialog nutzen alle verfügbaren Arbeitsplatz-Spalten.</p>{err&&<b className="error">{err}</b>}<div className="stats"><span>Datensätze<br/><b>{rows.length}</b></span><span>Mit Telefon<br/><b>{withPhone}</b></span><span>Fertiggestellt<br/><b>{ready}</b></span><span>Tabelle<br/><b>{catalog?.tableName||'arbeitsplatz'}</b></span></div><GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> Neuer Arbeitsplatz</button><label><Search size={16}/><input placeholder="Arbeitsplatz oder Mitarbeiter suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button></GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr>{fields.map(k=><th key={k}>{workplaceColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{rows.length?rows.map((r,idx)=><tr key={String(rowValue(r,WORKPLACE_PRIMARY_KEY)||idx)} className="clickable-row" onClick={()=>startEdit(r)}>{fields.map(k=><td key={k}>{renderInvoiceAdminCell(k,rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>):<tr><td colSpan={fields.length+1} className="muted">Keine Arbeitsplatzausstattung gefunden.</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={workplaceLabel(form)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,WORKPLACE_PRIMARY_KEY)?'Änderungen speichern':'Arbeitsplatz anlegen'}</button>{rowValue(form,WORKPLACE_PRIMARY_KEY)&&<button className="danger" type="button" onClick={remove}>Arbeitsplatz löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key}>{workplaceColumnLabels[key]||key}{workplaceFieldType(key)==='boolean'?<select value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}><option value="">—</option><option value="1">Ja</option><option value="0">Nein</option></select>:<input ref={idx===0?firstRef:undefined} type={workplaceFieldType(key)} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></section>;
 }
 
 function RecordsPage({title,loader}:{title:string; loader:(limit?:number)=>Promise<any[]>}){const [rows,setRows]=useState<any[]>([]); const [err,setErr]=useState(''); useEffect(()=>{loader(150).then(setRows).catch((e:any)=>setErr(e.message??'Konnte Daten nicht laden'))},[title]); return <section className="card"><h2>{title}</h2><p className="muted">Schritt 5: sichere Leseansicht als Modulrahmen. Schreib-/Bearbeitungslogik wird erst nach Abgleich mit der alten Fachlogik aktiviert.</p>{err&&<b className="error">{err}</b>}<GenericTable rows={rows}/></section>}
@@ -4150,7 +4501,7 @@ function ComplianceCatalogEditor({catalogKey,title,empty,add}:{catalogKey:string
    try{ await deleteMasterDataRow(catalogKey, String(id)); setOpen(false); await reload(q); gamNotify('success',`${title} gelöscht.`); }
    catch(e:any){ gamNotify('error', e.message??`${title} konnte nicht gelöscht werden`, 0); }
  }
- return <div className="card subtle-card"><h3>{title}</h3>{err&&<b className="error">{err}</b>}<div className="stats"><button className={dueFilter==='all'?'stat-button active':'stat-button'} type="button" onClick={()=>setDueFilter('all')}>Datensätze<br/><b>{rows.length}</b></button><button className={overdueRows.length?'stat-button danger-stat':'stat-button'} type="button" onClick={()=>setDueFilter('overdue')}>Überfällig<br/><b>{overdueRows.length}</b></button><button className={soonRows.length?'stat-button warning-stat':'stat-button'} type="button" onClick={()=>setDueFilter('soon')}>Nächste 14 Tage<br/><b>{soonRows.length}</b></button><span>Tabelle<br/><b>{catalog?.tableName||catalogKey}</b></span></div>{overdueRows.length>0&&<div className="note overdue-note" role="alert" onClick={()=>setDueFilter('overdue')}><b>🔴 Überfällige Prüfungen</b><br/>{overdueRows.slice(0,5).map(({row,due})=><small key={String(rowValue(row,primary))}>{complianceDueName(row,catalog)} · {due?.label}</small>)}{overdueRows.length>5&&<small>… und {overdueRows.length-5} weitere</small>}</div>}{soonRows.length>0&&<div className="note soon-note" onClick={()=>setDueFilter('soon')}><b>🟡 Bald fällige Prüfungen</b><br/>{soonRows.slice(0,5).map(({row,due})=><small key={String(rowValue(row,primary))}>{complianceDueName(row,catalog)} · {due?.label}</small>)}{soonRows.length>5&&<small>… und {soonRows.length-5} weitere</small>}</div>}<GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> {add}</button><label><Search size={16}/><input placeholder="Suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button>{dueFilter!=='all'&&<button className="secondary" type="button" onClick={()=>setDueFilter('all')}>Filter zurücksetzen</button>}</GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr><th>Fälligkeit</th>{fields.map(k=><th key={k}>{complianceColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{shownRows.length?shownRows.map((r,idx)=>{const due=complianceRowDueInfo(r,catalogKey); return <tr key={String(rowValue(r,primary)||idx)} className={due?.level==='overdue'?"clickable-row due-overdue":due?.level==='soon'?"clickable-row due-soon":"clickable-row"} onClick={()=>startEdit(r)}><td>{due?.level==='overdue'?'🔴':due?.level==='soon'?'🟡':'—'} {due?.label||''}</td>{fields.map(k=><td key={k}>{formatCell(rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>}):<tr><td colSpan={fields.length+2} className="muted">{dueFilter==='overdue'?'Keine überfälligen Prüfungen.':dueFilter==='soon'?'Keine bald fälligen Prüfungen.':empty}</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={complianceLabel(form,catalog)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,primary)?'Änderungen speichern':'Eintrag anlegen'}</button>{rowValue(form,primary)&&<button className="danger" type="button" onClick={remove}>Eintrag löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key} className={(key.toUpperCase().includes('BEMERKUNG')||key.toUpperCase().includes('BESCHREIBUNG'))?'wide-field':undefined}>{complianceColumnLabels[key]||key}{(key.toUpperCase().includes('BEMERKUNG')||key.toUpperCase().includes('BESCHREIBUNG'))?<textarea ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>:<input ref={idx===0?firstRef:undefined} type={complianceFieldType(key)} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></div>;
+ return <div className="card subtle-card"><h3>{title}</h3>{err&&<b className="error">{err}</b>}<div className="stats"><button className={dueFilter==='all'?'stat-button active':'stat-button'} type="button" onClick={()=>setDueFilter('all')}>Datensätze<br/><b>{rows.length}</b></button><button className={overdueRows.length?'stat-button danger-stat':'stat-button'} type="button" onClick={()=>setDueFilter('overdue')}>Überfällig<br/><b>{overdueRows.length}</b></button><button className={soonRows.length?'stat-button warning-stat':'stat-button'} type="button" onClick={()=>setDueFilter('soon')}>Nächste 14 Tage<br/><b>{soonRows.length}</b></button><span>Tabelle<br/><b>{catalog?.tableName||catalogKey}</b></span></div>{overdueRows.length>0&&<div className="note overdue-note" role="alert" onClick={()=>setDueFilter('overdue')}><b>🔴 Überfällige Prüfungen</b><br/>{overdueRows.slice(0,5).map(({row,due})=><small key={String(rowValue(row,primary))}>{complianceDueName(row,catalog)} · {due?.label}</small>)}{overdueRows.length>5&&<small>… und {overdueRows.length-5} weitere</small>}</div>}{soonRows.length>0&&<div className="note soon-note" onClick={()=>setDueFilter('soon')}><b>🟡 Bald fällige Prüfungen</b><br/>{soonRows.slice(0,5).map(({row,due})=><small key={String(rowValue(row,primary))}>{complianceDueName(row,catalog)} · {due?.label}</small>)}{soonRows.length>5&&<small>… und {soonRows.length-5} weitere</small>}</div>}<GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> {add}</button><label><Search size={16}/><input placeholder="Suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button>{dueFilter!=='all'&&<button className="secondary" type="button" onClick={()=>setDueFilter('all')}>Filter zurücksetzen</button>}</GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr><th>Fälligkeit</th>{fields.map(k=><th key={k}>{complianceColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{shownRows.length?shownRows.map((r,idx)=>{const due=complianceRowDueInfo(r,catalogKey); return <tr key={String(rowValue(r,primary)||idx)} className={due?.level==='overdue'?"clickable-row due-overdue":due?.level==='soon'?"clickable-row due-soon":"clickable-row"} onClick={()=>startEdit(r)}><td>{due?.level==='overdue'?'🔴':due?.level==='soon'?'🟡':'—'} {due?.label||''}</td>{fields.map(k=><td key={k}>{renderInvoiceAdminCell(k,rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>}):<tr><td colSpan={fields.length+2} className="muted">{dueFilter==='overdue'?'Keine überfälligen Prüfungen.':dueFilter==='soon'?'Keine bald fälligen Prüfungen.':empty}</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={complianceLabel(form,catalog)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,primary)?'Änderungen speichern':'Eintrag anlegen'}</button>{rowValue(form,primary)&&<button className="danger" type="button" onClick={remove}>Eintrag löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key} className={(key.toUpperCase().includes('BEMERKUNG')||key.toUpperCase().includes('BESCHREIBUNG'))?'wide-field':undefined}>{complianceColumnLabels[key]||key}{(key.toUpperCase().includes('BEMERKUNG')||key.toUpperCase().includes('BESCHREIBUNG'))?<textarea ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>:<input ref={idx===0?firstRef:undefined} type={complianceFieldType(key)} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></div>;
 }
 function CompliancePage(){return <section className="card"><h2>Prüfungen</h2><p className="muted">Schritt 38p4: Prüfungen mit Frühwarnsystem. Überfällige Prüfungen werden rot angemahnt, Prüfungen der nächsten 14 Tage gelb vorgewarnt.</p>{COMPLIANCE_CATALOGS.map(c=><ComplianceCatalogEditor key={c.catalogKey} {...c}/>)}</section>}
 
@@ -4316,7 +4667,7 @@ function PriceListPage(){
    try{ await deleteMasterDataRow(PRICELIST_CATALOG_KEY, String(id)); setOpen(false); await reload(q); gamNotify('success','Preislisteneintrag gelöscht.'); }
    catch(e:any){ gamNotify('error', e.message??'Preislisteneintrag konnte nicht gelöscht werden', 0); }
  }
- return <section className="card"><h2>Preisliste</h2><p className="muted">Schritt 38o: Preisliste als bearbeitbares GDS-Modul auf Basis der bestehenden Tabelle <code>preisliste</code>. Es werden vorerst ausschließlich die vorhandenen Spalten umgesetzt.</p>{err&&<b className="error">{err}</b>}<div className="stats"><span>Datensätze<br/><b>{rows.length}</b></span><span>Mit Lieferant<br/><b>{withSupplier}</b></span><span>Monatliche Kosten<br/><b>{money(monthlyTotal)}</b></span><span>Tabelle<br/><b>{catalog?.tableName||'preisliste'}</b></span></div><GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> Neuer Preislisteneintrag</button><label><Search size={16}/><input placeholder="Artikel, Lieferant oder Bemerkung suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button></GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr>{fields.map(k=><th key={k}>{priceListColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{rows.length?rows.map((r,idx)=><tr key={String(rowValue(r,PRICELIST_PRIMARY_KEY)||idx)} className="clickable-row" onClick={()=>startEdit(r)}>{fields.map(k=><td key={k}>{formatCell(rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>):<tr><td colSpan={fields.length+1} className="muted">Keine Preislisteneinträge gefunden.</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={priceListLabel(form)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,PRICELIST_PRIMARY_KEY)?'Änderungen speichern':'Preislisteneintrag anlegen'}</button>{rowValue(form,PRICELIST_PRIMARY_KEY)&&<button className="danger" type="button" onClick={remove}>Preislisteneintrag löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key} className={key==='BEMERKUNG'?'wide-field':undefined}>{priceListColumnLabels[key]||key}{key==='BEMERKUNG'?<textarea ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>:<input ref={idx===0?firstRef:undefined} type={priceListFieldType(key)} step={priceListFieldType(key)==='number'?'0.01':undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></section>;
+ return <section className="card"><h2>Preisliste</h2><p className="muted">Schritt 38o: Preisliste als bearbeitbares GDS-Modul auf Basis der bestehenden Tabelle <code>preisliste</code>. Es werden vorerst ausschließlich die vorhandenen Spalten umgesetzt.</p>{err&&<b className="error">{err}</b>}<div className="stats"><span>Datensätze<br/><b>{rows.length}</b></span><span>Mit Lieferant<br/><b>{withSupplier}</b></span><span>Monatliche Kosten<br/><b>{money(monthlyTotal)}</b></span><span>Tabelle<br/><b>{catalog?.tableName||'preisliste'}</b></span></div><GamStickyToolbar><button type="button" onClick={startNew}><FilePlus2 size={16}/> Neuer Preislisteneintrag</button><label><Search size={16}/><input placeholder="Artikel, Lieferant oder Bemerkung suchen" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') reload(q)}}/></label><button className="secondary" type="button" onClick={()=>reload(q)}>Suchen / Aktualisieren</button></GamStickyToolbar><GamScrollArea tall><table className="compact-table"><thead><tr>{fields.map(k=><th key={k}>{priceListColumnLabels[k]||k}</th>)}<th>Aktion</th></tr></thead><tbody>{rows.length?rows.map((r,idx)=><tr key={String(rowValue(r,PRICELIST_PRIMARY_KEY)||idx)} className="clickable-row" onClick={()=>startEdit(r)}>{fields.map(k=><td key={k}>{renderInvoiceAdminCell(k,rowValue(r,k))}</td>)}<td><button className="secondary" type="button" onClick={(e)=>{e.stopPropagation(); startEdit(r);}}>Bearbeiten</button></td></tr>):<tr><td colSpan={fields.length+1} className="muted">Keine Preislisteneinträge gefunden.</td></tr>}</tbody></table></GamScrollArea><GamDialog open={open} title={priceListLabel(form)} onClose={()=>setOpen(false)} size="large" firstFocusRef={firstRef} footer={<><button type="button" onClick={save}>{rowValue(form,PRICELIST_PRIMARY_KEY)?'Änderungen speichern':'Preislisteneintrag anlegen'}</button>{rowValue(form,PRICELIST_PRIMARY_KEY)&&<button className="danger" type="button" onClick={remove}>Preislisteneintrag löschen</button>}<button className="secondary" type="button" onClick={()=>setOpen(false)}>Abbrechen</button></>}><div className="newgrid">{editable.map((key,idx)=><label key={key} className={key==='BEMERKUNG'?'wide-field':undefined}>{priceListColumnLabels[key]||key}{key==='BEMERKUNG'?<textarea ref={idx===0?firstRef:undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>:<input ref={idx===0?firstRef:undefined} type={priceListFieldType(key)} step={priceListFieldType(key)==='number'?'0.01':undefined} value={String(form[key]??'')} onChange={e=>setField(key,e.target.value)}/>}</label>)}</div></GamDialog></section>;
 }
 
 // Schritt 9: Inventar/Lager-Verbindung

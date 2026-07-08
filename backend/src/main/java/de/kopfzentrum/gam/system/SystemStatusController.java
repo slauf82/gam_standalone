@@ -37,6 +37,7 @@ public class SystemStatusController {
     Map<String, Object> modules = new LinkedHashMap<>();
     modules.put("auth", Map.of("status", "phase-1a", "accountsTable", "accounts"));
     modules.put("invoice", Map.of("status", "foundation", "lbd", lbd.isPresent()));
+    modules.put("invoiceAdmin", Map.of("status", "gds-editable", "tables", List.of("rechnungsgesellschaft", "rechnungsdaten", "rechnungsanrede", "rechnungstext", "rechnungsrechtlicherhinweis", "rechnungsgrussformel", "rechnungstext_gesellschaft_zuordnung", "rechnungslogo")));
     modules.put("inventory", Map.of("status", "pending"));
     modules.put("permissions", Map.of("status", "role-from-accounts-compatible"));
     modules.put("tasks", Map.of("status", "read-only-frame", "table", "aufgaben"));

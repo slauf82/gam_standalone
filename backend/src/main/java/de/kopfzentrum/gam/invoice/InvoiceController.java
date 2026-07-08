@@ -144,7 +144,13 @@ public class InvoiceController {
   }
 
   @GetMapping("/products")
-  public List<ProductDto> products(@RequestParam(defaultValue = "") String q, @RequestParam(defaultValue = "100") int limit) { return repo.findProducts(q, Math.min(Math.max(limit, 1), 500)); }
+  public List<ProductDto> products(
+    @RequestParam(defaultValue = "") String q,
+    @RequestParam(defaultValue = "100") int limit,
+    @RequestParam(required = false) String invoiceDate
+  ) {
+    return repo.findProducts(q, Math.min(Math.max(limit, 1), 500), invoiceDate);
+  }
 
   @GetMapping("/companies")
   public List<InvoiceCompany> companies() { return repo.findCompanies(); }

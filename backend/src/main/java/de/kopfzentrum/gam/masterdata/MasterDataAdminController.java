@@ -6,6 +6,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +27,10 @@ public class MasterDataAdminController {
     this.jdbc = jdbc;
     this.named = named;
     this.catalogs = buildCatalogs();
+    ensureInvoiceTextAssignmentTable();
+    ensureInvoiceTextFallbackRows();
+    ensureInvoiceLogoTable();
+    ensureInvoiceCompanyLogoColumn();
   }
 
   @GetMapping("/catalogs")
@@ -34,6 +43,8 @@ public class MasterDataAdminController {
                              @RequestParam(defaultValue = "") String q,
                              @RequestParam(defaultValue = "150") int limit) {
     MasterDataCatalog c = catalog(key);
+    if (isInvoiceTextFallbackCatalog(c)) ensureInvoiceTextFallbackRows();
+    if (isInvoiceLogoCatalog(c)) ensureInvoiceLogoTable();
     int safeLimit = Math.min(Math.max(limit, 1), 500);
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("limit", safeLimit);
     StringBuilder sql = new StringBuilder("SELECT ")
@@ -49,7 +60,7 @@ public class MasterDataAdminController {
       }
       sql.append(") ");
     }
-    sql.append(" ORDER BY ").append(col(c.primaryKey())).append(" DESC LIMIT :limit");
+    sql.append(" ORDER BY ").append(col(c.primaryKey())).append(isInvoiceTextFallbackCatalog(c) ? " ASC" : " DESC").append(" LIMIT :limit");
     return new MasterDataRows(c, named.query(sql.toString(), params, new ColumnMapRowMapper()));
   }
 
@@ -69,6 +80,12 @@ public class MasterDataAdminController {
   @PutMapping("/{key}/{id}")
   public Map<String, Object> update(@PathVariable String key, @PathVariable String id, @RequestBody Map<String, Object> payload) {
     MasterDataCatalog c = catalog(key);
+    if (isProtectedInvoiceTextFallback(c, id)) {
+      throw new IllegalArgumentException("Systemstandard ID 0 darf nicht geändert werden.");
+    }
+    if (isProtectedInvoiceLogoFallback(c, id)) {
+      throw new IllegalArgumentException("Systemlogo ID 0 darf nicht geändert werden.");
+    }
     Map<String, Object> values = writableValues(c, payload);
     if (values.isEmpty()) return find(c, id);
     String set = values.keySet().stream().map(k -> col(k) + " = :" + paramName(k)).collect(Collectors.joining(", "));
@@ -77,10 +94,57 @@ public class MasterDataAdminController {
     return find(c, id);
   }
 
+  // Schritt 39k: Die alte 39d-Rechnungstext-Set-Oberfläche bleibt bewusst entfernt.
+  // Fachlich richtig sind vier getrennte Textbaustein-Kataloge plus Textzuordnung je Gesellschaft.
+
+  @PostMapping("/invoice-logos/upload")
+  public Map<String, Object> uploadInvoiceLogo(@RequestParam("file") MultipartFile file) throws IOException {
+    if (file == null || file.isEmpty()) throw new IllegalArgumentException("Keine Logo-Datei übergeben.");
+    String original = Optional.ofNullable(file.getOriginalFilename()).orElse("logo");
+    String lower = original.toLowerCase(Locale.ROOT);
+    if (!(lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp"))) {
+      throw new IllegalArgumentException("Bitte eine Bilddatei hochladen: PNG, JPG, GIF oder WEBP.");
+    }
+    String ext = lower.contains(".") ? lower.substring(lower.lastIndexOf('.')) : ".png";
+    String safe = original.replaceAll("[^A-Za-z0-9._-]", "_");
+    String name = System.currentTimeMillis() + "_" + safe;
+    if (!name.toLowerCase(Locale.ROOT).endsWith(ext)) name += ext;
+    byte[] bytes = file.getBytes();
+    List<Path> targets = new ArrayList<>();
+    targets.add(Path.of("src/main/resources/static/images/uploads", name));
+    targets.add(Path.of("backend/src/main/resources/static/images/uploads", name));
+    targets.add(Path.of("frontend/public/images/uploads", name));
+    targets.add(Path.of("../frontend/public/images/uploads", name));
+    Path primary = null;
+    for (Path target : targets) {
+      try {
+        Path normalized = target.normalize();
+        Files.createDirectories(normalized.getParent());
+        Files.write(normalized, bytes);
+        if (primary == null) primary = normalized;
+      } catch (Exception ignored) { }
+    }
+    if (primary == null) throw new IOException("Logo konnte nicht gespeichert werden.");
+    String url = "/images/uploads/" + name;
+    return Map.of("url", url, "filename", name, "previewUrl", url);
+  }
+
 
   @DeleteMapping("/{key}/{id}")
   public Map<String, Object> delete(@PathVariable String key, @PathVariable String id) {
     MasterDataCatalog c = catalog(key);
+    if (isProtectedInvoiceTextFallback(c, id)) {
+      throw new IllegalArgumentException("Systemstandard ID 0 darf nicht gelöscht werden.");
+    }
+    if (isProtectedInvoiceLogoFallback(c, id)) {
+      throw new IllegalArgumentException("Systemlogo ID 0 darf nicht gelöscht werden.");
+    }
+    if (isInvoiceLogoCatalog(c)) {
+      Integer used = jdbc.queryForObject("SELECT COUNT(*) FROM `rechnungsgesellschaft` WHERE `LOGO_ID` = ?", Integer.class, id);
+      if (used != null && used > 0) {
+        throw new IllegalArgumentException("Dieses Logo wird noch von " + used + " Gesellschaft(en) verwendet und kann nicht gelöscht werden.");
+      }
+    }
     Map<String, Object> existing = find(c, id);
     named.update("DELETE FROM " + table(c.tableName()) + " WHERE " + col(c.primaryKey()) + " = :id", new MapSqlParameterSource().addValue("id", id));
     existing.put("deleted", true);
@@ -134,6 +198,76 @@ public class MasterDataAdminController {
   private String table(String name) { return "`" + name.replace("`", "") + "`"; }
   private String col(String name) { return "`" + name.replace("`", "") + "`"; }
   private String paramName(String name) { return name.replaceAll("[^A-Za-z0-9_]", "_"); }
+
+  private void ensureInvoiceTextCompanyColumns() {
+    ensureInvoiceTextAssignmentTable();
+  }
+
+  private void ensureInvoiceTextAssignmentTable() {
+    try {
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungstext_gesellschaft_zuordnung` (" +
+        "`ID` int NOT NULL AUTO_INCREMENT," +
+        "`RGESELLSCHAFTS_ID` int(50) NOT NULL," +
+        "`ANREDE_ID` int(50) DEFAULT NULL," +
+        "`RECHNUNGSTEXT_ID` int(50) DEFAULT NULL," +
+        "`RECHTLICHER_HINWEIS_ID` int(50) DEFAULT NULL," +
+        "`GRUSSFORMEL_ID` int(50) DEFAULT NULL," +
+        "PRIMARY KEY (`ID`)," +
+        "UNIQUE KEY `uk_rechnungstext_gesellschaft` (`RGESELLSCHAFTS_ID`)" +
+        ")");
+    } catch (Exception ignored) { }
+  }
+
+  private void ensureInvoiceTextFallbackRows() {
+    try {
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungsanrede` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungstext` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungsrechtlicherhinweis` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungsgrussformel` (`ID` int NOT NULL AUTO_INCREMENT, `TEXT` text, PRIMARY KEY (`ID`))");
+      // Schritt 39i: ID 0 ist fachlicher Systemstandard.
+      // MariaDB/MySQL benötigen NO_AUTO_VALUE_ON_ZERO, damit 0 nicht als neuer Auto-Increment-Wert interpretiert wird.
+      jdbc.execute("SET SESSION sql_mode = CONCAT_WS(',', @@sql_mode, 'NO_AUTO_VALUE_ON_ZERO')");
+      jdbc.update("INSERT IGNORE INTO `rechnungsanrede` (`ID`, `TEXT`) VALUES (0, ?)", "Sehr geehrte Damen und Herren,");
+      jdbc.update("INSERT IGNORE INTO `rechnungstext` (`ID`, `TEXT`) VALUES (0, ?)", "Wir erlauben uns folgende Leistungen in Rechnung zu stellen.");
+      jdbc.update("INSERT IGNORE INTO `rechnungsrechtlicherhinweis` (`ID`, `TEXT`) VALUES (0, ?)", "Bitte begleichen Sie den Rechnungsbetrag innerhalb der angegebenen Frist.");
+      jdbc.update("INSERT IGNORE INTO `rechnungsgrussformel` (`ID`, `TEXT`) VALUES (0, ?)", "Mit freundlichen Grüßen");
+    } catch (Exception ignored) { }
+  }
+
+  private boolean isInvoiceTextFallbackCatalog(MasterDataCatalog c) {
+    return Set.of("rechnungsanrede", "rechnungstext", "rechnungsrechtlicherhinweis", "rechnungsgrussformel").contains(c.tableName());
+  }
+
+  private boolean isProtectedInvoiceTextFallback(MasterDataCatalog c, String id) {
+    return isInvoiceTextFallbackCatalog(c) && "0".equals(String.valueOf(id));
+  }
+
+  private boolean isInvoiceLogoCatalog(MasterDataCatalog c) {
+    return "rechnungslogo".equals(c.tableName());
+  }
+
+  private boolean isProtectedInvoiceLogoFallback(MasterDataCatalog c, String id) {
+    return isInvoiceLogoCatalog(c) && "0".equals(String.valueOf(id));
+  }
+
+  private void ensureInvoiceLogoTable() {
+    try {
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungslogo` (`ID` int NOT NULL AUTO_INCREMENT, `NAME` varchar(255) DEFAULT NULL, `URL` varchar(1024) DEFAULT NULL, PRIMARY KEY (`ID`))");
+      try { jdbc.execute("ALTER TABLE `rechnungslogo` ADD COLUMN `NAME` varchar(255) DEFAULT NULL"); } catch (Exception ignored) { }
+      jdbc.execute("SET SESSION sql_mode = CONCAT_WS(',', @@sql_mode, 'NO_AUTO_VALUE_ON_ZERO')");
+      jdbc.update("INSERT IGNORE INTO `rechnungslogo` (`ID`, `NAME`, `URL`) VALUES (0, ?, ?)", "Systemstandard", "KOPFZENTRUM_LOGO.png");
+      try { jdbc.update("UPDATE `rechnungslogo` SET `NAME` = COALESCE(NULLIF(`NAME`, ''), 'Systemstandard') WHERE `ID` = 0"); } catch (Exception ignored) { }
+    } catch (Exception ignored) { }
+  }
+
+  private void ensureInvoiceCompanyLogoColumn() {
+    try { jdbc.execute("ALTER TABLE `rechnungsgesellschaft` ADD COLUMN `LOGO_ID` int(50) DEFAULT NULL"); } catch (Exception ignored) { }
+  }
+
+  private Object normalizeBlank(Object v) {
+    if (v instanceof String s && s.isBlank()) return null;
+    return v;
+  }
 
   private static Map<String, MasterDataCatalog> buildCatalogs() {
     List<MasterDataCatalog> list = List.of(
@@ -251,7 +385,27 @@ public class MasterDataAdminController {
         List.of("RGESELLSCHAFTS_ID", "FILIALE_ID"), "Zuordnung von Gesellschaften zu Filialen; Rechnungsdetails bleiben weiter im späteren Rechnungsadmin."),
       new MasterDataCatalog("payment-advice-lines", "Zahlungsavis-Positionen", "Zahlungsavis", "zahlungsavis", "ID",
         List.of("NUMMER", "MENGE", "PRODUKT_ID", "MWST", "PREIS2", "AUFTRAGGEBER", "DURCHFÜHRENDER", "FILIALE_ID", "RGESELLSCHAFTS_ID"),
-        List.of("NUMMER", "AUFTRAGGEBER", "DURCHFÜHRENDER"), "Historische Zahlungsavis-Daten als eigener GAM-1.0-Verwaltungsbereich; Rechnungsstammdaten bleiben getrennt.")
+        List.of("NUMMER", "AUFTRAGGEBER", "DURCHFÜHRENDER"), "Historische Zahlungsavis-Daten als eigener GAM-1.0-Verwaltungsbereich; Rechnungsstammdaten bleiben getrennt."),
+      new MasterDataCatalog("invoice-companies", "Rechnungsgesellschaften", "Rechnungsadministration", "rechnungsgesellschaft", "id",
+        List.of("gesellschaftskürzel", "gesellschaftsname", "gesellschaftsadresse", "post_straße_nummer", "post_plz_ort", "ustid", "register", "steuernummer", "gerichtsstand", "gesellschaftsführer", "ansprechpartner", "telefon", "fax", "email", "kontoinhaber", "iban", "bic", "neueskonto", "LOGO_ID"),
+        List.of("gesellschaftskürzel", "gesellschaftsname", "post_plz_ort", "email", "iban", "LOGO_ID"), "Rechnungsrelevante Gesellschaftsdaten inklusive Bank-, Steuer-, Kontodaten und Logo-Zuordnung."),
+      new MasterDataCatalog("invoice-products", "Rechnungsprodukte", "Rechnungsadministration", "rechnungsdaten", "rdaten_id",
+        List.of("filiale_id", "code", "beschreibung", "abkürzung", "kategorie", "preis1", "preisneu", "preisalt", "preis_gueltigab", "mwst", "mwstalt", "mwst_gueltigab", "konto", "rgesellschafts_id", "auftraggeber", "durchführender", "gültig_bis", "gültig_ab"),
+        List.of("code", "beschreibung", "kategorie", "preis1", "preisneu", "preis_gueltigab", "mwst", "mwst_gueltigab", "gültig_ab", "gültig_bis"), "Stichtagsfähige Rechnungsprodukte: Preis, MwSt und Angebotszeitraum werden über Datumsfelder vorbereitet."),
+      new MasterDataCatalog("invoice-salutations", "Rechnungsanreden", "Rechnungsadministration", "rechnungsanrede", "ID",
+        List.of("TEXT"), List.of("TEXT"), "Textbausteine für Rechnungsanreden."),
+      new MasterDataCatalog("invoice-texts", "Rechnungstexte", "Rechnungsadministration", "rechnungstext", "ID",
+        List.of("TEXT"), List.of("TEXT"), "Textbausteine für Rechnungstexte."),
+      new MasterDataCatalog("invoice-legal-notes", "Rechtliche Hinweise", "Rechnungsadministration", "rechnungsrechtlicherhinweis", "ID",
+        List.of("TEXT"), List.of("TEXT"), "Rechtliche Hinweise und Rechnungshinweise."),
+      new MasterDataCatalog("invoice-greetings", "Grußformeln", "Rechnungsadministration", "rechnungsgrussformel", "ID",
+        List.of("TEXT"), List.of("TEXT"), "Grußformeln für Rechnungen."),
+      new MasterDataCatalog("invoice-text-assignments", "Textzuordnung je Gesellschaft", "Rechnungsadministration", "rechnungstext_gesellschaft_zuordnung", "ID",
+        List.of("RGESELLSCHAFTS_ID", "ANREDE_ID", "RECHNUNGSTEXT_ID", "RECHTLICHER_HINWEIS_ID", "GRUSSFORMEL_ID"),
+        List.of("RGESELLSCHAFTS_ID", "ANREDE_ID", "RECHNUNGSTEXT_ID", "RECHTLICHER_HINWEIS_ID", "GRUSSFORMEL_ID"),
+        "Pro Gesellschaft wird ausgewählt, welche vorhandene Anrede, welcher Rechnungstext, welcher rechtliche Hinweis und welche Grußformel verwendet werden."),
+      new MasterDataCatalog("invoice-logos", "Rechnungslogos", "Rechnungsadministration", "rechnungslogo", "ID",
+        List.of("NAME", "URL"), List.of("NAME", "URL"), "Logo-Katalog für Rechnungsdokumente. Logos werden einmal angelegt und von Gesellschaften wiederverwendet.")
     );
     return list.stream().collect(Collectors.toMap(MasterDataCatalog::key, c -> c, (a, b) -> a, LinkedHashMap::new));
   }

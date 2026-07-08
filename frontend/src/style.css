@@ -863,3 +863,47 @@ body.gam-modal-open {
 .internal-soon { border-left: 6px solid #f59e0b; background: rgba(245, 158, 11, 0.14); }
 .appointment-overdue td:first-child { border-left: 4px solid #dc2626; }
 .appointment-soon td:first-child { border-left: 4px solid #f59e0b; }
+
+/* Schritt 39f: Rechnungsadministration - übersichtlicheres Zuordnungslayout
+   Lange Text-Auswahlen bekommen volle Breite, mittlere Felder nur 2 pro Zeile,
+   kurze Stammdaten dürfen bis zu 3 pro Zeile stehen. */
+.invoice-admin-editor-grid{
+  display:grid;
+  grid-template-columns:repeat(12,minmax(0,1fr));
+  gap:.85rem 1rem;
+  align-items:start;
+}
+.invoice-admin-editor-grid > label,
+.invoice-admin-editor-grid .invoice-admin-editor-field{
+  min-width:0;
+  max-width:100%;
+}
+.invoice-admin-editor-grid input,
+.invoice-admin-editor-grid select,
+.invoice-admin-editor-grid textarea{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.invoice-admin-field-short{grid-column:span 4;}
+.invoice-admin-field-medium{grid-column:span 6;}
+.invoice-admin-field-long{grid-column:1 / -1;}
+.invoice-admin-field-long select,
+.invoice-admin-field-long textarea{
+  min-height:2.8rem;
+}
+.invoice-admin-field-long textarea{
+  min-height:7rem;
+  resize:vertical;
+}
+@media(max-width:1150px){
+  .invoice-admin-field-short{grid-column:span 6;}
+  .invoice-admin-field-medium{grid-column:1 / -1;}
+}
+@media(max-width:760px){
+  .invoice-admin-editor-grid{grid-template-columns:1fr;}
+  .invoice-admin-field-short,
+  .invoice-admin-field-medium,
+  .invoice-admin-field-long{grid-column:1 / -1;}
+}

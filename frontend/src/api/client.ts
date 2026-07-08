@@ -7,8 +7,8 @@ export type InvoiceDetail = { summary: InvoiceSummary; lines: InvoiceLine[]; tot
 export type InvoiceNumberPreview = { nextNumber: string; currentMaxNumber: string; numericSequence: boolean; note: string };
 export type InvoiceValidationIssue = { severity: string; field: string; message: string };
 export type InvoiceExportCheck = { number: string; exportable: boolean; issues: InvoiceValidationIssue[] };
-export type ProductDto = { id: number; code?: string; description?: string; category?: string; price?: number; vat?: number; companyId?: number };
-export type InvoiceCompany = { id: number; code?: string; name?: string; address?: string; street?: string; city?: string; email?: string; iban?: string; bic?: string; accountHolder?: string; taxNumber?: string; vatId?: string };
+export type ProductDto = { id: number; code?: string; description?: string; category?: string; price?: number; vat?: number; companyId?: number; basePrice?: number; newPrice?: number; oldPrice?: number; priceValidFrom?: string; oldVat?: number; vatValidFrom?: string; validFrom?: string; validUntil?: string; available?: boolean; effectiveNote?: string };
+export type InvoiceCompany = { id: number; code?: string; name?: string; address?: string; street?: string; city?: string; email?: string; iban?: string; bic?: string; accountHolder?: string; taxNumber?: string; vatId?: string; logoId?: number; logoUrl?: string };
 export type InvoiceCreateLineRequest = { productId?: number; quantity?: number; price?: number; vat?: number; branchId?: number; client?: string; performer?: string };
 export type InvoiceRecipientRequest = { manual?: boolean; salutation?: string; title?: string; firstName?: string; lastName?: string; nameSuffix?: string; street?: string; postalCode?: string; city?: string; country?: string; email?: string; patientNumber?: string; lbdFile?: string };
 export type InvoiceCreateRequest = { number?: string; invoiceDate?: string; treatmentDate?: string; companyId?: number; addressId?: number; childAddressId?: number; firmAddressId?: number; branchId?: number; paymentMethod?: string; reason?: string; remark?: string; creditNote?: boolean; cancelled?: boolean; paymentAdvice?: boolean; couponText?: string; couponAmount?: number; discountType?: string; discountValue?: number; installments?: number; lbdFile?: string; recipient?: InvoiceRecipientRequest; lines: InvoiceCreateLineRequest[] };
@@ -79,7 +79,7 @@ export const loadSystemStatus = () => request<SystemStatus>("/system/status");
 export const loadInvoices = (limit = 100, q = "", companyId?: number) => request<InvoiceSummary[]>(`/invoices?limit=${limit}&q=${encodeURIComponent(q)}${companyId ? `&companyId=${companyId}` : ""}`);
 export const loadInvoice = (number: string, companyId?: number) => request<InvoiceDetail>(`/invoices/${encodeURIComponent(number)}${companyId ? `?companyId=${companyId}` : ""}`);
 export const loadLbdPreview = (file = "") => request<LbdRecipient>(`/invoices/lbd/preview${file ? `?file=${encodeURIComponent(file)}` : ""}`);
-export const loadProducts = (q = "", limit = 50) => request<ProductDto[]>(`/invoices/products?q=${encodeURIComponent(q)}&limit=${limit}`);
+export const loadProducts = (q = "", limit = 50, invoiceDate = "") => request<ProductDto[]>(`/invoices/products?q=${encodeURIComponent(q)}&limit=${limit}${invoiceDate ? `&invoiceDate=${encodeURIComponent(invoiceDate)}` : ""}`);
 export const loadInvoiceTextPreview = (companyId?: number, lang = "de", treatmentDate = "", lbdFile = "") => { const p = new URLSearchParams(); if (companyId) p.set("companyId", String(companyId)); p.set("lang", lang); if (treatmentDate) p.set("treatmentDate", treatmentDate); if (lbdFile) p.set("lbdFile", lbdFile); return request<InvoiceTextPreview>(`/invoices/text-preview?${p}`); };
 export const loadDraft = () => request<InvoiceDraft>("/invoices/draft");
 export const loadCompanies = () => request<InvoiceCompany[]>("/invoices/companies");
@@ -262,3 +262,16 @@ export type CommunicationSettings = {
 export type LoginNews = { enabled:boolean; title:string; text:string; severity:string };
 export const loadCommunicationSettings = () => request<CommunicationSettings>('/communication/settings');
 export const loadLoginNews = () => request<LoginNews>('/communication/login-news');
+
+// Schritt 39k: Logo-Upload bleibt erhalten; Logos sind normalisierte Stammdaten und können wiederverwendet werden.
+export async function uploadInvoiceLogo(file: File): Promise<{url:string; filename:string; previewUrl?:string}> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API}/gam/admin/masterdata/invoice-logos/upload`, {
+    method: 'POST',
+    headers: token() ? {Authorization: `Bearer ${token()}`} : {},
+    body: form
+  });
+  if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+  return await res.json();
+}

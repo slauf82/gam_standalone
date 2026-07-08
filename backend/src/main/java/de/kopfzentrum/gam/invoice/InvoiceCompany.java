@@ -18,5 +18,7 @@ public record InvoiceCompany(
   String email,
   String accountHolder,
   String iban,
-  String bic
+  String bic,
+  Integer logoId,
+  String logoUrl
 ) {}

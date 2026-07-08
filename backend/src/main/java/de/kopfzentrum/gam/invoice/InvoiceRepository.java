@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +30,17 @@ public class InvoiceRepository {
     this.jdbc = jdbc;
     this.named = named;
     this.calculator = calculator;
+    ensureInvoiceCompanyLogoColumn();
+  }
+
+  private void ensureInvoiceCompanyLogoColumn() {
+    try { jdbc.execute("ALTER TABLE `rechnungsgesellschaft` ADD COLUMN `LOGO_ID` int(50) DEFAULT NULL"); } catch (Exception ignored) { }
+    try {
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungslogo` (`ID` int NOT NULL AUTO_INCREMENT, `NAME` varchar(255) DEFAULT NULL, `URL` varchar(1024) DEFAULT NULL, PRIMARY KEY (`ID`))");
+      try { jdbc.execute("ALTER TABLE `rechnungslogo` ADD COLUMN `NAME` varchar(255) DEFAULT NULL"); } catch (Exception ignored) { }
+      jdbc.execute("SET SESSION sql_mode = CONCAT_WS(',', @@sql_mode, 'NO_AUTO_VALUE_ON_ZERO')");
+      jdbc.update("INSERT IGNORE INTO `rechnungslogo` (`ID`, `NAME`, `URL`) VALUES (0, ?, ?)", "Systemstandard", "KOPFZENTRUM_LOGO.png");
+    } catch (Exception ignored) { }
   }
 
   public List<InvoiceSummary> findRecent(int limit) {
@@ -175,28 +187,102 @@ public class InvoiceRepository {
   }
 
   public List<ProductDto> findProducts(String q, int limit) {
-    String like = "%" + (q == null ? "" : q) + "%";
+    return findProducts(q, limit, null);
+  }
+
+  /**
+   * Schritt 39b: Produkte werden stichtagsbezogen gelesen.
+   * - gueltig_ab: Produkt wird erst ab diesem Datum angeboten.
+   * - gueltig_bis: Produkt wird nach diesem Datum nicht mehr angeboten.
+   * - preis_gueltigab/preisneu/preisalt: Preiswechsel zum Rechnungsdatum.
+   * - mwst_gueltigab/mwst/mwstalt: MwSt.-Wechsel zum Rechnungsdatum.
+   *
+   * Wichtig: price/vat enthalten immer die fuer das Rechnungsdatum wirksamen Werte,
+   * damit die Rechnungserfassung diese Werte in die Rechnungsposition uebernimmt und
+   * historische Rechnungen spaeter nicht durch neue Stammdaten veraendert werden.
+   */
+  public List<ProductDto> findProducts(String q, int limit, String invoiceDate) {
+    String raw = q == null ? "" : q.trim();
+    String like = "%" + raw + "%";
+    LocalDate effectiveDate = parseProductDate(invoiceDate);
     return jdbc.query("""
-      SELECT rdaten_id, code, beschreibung, kategorie, preis1, mwst, rgesellschafts_id
+      SELECT rdaten_id, code, beschreibung, kategorie, preis1, preisneu, preisalt, preis_gueltigab,
+             mwst, mwstalt, mwst_gueltigab, rgesellschafts_id, `gültig_ab`, `gültig_bis`
       FROM rechnungsdaten
       WHERE (? = '' OR code LIKE ? OR beschreibung LIKE ? OR kategorie LIKE ?)
+        AND (`gültig_ab` IS NULL OR `gültig_ab` <= ?)
+        AND (`gültig_bis` IS NULL OR `gültig_bis` >= ?)
       ORDER BY code ASC
       LIMIT ?
-      """, (rs, row) -> new ProductDto(getInt(rs, "rdaten_id"), rs.getString("code"), rs.getString("beschreibung"), rs.getString("kategorie"), getDouble(rs, "preis1"), getInt(rs, "mwst"), getInt(rs, "rgesellschafts_id")), q == null ? "" : q, like, like, like, limit);
+      """, (rs, row) -> {
+        LocalDate priceFrom = getLocalDate(rs, "preis_gueltigab");
+        LocalDate vatFrom = getLocalDate(rs, "mwst_gueltigab");
+        LocalDate validFrom = getLocalDate(rs, "gültig_ab");
+        LocalDate validUntil = getLocalDate(rs, "gültig_bis");
+        Double basePrice = getDouble(rs, "preis1");
+        Double newPrice = getDouble(rs, "preisneu");
+        Double oldPrice = getDouble(rs, "preisalt");
+        Integer currentVat = getInt(rs, "mwst");
+        Integer oldVat = getInt(rs, "mwstalt");
+        Double effectivePrice = effectivePrice(effectiveDate, basePrice, newPrice, oldPrice, priceFrom);
+        Integer effectiveVat = effectiveVat(effectiveDate, currentVat, oldVat, vatFrom);
+        String note = effectiveNote(effectiveDate, priceFrom, vatFrom, validFrom, validUntil);
+        return new ProductDto(getInt(rs, "rdaten_id"), rs.getString("code"), rs.getString("beschreibung"), rs.getString("kategorie"),
+          effectivePrice, effectiveVat, getInt(rs, "rgesellschafts_id"), basePrice, newPrice, oldPrice, toIso(priceFrom), oldVat, toIso(vatFrom),
+          toIso(validFrom), toIso(validUntil), true, note);
+      }, raw, like, like, like, java.sql.Date.valueOf(effectiveDate), java.sql.Date.valueOf(effectiveDate), limit);
+  }
+
+
+  private static LocalDate parseProductDate(String value) {
+    if (value == null || value.isBlank()) return LocalDate.now();
+    String v = value.trim();
+    if (v.length() >= 10) v = v.substring(0, 10);
+    try { return LocalDate.parse(v); } catch (DateTimeParseException ex) { return LocalDate.now(); }
+  }
+
+  private static java.time.LocalDate getLocalDate(java.sql.ResultSet rs, String column) throws java.sql.SQLException {
+    java.sql.Date d = rs.getDate(column);
+    return d == null ? null : d.toLocalDate();
+  }
+
+  private static String toIso(LocalDate d) { return d == null ? null : d.toString(); }
+
+  private static Double effectivePrice(LocalDate date, Double basePrice, Double newPrice, Double oldPrice, LocalDate priceFrom) {
+    if (priceFrom != null && !date.isBefore(priceFrom)) return newPrice != null ? newPrice : basePrice;
+    if (priceFrom != null && date.isBefore(priceFrom) && oldPrice != null) return oldPrice;
+    return basePrice;
+  }
+
+  private static Integer effectiveVat(LocalDate date, Integer currentVat, Integer oldVat, LocalDate vatFrom) {
+    if (vatFrom != null && date.isBefore(vatFrom) && oldVat != null) return oldVat;
+    return currentVat;
+  }
+
+  private static String effectiveNote(LocalDate date, LocalDate priceFrom, LocalDate vatFrom, LocalDate validFrom, LocalDate validUntil) {
+    java.util.List<String> notes = new java.util.ArrayList<>();
+    if (validFrom != null && !date.isBefore(validFrom)) notes.add("angeboten ab " + validFrom);
+    if (validUntil != null) notes.add("angeboten bis " + validUntil);
+    if (priceFrom != null) notes.add((date.isBefore(priceFrom) ? "alter Preis bis " : "neuer Preis seit ") + priceFrom);
+    if (vatFrom != null) notes.add((date.isBefore(vatFrom) ? "alter MwSt.-Satz bis " : "neuer MwSt.-Satz seit ") + vatFrom);
+    return String.join(" · ", notes);
   }
 
   public List<InvoiceCompany> findCompanies() {
     return jdbc.query("""
-      SELECT id, `gesellschaftskürzel`, gesellschaftsname, gesellschaftsadresse, `post_straße_nummer`, post_plz_ort,
-             ustid, register, steuernummer, gerichtsstand, `gesellschaftsführer`, ansprechpartner,
-             telefon, fax, email, kontoinhaber, iban, bic
-      FROM rechnungsgesellschaft
-      ORDER BY id ASC
+      SELECT g.id, g.`gesellschaftskürzel`, g.gesellschaftsname, g.gesellschaftsadresse, g.`post_straße_nummer`, g.post_plz_ort,
+             g.ustid, g.register, g.steuernummer, g.gerichtsstand, g.`gesellschaftsführer`, g.ansprechpartner,
+             g.telefon, g.fax, g.email, g.kontoinhaber, g.iban, g.bic, COALESCE(g.LOGO_ID, 0) AS LOGO_ID, COALESCE(l.URL, l0.URL) AS LOGO_URL
+      FROM rechnungsgesellschaft g
+      LEFT JOIN rechnungslogo l ON l.ID = g.LOGO_ID
+      LEFT JOIN rechnungslogo l0 ON l0.ID = 0
+      ORDER BY g.id ASC
       """, (rs, row) -> new InvoiceCompany(
         getInt(rs,"id"), rs.getString("gesellschaftskürzel"), rs.getString("gesellschaftsname"), rs.getString("gesellschaftsadresse"),
         rs.getString("post_straße_nummer"), rs.getString("post_plz_ort"), rs.getString("ustid"), rs.getString("register"),
         rs.getString("steuernummer"), rs.getString("gerichtsstand"), rs.getString("gesellschaftsführer"), rs.getString("ansprechpartner"),
-        rs.getString("telefon"), rs.getString("fax"), rs.getString("email"), rs.getString("kontoinhaber"), rs.getString("iban"), rs.getString("bic")));
+        rs.getString("telefon"), rs.getString("fax"), rs.getString("email"), rs.getString("kontoinhaber"), rs.getString("iban"), rs.getString("bic"),
+        getInt(rs,"LOGO_ID"), rs.getString("LOGO_URL")));
   }
 
   public InvoiceCompany findCompany(Integer id) {
