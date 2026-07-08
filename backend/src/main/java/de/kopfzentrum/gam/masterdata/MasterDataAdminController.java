@@ -253,7 +253,9 @@ public class MasterDataAdminController {
   private void ensureInvoiceLogoTable() {
     try {
       jdbc.execute("CREATE TABLE IF NOT EXISTS `rechnungslogo` (`ID` int NOT NULL AUTO_INCREMENT, `NAME` varchar(255) DEFAULT NULL, `URL` varchar(1024) DEFAULT NULL, PRIMARY KEY (`ID`))");
-      try { jdbc.execute("ALTER TABLE `rechnungslogo` ADD COLUMN `NAME` varchar(255) DEFAULT NULL"); } catch (Exception ignored) { }
+      if (!columnExists("rechnungslogo", "NAME")) {
+        jdbc.execute("ALTER TABLE `rechnungslogo` ADD COLUMN `NAME` varchar(255) DEFAULT NULL");
+      }
       jdbc.execute("SET SESSION sql_mode = CONCAT_WS(',', @@sql_mode, 'NO_AUTO_VALUE_ON_ZERO')");
       jdbc.update("INSERT IGNORE INTO `rechnungslogo` (`ID`, `NAME`, `URL`) VALUES (0, ?, ?)", "Systemstandard", "KOPFZENTRUM_LOGO.png");
       try { jdbc.update("UPDATE `rechnungslogo` SET `NAME` = COALESCE(NULLIF(`NAME`, ''), 'Systemstandard') WHERE `ID` = 0"); } catch (Exception ignored) { }
@@ -261,7 +263,26 @@ public class MasterDataAdminController {
   }
 
   private void ensureInvoiceCompanyLogoColumn() {
-    try { jdbc.execute("ALTER TABLE `rechnungsgesellschaft` ADD COLUMN `LOGO_ID` int(50) DEFAULT NULL"); } catch (Exception ignored) { }
+    try {
+      if (!columnExists("rechnungsgesellschaft", "LOGO_ID")) {
+        jdbc.execute("ALTER TABLE `rechnungsgesellschaft` ADD COLUMN `LOGO_ID` int(50) DEFAULT NULL");
+      }
+    } catch (Exception ignored) { }
+  }
+
+  private boolean columnExists(String tableName, String columnName) {
+    try {
+      Integer count = jdbc.queryForObject("""
+        SELECT COUNT(*)
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND UPPER(TABLE_NAME) = UPPER(?)
+          AND UPPER(COLUMN_NAME) = UPPER(?)
+        """, Integer.class, tableName, columnName);
+      return count != null && count > 0;
+    } catch (Exception ignored) {
+      return false;
+    }
   }
 
   private Object normalizeBlank(Object v) {
