@@ -14,7 +14,7 @@ Der Fokus liegt auf:
 
 ---
 
-# Aktueller Stand: GAM 2.0.2
+# Aktueller Stand: GAM 2.0.3
 
 ## Moderne Plattform
 
