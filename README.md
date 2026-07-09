@@ -97,7 +97,7 @@ Besonderheiten:
 
 - moderne PDF-Erstellung
 - PDF/A Unterstützung
-- PDF/UA Vorbereitung
+- PDF/UA Unterstützung
 - Vorlesefunktion
 - Piper TTS Integration
 
