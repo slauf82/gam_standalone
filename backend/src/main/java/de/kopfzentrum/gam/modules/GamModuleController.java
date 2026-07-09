@@ -34,7 +34,7 @@ public class GamModuleController {
       overview("cashbook", "Kassenbuch", "kassenbuch", "Kassenbuch und Mandantenbezug"),
       overview("workplace", "Arbeitsplatzausstattung", "arbeitsplatz", "Arbeitsplätze, Einrichtung und Arbeitsplatzstatus"),
       overview("priceList", "Preisliste", "preisliste", "Preislisten- und Lieferantenpreise"),
-      overview("compliance", "Prüfungen", "kontrolle/inbetriebnahme/einweisung", "Prüfungen, Inbetriebnahmen und Einweisungen als GDS-Modul"),
+      overviewMulti("compliance", "Prüfungen", List.of("kontrolle", "inbetriebnahme", "einweisung"), "Prüfungen, Inbetriebnahmen und Einweisungen als GDS-Modul"),
       overview("folders", "Ordnerfreigaben", "ordnerfreigabe", "Arbeitsplatz- und Ordnerfreigaben"),
       overview("news", "News", "news", "Startseiten-/Informationsmodul"),
       overview("reports", "Reports/Exporte", "rechnung", "Berichte aus Rechnungen, Inventar, Lager und Aufgaben")
@@ -135,7 +135,30 @@ public class GamModuleController {
     return new ModuleOverview(key, label, tableName, c, c >= 0 ? "angebunden" : "nicht verfuegbar", note);
   }
 
+  private ModuleOverview overviewMulti(String key, String label, List<String> tableNames, String note) {
+    long total = 0;
+    boolean anyAvailable = false;
+    for (String tableName : tableNames) {
+      long c = count(tableName);
+      if (c >= 0) {
+        total += c;
+        anyAvailable = true;
+      }
+    }
+    return new ModuleOverview(
+      key,
+      label,
+      String.join(", ", tableNames),
+      anyAvailable ? total : -1,
+      anyAvailable ? "angebunden" : "nicht verfuegbar",
+      note
+    );
+  }
+
   private long count(String table) {
+    if (table == null || !table.matches("[A-Za-z0-9_ÄÖÜäöüß]+")) {
+      return -1;
+    }
     try { return jdbc.queryForObject("SELECT COUNT(*) FROM `" + table + "`", Long.class); }
     catch (Exception ex) { return -1; }
   }

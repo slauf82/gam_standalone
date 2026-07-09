@@ -195,7 +195,7 @@ if (!$serverAvailable) {
 
 $client = Find-DbClient
 if (!$client) {
-  Write-Warn "Kein mariadb.exe/mysql.exe gefunden. DB-Erreichbarkeit ist ok, Demo-Import wird uebersprungen."
+  Write-Info "MariaDB/MySQL ist erreichbar. Kein lokaler DB-Client gefunden; optionaler Demo-Import wird uebersprungen."
   exit 0
 }
 

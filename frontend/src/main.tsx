@@ -3876,20 +3876,25 @@ function pendingProductDescription(lang: GamLanguage) {
 
 
 const HISTORICAL_MODULES = [
-  ['Rechnungsprogramm','vollständig nutzbar','Rechnungen, Storno, Gutschrift, Proforma, Zahlungsavis, QR-Portal, Reports'],
-  ['Geräteverzeichnis','vollständig','Geräte, Details, Bearbeitung, Gesellschafts-/Filialzuordnung und Lagerbezug'],
-  ['Lagerverwaltung','vollständig','Lagerpositionen, Verbrauchsmaterial, Bestände, Bewegungen und Gerätezuordnung'],
-  ['Kassenbuch','Lesemodus','Historische Tabellen werden angezeigt, Bearbeitung folgt später'],
-  ['Aufgabenverwaltung','Lesemodus','Aufgaben- und Workflowdaten als sichere Ansicht'],
-  ['Freigabemanagement','Lesemodus','Freigabeprozesse sichtbar, Schreiblogik folgt nach Fachabgleich'],
-  ['Bestelltool','Shell','Modul sichtbar, Fachlogik wird noch rekonstruiert'],
-  ['Personaldaten','Lesemodus','Personaldatenmodul sichtbar, Bearbeitung bewusst deaktiviert'],
-  ['Arbeitsplatzausstattung','Shell','Historisches Ausstattungsmodul als Platzhalter/Übersicht'],
-  ['Preisliste','Shell','Preislistenmodul sichtbar, Admin-Funktionen folgen'],
+  ['Rechnungsprogramm','produktiv nutzbar','Rechnungen, Storno, Gutschrift, Proforma, Zahlungsavis, QR-Portal, PDF/ZUGFeRD und Vorschau'],
+  ['Rechnungsadministration','produktiv nutzbar','Gesellschaften, Filialen, Produkte, Preise, MwSt., Textbausteine, Logo-Katalog und Fallbacks'],
+  ['Geräteverzeichnis','produktiv nutzbar','Geräte, Details, Bearbeitung, Gesellschafts-/Filialzuordnung und Lagerbezug'],
+  ['Lagerverwaltung','produktiv nutzbar','Lagerpositionen, Verbrauchsmaterial, Bestände, Bewegungen und Gerätezuordnung'],
+  ['Patientenverwaltung','umgesetzt','Patientenstammdaten als GDS-Modul; interne Patientenakte folgt später mit GAM 2.5'],
+  ['Terminverwaltung','umgesetzt','Termine als GDS-Modul mit Login-Zielmodul-Unterstützung und Bearbeitung'],
+  ['Aufgabenverwaltung','umgesetzt','Aufgaben, Workflowdaten, Bearbeitung und Vorbereitung für 40h Workflow-Kommunikation'],
+  ['Freigabemanagement','umgesetzt','Freigabeübersicht und Workflow-Grundlage für 40e'],
+  ['Bestelltool','umgesetzt','Bestellentwürfe, Maildialog, Lieferantenkommunikation und Aufgabenverknüpfung'],
+  ['Kommunikation','umgesetzt','Login-News, Meldungen, Änderungsverlauf und Kommunikationszentrale'],
+  ['Personaldaten','umgesetzt','Personaldatenmodul mit vollständiger Tabellenanzeige und Bearbeitung'],
+  ['Kassenbuch','umgesetzt','Historisches Kassenbuch als GDS-Modul mit Tabellen-/Bearbeitungslogik'],
+  ['Arbeitsplatzausstattung','umgesetzt','Arbeitsplatz- und Ausstattungstabellen als GDS-Modul'],
+  ['Preisliste','umgesetzt','Bearbeitbare Preisliste mit Suche, Dialogen und Tabellenanzeige'],
+  ['Prüfungen','umgesetzt','Kontrolle, Inbetriebnahme und Einweisung korrekt getrennt und zusammengefasst'],
   ['Reports','nutzbar','Alt-GAM-Reportarten mit XLS/XLSX/CSV/DATEV-Vorbereitung'],
-  ['Benutzer/Rechte','nutzbar','accounts, Rollen und userapplication-Modell']
+  ['Benutzer/Rechte','produktiv nutzbar','Accounts, Rollen, Modulrechte, 2FA, Passkey/WebAuthn und userapplication-Modell']
 ];
-function HistoricalModuleOverview(){return <div className="module-overview"><h3>Historische GAM-Anwendungen</h3><p className="muted">Schritt 31 macht die vollständige GAM-Struktur sichtbar. Noch nicht fertig migrierte Module sind als sichere Lesemodus-/Übersichtsbereiche vorhanden.</p><div className="module-grid">{HISTORICAL_MODULES.map(([name,status,desc])=><div className="module-card-mini" key={name}><b>{name}</b><span>{status}</span><small>{desc}</small></div>)}</div></div>}
+function HistoricalModuleOverview(){return <div className="module-overview"><h3>GAM-Module: aktueller Umsetzungsstand</h3><p className="muted">Stand 39p: Die migrierten GAM2-Module werden nicht mehr als Platzhalter/Lesemodus geführt. Die nächsten Schritte 40a–40o ergänzen darauf aufbauend die Workflow-Schicht.</p><div className="module-grid">{HISTORICAL_MODULES.map(([name,status,desc])=><div className="module-card-mini" key={name}><b>{name}</b><span>{status}</span><small>{desc}</small></div>)}</div></div>}
 function ReadOnlyModuleShell({title,description}:{title:string;description:string}){return <section className="card readonly-shell"><h2>{title}</h2><p>{description}</p><p className="note warn">Lesemodus / Modulrahmen: Dieses historische GAM-Modul ist in der Navigation sichtbar. Bearbeiten, Löschen und produktive Schreibaktionen bleiben deaktiviert, bis die Alt-GAM-Fachlogik vollständig rekonstruiert ist.</p><div className="module-grid"><div className="module-card-mini"><b>Status</b><span>Read-only</span><small>Übersicht vorhanden</small></div><div className="module-card-mini"><b>Rechte</b><span>userapplication</span><small>Superadmin-Bypass bleibt erhalten</small></div><div className="module-card-mini"><b>Nächster Schritt</b><span>Fachlogik</span><small>Rekonstruktion aus Alt-GAM-Quellcode</small></div></div></section>}
 
 type OrderLineDraft = { materialId?:number; name?:string; stock?:number; quantity:number; supplierEmail?:string };
