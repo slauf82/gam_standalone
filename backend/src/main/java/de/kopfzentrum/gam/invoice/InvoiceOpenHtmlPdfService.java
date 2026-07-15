@@ -53,11 +53,11 @@ public class InvoiceOpenHtmlPdfService {
     try {
       String html = html(number, companyId, language);
       ByteArrayOutputStream out = new ByteArrayOutputStream();
+      OpenHtmlPdfLogging.configure();
       PdfRendererBuilder builder = new PdfRendererBuilder();
-      builder.useFastMode();
       // Schritt 37h3/37h7: PDF/UA-Tagging direkt im OpenHTMLtoPDF-Renderer aktivieren.
       // Wichtig: keine Tabellenstruktur-Umbauten wie in 37h, damit der stabile 37g/37h1-Pfad erhalten bleibt.
-      builder.usePdfUaAccessbility(true);
+      builder.usePdfUaAccessibility(true);
       builder.usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_3_U);
       builder.useColorProfile(ICC_Profile.getInstance(ColorSpace.CS_sRGB).getData());
       registerWindowsFonts(builder);
@@ -94,18 +94,17 @@ public class InvoiceOpenHtmlPdfService {
     InvoiceSummary summary = detail.summary();
     List<InvoiceLine> lines = detail.lines();
     InvoiceCompany company = repo.findCompany(summary.companyId());
-    LbdRecipient recipient = repo.findInvoiceRecipient(summary.number(), summary.companyId());
-    if (recipient == null || !recipient.found()) {
-      try { recipient = lbdService.preview(""); } catch (Exception e) { recipient = null; }
-    }
+    InvoiceDocumentData documentData = repo.findDocumentData(summary.number(), summary.companyId());
+    LbdRecipient recipient = documentData.invoiceRecipient();
     InvoiceTotals totals = detail.totals() == null ? repo.calculateFromExistingLines(lines) : detail.totals();
 
     String lang = normalizeLanguage(language);
     String title = documentTitle(summary.number(), lang) + " " + escape(summary.number());
+    String cancellationStatus = cancellationStatusHtml(summary, lang);
     String companyName = company == null ? "" : escape(company.name());
     String companyAddress = companyAddress(company);
     String companyLogo = companyLogoBlock(company);
-    String recipientBlock = recipientBlockHtml(recipient, lang);
+    String recipientBlock = recipientBlockHtml(recipient, lang) + roleReferenceHtml(documentData, lang);
     String invoiceDate = formatDate(summary.invoiceDate(), lang);
     String customerFile = recipient == null ? "—" : nullSafe(recipient.file());
 
@@ -132,7 +131,8 @@ public class InvoiceOpenHtmlPdfService {
     String lawHint = invoiceAdminText(resolvedCompanyId, "legalNote", "rechnungsrechtlicherhinweis", "invoiceLawHintLabel0", lang, summary, company, recipient);
     String greetings = invoiceAdminText(resolvedCompanyId, "greeting", "rechnungsgrussformel", "invoiceGreetingsLabel0", lang, summary, company, recipient);
     String adjustments = commercialAdjustments(summary, lines, totals, lang);
-    String bank = bankBlock(company, lang);
+    String paymentMethod = repo.findPaymentMethod(summary.number(), resolvedCompanyId);
+    String bank = bankBlock(company, lang, paymentMethod);
     String portal = portalBlock(summary, lang);
 
     return """
@@ -141,10 +141,13 @@ public class InvoiceOpenHtmlPdfService {
       <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>%s</title>
+        <meta name="description" content="%s" />
+        <meta name="dc.description" content="%s" />
         <style>
           @page { size: A4; margin: 22mm 18mm; }
           body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; color: #222; line-height: 1.35; }
           h1 { font-size: 20pt; margin: 0; text-align: right; }
+          .document-status { margin: 2mm 0 0 0; text-align: right; font-size: 10.5pt; font-weight: bold; }
           h2 { font-size: 12.5pt; margin: 7mm 0 2.5mm 0; }
           p { margin: 0 0 3.5mm 0; }
           .company p, .meta p, .recipient p, .total-values p, .bank p, .portal p { margin: 0; }
@@ -153,7 +156,7 @@ public class InvoiceOpenHtmlPdfService {
           .header-right { display: table-cell; width: 40%%; vertical-align: top; }
           .logo { margin: 0 0 3mm 0; width: 180px; height: 70px; background-repeat: no-repeat; background-position: left top; background-size: contain; }
           .company { font-size: 11pt; }
-          .company-name { font-weight: bold; }
+          .company-name { font-weight: normal; font-size: 11pt; }
           .sender { font-size: 8pt; margin-bottom: 2mm; }
           .recipient { margin: 1mm 0 8mm 0; }
           .intro { margin: 5mm 0 6mm 0; }
@@ -174,13 +177,13 @@ public class InvoiceOpenHtmlPdfService {
           .portal-text { display: table-cell; width: 72%%; vertical-align: top; }
           .portal-qr { display: table-cell; width: 28%%; text-align: right; vertical-align: top; }
           .portal-qr-image { width: 90px; height: 90px; margin-left: auto; background-repeat: no-repeat; background-position: right top; background-size: 90px 90px; }
-          .portal-url { font-size: 7.5pt; overflow-wrap: break-word; }
+          .portal-url { font-size: 7.5pt; word-wrap: break-word; white-space: normal; }
         </style>
       </head>
       <body>
         <div class="header">
           <div class="header-left">%s<div class="company"><p class="company-name">%s</p>%s</div></div>
-          <div class="header-right"><h1>%s</h1></div>
+          <div class="header-right"><h1>%s</h1>%s</div>
         </div>
 
         <p class="sender">%s</p>
@@ -210,7 +213,7 @@ public class InvoiceOpenHtmlPdfService {
       </body>
       </html>
       """.formatted(
-        lang, lang, escape(title), companyLogo, companyName, companyAddress, title,
+        lang, lang, escape(title), escape(title + " – barrierefreie Rechnung"), escape(title + " – barrierefreie Rechnung"), companyLogo, companyName, companyAddress, title, cancellationStatus,
         escape(senderLine(company)), translations.invoice("invoiceRecipient", lang), recipientBlock,
         translations.invoice("invoiceDate", lang), escape(invoiceDate), translations.invoice("invoiceCustomerFile", lang), escape(customerFile),
         xhtmlText(salutation), xhtmlText(invoiceText),
@@ -222,6 +225,24 @@ public class InvoiceOpenHtmlPdfService {
       );
   }
 
+
+  private static String roleReferenceHtml(InvoiceDocumentData data, String language) {
+    if (data == null) return "";
+    LbdRecipient treated = data.treatedPerson();
+    LbdRecipient billed = data.invoiceRecipient();
+    if (treated == null || !treated.found() || treated == billed) return "";
+    String label = switch (normalizeLanguage(language)) {
+      case "en" -> data.companyCase() ? "Cost coverage for" : "Services for";
+      case "fr" -> data.companyCase() ? "Prise en charge pour" : "Prestations pour";
+      default -> data.companyCase() ? "Kostenuebernahme fuer" : "Leistungen fuer";
+    };
+    return "<p class='role-reference'><b>" + escape(label) + ":</b> " + escape(personName(treated)) + "</p>";
+  }
+
+  private static String personName(LbdRecipient person) {
+    if (person == null) return "";
+    return joinNonBlank(person.title(), person.firstName(), person.nameSuffix(), person.lastName());
+  }
 
   private static String openHtmlPdfNote(String language) {
     return switch (normalizeLanguage(language)) {
@@ -272,8 +293,8 @@ public class InvoiceOpenHtmlPdfService {
     } catch (Exception ignored) { return ""; }
   }
 
-  private String bankBlock(InvoiceCompany company, String language) {
-    if (company == null) return "";
+  private String bankBlock(InvoiceCompany company, String language, String paymentMethod) {
+    if (company == null || !paymentNeedsBankDetails(paymentMethod)) return "";
     String bank = translations.invoice("bank", language) + ": " + nullSafe(company.accountHolder()) + " · IBAN " + nullSafe(company.iban()) + " · BIC " + nullSafe(company.bic());
     String tax = translations.invoice("invoiceTaxNumberVatId", language) + ": " + nullSafe(company.taxNumber()) + " " + nullSafe(company.vatId());
     return "<div class='bank'><p>" + escape(bank) + "</p><p>" + escape(tax) + "</p></div>";
@@ -287,12 +308,21 @@ public class InvoiceOpenHtmlPdfService {
   }
 
   private String invoiceAdminText(Integer companyId, String logicalKey, String table, String translationKey, String language, InvoiceSummary summary, InvoiceCompany company, LbdRecipient recipient) {
-    String selected = selectedCompanyText(companyId, logicalKey);
-    String text = selected == null || selected.isBlank() ? systemFallbackText(table) : selected;
-    if (text == null || text.isBlank()) text = hardcodedFallback(logicalKey, translations.invoice(translationKey, language));
-    return replacePlaceholders(text, language, summary, company, recipient)
+    String lang = normalizeLanguage(language);
+    // Die administrativen GAM-1.0-Textbausteine sind deutsch. Für fremdsprachige
+    // Rechnungen wird deshalb der vollständig übersetzte Sprachkatalog verwendet,
+    // statt deutsche Sätze mit einzelnen übersetzten Platzhaltern zu vermischen.
+    String text;
+    if (!"de".equals(lang)) {
+      text = translations.invoice(translationKey, lang);
+    } else {
+      String selected = selectedCompanyText(companyId, logicalKey);
+      text = selected == null || selected.isBlank() ? systemFallbackText(table) : selected;
+      if (text == null || text.isBlank()) text = hardcodedFallback(logicalKey, translations.invoice(translationKey, lang));
+    }
+    return replacePlaceholders(text, lang, summary, company, recipient)
       .replace("-br-", "\n")
-      .replace("  ", " ")
+      .replaceAll("[ \t]{2,}", " ")
       .trim();
   }
 
@@ -363,14 +393,38 @@ public class InvoiceOpenHtmlPdfService {
     if (text == null) return "";
     String result = text;
     result = result.replace("<SieIhrKind>", translations.invoice("invoiceYou", language));
-    result = result.replace("<Anrede>", recipient == null ? "" : nullSafe(recipient.salutation()));
+    result = result.replace("<Anrede>", recipient == null ? "" : localizedSalutation(recipient.salutation(), recipient.salutationIndex(), language));
     result = result.replace("<Titel>", recipient == null ? "" : nullSafe(recipient.title()));
     result = result.replace("<Vorname>", recipient == null ? "" : nullSafe(recipient.firstName()));
     result = result.replace("<Namenszusatz>", recipient == null ? "" : nullSafe(recipient.nameSuffix()));
     result = result.replace("<Nachname>", recipient == null ? "" : nullSafe(recipient.lastName()));
-    result = result.replace("<Behandlungsdatum>", summary == null ? "" : formatDate(summary.invoiceDate(), language));
+    result = result.replace("<Behandlungsdatum>", summary == null ? "" : formatDate(repo.findDocumentData(summary.number(), summary.companyId()).treatmentDate(), language));
     result = result.replace("<Gesellschaftsname>", company == null ? "" : nullSafe(company.name()));
     return result;
+  }
+
+  private static String localizedSalutation(String salutation, Integer salutationIndex, String language) {
+    String raw = nullSafe(salutation).trim();
+    if (raw.isBlank()) return "";
+    String normalized = raw.toLowerCase(Locale.ROOT).replace(".", "").trim();
+    String lang = normalizeLanguage(language);
+    boolean female = Integer.valueOf(2).equals(salutationIndex) || normalized.startsWith("frau") || normalized.startsWith("mrs") || normalized.startsWith("ms") || normalized.startsWith("madame");
+    boolean male = Integer.valueOf(1).equals(salutationIndex) || normalized.startsWith("herr") || normalized.startsWith("mr") || normalized.startsWith("monsieur");
+    return switch (lang) {
+      case "en" -> female ? "Ms" : male ? "Mr" : raw;
+      case "fr" -> female ? "Madame" : male ? "Monsieur" : raw;
+      case "uk" -> female ? "Пані" : male ? "Пан" : raw;
+      case "it" -> female ? "Signora" : male ? "Signor" : raw;
+      case "sv" -> female ? "Fru" : male ? "Herr" : raw;
+      case "tr" -> female ? "Bayan" : male ? "Bay" : raw;
+      case "ru" -> female ? "Госпожа" : male ? "Господин" : raw;
+      case "es" -> female ? "Señora" : male ? "Señor" : raw;
+      case "pt" -> female ? "Senhora" : male ? "Senhor" : raw;
+      case "nl" -> female ? "Mevrouw" : male ? "De heer" : raw;
+      case "pl" -> female ? "Pani" : male ? "Pan" : raw;
+      case "cs" -> female ? "Paní" : male ? "Pan" : raw;
+      default -> female ? "Frau" : male ? "Herr" : raw;
+    };
   }
 
   private String translatedProductDescription(InvoiceLine line, String language) {
@@ -434,8 +488,19 @@ public class InvoiceOpenHtmlPdfService {
     }
   }
 
+
+  private static boolean paymentNeedsBankDetails(String paymentMethod) {
+    if (paymentMethod == null) return false;
+    String value = paymentMethod.trim().toLowerCase(Locale.ROOT);
+    return value.contains("überweisung") || value.contains("ueberweisung")
+      || value.contains("bank transfer") || value.contains("transfer")
+      || value.contains("sepa") || value.contains("lastschrift")
+      || value.contains("direct debit") || value.contains("ratenzahlung")
+      || value.contains("installment");
+  }
+
   private static String companyLogoFile(InvoiceCompany company) {
-    if (company != null && !blank(company.logoUrl())) return company.logoUrl();
+    if (company != null && company.logoId() != null && company.logoId() > 0 && !blank(company.logoUrl())) return company.logoUrl();
     int id = company == null || company.id() == null ? -1 : company.id();
     return switch (id) {
       case 1 -> "logo_AMAE_blau.png";
@@ -457,7 +522,7 @@ public class InvoiceOpenHtmlPdfService {
   private String recipientBlockHtml(LbdRecipient r, String lang) {
     if (r == null || !r.found()) return "<p>" + escape(translations.invoice("invoiceNoRecipient", lang)) + "</p>";
     StringBuilder b = new StringBuilder();
-    String name = recipientName(r);
+    String name = recipientName(r, lang);
     if (!blank(name)) b.append("<p>").append(escape(name)).append("</p>");
     if (!blank(r.street())) b.append("<p>").append(escape(r.street())).append("</p>");
     String cityLine = ((r.postalCode() == null ? "" : r.postalCode() + " ") + (r.city() == null ? "" : r.city())).trim();
@@ -466,18 +531,37 @@ public class InvoiceOpenHtmlPdfService {
     return b.length() == 0 ? "<p>—</p>" : b.toString();
   }
 
-  private static String recipientName(LbdRecipient r) {
+  private static String recipientName(LbdRecipient r, String language) {
     if (r == null) return "";
-    return (nullSafe(r.salutation()) + " " + nullSafe(r.title()) + " " + nullSafe(r.firstName()) + " " + nullSafe(r.nameSuffix()) + " " + nullSafe(r.lastName())).replaceAll("\\s+", " ").trim();
+    return (localizedSalutation(r.salutation(), r.salutationIndex(), language) + " " + nullSafe(r.title()) + " " + nullSafe(r.firstName()) + " " + nullSafe(r.nameSuffix()) + " " + nullSafe(r.lastName())).replaceAll("\\s+", " ").trim();
   }
 
   private String documentTitle(String number, String language) {
     InvoiceDetail detail = repo.findDetail(number, null);
     InvoiceSummary s = detail.summary();
-    if (Boolean.TRUE.equals(s.creditNote())) return translations.invoice("credit", language);
-    if (Boolean.TRUE.equals(s.cancelled())) return translations.invoice("cancellation", language);
-    if (Boolean.TRUE.equals(s.paymentAdvice())) return translations.invoice("paymentAdvice", language);
+    String normalizedNumber = number == null ? "" : number.trim();
+    if (normalizedNumber.endsWith("S")) return translations.invoice("cancellation", language);
+    if (Boolean.TRUE.equals(s.creditNote()) || normalizedNumber.endsWith("G")) return translations.invoice("credit", language);
+    if (Boolean.TRUE.equals(s.paymentAdvice()) || normalizedNumber.matches(".*Z\\d*$")) return translations.invoice("paymentAdvice", language);
     return translations.invoice("invoice", language);
+  }
+
+  private static String cancellationStatusHtml(InvoiceSummary summary, String language) {
+    if (summary == null || !Boolean.TRUE.equals(summary.cancelled())) return "";
+    String number = summary.number() == null ? "" : summary.number().trim();
+    if (number.endsWith("S")) return "";
+    String lang = normalizeLanguage(language);
+    String status = switch (lang) {
+      case "en" -> "already cancelled";
+      case "fr" -> "déjà annulée";
+      case "it" -> "già stornata";
+      case "sv" -> "redan makulerad";
+      case "tr" -> "zaten iptal edildi";
+      case "ru" -> "уже сторнирован";
+      case "uk" -> "вже сторновано";
+      default -> "bereits storniert";
+    };
+    return "<p class=\"document-status\">" + escape(status) + "</p>";
   }
 
   private static String formatDate(String value, String language) {
@@ -497,6 +581,19 @@ public class InvoiceOpenHtmlPdfService {
   private static String trimNumber(double value) { return Math.rint(value) == value ? String.format(Locale.GERMANY, "%.0f", value) : String.format(Locale.GERMANY, "%.2f", value); }
   private static boolean blank(String s) { return s == null || s.isBlank(); }
   private static String nullSafe(String s) { return s == null ? "" : s; }
+
+  private static String joinNonBlank(String... values) {
+    if (values == null || values.length == 0) return "";
+    StringBuilder result = new StringBuilder();
+    for (String value : values) {
+      if (value == null) continue;
+      String normalized = value.trim();
+      if (normalized.isEmpty()) continue;
+      if (result.length() > 0) result.append(' ');
+      result.append(normalized);
+    }
+    return result.toString();
+  }
 
   private static String xhtmlBlockText(String s) {
     if (s == null || s.isBlank()) return "";

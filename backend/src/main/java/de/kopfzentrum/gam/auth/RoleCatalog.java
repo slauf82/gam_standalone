@@ -18,8 +18,8 @@ public class RoleCatalog {
     return List.of(
       new RoleDto("user", "Benutzer", false, List.of("dashboard")),
       new RoleDto("mainuser", "Hauptbenutzer", false, List.of("dashboard", "reports")),
-      new RoleDto("admin", "Admin", true, List.of("dashboard", "invoices", "inventory", "warehouse", "patients", "appointments", "users", "tasks", "approvals", "orders", "communication", "personnel", "cashbook", "workplace", "priceList", "compliance", "reports", "admin")),
-      new RoleDto("superadmin", "Superadmin", true, List.of("dashboard", "invoices", "inventory", "warehouse", "patients", "appointments", "users", "tasks", "approvals", "orders", "communication", "personnel", "cashbook", "workplace", "priceList", "compliance", "reports", "admin")),
+      new RoleDto("admin", "Admin", true, List.of("dashboard", "settings", "invoices", "inventory", "warehouse", "patients", "appointments", "users", "tasks", "approvals", "orders", "communication", "personnel", "cashbook", "workplace", "priceList", "compliance", "reports", "admin")),
+      new RoleDto("superadmin", "Superadmin", true, List.of("dashboard", "settings", "invoices", "inventory", "warehouse", "patients", "appointments", "users", "tasks", "approvals", "orders", "communication", "personnel", "cashbook", "workplace", "priceList", "compliance", "reports", "admin")),
       new RoleDto("viewer", "Nur Lesen", false, List.of("dashboard"))
     );
   }

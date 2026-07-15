@@ -1,17 +1,31 @@
 package de.kopfzentrum.gam.invoice;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 @Service
 public class TranslationService {
+  private static final List<String> ALL_TRANSLATION_TABLES = List.of(
+      "translation_german", "translation_english", "translation_french", "translation_ukrainian",
+      "translation_italian", "translation_swedish", "translation_turkish", "translation_russian",
+      "translation_spanish", "translation_portuguese", "translation_dutch", "translation_polish",
+      "translation_czech"
+  );
+
   private final JdbcTemplate jdbc;
 
   public TranslationService(JdbcTemplate jdbc) {
     this.jdbc = jdbc;
+  }
+
+  @PostConstruct
+  public void initializeTranslationTables() {
+    for (String table : ALL_TRANSLATION_TABLES) ensureTable(table);
   }
 
   public String invoice(String key, String language) {
@@ -47,7 +61,8 @@ public class TranslationService {
 
   private String find(String table, String description) {
     try {
-      return jdbc.query("SELECT TRANSLATED_TEXT FROM " + table + " WHERE TRANSLATE_DESCRIPTION = ? ORDER BY ID DESC LIMIT 1", rs -> {
+      if (!tableExists(table)) return null;
+      return jdbc.query("SELECT TRANSLATED_TEXT FROM `" + table + "` WHERE TRANSLATE_DESCRIPTION = ? ORDER BY ID DESC LIMIT 1", rs -> {
         if (rs.next()) return rs.getString(1);
         return null;
       }, description);
@@ -59,9 +74,10 @@ public class TranslationService {
   private void ensure(String table, String description, String text) {
     if (blank(description) || blank(text)) return;
     try {
-      Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE TRANSLATE_DESCRIPTION = ?", Integer.class, description);
+      ensureTable(table);
+      Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM `" + table + "` WHERE TRANSLATE_DESCRIPTION = ?", Integer.class, description);
       if (count != null && count > 0) return;
-      jdbc.update("INSERT INTO " + table + " (TRANSLATED_TEXT, TRANSLATE_DESCRIPTION) VALUES (?, ?)", text, description);
+      jdbc.update("INSERT INTO `" + table + "` (TRANSLATED_TEXT, TRANSLATE_DESCRIPTION) VALUES (?, ?)", text, description);
     } catch (Exception ignored) {
       // Falls die Demo-Datenbank die Tabellen noch nicht enthält, darf die Rechnungserzeugung nicht scheitern.
     }
@@ -77,6 +93,11 @@ public class TranslationService {
     if (l.startsWith("sv") || l.startsWith("se")) return "sv";
     if (l.startsWith("tr")) return "tr";
     if (l.startsWith("ru")) return "ru";
+    if (l.startsWith("es")) return "es";
+    if (l.startsWith("pt")) return "pt";
+    if (l.startsWith("nl")) return "nl";
+    if (l.startsWith("pl")) return "pl";
+    if (l.startsWith("cs") || l.startsWith("cz")) return "cs";
     return "de";
   }
 
@@ -89,6 +110,11 @@ public class TranslationService {
       case "sv" -> "translation_swedish";
       case "tr" -> "translation_turkish";
       case "ru" -> "translation_russian";
+      case "es" -> "translation_spanish";
+      case "pt" -> "translation_portuguese";
+      case "nl" -> "translation_dutch";
+      case "pl" -> "translation_polish";
+      case "cs" -> "translation_czech";
       default -> "translation_german";
     };
   }
@@ -102,8 +128,37 @@ public class TranslationService {
       case "sv" -> "SWEDISH";
       case "tr" -> "TURKISH";
       case "ru" -> "RUSSIAN";
+      case "es" -> "SPANISH";
+      case "pt" -> "PORTUGUESE";
+      case "nl" -> "DUTCH";
+      case "pl" -> "POLISH";
+      case "cs" -> "CZECH";
       default -> "GERMAN";
     };
+  }
+
+  private void ensureTable(String table) {
+    try {
+      jdbc.execute("CREATE TABLE IF NOT EXISTS `" + table + "` (" +
+          "ID BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY," +
+          "TRANSLATE_DESCRIPTION VARCHAR(255) NOT NULL," +
+          "TRANSLATED_TEXT TEXT NOT NULL," +
+          "UNIQUE KEY uk_translation_description (TRANSLATE_DESCRIPTION)" +
+          ")");
+    } catch (Exception ignored) {
+    }
+  }
+
+  private boolean tableExists(String table) {
+    try {
+      Integer count = jdbc.queryForObject(
+          "SELECT COUNT(*) FROM information_schema.TABLES " +
+              "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+          Integer.class, table);
+      return count != null && count > 0;
+    } catch (Exception ignored) {
+      return false;
+    }
   }
 
   private static boolean blank(String value) {

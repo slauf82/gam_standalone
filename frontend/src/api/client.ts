@@ -17,7 +17,7 @@ export type InvoiceCreateResponse = { number: string; detailId?: number; totals:
 export type InvoiceUpdateRequest = Omit<InvoiceCreateRequest, "number">;
 export type InvoiceStatusUpdateRequest = { cancelled?: boolean; creditNote?: boolean; paymentAdvice?: boolean; reason?: string };
 export type InvoiceDraft = { suggestedNumber: string; invoiceDate: string; companies: InvoiceCompany[]; lbdRecipient: LbdRecipient; totals: InvoiceTotals };
-export type InvoiceTextPreview = { language:string; companyId?:number; documentTitle?:string; salutation:string; invoiceText:string; lawHint:string; greetings:string; labels?: Record<string,string> };
+export type InvoiceTextPreview = { language:string; companyId?:number; documentTitle?:string; salutation:string; invoiceText:string; lawHint:string; greetings:string; labels?: Record<string,string>; recipient?: LbdRecipient; treatmentDate?:string; paymentMethod?:string };
 export type LbdRecipient = { found: boolean; file?: string; patientNumber?: string; nameSuffix?: string; lastName?: string; firstName?: string; birthDate?: string; title?: string; insuranceNumber?: string; postalCode?: string; city?: string; country?: string; street?: string; insuranceType?: string; salutationIndex?: number; salutation?: string; rawFields: Record<string,string> };
 
 const API = import.meta.env.VITE_GAM_API ?? "http://localhost:8080/api";
@@ -87,7 +87,7 @@ export const loadInvoices = (limit = 100, q = "", companyId?: number) => request
 export const loadInvoice = (number: string, companyId?: number) => request<InvoiceDetail>(`/invoices/${encodeURIComponent(number)}${companyId ? `?companyId=${companyId}` : ""}`);
 export const loadLbdPreview = (file = "") => request<LbdRecipient>(`/invoices/lbd/preview${file ? `?file=${encodeURIComponent(file)}` : ""}`);
 export const loadProducts = (q = "", limit = 50, invoiceDate = "") => request<ProductDto[]>(`/invoices/products?q=${encodeURIComponent(q)}&limit=${limit}${invoiceDate ? `&invoiceDate=${encodeURIComponent(invoiceDate)}` : ""}`);
-export const loadInvoiceTextPreview = (companyId?: number, lang = "de", treatmentDate = "", lbdFile = "") => { const p = new URLSearchParams(); if (companyId) p.set("companyId", String(companyId)); p.set("lang", lang); if (treatmentDate) p.set("treatmentDate", treatmentDate); if (lbdFile) p.set("lbdFile", lbdFile); return request<InvoiceTextPreview>(`/invoices/text-preview?${p}`); };
+export const loadInvoiceTextPreview = (companyId?: number, lang = "de", treatmentDate = "", lbdFile = "", invoiceNumber = "") => { const p = new URLSearchParams(); if (companyId) p.set("companyId", String(companyId)); p.set("lang", lang); if (treatmentDate) p.set("treatmentDate", treatmentDate); if (lbdFile) p.set("lbdFile", lbdFile); if (invoiceNumber) p.set("invoiceNumber", invoiceNumber); return request<InvoiceTextPreview>(`/invoices/text-preview?${p}`); };
 export const loadDraft = () => request<InvoiceDraft>("/invoices/draft");
 export const loadCompanies = () => request<InvoiceCompany[]>("/invoices/companies");
 export const loadNextInvoiceNumber = (companyId?: number) => request<InvoiceNumberPreview>(`/invoices/numbers/next${companyId ? `?companyId=${companyId}` : ""}`);
@@ -282,3 +282,90 @@ export async function uploadInvoiceLogo(file: File): Promise<{url:string; filena
   if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
   return await res.json();
 }
+
+// Schritt 40a: Rechnungsworkflow
+
+export type PaymentWorkflowEntry = { id:number; invoiceNumber:string; companyId?:number; fromStatus?:string; toStatus:string; amount?:number; note?:string; changedBy?:string; changedAt:string };
+export type PaymentWorkflowState = { invoiceNumber:string; companyId?:number; status:string; amountDue:number; paidAmount:number; openAmount:number; dueDate?:string; updatedAt:string; updatedBy?:string; allowedActions:string[]; history:PaymentWorkflowEntry[] };
+export const loadPaymentWorkflow = (number:string, companyId:number|undefined, amountDue:number, dueDate?:string) => request<PaymentWorkflowState>(`/invoices/${encodeURIComponent(number)}/payment-workflow?${new URLSearchParams({...(companyId?{companyId:String(companyId)}:{}),amountDue:String(amountDue),...(dueDate?{dueDate}:{})})}`);
+export const updatePaymentWorkflow = (number:string, companyId:number|undefined, action:string, amount?:number, note?:string, amountDue?:number, dueDate?:string) => request<PaymentWorkflowState>(`/invoices/${encodeURIComponent(number)}/payment-workflow${companyId?`?companyId=${companyId}`:''}`, {method:'POST', body:JSON.stringify({action,amount,note,amountDue,dueDate})});
+export type InvoiceWorkflowEntry = { id:number; invoiceNumber:string; companyId?:number; fromStatus?:string; toStatus:string; note?:string; changedBy?:string; changedAt:string };
+export type InvoiceWorkflowState = { invoiceNumber:string; companyId?:number; status:string; updatedAt:string; updatedBy?:string; allowedTransitions:string[]; configuredSteps:string[]; settings:InvoiceWorkflowSettings; history:InvoiceWorkflowEntry[] };
+export const loadInvoiceWorkflow = (number:string, companyId?:number) => request<InvoiceWorkflowState>(`/invoices/${encodeURIComponent(number)}/workflow${companyId ? `?companyId=${companyId}` : ""}`);
+export const transitionInvoiceWorkflow = (number:string, status:string, note="", companyId?:number) => request<InvoiceWorkflowState>(`/invoices/${encodeURIComponent(number)}/workflow/transition${companyId ? `?companyId=${companyId}` : ""}`, {method:"POST", body:JSON.stringify({status,note})});
+
+export type InvoiceWorkflowSettings = {
+  reviewEnabled:boolean;
+  approvalEnabled:boolean;
+  shippingEnabled:boolean;
+  autoCompleteAfterShipping:boolean;
+};
+export const loadInvoiceWorkflowSettings = () => request<InvoiceWorkflowSettings>('/settings/invoice-workflow');
+export const saveInvoiceWorkflowSettings = (settings:InvoiceWorkflowSettings) => request<InvoiceWorkflowSettings>('/settings/invoice-workflow', {method:'PUT', body:JSON.stringify(settings)});
+
+
+export type PaymentWorkflowSettings = {partialPaymentsEnabled:boolean;defaultInstallmentCount:number;installmentIntervalDays:number;minimumInstallmentAmount:number;paymentTermDays:number;reminderEnabled:boolean;reminderDaysAfterDue:number;dunning1Enabled:boolean;dunning1DaysAfterReminder:number;dunning1Fee:number;dunning2Enabled:boolean;dunning2DaysAfterDunning1:number;dunning2Fee:number;dunning3Enabled:boolean;dunning3DaysAfterDunning2:number;dunning3Fee:number;collectionEnabled:boolean;collectionDaysAfterDunning3:number;annualInterestPercent:number;automaticDocumentCreation:boolean;manualApprovalRequired:boolean;publishToPortal:boolean;portalReadAloudEnabled:boolean;automaticEmailDispatch:boolean};
+export const loadPaymentWorkflowSettings=()=>request<PaymentWorkflowSettings>('/settings/payment-workflow');
+export const savePaymentWorkflowSettings=(settings:PaymentWorkflowSettings)=>request<PaymentWorkflowSettings>('/settings/payment-workflow',{method:'PUT',body:JSON.stringify(settings)});
+
+export type ComplianceWorkflowSettings = {enabled:boolean;warningDays:number;overdueEscalationEnabled:boolean;automaticFollowUpDate:boolean;requireResponsiblePerson:boolean;requireResultNote:boolean;createTaskOnWarning:boolean;createTaskWhenOverdue:boolean;notifyOnWarning:boolean;notifyWhenOverdue:boolean;showStatusInNavigation:boolean;showStatusOnDashboard:boolean};
+export const loadComplianceWorkflowSettings=()=>request<ComplianceWorkflowSettings>('/settings/compliance-workflow');
+export const saveComplianceWorkflowSettings=(settings:ComplianceWorkflowSettings)=>request<ComplianceWorkflowSettings>('/settings/compliance-workflow',{method:'PUT',body:JSON.stringify(settings)});
+
+export type ModuleSettings = Record<string, boolean>;
+export const loadPublicModuleSettings = () => request<ModuleSettings>('/public/module-settings');
+export const loadModuleSettings = () => request<ModuleSettings>('/settings/modules');
+export const saveModuleSettings = (settings:ModuleSettings) => request<ModuleSettings>('/settings/modules', {method:'PUT', body:JSON.stringify(settings)});
+
+export type PaymentDocument = { id:number; invoiceNumber:string; companyId?:number; documentType:string; title:string; language:string; createdAt:string; createdBy?:string };
+export const loadPaymentDocuments = (number:string, companyId?:number) => request<PaymentDocument[]>(`/invoices/${encodeURIComponent(number)}/payment-workflow/documents${companyId?`?companyId=${companyId}`:''}`);
+export const createPaymentDocument = (number:string, companyId:number|undefined, type:string, lang='de', repeat=false) => request<PaymentDocument>(`/invoices/${encodeURIComponent(number)}/payment-workflow/documents/${encodeURIComponent(type)}?${new URLSearchParams({...(companyId?{companyId:String(companyId)}:{}),lang,repeat:String(repeat)})}`, {method:'POST'});
+export const paymentDocumentPdfUrl = (number:string, id:number, companyId?:number, lang='de') => `${API}/invoices/${encodeURIComponent(number)}/payment-workflow/documents/${id}/pdf?${new URLSearchParams({...(companyId?{companyId:String(companyId)}:{}),lang})}`;
+export async function openPaymentDocumentPdf(number:string, id:number, companyId?:number, lang='de'){ const target=window.open('about:blank','_blank'); const path=`/invoices/${encodeURIComponent(number)}/payment-workflow/documents/${id}/pdf?${new URLSearchParams({...(companyId?{companyId:String(companyId)}:{}),lang})}`; try{ const res=await fetch(`${API}${path}`,{headers:{Authorization:`Bearer ${token()}`}}); if(!res.ok){const text=await res.text(); throw new Error(text||`HTTP ${res.status}`);} const blob=await res.blob(); const url=URL.createObjectURL(blob); if(target) target.location.href=url; else window.location.href=url; window.setTimeout(()=>URL.revokeObjectURL(url),60000); }catch(e){if(target)target.close();throw e;} }
+
+export type MarketingWorkflowSettings={enabled:boolean;scannerEnabled:boolean;warehouseCheckEnabled:boolean;offerReorder:boolean;receiptConfirmationRequired:boolean;automaticStockUpdate:boolean;createTasks:boolean;showOnDashboard:boolean;defaultQuantityPerBranch:number;warningThreshold:number;createPackingList:boolean;createDistributionProtocol:boolean;scanSoundEnabled:boolean;errorSoundEnabled:boolean;scanSoundVolume:number;scanSoundDurationMs:number;scanSoundFrequencyHz:number;errorSoundFrequencyHz:number};
+export const loadMarketingWorkflowSettings=()=>request<MarketingWorkflowSettings>('/settings/marketing-workflow');
+export const saveMarketingWorkflowSettings=(settings:MarketingWorkflowSettings)=>request<MarketingWorkflowSettings>('/settings/marketing-workflow',{method:'PUT',body:JSON.stringify(settings)});
+export type MarketingCampaign={id:number;name:string;actionTypeId?:number;actionType?:string;materialTypeId?:number;materialType?:string;materialName:string;materialCode?:string;sourceWarehouseId?:number;sourceWarehouse?:string;targetBranchId?:number;targetBranch:string;plannedQuantity:number;scannedQuantity:number;status:string;receiptConfirmed:boolean;note?:string;createdAt:string;updatedAt:string};
+export type MarketingReference={id:number;name:string;typeId?:number};
+export type MarketingReferences={branches:MarketingReference[];warehouses:MarketingReference[];warehouseTypes:MarketingReference[];actionTypes:MarketingReference[];materialTypes:MarketingReference[]};
+export const loadMarketingReferences=()=>request<MarketingReferences>('/marketing/references');
+export const loadMarketingCampaigns=()=>request<MarketingCampaign[]>('/marketing/campaigns');
+export const createMarketingCampaign=(v:{name:string;actionTypeId:number;materialTypeId:number;materialName:string;materialCode?:string;sourceWarehouseId:number;targetBranchId:number;plannedQuantity:number;note?:string})=>request<MarketingCampaign>('/marketing/campaigns',{method:'POST',body:JSON.stringify(v)});
+export const scanMarketingCampaign=(id:number,code:string,quantity=1)=>request<MarketingCampaign>(`/marketing/campaigns/${id}/scan`,{method:'POST',body:JSON.stringify({code,quantity})});
+export const undoLastMarketingScan=(id:number)=>request<MarketingCampaign>(`/marketing/campaigns/${id}/scan/undo-last`,{method:'POST'});
+export const transitionMarketingCampaign=(id:number,status:string)=>request<MarketingCampaign>(`/marketing/campaigns/${id}/status/${encodeURIComponent(status)}`,{method:'POST'});
+export const loadMarketingCampaignHistory=(id:number)=>request<any[]>(`/marketing/campaigns/${id}/history`);
+
+// Schritt 40e: Kommunikationsworkflow
+export type CommunicationWorkflowSettings = {enabled:boolean;requireResponsiblePerson:boolean;requireDueDate:boolean;createTaskForFollowUp:boolean;notifyResponsiblePerson:boolean;showOnDashboard:boolean;warningDays:number;defaultDueDays:number};
+export type CommunicationWorkflowItem = {id:number;channel:string;direction:string;sender?:string;recipient?:string;subject:string;message?:string;responsible?:string;priority:string;status:string;dueDate?:string;resultNote?:string;createdBy?:string;createdAt:string;updatedBy?:string;updatedAt:string};
+export type CommunicationWorkflowRequest = {channel?:string;direction?:string;sender?:string;recipient?:string;subject:string;message?:string;responsible?:string;priority?:string;status?:string;dueDate?:string;resultNote?:string};
+export const loadCommunicationWorkflowSettings=()=>request<CommunicationWorkflowSettings>('/settings/communication-workflow');
+export const saveCommunicationWorkflowSettings=(settings:CommunicationWorkflowSettings)=>request<CommunicationWorkflowSettings>('/settings/communication-workflow',{method:'PUT',body:JSON.stringify(settings)});
+export const loadCommunicationWorkflowItems=(q='',status='all',responsible='')=>request<CommunicationWorkflowItem[]>(`/communication/workflow?${new URLSearchParams({q,status,responsible})}`);
+export const createCommunicationWorkflowItem=(payload:CommunicationWorkflowRequest)=>request<CommunicationWorkflowItem>('/communication/workflow',{method:'POST',body:JSON.stringify(payload)});
+export const updateCommunicationWorkflowItem=(id:number,payload:CommunicationWorkflowRequest)=>request<CommunicationWorkflowItem>(`/communication/workflow/${id}`,{method:'PUT',body:JSON.stringify(payload)});
+export const deleteCommunicationWorkflowItem=(id:number)=>request<void>(`/communication/workflow/${id}`,{method:'DELETE'});
+
+// Schritt 40f: Aufgabenworkflow
+export type TaskWorkflowSettings={enabled:boolean;requireResponsiblePerson:boolean;requireDueDate:boolean;requireCompletionNote:boolean;showOnDashboard:boolean;overdueEscalationEnabled:boolean;defaultDueDays:number;warningDays:number};
+export const loadTaskWorkflowSettings=()=>request<TaskWorkflowSettings>('/settings/task-workflow');
+export const saveTaskWorkflowSettings=(settings:TaskWorkflowSettings)=>request<TaskWorkflowSettings>('/settings/task-workflow',{method:'PUT',body:JSON.stringify(settings)});
+
+// Schritt 40g: Labormodul und Laborworkflow
+export type LaboratoryOrder={id:number;patientNumber?:string;patientName:string;requestedBy?:string;externalLaboratory?:string;examinations:string;specimenMaterial?:string;priority:string;status:string;dueDate?:string;collectedAt?:string;collectedBy?:string;specimenId?:string;sentAt?:string;resultReceivedAt?:string;resultSummary?:string;reviewedBy?:string;reviewedAt?:string;patientInformation?:string;note?:string;createdBy?:string;createdAt:string;updatedBy?:string;updatedAt:string};
+export type LaboratoryOrderRequest=Omit<LaboratoryOrder,'id'|'createdAt'|'updatedAt'|'createdBy'|'updatedBy'>;
+export const loadLaboratoryOrders=(q='',status='all')=>request<LaboratoryOrder[]>(`/laboratory/orders?${new URLSearchParams({q,status})}`);
+export const createLaboratoryOrder=(payload:LaboratoryOrderRequest)=>request<LaboratoryOrder>('/laboratory/orders',{method:'POST',body:JSON.stringify(payload)});
+export const updateLaboratoryOrder=(id:number,payload:LaboratoryOrderRequest)=>request<LaboratoryOrder>(`/laboratory/orders/${id}`,{method:'PUT',body:JSON.stringify(payload)});
+export const deleteLaboratoryOrder=(id:number)=>request<void>(`/laboratory/orders/${id}`,{method:'DELETE'});
+
+
+// Schritt 40h: Wartezimmer und Patientenfluss
+export type WaitingRoomVisit={id:number;patientNumber?:string;patientName:string;appointmentType?:string;practitioner?:string;room?:string;priority:string;status:string;appointmentAt?:string;arrivedAt?:string;calledAt?:string;treatmentStartedAt?:string;completedAt?:string;nextStep?:string;note?:string;createdBy?:string;createdAt:string;updatedBy?:string;updatedAt:string};
+export type WaitingRoomVisitRequest={patientNumber?:string;patientName:string;appointmentType?:string;practitioner?:string;room?:string;priority?:string;status?:string;appointmentAt?:string;nextStep?:string;note?:string};
+export const loadWaitingRoomVisits=(q='',status='all')=>request<WaitingRoomVisit[]>(`/waiting-room?${new URLSearchParams({q,status})}`);
+export const createWaitingRoomVisit=(payload:WaitingRoomVisitRequest)=>request<WaitingRoomVisit>('/waiting-room',{method:'POST',body:JSON.stringify(payload)});
+export const transitionWaitingRoomVisit=(id:number,payload:{status:string;room?:string;practitioner?:string;nextStep?:string;note?:string})=>request<WaitingRoomVisit>(`/waiting-room/${id}/transition`,{method:'POST',body:JSON.stringify(payload)});
+export const deleteWaitingRoomVisit=(id:number)=>request<void>(`/waiting-room/${id}`,{method:'DELETE'});

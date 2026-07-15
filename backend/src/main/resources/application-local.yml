@@ -20,6 +20,7 @@ spring:
 logging:
   level:
     de.kopfzentrum.gam: DEBUG
+    com.openhtmltopdf.general: ERROR
 
 app:
   security:

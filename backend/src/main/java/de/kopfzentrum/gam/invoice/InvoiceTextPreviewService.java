@@ -24,20 +24,61 @@ public class InvoiceTextPreviewService {
   }
 
   public InvoiceTextPreview preview(Integer companyId, String language, String treatmentDate, LbdRecipient recipient) {
+    return preview(companyId, language, treatmentDate, recipient, "");
+  }
+
+  public InvoiceTextPreview preview(Integer companyId, String language, String treatmentDate, LbdRecipient recipient, String paymentMethod) {
     InvoiceCompany company = companyId == null ? null : repo.findCompany(companyId);
     String lang = normalize(language);
     Map<String, String> labels = labels(lang);
-    Map<String, String> assigned = assignedTexts(companyId);
+    Map<String, String> assigned = "de".equals(lang) ? assignedTexts(companyId) : Map.of();
+    String invoiceText = "de".equals(lang)
+        ? resolveText(assigned, "invoiceText", "rechnungstext", hardcodedFallback("invoiceText"))
+        : translations.invoice("invoiceInvoiceTextLabel0", lang);
+    String legalNote = "de".equals(lang)
+        ? resolveText(assigned, "legalNote", "rechnungsrechtlicherhinweis", hardcodedFallback("legalNote"))
+        : translations.invoice("invoiceLawHintLabel0", lang);
+    String greeting = "de".equals(lang)
+        ? resolveText(assigned, "greeting", "rechnungsgrussformel", hardcodedFallback("greeting"))
+        : translations.invoice("invoiceGreetingsLabel0", lang);
     return new InvoiceTextPreview(
       lang,
       companyId,
       translations.invoice("invoice", lang),
-      replace(resolveText(assigned, "salutation", "rechnungsanrede", hardcodedFallback("salutation")), lang, company, recipient, treatmentDate),
-      replace(resolveText(assigned, "invoiceText", "rechnungstext", hardcodedFallback("invoiceText")), lang, company, recipient, treatmentDate),
-      replace(resolveText(assigned, "legalNote", "rechnungsrechtlicherhinweis", hardcodedFallback("legalNote")), lang, company, recipient, treatmentDate),
-      replace(resolveText(assigned, "greeting", "rechnungsgrussformel", hardcodedFallback("greeting")), lang, company, recipient, treatmentDate),
-      labels
+      personalSalutation(recipient, lang),
+      replace(invoiceText, lang, company, recipient, treatmentDate),
+      replace(legalNote, lang, company, recipient, treatmentDate),
+      replace(greeting, lang, company, recipient, treatmentDate),
+      labels,
+      recipient,
+      treatmentDate,
+      paymentMethod
     );
+  }
+
+  private String personalSalutation(LbdRecipient recipient, String language) {
+    if (recipient == null || !recipient.found()) return translations.invoice("invoiceNoRecipient", language);
+    String name = java.util.stream.Stream.of(recipient.title(), recipient.firstName(), recipient.nameSuffix(), recipient.lastName())
+        .filter(v -> v != null && !v.isBlank()).map(String::trim).collect(java.util.stream.Collectors.joining(" "));
+    String salutation = value(recipient.salutation()).toLowerCase(Locale.ROOT);
+    Integer index = recipient.salutationIndex();
+    boolean male = Integer.valueOf(1).equals(index) || salutation.startsWith("herr") || salutation.startsWith("mr") || salutation.startsWith("monsieur");
+    boolean female = Integer.valueOf(2).equals(index) || salutation.startsWith("frau") || salutation.startsWith("mrs") || salutation.startsWith("ms") || salutation.startsWith("madame");
+    return switch (normalize(language)) {
+      case "en" -> male ? "Dear Mr " + name + "," : female ? "Dear Ms " + name + "," : "Hello " + name + ",";
+      case "fr" -> male ? "Monsieur " + name + "," : female ? "Madame " + name + "," : "Bonjour " + name + ",";
+      case "uk" -> male ? "Шановний пане " + name + "," : female ? "Шановна пані " + name + "," : "Добрий день, " + name + ",";
+      case "it" -> male ? "Gentile Signor " + name + "," : female ? "Gentile Signora " + name + "," : "Gentile " + name + ",";
+      case "sv" -> male ? "Bäste Herr " + name + "," : female ? "Bästa Fru " + name + "," : "Hej " + name + ",";
+      case "tr" -> male ? "Sayın Bay " + name + "," : female ? "Sayın Bayan " + name + "," : "Sayın " + name + ",";
+      case "ru" -> male ? "Уважаемый господин " + name + "," : female ? "Уважаемая госпожа " + name + "," : "Здравствуйте, " + name + ",";
+      case "es" -> male ? "Estimado Señor " + name + "," : female ? "Estimada Señora " + name + "," : "Estimado/a " + name + ",";
+      case "pt" -> male ? "Prezado Senhor " + name + "," : female ? "Prezada Senhora " + name + "," : "Prezado(a) " + name + ",";
+      case "nl" -> male ? "Geachte heer " + name + "," : female ? "Geachte mevrouw " + name + "," : "Geachte " + name + ",";
+      case "pl" -> male ? "Szanowny Panie " + name + "," : female ? "Szanowna Pani " + name + "," : "Dzień dobry " + name + ",";
+      case "cs" -> male ? "Vážený pane " + name + "," : female ? "Vážená paní " + name + "," : "Dobrý den " + name + ",";
+      default -> male ? "Sehr geehrter Herr " + name + "," : female ? "Sehr geehrte Frau " + name + "," : "Guten Tag " + name + ",";
+    };
   }
 
   private Map<String, String> assignedTexts(Integer companyId) {
@@ -129,7 +170,7 @@ public class InvoiceTextPreviewService {
     if (text == null) return "";
     String result = text;
     result = result.replace("-br-", "\n");
-    result = result.replace("<Anrede>", value(recipient == null ? null : recipient.salutation()));
+    result = result.replace("<Anrede>", localizedSalutation(recipient == null ? null : recipient.salutation(), language));
     result = result.replace("<Titel>", value(recipient == null ? null : recipient.title()));
     result = result.replace("<Vorname>", value(recipient == null ? null : recipient.firstName()));
     result = result.replace("<Namenszusatz>", value(recipient == null ? null : recipient.nameSuffix()));
@@ -138,6 +179,35 @@ public class InvoiceTextPreviewService {
     result = result.replace("<Gesellschaftsname>", value(company == null ? null : company.name()));
     result = result.replace("<SieIhrKind>", translations.invoice("invoiceYou", language));
     return result.replaceAll("[ \\t]+", " ").replace(" ,", ",").trim();
+  }
+
+  private static String localizedSalutation(String salutation, String language) {
+    String raw = value(salutation);
+    if (raw.isBlank()) return "";
+    String normalized = raw.toLowerCase(Locale.ROOT).replace(".", "").trim();
+    boolean female = normalized.equals("frau") || normalized.equals("mrs") || normalized.equals("ms") || normalized.equals("madame")
+        || normalized.equals("sigra") || normalized.equals("señora") || normalized.equals("senhora") || normalized.equals("mevrouw")
+        || normalized.equals("pani") || normalized.equals("paní") || normalized.equals("fru") || normalized.equals("bayan")
+        || normalized.equals("пані") || normalized.equals("госпожа");
+    boolean male = normalized.equals("herr") || normalized.equals("herrn") || normalized.equals("mr") || normalized.equals("monsieur")
+        || normalized.equals("sig") || normalized.equals("signor") || normalized.equals("señor") || normalized.equals("senhor")
+        || normalized.equals("de heer") || normalized.equals("pan") || normalized.equals("bay") || normalized.equals("пан")
+        || normalized.equals("господин");
+    return switch (normalize(language)) {
+      case "en" -> female ? "Ms" : male ? "Mr" : raw;
+      case "fr" -> female ? "Madame" : male ? "Monsieur" : raw;
+      case "uk" -> female ? "Пані" : male ? "Пан" : raw;
+      case "it" -> female ? "Signora" : male ? "Signor" : raw;
+      case "sv" -> female ? "Fru" : male ? "Herr" : raw;
+      case "tr" -> female ? "Bayan" : male ? "Bay" : raw;
+      case "ru" -> female ? "Госпожа" : male ? "Господин" : raw;
+      case "es" -> female ? "Señora" : male ? "Señor" : raw;
+      case "pt" -> female ? "Senhora" : male ? "Senhor" : raw;
+      case "nl" -> female ? "Mevrouw" : male ? "De heer" : raw;
+      case "pl" -> female ? "Pani" : male ? "Pan" : raw;
+      case "cs" -> female ? "Paní" : male ? "Pan" : raw;
+      default -> female ? "Frau" : male ? "Herr" : raw;
+    };
   }
 
   private static String value(String value) {
@@ -171,6 +241,11 @@ public class InvoiceTextPreviewService {
     if (l.startsWith("sv") || l.startsWith("se")) return "sv";
     if (l.startsWith("tr")) return "tr";
     if (l.startsWith("ru")) return "ru";
+    if (l.startsWith("es")) return "es";
+    if (l.startsWith("pt")) return "pt";
+    if (l.startsWith("nl")) return "nl";
+    if (l.startsWith("pl")) return "pl";
+    if (l.startsWith("cs") || l.startsWith("cz")) return "cs";
     return "de";
   }
 }

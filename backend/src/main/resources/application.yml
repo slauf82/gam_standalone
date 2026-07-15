@@ -26,6 +26,8 @@ logging:
     root: INFO
     de.kopfzentrum.gam: DEBUG
     org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver: ERROR
+    # PDF/UA-Metadaten werden anschließend zentral per PDFBox finalisiert.
+    com.openhtmltopdf.general: ERROR
 gam:
   jwt:
     secret: ${GAM_JWT_SECRET:BITTE_IN_PRODUKTION_AENDERN_MINDESTENS_32_ZEICHEN}
@@ -91,3 +93,4 @@ app:
 
 zugferd:
   enabled: ${GAM_ZUGFERD_ENABLED:true}
+

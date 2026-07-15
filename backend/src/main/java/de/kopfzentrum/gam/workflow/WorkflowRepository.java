@@ -14,10 +14,12 @@ import java.util.List;
 public class WorkflowRepository {
   private final JdbcTemplate jdbc;
   private final NamedParameterJdbcTemplate named;
+  private final TaskWorkflowSettingsRepository taskSettings;
 
-  public WorkflowRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate named) {
+  public WorkflowRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate named, TaskWorkflowSettingsRepository taskSettings) {
     this.jdbc = jdbc;
     this.named = named;
+    this.taskSettings = taskSettings;
   }
 
   public List<TaskDto> tasks(String q, String status, Integer branchId, int limit) {
@@ -41,19 +43,21 @@ public class WorkflowRepository {
   }
 
   public TaskDto createTask(TaskUpdateRequest r, String currentUser) {
+    TaskUpdateRequest v = validateTask(r);
     jdbc.update("""
       INSERT INTO `aufgaben` (`USERNAME`,`TAGESDATUM`,`KÜRZEL`,`FILIALE_ID`,`FACHBEREICH`,`AUFGABE`,`VERANTWORTLICHER`,`PRIORITÄT`,`STATUS`,`FRIST`,`ERLEDIGT`,`BEMERKUNG`)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-      """, valueOr(r.username(), currentUser), LocalDate.now(), r.branchCode(), r.branchId(), r.department(), r.task(), r.responsible(), valueOr(r.priority(), "mittel"), valueOr(r.status(), "offen"), parseDate(r.dueDate()), r.doneBy(), r.note());
+      """, valueOr(v.username(), currentUser), LocalDate.now(), v.branchCode(), v.branchId(), v.department(), v.task(), v.responsible(), valueOr(v.priority(), "mittel"), valueOr(v.status(), "offen"), parseDate(v.dueDate()), v.doneBy(), v.note());
     Integer id = jdbc.queryForObject("SELECT LAST_INSERT_ID()", Integer.class);
     return task(id);
   }
 
   public TaskDto updateTask(Integer id, TaskUpdateRequest r) {
+    TaskUpdateRequest v = validateTask(r);
     jdbc.update("""
       UPDATE `aufgaben` SET `KÜRZEL`=?, `FILIALE_ID`=?, `FACHBEREICH`=?, `AUFGABE`=?, `VERANTWORTLICHER`=?, `PRIORITÄT`=?, `STATUS`=?, `FRIST`=?, `ERLEDIGT`=?, `BEMERKUNG`=?
       WHERE `ID`=?
-      """, r.branchCode(), r.branchId(), r.department(), r.task(), r.responsible(), r.priority(), r.status(), parseDate(r.dueDate()), r.doneBy(), r.note(), id);
+      """, v.branchCode(), v.branchId(), v.department(), v.task(), v.responsible(), v.priority(), v.status(), parseDate(v.dueDate()), v.doneBy(), v.note(), id);
     return task(id);
   }
 
@@ -107,6 +111,23 @@ public class WorkflowRepository {
       count("SELECT COUNT(*) FROM `freigabe` WHERE COALESCE(`STATUS`,'') NOT IN ('abgeschlossen','freigegeben')"),
       count("SELECT COUNT(*) FROM `freigabe` WHERE COALESCE(`STATUS`,'') IN ('abgeschlossen','freigegeben')")
     );
+  }
+
+
+  private TaskUpdateRequest validateTask(TaskUpdateRequest r) {
+    var s=taskSettings.load();
+    if(!s.enabled()) throw new IllegalStateException("Aufgabenworkflow ist deaktiviert.");
+    String task=valueOr(r.task(), "").trim();
+    if(task.isBlank()) throw new IllegalArgumentException("Aufgabe fehlt.");
+    String responsible=r.responsible()==null?"":r.responsible().trim();
+    if(s.requireResponsiblePerson() && responsible.isBlank()) throw new IllegalArgumentException("Verantwortlicher fehlt.");
+    String status=valueOr(r.status(), "offen");
+    String due=r.dueDate();
+    if((due==null||due.isBlank()) && s.requireDueDate()) throw new IllegalArgumentException("Frist fehlt.");
+    if((due==null||due.isBlank()) && s.defaultDueDays()>0) due=LocalDate.now().plusDays(s.defaultDueDays()).toString();
+    boolean done="erledigt".equalsIgnoreCase(status)||"abgeschlossen".equalsIgnoreCase(status);
+    if(done && s.requireCompletionNote() && (r.note()==null||r.note().isBlank())) throw new IllegalArgumentException("Für erledigte Aufgaben ist eine Abschlussnotiz erforderlich.");
+    return new TaskUpdateRequest(r.username(),r.branchCode(),r.branchId(),r.department(),task,responsible,r.priority(),status,due,r.doneBy(),r.note());
   }
 
   private TaskDto mapTask(ResultSet rs) throws SQLException {

@@ -10,5 +10,8 @@ public record InvoiceTextPreview(
   String invoiceText,
   String lawHint,
   String greetings,
-  Map<String, String> labels
+  Map<String, String> labels,
+  de.kopfzentrum.gam.invoice.lbd.LbdRecipient recipient,
+  String treatmentDate,
+  String paymentMethod
 ) {}

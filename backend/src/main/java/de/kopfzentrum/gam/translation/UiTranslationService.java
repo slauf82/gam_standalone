@@ -2,6 +2,7 @@ package de.kopfzentrum.gam.translation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,13 @@ public class UiTranslationService {
   private final int maxBackgroundAutoTranslations;
   private static final Set<String> BACKGROUND_RECONCILE_LANGUAGES = ConcurrentHashMap.newKeySet();
 
+  private static final List<String> ALL_TRANSLATION_TABLES = List.of(
+      "translation_german", "translation_english", "translation_french", "translation_ukrainian",
+      "translation_italian", "translation_swedish", "translation_turkish", "translation_russian",
+      "translation_spanish", "translation_portuguese", "translation_dutch", "translation_polish",
+      "translation_czech"
+  );
+
   public UiTranslationService(
       JdbcTemplate jdbc,
       ObjectMapper objectMapper,
@@ -64,6 +72,11 @@ public class UiTranslationService {
     this.diagnostics = diagnostics;
     this.maxSynchronousAutoTranslations = Math.max(0, maxSynchronousAutoTranslations);
     this.maxBackgroundAutoTranslations = Math.max(0, maxBackgroundAutoTranslations);
+  }
+
+  @PostConstruct
+  public void initializeTranslationTables() {
+    for (String table : ALL_TRANSLATION_TABLES) ensureTable(table);
   }
 
   public synchronized Map<String, String> translateUi(String language, Map<String, String> germanEntries, Map<String, String> knownTranslations) {
@@ -805,8 +818,11 @@ public class UiTranslationService {
 
   private boolean tableExists(String table) {
     try {
-      jdbc.queryForObject("SELECT 1 FROM " + q(table) + " LIMIT 1", Integer.class);
-      return true;
+      Integer count = jdbc.queryForObject(
+          "SELECT COUNT(*) FROM information_schema.TABLES " +
+              "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+          Integer.class, table);
+      return count != null && count > 0;
     } catch (Exception ignored) {
       return false;
     }

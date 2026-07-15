@@ -10,16 +10,18 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
+    "lucide-react": "latest",
+    "qrcode.react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest",
-    "qrcode.react": "latest"
+    "typescript": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
+    "@types/node": "latest",
     "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "@types/node": "latest"
+    "@types/react-dom": "latest"
   }
 }

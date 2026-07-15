@@ -31,6 +31,7 @@ public class MasterDataAdminController {
     ensureInvoiceTextFallbackRows();
     ensureInvoiceLogoTable();
     ensureInvoiceCompanyLogoColumn();
+    ensureMarketingMasterDataTables();
   }
 
   @GetMapping("/catalogs")
@@ -270,6 +271,41 @@ public class MasterDataAdminController {
     } catch (Exception ignored) { }
   }
 
+
+  private void ensureMarketingMasterDataTables() {
+    jdbc.execute("""
+      CREATE TABLE IF NOT EXISTS gam_warehouse_type (
+        id BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, description TEXT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE, sort_order INT NOT NULL DEFAULT 100, PRIMARY KEY (id), UNIQUE KEY uk_warehouse_type_name (name)
+      )
+      """);
+    jdbc.execute("""
+      CREATE TABLE IF NOT EXISTS gam_warehouse_location (
+        id BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, code VARCHAR(80) NULL, warehouse_type_id BIGINT NULL,
+        branch_id BIGINT NULL, address VARCHAR(500) NULL, active BOOLEAN NOT NULL DEFAULT TRUE, note TEXT NULL, PRIMARY KEY (id), UNIQUE KEY uk_warehouse_location_name (name)
+      )
+      """);
+    jdbc.execute("""
+      CREATE TABLE IF NOT EXISTS gam_marketing_action_type (
+        id BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, description TEXT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE, sort_order INT NOT NULL DEFAULT 100, PRIMARY KEY (id), UNIQUE KEY uk_marketing_action_type_name (name)
+      )
+      """);
+    jdbc.execute("""
+      CREATE TABLE IF NOT EXISTS gam_marketing_material_type (
+        id BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, description TEXT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE, sort_order INT NOT NULL DEFAULT 100, PRIMARY KEY (id), UNIQUE KEY uk_marketing_material_type_name (name)
+      )
+      """);
+    jdbc.update("INSERT IGNORE INTO gam_warehouse_type (name, description, sort_order) VALUES ('Hauptlager', 'Zentrales Hauptlager', 10)");
+    jdbc.update("INSERT IGNORE INTO gam_warehouse_location (name, code, warehouse_type_id, active) SELECT 'Hauptlager', 'HL', id, TRUE FROM gam_warehouse_type WHERE name = 'Hauptlager' LIMIT 1");
+    jdbc.update("INSERT IGNORE INTO gam_marketing_action_type (name, description, sort_order) VALUES ('Materialverteilung', 'Marketingmaterial an Filialen verteilen', 10)");
+    jdbc.update("INSERT IGNORE INTO gam_marketing_action_type (name, description, sort_order) VALUES ('Kampagne', 'Zeitlich begrenzte Marketingkampagne', 20)");
+    jdbc.update("INSERT IGNORE INTO gam_marketing_material_type (name, description, sort_order) VALUES ('Flyer', 'Flyer und Faltblätter', 10)");
+    jdbc.update("INSERT IGNORE INTO gam_marketing_material_type (name, description, sort_order) VALUES ('Plakat', 'Plakate und Aushänge', 20)");
+    jdbc.update("INSERT IGNORE INTO gam_marketing_material_type (name, description, sort_order) VALUES ('Werbeartikel', 'Sonstige Werbe- und Streuartikel', 30)");
+  }
+
   private boolean columnExists(String tableName, String columnName) {
     try {
       Integer count = jdbc.queryForObject("""
@@ -292,6 +328,14 @@ public class MasterDataAdminController {
 
   private static Map<String, MasterDataCatalog> buildCatalogs() {
     List<MasterDataCatalog> list = List.of(
+      new MasterDataCatalog("warehouse-types", "Lagerarten", "Marketing & Logistik", "gam_warehouse_type", "id",
+        List.of("name", "description", "active", "sort_order"), List.of("name", "description"), "Zentrale Lagerarten für Marketing- und Lagerworkflows."),
+      new MasterDataCatalog("warehouse-locations", "Lager", "Marketing & Logistik", "gam_warehouse_location", "id",
+        List.of("name", "code", "warehouse_type_id", "branch_id", "address", "active", "note"), List.of("name", "code", "address"), "Zentrale Lagerstammdaten. Im Marketingworkflow ist nur eine Auswahl möglich."),
+      new MasterDataCatalog("marketing-action-types", "Marketing-Aktionsarten", "Marketing & Logistik", "gam_marketing_action_type", "id",
+        List.of("name", "description", "active", "sort_order"), List.of("name", "description"), "Zulässige Aktionsarten für den Marketingworkflow."),
+      new MasterDataCatalog("marketing-material-types", "Marketing-Materialarten", "Marketing & Logistik", "gam_marketing_material_type", "id",
+        List.of("name", "description", "active", "sort_order"), List.of("name", "description"), "Zulässige Materialarten für den Marketingworkflow."),
       new MasterDataCatalog("branches", "Filialen / Standorte", "Stammdaten", "filiale", "FILIALE_ID",
         List.of("FILIALEKUERZEL", "FILIALENAME", "STRASSE", "PLZ", "ORT", "EMAIL", "RELEVANT", "KATEGORIE", "KOSTENSTELLE", "IMPORTORDNER", "EXPORTORDNER"),
         List.of("FILIALEKUERZEL", "FILIALENAME", "ORT", "KATEGORIE"), "Alt-GAM Filial- und Standortverwaltung ohne Rechnungsdetails."),
@@ -401,6 +445,33 @@ public class MasterDataAdminController {
       new MasterDataCatalog("ui-translations-uk", "Übersetzungen Ukrainisch", "Mehrsprachigkeit", "translation_ukrainian", "ID",
         List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
         List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "GAM-1.0-Übersetzungskatalog Ukrainisch."),
+      new MasterDataCatalog("ui-translations-it", "Übersetzungen Italienisch", "Mehrsprachigkeit", "translation_italian", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Italienisch."),
+      new MasterDataCatalog("ui-translations-sv", "Übersetzungen Schwedisch", "Mehrsprachigkeit", "translation_swedish", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Schwedisch."),
+      new MasterDataCatalog("ui-translations-tr", "Übersetzungen Türkisch", "Mehrsprachigkeit", "translation_turkish", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Türkisch."),
+      new MasterDataCatalog("ui-translations-ru", "Übersetzungen Russisch", "Mehrsprachigkeit", "translation_russian", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Russisch."),
+      new MasterDataCatalog("ui-translations-es", "Übersetzungen Spanisch", "Mehrsprachigkeit", "translation_spanish", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Spanisch."),
+      new MasterDataCatalog("ui-translations-pt", "Übersetzungen Portugiesisch", "Mehrsprachigkeit", "translation_portuguese", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Portugiesisch."),
+      new MasterDataCatalog("ui-translations-nl", "Übersetzungen Niederländisch", "Mehrsprachigkeit", "translation_dutch", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Niederländisch."),
+      new MasterDataCatalog("ui-translations-pl", "Übersetzungen Polnisch", "Mehrsprachigkeit", "translation_polish", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Polnisch."),
+      new MasterDataCatalog("ui-translations-cs", "Übersetzungen Tschechisch", "Mehrsprachigkeit", "translation_czech", "ID",
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"),
+        List.of("TRANSLATED_TEXT", "TRANSLATE_DESCRIPTION"), "Übersetzungskatalog Tschechisch."),
       new MasterDataCatalog("company-branch-links", "Gesellschaft-Filiale-Zuordnung", "Stammdaten", "rechnungsgesellschaft_filiale", "ID",
         List.of("RGESELLSCHAFTS_ID", "FILIALE_ID"),
         List.of("RGESELLSCHAFTS_ID", "FILIALE_ID"), "Zuordnung von Gesellschaften zu Filialen; Rechnungsdetails bleiben weiter im späteren Rechnungsadmin."),

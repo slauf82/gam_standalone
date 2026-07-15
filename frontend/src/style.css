@@ -75,6 +75,12 @@ tr.selected{background:#eef4ff}
 .invoice-preview-head{
   align-items:flex-start;
 }
+.invoice-cancelled-status{
+  display:block;
+  margin-top:.2rem;
+  font-weight:700;
+  line-height:1.25;
+}
 
 /* Schritt 31: Original Login Experience + Modulübersicht */
 .login{
@@ -722,7 +728,7 @@ body.gam-modal-open {
 .change-details-table td {
   vertical-align: top;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 
@@ -907,3 +913,296 @@ body.gam-modal-open {
   .invoice-admin-field-medium,
   .invoice-admin-field-long{grid-column:1 / -1;}
 }
+
+
+/* Schritt 40a3: sichtbarer Rechnungsworkflow */
+.workflow-panel{border:1px solid var(--border,#cfd6dd);border-radius:10px;padding:12px;margin:12px 0;background:var(--surface,#fff)}
+.workflow-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.workflow-status{font-size:1.08rem;font-weight:700;margin-top:3px}
+.workflow-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:12px 0}
+.workflow-steps span{padding:7px 5px;text-align:center;border-radius:7px;background:#eceff2;font-size:.82rem;opacity:.65}
+.workflow-steps span.done{opacity:1;font-weight:700;background:#dcefe1}
+.workflow-entwurf{color:#725300}.workflow-pruefung{color:#715700}.workflow-freigegeben{color:#146b35}.workflow-versendet{color:#245f8c}.workflow-abgeschlossen{color:#36505f}
+@media(max-width:900px){.workflow-steps{grid-template-columns:1fr}.workflow-head{align-items:flex-start;flex-direction:column}}
+
+/* Schritt 40a5: zentrales Einstellungsmodul */
+.settings-module{display:block}.settings-tabs{display:flex;flex-wrap:wrap;gap:.45rem;margin:1rem 0}.settings-tabs button{white-space:nowrap}.settings-pane{border-top:1px solid var(--border,#d5dbe4);padding-top:1rem}.settings-list{display:grid;gap:.75rem;max-width:900px}.settings-switch{display:flex;align-items:flex-start;gap:.8rem;padding:.85rem 1rem;border:1px solid var(--border,#d5dbe4);border-radius:10px;background:var(--surface,#fff)}.settings-switch input{margin-top:.25rem;transform:scale(1.2)}.settings-switch span{display:grid;gap:.2rem}.settings-switch small{color:var(--muted,#667085)}
+
+
+/* Schritt 40a9: Meldungszeiten und automatische Ausblendung */
+.notification-setting-row { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.notification-setting-row > label:first-child { display:flex; align-items:flex-start; gap:10px; flex:1; }
+.notification-seconds { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+.notification-seconds input { width:90px; }
+@media (max-width: 720px){ .notification-setting-row { align-items:stretch; flex-direction:column; } .notification-seconds { justify-content:space-between; } }
+
+/* Schritt 40a12: gemeinsame Workflow-UI-Foundation */
+.workflow-dashboard{margin:1.25rem 0;padding:1rem;border:1px solid var(--border,#d5dbe4);border-radius:14px;background:linear-gradient(180deg,rgba(42,115,155,.07),rgba(42,115,155,.02))}
+.workflow-dashboard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem}.workflow-dashboard-head h3{margin:0 0 .25rem}
+.workflow-summary{display:flex;flex-wrap:wrap;gap:.5rem}.workflow-summary span{padding:.45rem .7rem;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--border,#d5dbe4);font-size:.82rem;white-space:nowrap}
+.workflow-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}.workflow-card{display:flex;align-items:flex-start;gap:.75rem;text-align:left;padding:.9rem;border:1px solid var(--border,#d5dbe4);border-radius:12px;background:var(--surface,#fff);min-height:96px}.workflow-card-ready{cursor:pointer}.workflow-card-ready:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(20,50,70,.12)}.workflow-card-planned{opacity:.62;cursor:default}.workflow-card-icon{font-size:1.65rem;line-height:1}.workflow-card-content{display:grid;gap:.25rem}.workflow-card-content small{color:var(--muted,#667085);font-style:normal}.workflow-card-content em{font-size:.72rem;font-style:normal;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#2a739b}
+.workflow-status-legend{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1rem}.wf-state{font-size:.76rem;font-weight:700;padding:.35rem .6rem;border-radius:999px;border:1px solid transparent}.wf-state-new{background:#eceff2;color:#4b5563}.wf-state-active{background:#dbeafe;color:#1d4ed8}.wf-state-waiting{background:#fef3c7;color:#92400e}.wf-state-approval{background:#ffedd5;color:#9a3412}.wf-state-done{background:#dcfce7;color:#166534}.wf-state-error{background:#fee2e2;color:#991b1b}
+@media(max-width:1050px){.workflow-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.workflow-dashboard-head{flex-direction:column}}
+@media(max-width:680px){.workflow-card-grid{grid-template-columns:1fr}}
+
+/* Schritt 40a16: hierarchische Einstellungen */
+.settings-main-tabs{margin-bottom:1rem}
+.settings-subtabs{margin:.75rem 0 1rem;display:flex;flex-wrap:wrap;gap:.4rem}
+.settings-subpane{border-left:4px solid #0f766e;padding-left:1rem}
+.module-settings-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.65rem}
+
+
+/* Schritt 40a18: Pruefungsstatus muss bereits am Rahmen ins Auge fallen. */
+.compliance-card{border-width:3px;border-style:solid;transition:border-color .18s ease,box-shadow .18s ease}
+.compliance-card-danger{border-color:#c62828;box-shadow:0 0 0 2px rgba(198,40,40,.12)}
+.compliance-card-warning{border-color:#d59b00;box-shadow:0 0 0 2px rgba(213,155,0,.10)}
+.compliance-card-ok{border-color:#2e7d32;box-shadow:0 0 0 1px rgba(46,125,50,.08)}
+
+/* Schritt 40a19: globaler Prüfungsstatus in Navigation und Dashboard */
+.module-tabs button{position:relative}
+.module-status-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;margin-left:7px;padding:0 6px;border-radius:999px;font-size:11px;font-weight:800;line-height:1;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.module-status-overdue{background:#c62828}.module-status-soon{background:#d59b00;color:#2f2300}.module-status-ok{background:#2e7d32}
+.module-tabs button.compliance-nav-overdue{border:2px solid #c62828!important;box-shadow:0 0 0 2px rgba(198,40,40,.14)}
+.module-tabs button.compliance-nav-soon{border:2px solid #d59b00!important;box-shadow:0 0 0 2px rgba(213,155,0,.12)}
+.module-tabs button.compliance-nav-ok{border:1px solid rgba(46,125,50,.55)}
+.dashboard-main-card{border-width:3px!important;border-style:solid!important}
+.dashboard-compliance-overdue{border-color:#c62828!important}.dashboard-compliance-soon{border-color:#d59b00!important}.dashboard-compliance-ok{border-color:#2e7d32!important}
+.dashboard-attention{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0 16px;padding:12px 14px;border-radius:10px;border:1px solid currentColor}
+.dashboard-attention-overdue{color:#8e1111;background:#fff0f0}.dashboard-attention-soon{color:#725000;background:#fff8dc}.dashboard-attention-ok{color:#195d1d;background:#effaf0}
+@media(max-width:800px){.dashboard-attention{align-items:flex-start;flex-direction:column;gap:4px}}
+
+.payment-workflow{border-left:5px solid #0f766e}.payment-workflow.warn{border-color:#d97706}.payment-workflow.danger{border-color:#dc2626}.payment-workflow.ok{border-color:#16a34a}.payment-stats{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:.6rem;margin:.8rem 0}.payment-stats span{background:var(--surface-soft,#f5f7fa);border-radius:.55rem;padding:.6rem;display:flex;flex-direction:column}.payment-stats b{font-size:1.05rem;margin-top:.2rem}.payment-bezahlt{color:#15803d}.payment-teilzahlung{color:#d97706}.payment-storniert{color:#b91c1c}@media(max-width:800px){.payment-stats{grid-template-columns:repeat(2,1fr)}}
+
+/* Schritt 40b6: einheitlicher Einstellungs- und Workflow-Layoutstandard */
+.workflow-settings-standard{display:grid;gap:1rem;max-width:1180px}
+.settings-group{border:1px solid var(--border,#d5dbe4);border-radius:12px;background:var(--surface,#fff);padding:1rem;display:grid;gap:1rem}
+.settings-group-head{display:grid;gap:.2rem;padding-bottom:.65rem;border-bottom:1px solid var(--border,#e4e7ec)}
+.settings-group-head h5{margin:0;font-size:1rem}
+.settings-group-head p{margin:0;color:var(--muted,#667085);font-size:.9rem}
+.settings-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem 1rem}
+.settings-check{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:start;gap:.65rem;min-height:64px;padding:.75rem .85rem;border:1px solid var(--border,#d5dbe4);border-radius:9px;background:var(--surface,#fff)}
+.settings-check input{width:18px;height:18px;margin:.15rem 0 0}
+.settings-check span{display:grid;grid-template-rows:auto 1fr;gap:.15rem;align-content:start}
+.settings-check b{line-height:1.3}
+.settings-check small{color:var(--muted,#667085);line-height:1.35}
+.settings-field-grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:.75rem 1.25rem}
+.settings-field-grid>label{display:grid;grid-template-columns:minmax(190px,1fr) minmax(110px,150px);align-items:center;gap:1rem;min-height:42px}
+.settings-field-grid>label>span{line-height:1.3}
+.settings-field-grid input,.settings-field-grid select{width:100%;min-width:0;box-sizing:border-box}
+.settings-input-with-unit{display:grid;grid-template-columns:minmax(0,1fr) 42px;align-items:center;gap:.4rem}
+.settings-input-with-unit em{font-style:normal;color:var(--muted,#667085);text-align:left}
+.settings-pane:not(.settings-workflows) .form-grid{align-items:start}
+.settings-pane:not(.settings-workflows) .form-grid>label{display:grid;gap:.35rem;align-content:start}
+.settings-pane:not(.settings-workflows) .settings-list{align-items:start}
+@media(max-width:900px){.settings-check-grid,.settings-field-grid{grid-template-columns:1fr}.settings-field-grid>label{grid-template-columns:minmax(160px,1fr) minmax(105px,145px)}}
+@media(max-width:600px){.settings-field-grid>label{grid-template-columns:1fr;gap:.35rem}.settings-input-with-unit{grid-template-columns:minmax(0,1fr) 42px}.settings-check-grid{grid-template-columns:1fr}.settings-group{padding:.8rem}}
+
+/* Schritt 40b8: einheitlicher Layoutstandard fuer alle Einstellungen */
+.settings-standard-pane{display:grid;gap:1rem}
+.settings-standard-pane>h3,.settings-standard-pane>p{margin-bottom:0}
+.settings-standard-stack{display:grid;gap:1rem;max-width:1180px}
+.settings-notification-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem 1rem}
+.settings-notification-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,190px);align-items:stretch;gap:.8rem;padding:.75rem;border:1px solid var(--border,#d5dbe4);border-radius:10px;background:var(--surface,#fff)}
+.settings-notification-check{border:0;padding:0;min-height:58px;background:transparent}
+.settings-notification-duration{display:grid;grid-template-columns:minmax(90px,1fr) minmax(92px,120px);align-items:center;gap:.7rem;padding-left:.8rem;border-left:1px solid var(--border,#e4e7ec)}
+.settings-notification-duration>span{line-height:1.3}
+.settings-notification-duration input{width:100%;box-sizing:border-box}
+.module-settings-grid{align-items:stretch}
+.module-setting-card{height:100%;box-sizing:border-box}
+.module-setting-card input:disabled{cursor:not-allowed}
+@media(max-width:900px){.settings-notification-grid{grid-template-columns:1fr}.settings-notification-card{grid-template-columns:minmax(0,1fr) minmax(145px,180px)}}
+@media(max-width:600px){.settings-notification-card{grid-template-columns:1fr}.settings-notification-duration{grid-template-columns:minmax(120px,1fr) minmax(92px,120px);padding-left:0;padding-top:.7rem;border-left:0;border-top:1px solid var(--border,#e4e7ec)}}
+
+/* Schritt 40b9: besser lesbare Zahlenfelder in den Einstellungen.
+   Die nativen Mehr-/Weniger-Schaltflächen bleiben erhalten, überdecken den Wert aber nicht mehr. */
+.settings-standard-pane .settings-input-with-unit input[type="number"]{
+  min-width:112px;
+  width:100%;
+  box-sizing:border-box;
+  padding-left:.75rem;
+  padding-right:2.35rem;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  font-weight:600;
+  line-height:1.35;
+}
+.settings-standard-pane .settings-notification-duration .settings-input-with-unit{
+  grid-template-columns:minmax(112px,136px) 42px;
+  justify-content:end;
+}
+.settings-standard-pane .settings-notification-duration{
+  grid-template-columns:minmax(96px,1fr) minmax(160px,190px);
+}
+@media(max-width:600px){
+  .settings-standard-pane .settings-notification-duration{
+    grid-template-columns:minmax(120px,1fr) minmax(160px,190px);
+  }
+}
+
+/* Schritt 40b10: Variante 1 – kompakte, bündige Zahlenfelder ohne Kartenüberstand.
+   Beschriftung links, fester Wertebereich rechts, Einheit außerhalb des Eingabefeldes. */
+.settings-standard-pane .settings-notification-card{
+  grid-template-columns:minmax(0,1fr) minmax(220px,260px);
+  min-width:0;
+}
+.settings-standard-pane .settings-notification-duration{
+  grid-template-columns:minmax(0,1fr) 108px;
+  min-width:0;
+  gap:.65rem;
+}
+.settings-standard-pane .settings-notification-duration .settings-input-with-unit{
+  grid-template-columns:78px 24px;
+  justify-content:end;
+  min-width:0;
+  gap:.35rem;
+}
+.settings-standard-pane .settings-input-with-unit input[type="number"]{
+  width:78px;
+  min-width:78px;
+  max-width:78px;
+  padding-left:.55rem;
+  padding-right:1.65rem;
+  text-align:center;
+}
+.settings-standard-pane .settings-input-with-unit em{
+  width:24px;
+  min-width:24px;
+  text-align:left;
+  white-space:nowrap;
+}
+.settings-standard-pane .settings-field-grid>label{
+  grid-template-columns:minmax(190px,1fr) 108px;
+  min-width:0;
+}
+.settings-standard-pane .settings-field-grid .settings-input-with-unit{
+  grid-template-columns:78px 24px;
+  justify-content:end;
+  min-width:0;
+}
+@media(max-width:900px){
+  .settings-standard-pane .settings-notification-card{
+    grid-template-columns:minmax(0,1fr) minmax(205px,235px);
+  }
+}
+@media(max-width:600px){
+  .settings-standard-pane .settings-notification-card{
+    grid-template-columns:1fr;
+  }
+  .settings-standard-pane .settings-notification-duration{
+    grid-template-columns:minmax(0,1fr) 108px;
+  }
+  .settings-standard-pane .settings-field-grid>label{
+    grid-template-columns:minmax(0,1fr) 108px;
+    gap:.65rem;
+  }
+}
+
+/* Schritt 40d – Marketingworkflow */
+.marketing-workflow-grid{grid-template-columns:minmax(0,1.45fr) minmax(340px,.9fr);align-items:start}.marketing-progress{height:12px;border-radius:999px;background:var(--surface-2,#e5e7eb);overflow:hidden;margin:12px 0 16px}.marketing-progress>div{height:100%;background:#2563eb;transition:width .2s ease}.marketing-status-planned{background:#e5e7eb}.marketing-status-picking{background:#fef3c7}.marketing-status-ready_to_ship{background:#dbeafe}.marketing-status-shipped{background:#dbeafe}.marketing-status-received,.marketing-status-completed{background:#dcfce7}.settings-field-span-2{grid-column:1/-1}@media(max-width:1100px){.marketing-workflow-grid{grid-template-columns:1fr}}
+
+/* Schritt 40d4: Kamera- und mobile Beep-Ansicht */
+.marketing-camera-panel{margin:14px 0;padding:14px;border:1px solid var(--border,#d7dde5);border-radius:12px;background:rgba(127,127,127,.04)}
+.marketing-camera-video{display:block;width:100%;max-height:360px;object-fit:cover;margin-top:12px;border-radius:10px;background:#111}
+.marketing-camera-video.hidden{display:none}
+.marketing-mobile-scan>section:first-child{display:none}
+.marketing-mobile-scan{grid-template-columns:minmax(0,1fr)!important;max-width:760px;margin:0 auto}
+.marketing-mobile-scan .card{font-size:1.05rem}
+.marketing-mobile-scan button{min-height:48px}
+@media(max-width:760px){.marketing-camera-video{max-height:46vh}.marketing-mobile-scan{padding:0}.marketing-mobile-scan .toolbar{display:grid;grid-template-columns:1fr}.marketing-mobile-scan input,.marketing-mobile-scan select{min-height:48px;font-size:1.05rem}}
+
+.marketing-mobile-campaign-select{display:grid;gap:.4rem;margin:.75rem 0 1rem}.marketing-mobile-campaign-select select{width:100%;min-height:48px}
+
+/* Schritt 40d6: einheitlich gruppierte Modulauswahl und erkennbare Workflow-Module */
+.login-app-groups{
+  display:grid;
+  gap:12px;
+  margin-top:8px;
+}
+.login-app-group{
+  border:1px solid #dbe3ee;
+  border-radius:14px;
+  padding:10px 12px 12px;
+  background:#f8fafc;
+}
+.login-app-group-head{
+  display:grid;
+  gap:2px;
+  margin-bottom:8px;
+}
+.login-app-group-head b{color:#172033}
+.login-app-group-head small{color:#64748b}
+.workflow-module-button{
+  border:2px solid #6d5bd0!important;
+  box-shadow:0 0 0 2px rgba(109,91,208,.10);
+}
+.login-app-buttons button.workflow-module-button:not(.active){
+  background:#f4f1ff;
+  color:#342a73;
+}
+.login-app-buttons button.workflow-module-button.active{
+  background:#4f3fb3;
+  color:#fff;
+}
+.module-setting-card.workflow-module-card{
+  border:2px solid #6d5bd0;
+  background:#f7f5ff;
+  box-shadow:0 0 0 2px rgba(109,91,208,.08);
+}
+@media (max-width:760px){
+  .login-app-group{padding:9px}
+  .login-app-buttons button{border-radius:12px;flex:1 1 180px;justify-content:flex-start}
+}
+
+.module-group-picker{display:flex;justify-content:flex-start;align-items:end;margin:.65rem 0 .35rem}.module-group-picker label{display:grid;gap:.25rem;font-weight:600}.module-group-picker select{min-width:260px;max-width:100%;padding:.55rem .7rem}.grouped-module-tabs{margin-top:.2rem}.link-button{border:0;background:none;padding:0;color:#0b57d0;text-decoration:underline;cursor:pointer;font:inherit}.link-button:hover{text-decoration:none}
+
+/* Schritt 40d14: breitere, responsive Eingabe der Marketingaktion */
+.marketing-action-form{overflow:hidden}
+.marketing-action-field-grid{
+  grid-template-columns:repeat(2,minmax(360px,1fr));
+  gap:1rem 1.5rem;
+}
+.marketing-action-field-grid>label{
+  grid-template-columns:minmax(145px,190px) minmax(240px,1fr);
+  align-items:center;
+}
+.marketing-action-field-grid input,
+.marketing-action-field-grid select,
+.marketing-action-field-grid textarea{
+  width:100%;
+  max-width:none;
+  min-width:0;
+  box-sizing:border-box;
+}
+.marketing-action-field-grid select{
+  text-overflow:ellipsis;
+}
+.marketing-action-field-grid .marketing-field-wide{
+  grid-column:span 2;
+  grid-template-columns:minmax(145px,190px) minmax(360px,1fr);
+}
+.marketing-action-field-grid .marketing-field-full{
+  grid-column:1 / -1;
+  grid-template-columns:minmax(145px,190px) minmax(360px,1fr);
+}
+.marketing-action-field-grid textarea{min-height:96px;resize:vertical}
+@media(max-width:1200px){
+  .marketing-action-field-grid{grid-template-columns:1fr}
+  .marketing-action-field-grid .marketing-field-wide,
+  .marketing-action-field-grid .marketing-field-full{grid-column:1}
+}
+@media(max-width:700px){
+  .marketing-action-field-grid>label,
+  .marketing-action-field-grid .marketing-field-wide,
+  .marketing-action-field-grid .marketing-field-full{
+    grid-template-columns:1fr;
+    gap:.4rem;
+  }
+  .marketing-action-field-grid input,
+  .marketing-action-field-grid select,
+  .marketing-action-field-grid textarea{font-size:16px}
+}
+.communication-overdue{background:rgba(190,30,45,.09)}
+.communication-overdue td:first-child{border-left:4px solid #b91c1c}
+
+/* Schritt 40h: Wartezimmer */
+.waiting-actions{display:flex;flex-wrap:wrap;gap:5px;min-width:420px}.waiting-actions button{padding:6px 8px}.waiting-warning{background:rgba(245,158,11,.12)}.waiting-overdue{background:rgba(239,68,68,.12)}

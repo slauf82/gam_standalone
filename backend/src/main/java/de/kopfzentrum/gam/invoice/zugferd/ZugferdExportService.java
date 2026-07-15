@@ -273,9 +273,10 @@ public class ZugferdExportService {
   private LbdRecipient invoiceRecipient(String number, Integer companyId) {
     try {
       LbdRecipient stored = repo.findInvoiceRecipient(number, companyId);
-      if (stored != null && stored.found()) return stored;
-    } catch (Exception ignored) {}
-    try { return lbdService.preview(""); } catch (Exception e) { return null; }
+      return stored != null && stored.found() ? stored : null;
+    } catch (Exception ignored) {
+      return null;
+    }
   }
   private static boolean blank(String s) { return s == null || s.isBlank(); }
 }

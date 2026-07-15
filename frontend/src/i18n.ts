@@ -172,22 +172,31 @@ export function tUi(language: UiLanguage, key: string): string {
 
 export function iconForModule(key: string): string {
   const normalized = key.toLowerCase();
-  if (normalized.includes("rechnung")) return "/icons/invoice.svg";
-  if (normalized.includes("gerät") || normalized.includes("geraet")) return "/icons/inventory.svg";
-  if (normalized.includes("lager")) return "/icons/warehouse.svg";
-  if (normalized.includes("kasse")) return "/icons/cashbook.svg";
-  if (normalized.includes("aufgabe")) return "/icons/tasks.svg";
-  if (normalized.includes("freigabe")) return "/icons/approval.svg";
-  if (normalized.includes("bestell")) return "/icons/orders.svg";
+  if (normalized.includes("dashboard")) return "/icons/dashboard.svg";
+  if (normalized.includes("einstellung") || normalized === "settings") return "/icons/settings.svg";
+  if (normalized.includes("rechnungsadministration") || normalized.includes("invoice admin")) return "/icons/invoice-admin.svg";
+  if (normalized.includes("rechnung") || normalized.includes("invoice")) return "/icons/invoice.svg";
+  if (normalized.includes("patient")) return "/icons/patients.svg";
+  if (normalized.includes("termin") || normalized.includes("appointment")) return "/icons/appointments.svg";
+  if (normalized.includes("gerät") || normalized.includes("geraet") || normalized.includes("inventory")) return "/icons/inventory.svg";
+  if (normalized.includes("lager") || normalized.includes("warehouse")) return "/icons/warehouse.svg";
+  if (normalized.includes("kasse") || normalized.includes("cashbook")) return "/icons/cashbook.svg";
+  if (normalized.includes("aufgabe") || normalized.includes("task")) return "/icons/tasks.svg";
+  if (normalized.includes("freigabe") || normalized.includes("approval")) return "/icons/approval.svg";
+  if (normalized.includes("bestell") || normalized.includes("order")) return "/icons/orders.svg";
+  if (normalized.includes("marketing")) return "/icons/marketing.svg";
+  if (normalized.includes("labor")) return "/icons/laboratory.svg";
+  if (normalized.includes("wartezimmer") || normalized.includes("waiting")) return "/icons/waiting-room.svg";
   if (normalized.includes("kommunikation") || normalized.includes("communication") || normalized.includes("gcs")) return "/icons/communication.svg";
-  if (normalized.includes("recht") || normalized.includes("permission")) return "/icons/admin.svg";
-  if (normalized.includes("personal")) return "/icons/personnel.svg";
-  if (normalized.includes("arbeitsplatz")) return "/icons/workplace.svg";
-  if (normalized.includes("preis")) return "/icons/price.svg";
-  if (normalized.includes("prüf") || normalized.includes("pruef") || normalized.includes("check") || normalized.includes("compliance")) return "/icons/admin.svg";
+  if (normalized.includes("personal") || normalized.includes("personnel")) return "/icons/personnel.svg";
+  if (normalized.includes("arbeitsplatz") || normalized.includes("workplace")) return "/icons/workplace.svg";
+  if (normalized.includes("preis") || normalized.includes("price")) return "/icons/price.svg";
+  if (normalized.includes("prüf") || normalized.includes("pruef") || normalized.includes("check") || normalized.includes("compliance")) return "/icons/compliance.svg";
   if (normalized.includes("report") || normalized.includes("bericht")) return "/icons/reports.svg";
+  if (normalized.includes("modul-admin") || normalized.includes("module admin")) return "/icons/module-admin.svg";
+  if (normalized.includes("benutzer") || normalized.includes("user") || normalized.includes("recht") || normalized.includes("permission")) return "/icons/users.svg";
   if (normalized.includes("admin")) return "/icons/admin.svg";
-  return "/icons/invoice.svg";
+  return "/icons/default.svg";
 }
 
 export function moduleKeyFromLabel(label: string): string {

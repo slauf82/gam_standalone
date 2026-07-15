@@ -28,6 +28,7 @@ public class GamModuleController {
   @GetMapping("/modules")
   public List<ModuleOverview> modules() {
     return List.of(
+      overview("settings", "Einstellungen", "gam_settings", "Zentrale GAM- und Workflow-Einstellungen"),
       overview("tasks", "Aufgaben", "aufgaben", "Aufgabenverwaltung aus dem alten GAM"),
       overview("approvals", "Freigaben", "freigabe", "Freigabe-/Entscheidungsmodul"),
       overview("personnel", "Personal", "personal", "Mitarbeiter, Konten und interne Zuordnungen"),

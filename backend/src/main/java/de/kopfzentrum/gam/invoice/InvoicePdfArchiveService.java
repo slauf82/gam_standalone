@@ -1,7 +1,6 @@
 package de.kopfzentrum.gam.invoice;
 
 import de.kopfzentrum.gam.invoice.lbd.LbdRecipient;
-import de.kopfzentrum.gam.invoice.lbd.LbdService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +15,6 @@ import java.util.Locale;
 @Service
 public class InvoicePdfArchiveService {
   private final InvoiceRepository repo;
-  private final LbdService lbdService;
 
   @Value("${app.invoice.pdf.archive-enabled:true}")
   private boolean archiveEnabled;
@@ -33,9 +31,8 @@ public class InvoicePdfArchiveService {
   @Value("${app.invoice.pdf.hotfolder-filename-mode:patient-number}")
   private String hotfolderFilenameMode;
 
-  public InvoicePdfArchiveService(InvoiceRepository repo, LbdService lbdService) {
+  public InvoicePdfArchiveService(InvoiceRepository repo) {
     this.repo = repo;
-    this.lbdService = lbdService;
   }
 
   public void archive(String invoiceNumber, byte[] pdfBytes) { archive(invoiceNumber, null, pdfBytes); }
@@ -46,7 +43,7 @@ public class InvoicePdfArchiveService {
     InvoiceDetail detail = repo.findDetail(invoiceNumber, companyId);
     InvoiceSummary summary = detail.summary();
     InvoiceCompany company = repo.findCompany(summary.companyId());
-    LbdRecipient recipient = previewRecipient();
+    LbdRecipient recipient = repo.findInvoiceRecipient(summary.number(), summary.companyId());
 
     if (archiveEnabled) {
       writeSafe(Paths.get(archiveFolder), archiveFileName(summary, company, recipient), pdfBytes);
@@ -88,13 +85,10 @@ public class InvoicePdfArchiveService {
     return clean(summary.number()) + ".pdf";
   }
 
-  private LbdRecipient previewRecipient() {
-    try { return lbdService.preview(""); } catch (Exception e) { return null; }
-  }
 
   private static String invoiceType(String number) {
     if (number == null) return "Rechnung";
-    if (number.endsWith("S")) return "Storno";
+    if (number.endsWith("S")) return "Stornorechnung";
     if (number.endsWith("G")) return "Gutschrift";
     if (number.endsWith("P")) return "Proforma";
     return "Rechnung";

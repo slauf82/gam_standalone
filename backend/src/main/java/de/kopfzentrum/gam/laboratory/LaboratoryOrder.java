@@ -1,0 +1,3 @@
+package de.kopfzentrum.gam.laboratory;
+import java.time.LocalDate;import java.time.LocalDateTime;
+public record LaboratoryOrder(Long id,String patientNumber,String patientName,String requestedBy,String externalLaboratory,String examinations,String specimenMaterial,String priority,String status,LocalDate dueDate,LocalDateTime collectedAt,String collectedBy,String specimenId,LocalDateTime sentAt,LocalDateTime resultReceivedAt,String resultSummary,String reviewedBy,LocalDateTime reviewedAt,String patientInformation,String note,String createdBy,LocalDateTime createdAt,String updatedBy,LocalDateTime updatedAt){}

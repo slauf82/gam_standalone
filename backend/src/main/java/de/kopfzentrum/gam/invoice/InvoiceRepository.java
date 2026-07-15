@@ -25,11 +25,13 @@ public class InvoiceRepository {
   private final JdbcTemplate jdbc;
   private final NamedParameterJdbcTemplate named;
   private final InvoiceCalculator calculator;
+  private final InvoiceDocumentDataService documentData;
 
-  public InvoiceRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate named, InvoiceCalculator calculator) {
+  public InvoiceRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate named, InvoiceCalculator calculator, InvoiceDocumentDataService documentData) {
     this.jdbc = jdbc;
     this.named = named;
     this.calculator = calculator;
+    this.documentData = documentData;
     ensureInvoiceCompanyLogoColumn();
   }
 
@@ -306,6 +308,11 @@ public class InvoiceRepository {
         getInt(rs,"LOGO_ID"), rs.getString("LOGO_URL")));
   }
 
+
+  public String findPaymentMethod(String number, Integer companyId) {
+    return documentData.load(number, companyId).paymentMethod();
+  }
+
   public InvoiceCompany findCompany(Integer id) {
     if (id == null) return null;
     return findCompanies().stream().filter(c -> id.equals(c.id())).findFirst().orElse(null);
@@ -375,6 +382,7 @@ public class InvoiceRepository {
     InvoiceTotals totals = calculateWithAdjustments(req.lines(), req);
     String invoiceDate = normalizeDate(req.invoiceDate());
     String treatmentDate = normalizeDate(req.treatmentDate() == null || req.treatmentDate().isBlank() ? req.invoiceDate() : req.treatmentDate());
+    documentData.validateRoleAssignment(req.addressId(), req.childAddressId(), req.firmAddressId());
 
     KeyHolder keyHolder = new GeneratedKeyHolder();
     named.update("""
@@ -422,6 +430,7 @@ public class InvoiceRepository {
     InvoiceTotals totals = calculateWithAdjustments(req.lines(), req);
     String invoiceDate = normalizeDate(req.invoiceDate());
     String treatmentDate = normalizeDate(req.treatmentDate() == null || req.treatmentDate().isBlank() ? req.invoiceDate() : req.treatmentDate());
+    documentData.validateRoleAssignment(req.addressId(), req.childAddressId(), req.firmAddressId());
 
     named.update("""
       UPDATE rechnungsdetails
@@ -473,6 +482,7 @@ public class InvoiceRepository {
     InvoiceTotals totals = calculateWithAdjustments(req.lines(), req);
     String invoiceDate = normalizeDate(req.invoiceDate());
     String treatmentDate = normalizeDate(req.treatmentDate() == null || req.treatmentDate().isBlank() ? req.invoiceDate() : req.treatmentDate());
+    documentData.validateRoleAssignment(req.addressId(), req.childAddressId(), req.firmAddressId());
     named.update("""
       UPDATE p_rechnungsdetails
       SET ADRESSID=:addressId, KINDADRESSID=:childAddressId, FIRMAADRESSID=:firmAddressId,
@@ -730,43 +740,16 @@ public class InvoiceRepository {
   }
 
 
-  /** Schritt 36g: Empfaenger aus Rechnung lesen, damit Vorschau/PDF/Portal dieselbe Adresse verwenden. */
+  /**
+   * Empfaenger zentral ueber rechnungsdetails.ADRESSID -> adressen.ID aufloesen.
+   * FADRESSE wird nur noch fuer historische Datensaetze ohne gueltige ADRESSID verwendet.
+   */
   public LbdRecipient findInvoiceRecipient(String number, Integer companyId) {
-    if (number == null || number.isBlank()) return emptyRecipient();
-    if (isProformaNumber(number)) return emptyRecipient();
-    try {
-      MapSqlParameterSource p = new MapSqlParameterSource().addValue("number", number).addValue("companyId", companyId);
-      return named.queryForObject("""
-        SELECT FADRESSE, FEMAIL
-        FROM rechnungsdetails
-        WHERE RNUMMER = :number
-          AND (:companyId IS NULL OR RGESELLSCHAFTS_ID = :companyId)
-        LIMIT 1
-        """, p, (rs, row) -> recipientFromStoredAddress(number, rs.getString("FADRESSE"), rs.getString("FEMAIL")));
-    } catch (Exception ignored) {
-      return emptyRecipient();
-    }
+    return documentData.load(number, companyId).recipient();
   }
 
-  private static LbdRecipient recipientFromStoredAddress(String file, String postal, String email) {
-    if (postal == null || postal.isBlank()) return emptyRecipient();
-    String[] lines = postal.replace("\r", "").split("\n");
-    String name = lines.length > 0 ? lines[0].trim() : "";
-    String street = lines.length > 1 ? lines[1].trim() : "";
-    String cityLine = lines.length > 2 ? lines[2].trim() : "";
-    String country = lines.length > 3 ? lines[3].trim() : "";
-    String postalCode = "";
-    String city = cityLine;
-    java.util.regex.Matcher m = java.util.regex.Pattern.compile("^(\\d{4,6})\\s+(.+)$").matcher(cityLine);
-    if (m.matches()) { postalCode = m.group(1); city = m.group(2); }
-    String[] nameParts = name.split("\\s+");
-    String firstName = nameParts.length > 1 ? nameParts[0] : "";
-    String lastName = nameParts.length > 1 ? name.substring(firstName.length()).trim() : name;
-    return new LbdRecipient(true, file, "", "", lastName, firstName, "", "", "", postalCode, city, country, street, "", null, "", java.util.Map.of("email", email == null ? "" : email));
-  }
-
-  private static LbdRecipient emptyRecipient() {
-    return new LbdRecipient(false, "", "", "", "", "", "", "", "", "", "", "", "", "", null, "", java.util.Map.of());
+  public InvoiceDocumentData findDocumentData(String number, Integer companyId) {
+    return documentData.load(number, companyId);
   }
 
   private static String recipientPostal(InvoiceRecipientRequest r) {

@@ -26,13 +26,14 @@ public class InvoiceController {
   private final LbdService lbdService;
   private final ZugferdExportService zugferdService;
   private final InvoiceTextPreviewService textPreviewService;
+  private final InvoiceDocumentDataService documentDataService;
   private final GamPermissionService permissions;
   private final InvoiceAccessTokenRepository accessTokens;
   private final QrCodeService qrCodeService;
   private final String portalBaseUrl;
 
-  public InvoiceController(InvoiceRepository repo, InvoiceOpenHtmlPdfService openHtmlPdfService, LbdService lbdService, ZugferdExportService zugferdService, InvoiceTextPreviewService textPreviewService, GamPermissionService permissions, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
-    this.repo = repo; this.openHtmlPdfService = openHtmlPdfService; this.lbdService = lbdService; this.zugferdService = zugferdService; this.textPreviewService = textPreviewService; this.permissions = permissions; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
+  public InvoiceController(InvoiceRepository repo, InvoiceOpenHtmlPdfService openHtmlPdfService, LbdService lbdService, ZugferdExportService zugferdService, InvoiceTextPreviewService textPreviewService, InvoiceDocumentDataService documentDataService, GamPermissionService permissions, InvoiceAccessTokenRepository accessTokens, QrCodeService qrCodeService, @Value("${app.invoice.portal.public-base-url:http://localhost:8080/api/invoice-portal}") String portalBaseUrl) {
+    this.repo = repo; this.openHtmlPdfService = openHtmlPdfService; this.lbdService = lbdService; this.zugferdService = zugferdService; this.textPreviewService = textPreviewService; this.documentDataService = documentDataService; this.permissions = permissions; this.accessTokens = accessTokens; this.qrCodeService = qrCodeService; this.portalBaseUrl = portalBaseUrl;
   }
 
   @GetMapping
@@ -136,9 +137,15 @@ public class InvoiceController {
     @RequestParam(defaultValue = "de") String lang,
     @RequestParam(defaultValue = "") String treatmentDate,
     @RequestParam(defaultValue = "") String lbdFile,
+    @RequestParam(defaultValue = "") String invoiceNumber,
     @AuthenticationPrincipal AuthenticatedUser user
   ) throws Exception {
     requireInvoiceRead(user, companyId);
+    if (invoiceNumber != null && !invoiceNumber.isBlank()) {
+      InvoiceDocumentData data = documentDataService.load(invoiceNumber, companyId);
+      String effectiveTreatmentDate = data.treatmentDate() == null || data.treatmentDate().isBlank() ? treatmentDate : data.treatmentDate();
+      return textPreviewService.preview(companyId, lang, effectiveTreatmentDate, data.invoiceRecipient(), data.paymentMethod());
+    }
     LbdRecipient lbd = lbdService.preview(lbdFile);
     return textPreviewService.preview(companyId, lang, treatmentDate, lbd);
   }

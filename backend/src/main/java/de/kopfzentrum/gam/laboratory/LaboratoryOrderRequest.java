@@ -1,0 +1,2 @@
+package de.kopfzentrum.gam.laboratory;
+public record LaboratoryOrderRequest(String patientNumber,String patientName,String requestedBy,String externalLaboratory,String examinations,String specimenMaterial,String priority,String status,String dueDate,String collectedAt,String collectedBy,String specimenId,String sentAt,String resultReceivedAt,String resultSummary,String reviewedBy,String reviewedAt,String patientInformation,String note){}
