@@ -59,8 +59,8 @@ public class FirstRunSetupController {
     result.put("initialized", initialized);
     result.put("accountCount", accounts);
     result.put("database", databaseName());
-    result.put("emptyDatabaseAvailable", locateSql("gam_v2_1_0_preview1_empty.sql") != null);
-    result.put("demoDatabaseAvailable", locateSql("gam_demo_v2_1_0_preview1_anonymisiert.sql") != null);
+    result.put("emptyDatabaseAvailable", locateSql("gam_v2_1_0_preview2_empty.sql") != null);
+    result.put("demoDatabaseAvailable", locateSql("gam_demo_v2_1_0_preview2_anonymisiert.sql") != null);
     result.put("error", error);
     return result;
   }
@@ -76,12 +76,13 @@ public class FirstRunSetupController {
 
     String mode = normalize(request.mode(), "empty");
     String sqlFile = "demo".equals(mode)
-        ? "gam_demo_v2_1_0_preview1_anonymisiert.sql"
-        : "gam_v2_1_0_preview1_empty.sql";
+        ? "gam_demo_v2_1_0_preview2_anonymisiert.sql"
+        : "gam_v2_1_0_preview2_empty.sql";
     Path script = locateSql(sqlFile);
     if (script == null) throw new IllegalStateException("Die Datenbankvorlage " + sqlFile + " wurde nicht gefunden.");
 
     createDatabaseIfMissing();
+    resetApplicationSchema();
     executeSqlScript(script);
     createAdministrator(request);
     applyPracticeDetails(request);
@@ -111,6 +112,21 @@ public class FirstRunSetupController {
     try (Connection connection = DriverManager.getConnection(serverUrl, datasourceUser, datasourcePassword);
          Statement statement = connection.createStatement()) {
       statement.executeUpdate("CREATE DATABASE IF NOT EXISTS `" + database.replace("`", "``") + "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    }
+  }
+
+  private void resetApplicationSchema() throws Exception {
+    try (Connection connection = DriverManager.getConnection(datasourceUrl, datasourceUser, datasourcePassword);
+         Statement statement = connection.createStatement()) {
+      statement.execute("SET FOREIGN_KEY_CHECKS=0");
+      List<String> tables = new ArrayList<>();
+      try (ResultSet rs = statement.executeQuery("SELECT table_name FROM information_schema.tables WHERE table_schema='" + sql(databaseName()) + "'")) {
+        while (rs.next()) tables.add(rs.getString(1));
+      }
+      for (String table : tables) {
+        statement.execute("DROP TABLE IF EXISTS `" + table.replace("`", "``") + "`");
+      }
+      statement.execute("SET FOREIGN_KEY_CHECKS=1");
     }
   }
 

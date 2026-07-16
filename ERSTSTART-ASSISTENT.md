@@ -1,33 +1,13 @@
-# GAM 2.1.0 Preview 1 – Erststart-Assistent
-
-Beim Start prüft GAM automatisch, ob die konfigurierte Datenbank bereits eingerichtet ist.
-
-Ist keine nutzbare GAM-Datenbank vorhanden oder enthält sie noch kein Administratorkonto, erscheint vor dem Login der Willkommensassistent.
+# GAM 2.1.0 Preview 2 – grafischer Erststart-Assistent
 
 ## Ablauf
 
-1. Oberflächensprache auswählen
-2. erstes Administratorkonto anlegen
-3. optionale Praxisangaben erfassen
-4. Startvariante auswählen:
-   - **Neue leere Praxis** – vollständige Tabellenstruktur ohne Beispieldaten
-   - **Beispieldatenbank** – anonymisierte Demo mit Patienten, Terminen, Rechnungen, Aufgaben, Kommunikation, Labor und Wartezimmer
-5. GAM erstellt beziehungsweise initialisiert die Datenbank automatisch
-6. Anmeldung mit dem neu angelegten Administratorkonto
+1. Das Backend prüft JDK 21 und MariaDB und stellt nur die technische Erreichbarkeit sicher.
+2. Es werden vor dem Assistenten keine GAM-Fachdaten und keine Demodaten importiert.
+3. Das Frontend erkennt über `/api/setup/status`, ob die Einrichtung erforderlich ist.
+4. Der Nutzer wählt zuerst seine Sprache.
+5. Administrator, Praxisdaten und Datenbankvariante werden im Frontend erfasst.
+6. `/api/setup/initialize` bereinigt eine noch nicht eingerichtete Ziel-Datenbank und importiert die gewählte Preview-2-Vorlage vollständig.
+7. Nach Abschluss wird der normale Login in der gewählten Sprache angezeigt.
 
-## Sicherheit
-
-- Der Assistent ist nur erreichbar, solange GAM noch nicht eingerichtet ist.
-- Sobald eine initialisierte Datenbank mit mindestens einem Konto erkannt wird, werden die Einrichtungsendpunkte gesperrt.
-- Das Administratorpasswort muss mindestens acht Zeichen enthalten und wird als SHA-256-Hash in der kompatiblen `accounts`-Struktur gespeichert.
-- Bestehende Datenbanken werden nicht überschrieben.
-
-## Datenbankzugang
-
-GAM verwendet weiterhin die konfigurierten Werte:
-
-- `GAM_DB_URL`
-- `GAM_DB_USER`
-- `GAM_DB_PASSWORD`
-
-Der konfigurierte MariaDB-Benutzer benötigt beim Erststart die Berechtigung, die angegebene Datenbank anzulegen und Tabellen zu erstellen.
+Eine bereits eingerichtete Datenbank wird durch den Assistenten nicht verändert.

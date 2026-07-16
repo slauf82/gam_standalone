@@ -10,7 +10,7 @@ if [ -f .env ]; then
 fi
 export SPRING_PROFILES_ACTIVE=local
 
-# Preview 1 Update: Java 21 automatisch pruefen und bei Bedarf lokal einrichten.
+# Preview 2: Java 21 automatisch pruefen und bei Bedarf lokal einrichten.
 if ! ./scripts/ensure-java.sh; then
   echo
   echo "[FEHLER] Java 21 konnte nicht eingerichtet werden."

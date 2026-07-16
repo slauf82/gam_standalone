@@ -6,14 +6,14 @@
   - vorhandene MariaDB/MySQL unter localhost:3306 respektieren
   - keine vorhandenen Datenbanken ueberschreiben
   - bei fehlender DB optional portable MariaDB unter tools\mariadb vorbereiten
-  - Demo-Datenbank nur importieren, wenn die Ziel-DB fehlt oder leer ist
+  - nur den Datenbankserver und eine leere Ziel-Datenbank bereitstellen
+  - Schema- oder Demodatenimport vollständig dem grafischen Frontend-Assistenten überlassen
 #>
 param(
   [string]$DatabaseName = $(if ($env:GAM_DB_NAME) { $env:GAM_DB_NAME } else { "kopfzentruminventardb" }),
   [string]$DbUser = $(if ($env:GAM_DB_USER) { $env:GAM_DB_USER } else { "root" }),
   [string]$DbPassword = $(if ($env:GAM_DB_PASSWORD) { $env:GAM_DB_PASSWORD } else { "" }),
-  [int]$Port = $(if ($env:GAM_DB_PORT) { [int]$env:GAM_DB_PORT } else { 3306 }),
-  [string]$SqlFile = $(if ($env:GAM_DEMO_SQL) { $env:GAM_DEMO_SQL } else { "sql\beispiel_v1_7_0_anonymisiert.sql" })
+  [int]$Port = $(if ($env:GAM_DB_PORT) { [int]$env:GAM_DB_PORT } else { 3306 })
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,7 +22,6 @@ $ToolsDir = Join-Path $Root "tools"
 $MariaRoot = Join-Path $ToolsDir "mariadb"
 $PortableBin = Join-Path $MariaRoot "bin"
 $PortableData = Join-Path $MariaRoot "data"
-$SqlPath = Join-Path $Root $SqlFile
 $LogDir = Join-Path $Root "logs"
 $LogFile = Join-Path $LogDir "mariadb-portable.log"
 
@@ -90,21 +89,6 @@ function Invoke-DbClient {
   $p.WaitForExit()
   if ($p.ExitCode -ne 0) { throw "DB-Client Fehler ($($p.ExitCode)): $err" }
   return $out.Trim()
-}
-
-function Import-SqlFile {
-  param([string]$Client, [string]$FilePath)
-  if (!(Test-Path $FilePath)) {
-    Write-Warn "Demo-SQL nicht gefunden: $FilePath"
-    return $false
-  }
-  $args = @("-h", "127.0.0.1", "-P", "$Port", "-u", $DbUser, "--default-character-set=utf8mb4", $DatabaseName)
-  if ($DbPassword -ne "") { $args = @("-h", "127.0.0.1", "-P", "$Port", "-u", $DbUser, "-p$DbPassword", "--default-character-set=utf8mb4", $DatabaseName) }
-  $cmdLine = "`"$Client`" " + ($args | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' '
-  Write-Info "Importiere Demo-SQL nach '$DatabaseName'..."
-  $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c $cmdLine < `"$FilePath`"" -Wait -PassThru -NoNewWindow
-  if ($p.ExitCode -ne 0) { throw "SQL-Import fehlgeschlagen (ExitCode $($p.ExitCode))." }
-  return $true
 }
 
 function Download-PortableMariaDB {
@@ -178,10 +162,8 @@ $serverAvailable = Test-PortOpen -PortNumber $Port
 if (!$serverAvailable) {
   Write-Warn "Keine MariaDB/MySQL-Instanz unter localhost:$Port erkannt."
   $auto = $env:GAM_DB_AUTO_SETUP
-  if (!$auto) {
-    $answer = Read-Host "Portable MariaDB fuer GAM lokal unter tools\mariadb einrichten? [J/N]"
-    if ($answer -match '^[JjYy]') { $auto = "true" } else { $auto = "false" }
-  }
+  if (!$auto) { $auto = "true" }
+  Write-Info "Portable MariaDB wird fuer den gefuehrten Erststart automatisch vorbereitet."
   if ($auto -eq "true" -or $auto -eq "1" -or $auto -eq "yes") {
     Install-PortableMariaDB | Out-Null
     $serverAvailable = Test-PortOpen -PortNumber $Port
@@ -195,21 +177,20 @@ if (!$serverAvailable) {
 
 $client = Find-DbClient
 if (!$client) {
-  Write-Info "MariaDB/MySQL ist erreichbar. Kein lokaler DB-Client gefunden; optionaler Demo-Import wird uebersprungen."
+  Write-Info "MariaDB/MySQL ist erreichbar. Kein lokaler DB-Client gefunden; die Ziel-Datenbank kann vor dem Backend-Start nicht automatisch angelegt werden."
   exit 0
 }
 
 try {
-  Write-Info "Pruefe Ziel-Datenbank '$DatabaseName'..."
+  Write-Info "Bereite leere Ziel-Datenbank '$DatabaseName' fuer den grafischen Erststart-Assistenten vor..."
   Invoke-DbClient -Client $client -Sql "CREATE DATABASE IF NOT EXISTS \`$DatabaseName\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" | Out-Null
   $count = Invoke-DbClient -Client $client -Sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DatabaseName';"
   if ([int]$count -eq 0) {
-    Import-SqlFile -Client $client -FilePath $SqlPath | Out-Null
-    Write-Info "Demo-Datenbank wurde importiert."
+    Write-Info "Ziel-Datenbank ist leer. Die vollstaendige Einrichtung erfolgt im Frontend-Assistenten."
   } else {
-    Write-Info "Datenbank '$DatabaseName' enthaelt bereits Tabellen ($count). Kein Import, kein Ueberschreiben."
+    Write-Info "Datenbank '$DatabaseName' ist bereits eingerichtet ($count Tabellen). Es wird nichts veraendert."
   }
 } catch {
-  Write-Warn "Demo-Import konnte nicht abgeschlossen werden: $($_.Exception.Message)"
-  Write-Warn "Backend-Start wird nicht blockiert. Bitte DB-Zugang in .env pruefen."
+  Write-Warn "Die leere Ziel-Datenbank konnte nicht vorbereitet werden: $($_.Exception.Message)"
+  Write-Warn "Backend-Start wird versucht. Bitte DB-Zugang in .env pruefen."
 }

@@ -9,7 +9,7 @@ if exist .env (
 )
 set SPRING_PROFILES_ACTIVE=local
 
-REM Preview 1 Update: Java 21 automatisch pruefen und bei Bedarf lokal einrichten.
+REM Preview 2: Java 21 automatisch pruefen und bei Bedarf lokal einrichten.
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ensure-java.ps1"
 if errorlevel 1 (
   echo.

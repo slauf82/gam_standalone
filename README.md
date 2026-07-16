@@ -1,7 +1,7 @@
 # GAM Standalone
 
 
-## Schnellstart der Preview 1
+## Schnellstart der Preview 2
 
 1. Starten Sie `start-backend.bat` (Windows) oder `start-backend.sh` (Linux/macOS).
 2. GAM prüft JDK 21 automatisch und richtet Eclipse Temurin bei Bedarf lokal ein.
