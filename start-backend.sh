@@ -9,6 +9,18 @@ if [ -f .env ]; then
   set +a
 fi
 export SPRING_PROFILES_ACTIVE=local
+
+# Preview 1 Update: Java 21 automatisch pruefen und bei Bedarf lokal einrichten.
+if ! ./scripts/ensure-java.sh; then
+  echo
+  echo "[FEHLER] Java 21 konnte nicht eingerichtet werden."
+  echo "Fuer die erstmalige Einrichtung ist ein Internetzugriff erforderlich."
+  exit 1
+fi
+if [ -x "$PWD/runtime/java/bin/java" ]; then
+  export JAVA_HOME="$PWD/runtime/java"
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
 ./mvnw clean package
 if [ $? -ne 0 ]; then
   echo

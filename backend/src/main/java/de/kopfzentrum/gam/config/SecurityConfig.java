@@ -35,6 +35,8 @@ public class SecurityConfig {
           "/api/auth/totp/confirm",
           "/api/system/status",
           "/api/system/startup-check",
+          "/api/setup/status",
+          "/api/setup/initialize",
           "/api/communication/login-news",
           "/api/public/module-settings",
           "/api/ui-translations",

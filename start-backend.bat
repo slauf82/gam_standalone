@@ -9,6 +9,20 @@ if exist .env (
 )
 set SPRING_PROFILES_ACTIVE=local
 
+REM Preview 1 Update: Java 21 automatisch pruefen und bei Bedarf lokal einrichten.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ensure-java.ps1"
+if errorlevel 1 (
+  echo.
+  echo [FEHLER] Java 21 konnte nicht eingerichtet werden.
+  echo Fuer die erstmalige Einrichtung ist ein Internetzugriff erforderlich.
+  pause
+  exit /b 1
+)
+if exist "%~dp0runtime\java\bin\java.exe" (
+  set "JAVA_HOME=%~dp0runtime\java"
+  set "PATH=%JAVA_HOME%\bin;%PATH%"
+)
+
 REM Schritt 36h: MariaDB/MySQL sicher erkennen und Demo-Datenbank optional vorbereiten.
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ensure-gam-database.ps1"
 if errorlevel 1 (

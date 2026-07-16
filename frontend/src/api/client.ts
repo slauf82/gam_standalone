@@ -27,7 +27,8 @@ export function setToken(value: string) { localStorage.setItem("gam_token", valu
 export function logout() { localStorage.removeItem("gam_token"); localStorage.removeItem("gam_user"); }
 
 function isPublicAuthPath(path: string) {
-  return path.startsWith("/auth/login")
+  return path.startsWith("/setup/")
+    || path.startsWith("/auth/login")
     || path.startsWith("/auth/totp/")
     || path.startsWith("/auth/passkey/");
 }
@@ -369,3 +370,14 @@ export const loadWaitingRoomVisits=(q='',status='all')=>request<WaitingRoomVisit
 export const createWaitingRoomVisit=(payload:WaitingRoomVisitRequest)=>request<WaitingRoomVisit>('/waiting-room',{method:'POST',body:JSON.stringify(payload)});
 export const transitionWaitingRoomVisit=(id:number,payload:{status:string;room?:string;practitioner?:string;nextStep?:string;note?:string})=>request<WaitingRoomVisit>(`/waiting-room/${id}/transition`,{method:'POST',body:JSON.stringify(payload)});
 export const deleteWaitingRoomVisit=(id:number)=>request<void>(`/waiting-room/${id}`,{method:'DELETE'});
+
+export type FirstRunStatus = {
+  required:boolean; databaseExists:boolean; initialized:boolean; accountCount:number; database:string;
+  emptyDatabaseAvailable:boolean; demoDatabaseAvailable:boolean; error?:string;
+};
+export type FirstRunSetupRequest = {
+  mode:'empty'|'demo'; language:string; adminUsername:string; adminPassword:string;
+  adminName?:string; adminEmail?:string; practiceName?:string; country?:string; timezone?:string;
+};
+export const loadFirstRunStatus = () => request<FirstRunStatus>("/setup/status");
+export const initializeFirstRun = (payload:FirstRunSetupRequest) => request<Record<string,unknown>>("/setup/initialize", {method:"POST", body:JSON.stringify(payload)});

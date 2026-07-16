@@ -1,5 +1,15 @@
 # GAM Standalone
 
+
+## Schnellstart der Preview 1
+
+1. Starten Sie `start-backend.bat` (Windows) oder `start-backend.sh` (Linux/macOS).
+2. GAM prüft JDK 21 automatisch und richtet Eclipse Temurin bei Bedarf lokal ein.
+3. Folgen Sie dem Erststart-Assistenten und wählen Sie eine leere Praxis oder die anonymisierte Beispieldatenbank.
+4. Starten Sie danach `start-frontend.bat` beziehungsweise `start-frontend.sh`.
+
+> Für Downloads während der erstmaligen Einrichtung wird Internetzugriff benötigt. Der anschließende Normalbetrieb ist offline möglich.
+
 ## Schritt 36a – Piper Verfügbarkeits- und UI-Fix
 
 Diese Version korrigiert die Piper-Erkennung: Das Backend sucht `piper.exe` und `voices` nun über mehrere plausible Pfade und meldet den tatsächlich gefundenen Pfad in `/api/tts/status`. Die Oberfläche graut Piper nicht mehr hart aus, wenn eine unterstützte Sprache noch per Auto-Download/Fallback verarbeitet werden kann.
