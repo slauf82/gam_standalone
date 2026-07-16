@@ -39,3 +39,10 @@ Im Verzeichnis `database` sind weiterhin beide Vorlagen enthalten:
 - `gam_demo_v2_1_0_preview2_anonymisiert.sql`
 
 Der Nutzer muss diese Dateien nicht manuell importieren. Der Einrichtungsassistent übernimmt die Auswahl und Installation.
+
+## Aktualisierung: verbesserte JDK-Erkennung
+
+- Bereits installierte JDK-21-Versionen werden jetzt zuverlässig über `JAVA_HOME`, `java`, `javac`, Registry und typische Installationsordner erkannt.
+- Ein globaler `javac`-Eintrag im `PATH` ist nicht mehr zwingend erforderlich.
+- Verschiedene JDK-Distributionen werden unterstützt; entscheidend ist Java/Javac ab Version 21.
+- Ein lokales Temurin-JDK wird nur noch heruntergeladen, wenn kein geeignetes vorhandenes JDK gefunden wurde.

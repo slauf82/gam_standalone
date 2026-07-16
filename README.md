@@ -494,3 +494,8 @@ Enthalten:
 Für die finale Freigabe wird eine Prüfung mit PAC 2024 oder Adobe Acrobat Preflight empfohlen. Weitere Hinweise siehe:
 
 `tools/pdfua/README_PDF_UA_ZUGFERD.md`
+
+## Preview 2 – Update 2
+
+- PowerShell-JDK-Erkennung korrigiert (`$HOME`-Namenskonflikt behoben).
+- Vorhandene JDK-21-Installationen werden wieder korrekt erkannt.

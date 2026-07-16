@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 if not exist logs mkdir logs
 if exist .env (
@@ -13,12 +13,31 @@ REM Preview 2: Java 21 automatisch pruefen und bei Bedarf lokal einrichten.
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ensure-java.ps1"
 if errorlevel 1 (
   echo.
-  echo [FEHLER] Java 21 konnte nicht eingerichtet werden.
-  echo Fuer die erstmalige Einrichtung ist ein Internetzugriff erforderlich.
-  pause
-  exit /b 1
+  echo [WARNUNG] Die automatische Java-Erkennung war nicht erfolgreich.
+  echo [GAM] Vorhandene Java-/Javac-Installation wird direkt geprueft...
+  java -version >nul 2>&1
+  if errorlevel 1 (
+    echo [FEHLER] Java ist weder automatisch erkannt noch ueber PATH erreichbar.
+    echo Fuer einen automatischen Download ist Internetzugriff erforderlich.
+    pause
+    exit /b 1
+  )
+  javac -version >nul 2>&1
+  if errorlevel 1 (
+    echo [FEHLER] Java ist vorhanden, aber kein JDK mit javac erreichbar.
+    echo Bitte JAVA_HOME auf Ihr JDK 21 setzen oder JDK 21 in PATH aufnehmen.
+    pause
+    exit /b 1
+  )
+  echo [GAM] Vorhandenes JDK aus PATH wird verwendet.
 )
-if exist "%~dp0runtime\java\bin\java.exe" (
+if exist "%~dp0runtime\java-home.txt" (
+  set /p "JAVA_HOME="<"%~dp0runtime\java-home.txt"
+  if exist "!JAVA_HOME!\bin\java.exe" if exist "!JAVA_HOME!\bin\javac.exe" (
+    set "PATH=!JAVA_HOME!\bin;!PATH!"
+    echo [GAM] Verwendetes JDK: !JAVA_HOME!
+  )
+) else if exist "%~dp0runtime\java\bin\java.exe" (
   set "JAVA_HOME=%~dp0runtime\java"
   set "PATH=%JAVA_HOME%\bin;%PATH%"
 )

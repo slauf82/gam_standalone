@@ -17,7 +17,13 @@ if ! ./scripts/ensure-java.sh; then
   echo "Fuer die erstmalige Einrichtung ist ein Internetzugriff erforderlich."
   exit 1
 fi
-if [ -x "$PWD/runtime/java/bin/java" ]; then
+if [ -f "$PWD/runtime/java-home.txt" ]; then
+  export JAVA_HOME="$(head -n 1 "$PWD/runtime/java-home.txt" | tr -d '\r\n')"
+  if [ -x "$JAVA_HOME/bin/java" ] && [ -x "$JAVA_HOME/bin/javac" ]; then
+    export PATH="$JAVA_HOME/bin:$PATH"
+    echo "[GAM] Verwendetes JDK: $JAVA_HOME"
+  fi
+elif [ -x "$PWD/runtime/java/bin/java" ]; then
   export JAVA_HOME="$PWD/runtime/java"
   export PATH="$JAVA_HOME/bin:$PATH"
 fi
