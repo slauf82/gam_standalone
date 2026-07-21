@@ -1,0 +1,6 @@
+Kompatibler Login
+Anwendung wählen
+2FA registrieren
+2FA-Login
+Passkey registrieren
+Passkey-Login

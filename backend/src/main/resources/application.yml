@@ -4,6 +4,11 @@ spring:
       - org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration
   application:
     name: gam-standalone-backend
+  mvc:
+    async:
+      # Discovery kann durch aktiven Subnetzscan und SSDP laenger als den
+      # bisherigen Servlet-Standard von rund 30 Sekunden dauern.
+      request-timeout: ${GAM_ASYNC_REQUEST_TIMEOUT_MS:180000}
   datasource:
     url: ${GAM_DB_URL:jdbc:mariadb://localhost:3306/kopfzentruminventardb}
     username: ${GAM_DB_USER:root}
@@ -11,6 +16,8 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
 server:
   port: ${GAM_BACKEND_PORT:8080}
+  compression:
+    enabled: false
 management:
   endpoints:
     web:

@@ -1,0 +1,12 @@
+GAM 2.1.0 Preview 1
+Basis: Schritt 40h3
+Ergänzung: integrierter mehrsprachiger Erststart- und Datenbankassistent
+
+Enthalten:
+- vollständiger Stand 40h3
+- Auswahl zwischen leerer Praxis und anonymisierter Beispieldatenbank
+- automatische Datenbankanlage und SQL-Initialisierung
+- Einrichtung des ersten Superadministrators
+- Erfassung optionaler Praxisdaten
+- automatische Anzeige nur bei fehlender/uninitialisierter Datenbank
+- beide SQL-Datenbankvorlagen im Verzeichnis database

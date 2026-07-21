@@ -381,3 +381,119 @@ export type FirstRunSetupRequest = {
 };
 export const loadFirstRunStatus = () => request<FirstRunStatus>("/setup/status");
 export const initializeFirstRun = (payload:FirstRunSetupRequest) => request<Record<string,unknown>>("/setup/initialize", {method:"POST", body:JSON.stringify(payload)});
+
+// Schritt 40k: Gerätemanager und Discovery-Grundlage
+export type DiscoveredDevice = {
+  id:string;
+  name:string;
+  type:string;
+  address?:string;
+  hardwareAddress?:string;
+  protocol:string;
+  status:string;
+  manufacturer?:string;
+  serialNumber?:string;
+  lastSeen?:string;
+  alreadyRegistered:boolean;
+};
+export type DeviceDiscoveryCapabilities = Record<string, boolean|string>;
+export const loadDeviceDiscoveryCapabilities = () => request<DeviceDiscoveryCapabilities>('/inventory/discovery/capabilities');
+export type BuiltinDiscoverySources=Record<string,boolean>;
+export const loadBuiltinDiscoverySources=()=>request<BuiltinDiscoverySources>('/inventory/discovery/builtin-sources');
+export const saveBuiltinDiscoverySources=(payload:BuiltinDiscoverySources)=>request<BuiltinDiscoverySources>('/inventory/discovery/builtin-sources',{method:'PUT',body:JSON.stringify(payload)});
+export type DeviceIdentityMergeSettings={autoMergeThreshold:number;possibleDuplicateThreshold:number;macWeight:number;hardwareSerialWeight:number;snmpSerialWeight:number;deviceIdWeight:number;hostnameWeight:number;ipWeight:number;manufacturerWeight:number;typeWeight:number;twoSourceBonus:number;threeSourceBonus:number;automaticMergeEnabled:boolean;hardConflictsBlockMerge:boolean;ipNeverMergesAlone:boolean};
+export const loadDeviceIdentityMergeSettings=()=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings');
+export const saveDeviceIdentityMergeSettings=(payload:DeviceIdentityMergeSettings)=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings',{method:'PUT',body:JSON.stringify(payload)});
+export const resetDeviceIdentityMergeSettings=()=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings/reset',{method:'POST'});
+export const scanForDevices = () => request<DiscoveredDevice[]>('/inventory/discovery/scan', {method:'POST'});
+export const registerDiscoveredDevice = (device:Pick<DiscoveredDevice,'address'|'name'|'hardwareAddress'|'serialNumber'>) => request<Record<string,unknown>>('/inventory/discovery/register',{method:'POST',body:JSON.stringify(device)});
+export const deregisterDiscoveredDevice = (device:Pick<DiscoveredDevice,'address'|'name'|'hardwareAddress'|'serialNumber'>) => request<Record<string,unknown>>('/inventory/discovery/deregister',{method:'POST',body:JSON.stringify(device)});
+export const registerAllDiscoveredDevices=(devices:DiscoveredDevice[])=>request<{registered:number;requested:number}>('/inventory/discovery/register-all',{method:'POST',body:JSON.stringify(devices)});
+export type RegisteredDiscoveryDevice={identityKey:string;name?:string;deviceType?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;protocol?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;registeredAt?:string;detectionCount?:number;lastScanHits?:number;manualDeviceType?:boolean};
+export const loadRegisteredDiscoveryDevices=()=>request<RegisteredDiscoveryDevice[]>('/inventory/discovery/registered');
+export const updateRegisteredDeviceType=(identityKey:string,deviceType:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/registered/device-type',{method:'PUT',body:JSON.stringify({identityKey,deviceType})});
+export const updateRegisteredDeviceName=(identityKey:string,name:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/registered/device-name',{method:'PUT',body:JSON.stringify({identityKey,name})});
+export const moveRegisteredDeviceToInventory=(identityKey:string)=>request<InventoryDeviceDetail>(`/inventory/discovery/registered/${encodeURIComponent(identityKey)}/inventory`,{method:'POST'});
+export const revokeRegisteredDevice=(identityKey:string)=>request<Record<string,unknown>>('/inventory/discovery/registered/revoke',{method:'POST',body:JSON.stringify({identityKey})});
+export const revokeAllRegisteredDevices=()=>request<Record<string,unknown>>('/inventory/discovery/registered',{method:'DELETE'});
+export const emptyEntireInventoryToRegistered=()=>request<Record<string,unknown>>('/inventory/devices/empty-to-registered',{method:'POST'});
+export const removeInventoryDeviceToRegistered=(id:number)=>request<Record<string,unknown>>(`/inventory/devices/new/${id}/remove-from-inventory`,{method:'POST'});
+
+export type DeviceDiscoveryDiagnostic = {sessionId:string;timestamp:string;phase:string;status:'STARTED'|'RUNNING'|'COMPLETED'|'SKIPPED'|'FAILED';message:string;deviceCount:number};
+export type DeviceDiscoveryStreamEvent = {type:'cancelled';message:string;timestamp?:string}|{type:'trace';event:string;workerNo?:number;sessionNo?:number;sessionId?:string;timestamp?:string}|{type:'device';device:DiscoveredDevice}|{type:'progress';progress:number;phase:string}|{type:'diagnostic';diagnostic:DeviceDiscoveryDiagnostic}|{type:'registered-count';count:number}|{type:'complete';timestamp?:string}|{type:'stream-closing';timestamp?:string}|{type:'error';message:string;timestamp?:string};
+export async function scanForDevicesStreaming(onEvent:(event:DeviceDiscoveryStreamEvent)=>void,onSession?:(sessionId:string)=>void):Promise<void>{
+  // 40k30n: Der eigentliche Discovery-Service liefert weiterhin sofortige
+  // Callback-Ereignisse. Die Übertragung zum Browser erfolgt nun bewusst per
+  // Long-Polling statt als dauerhaft offener SSE-Body. Damit kann kein
+  // Servlet-/Proxy-/Security-Puffer die Anzeige bis zum Scanende zurückhalten.
+  const clientTrace=`browser-${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
+  const trace=(step:string,details:Record<string,unknown>={})=>console.warn('[DISCOVERY-TRACE]',{clientTrace,step,time:new Date().toISOString(),...details});
+  const authHeaders=token()?{Authorization:`Bearer ${token()}`}:{ };
+  trace('BUTTON_PIPELINE_ENTER');
+  trace('SESSION_POST_BEGIN');
+  const startResponse=await fetch(`${API}/inventory/discovery/sessions`,{
+    method:'POST',headers:{Accept:'application/json','X-GAM-Discovery-Trace':clientTrace,...authHeaders},cache:'no-store'
+  });
+  if(!startResponse.ok){throw new Error((await startResponse.text())||`HTTP ${startResponse.status}`);}
+  const session=await startResponse.json() as {sessionId?:string;sessionNo?:number};
+  trace('SESSION_POST_COMPLETE',{httpStatus:startResponse.status,sessionId:session.sessionId,sessionNo:session.sessionNo});
+  if(!session.sessionId)throw new Error('Discovery-Session konnte nicht angelegt werden.');
+  onSession?.(session.sessionId);
+
+  let after=0;
+  let finished=false;
+  while(!finished){
+    trace('LONG_POLL_BEGIN',{sessionId:session.sessionId,sessionNo:session.sessionNo,after});
+    const response=await fetch(`${API}/inventory/discovery/sessions/${encodeURIComponent(session.sessionId)}/events-poll?after=${after}`,{
+      method:'GET',headers:{Accept:'application/json','X-GAM-Discovery-Trace':clientTrace,...authHeaders},cache:'no-store'
+    });
+    if(!response.ok){throw new Error((await response.text())||`HTTP ${response.status}`);}
+    const packet=await response.json() as {events?:DeviceDiscoveryStreamEvent[];finished?:boolean;lastEventId?:number};
+    const events=Array.isArray(packet.events)?packet.events:[];
+    for(const event of events){
+      const eventId=Number((event as DeviceDiscoveryStreamEvent&{eventId?:number}).eventId||0);
+      if(eventId>after)after=eventId;
+      trace('LIVE_EVENT',{eventType:event.type,eventId,sessionId:session.sessionId,sessionNo:session.sessionNo});
+      onEvent(event);
+      await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
+    }
+    if(typeof packet.lastEventId==='number'&&packet.lastEventId>after)after=packet.lastEventId;
+    finished=packet.finished===true;
+    if(!finished&&events.length===0){await new Promise<void>(resolve=>setTimeout(resolve,25));}
+  }
+  trace('LIVE_CHANNEL_FINISHED',{sessionId:session.sessionId,sessionNo:session.sessionNo,lastEventId:after});
+}
+
+export const cancelDeviceDiscoverySession=(sessionId:string)=>request<Record<string,unknown>>(`/inventory/discovery/sessions/${encodeURIComponent(sessionId)}/cancel`,{method:'POST'});
+
+
+// Schritt 40k19: mehrere FRITZ!Box-Identitätsquellen
+export type FritzBoxDiscoverySource={id:number;name:string;enabled:boolean;host:string;port:number;username:string;passwordConfigured:boolean;location:string};
+export type FritzBoxDiscoverySourceUpdate={name:string;enabled:boolean;host:string;port:number;username:string;password?:string;clearPassword?:boolean;location:string};
+export type FritzBoxDiscoveryTest={sourceId:number;sourceName:string;success:boolean;status:string;message:string;host:string;modelName:string;softwareVersion:string;deviceCount:number;activeDeviceCount:number;devicePreview:string[]};
+export const loadFritzBoxDiscoverySources=()=>request<FritzBoxDiscoverySource[]>('/inventory/discovery/fritzbox/sources');
+export const createFritzBoxDiscoverySource=(payload:FritzBoxDiscoverySourceUpdate)=>request<FritzBoxDiscoverySource>('/inventory/discovery/fritzbox/sources',{method:'POST',body:JSON.stringify(payload)});
+export const saveFritzBoxDiscoverySource=(id:number,payload:FritzBoxDiscoverySourceUpdate)=>request<FritzBoxDiscoverySource>(`/inventory/discovery/fritzbox/sources/${id}`,{method:'PUT',body:JSON.stringify(payload)});
+export const deleteFritzBoxDiscoverySource=(id:number)=>request<void>(`/inventory/discovery/fritzbox/sources/${id}`,{method:'DELETE'});
+export const testFritzBoxDiscoverySource=(id:number)=>request<FritzBoxDiscoveryTest>(`/inventory/discovery/fritzbox/sources/${id}/test`,{method:'POST'});
+// Schritt 40k20: mehrere Home-Assistant-Identitätsquellen
+export type HomeAssistantDiscoverySource={id:number;name:string;enabled:boolean;baseUrl:string;accessTokenConfigured:boolean;location:string};
+export type HomeAssistantDiscoverySourceUpdate={name:string;enabled:boolean;baseUrl:string;accessToken?:string;clearAccessToken?:boolean;location:string};
+export type HomeAssistantDiscoveryTest={sourceId:number;sourceName:string;success:boolean;status:string;message:string;baseUrl:string;version:string;deviceCount:number;devicePreview:string[]};
+export const loadHomeAssistantDiscoverySources=()=>request<HomeAssistantDiscoverySource[]>('/inventory/discovery/homeassistant/sources');
+export const createHomeAssistantDiscoverySource=(payload:HomeAssistantDiscoverySourceUpdate)=>request<HomeAssistantDiscoverySource>('/inventory/discovery/homeassistant/sources',{method:'POST',body:JSON.stringify(payload)});
+export const saveHomeAssistantDiscoverySource=(id:number,payload:HomeAssistantDiscoverySourceUpdate)=>request<HomeAssistantDiscoverySource>(`/inventory/discovery/homeassistant/sources/${id}`,{method:'PUT',body:JSON.stringify(payload)});
+export const deleteHomeAssistantDiscoverySource=(id:number)=>request<void>(`/inventory/discovery/homeassistant/sources/${id}`,{method:'DELETE'});
+export const testHomeAssistantDiscoverySource=(id:number)=>request<HomeAssistantDiscoveryTest>(`/inventory/discovery/homeassistant/sources/${id}/test`,{method:'POST'});
+// Schritt 40k21: Smart Life / Tuya Cloud als Identitätsquelle
+export type TuyaDiscoverySource={id:number;name:string;enabled:boolean;connectionMode:string;homeAssistantSourceId:number|null;appType:string;region:string;clientId:string;clientSecretConfigured:boolean;userUid:string;accountUsername:string;accountPasswordConfigured:boolean;countryCode:string;appSchema:string;location:string};
+export type TuyaDiscoverySourceUpdate={name:string;enabled:boolean;connectionMode:string;homeAssistantSourceId:number|null;appType:string;region:string;clientId:string;clientSecret?:string;clearClientSecret?:boolean;userUid:string;accountUsername:string;accountPassword?:string;clearAccountPassword?:boolean;countryCode:string;appSchema:string;location:string};
+export type TuyaDiscoveryTest={sourceId:number;sourceName:string;success:boolean;status:string;message:string;region:string;endpoint:string;userUid:string;apiMethod:string;authenticated:boolean;deviceCount:number;onlineDeviceCount:number;devicePreview:string[];diagnostics:string[]};
+export const loadTuyaDiscoverySources=()=>request<TuyaDiscoverySource[]>('/inventory/discovery/tuya/sources');
+export const createTuyaDiscoverySource=(payload:TuyaDiscoverySourceUpdate)=>request<TuyaDiscoverySource>('/inventory/discovery/tuya/sources',{method:'POST',body:JSON.stringify(payload)});
+export const saveTuyaDiscoverySource=(id:number,payload:TuyaDiscoverySourceUpdate)=>request<TuyaDiscoverySource>(`/inventory/discovery/tuya/sources/${id}`,{method:'PUT',body:JSON.stringify(payload)});
+export type TuyaDeleteResult={id:number;deleted:boolean;message:string};
+export type TuyaDeleteAllResult={deletedCount:number;message:string};
+export const deleteTuyaDiscoverySource=(id:number)=>request<TuyaDeleteResult>(`/inventory/discovery/tuya/sources/${id}`,{method:'DELETE'});
+export const deleteAllTuyaDiscoverySources=()=>request<TuyaDeleteAllResult>('/inventory/discovery/tuya/sources',{method:'DELETE'});
+export const testTuyaDiscoverySource=(id:number)=>request<TuyaDiscoveryTest>(`/inventory/discovery/tuya/sources/${id}/test`,{method:'POST'});

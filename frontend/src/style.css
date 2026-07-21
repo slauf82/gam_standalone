@@ -1221,3 +1221,289 @@ body.gam-modal-open {
 
 /* GAM 2.1.0 Preview 2: sichtbarer Abschluss der technischen Vorbereitung. */
 .first-run-system-ready{margin:14px 0 18px;padding:10px 14px;border-radius:10px;background:#edf8f0;border:1px solid #b8dfc2;font-weight:700;color:#245e32}
+
+.scan-center-panel{border-left:4px solid #5b7cfa}.scan-center-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}.scan-center-head h3{display:flex;align-items:center;gap:.5rem;margin:.2rem 0}.scan-center-panel code{font-size:1rem}
+.warehouse-workflow-panel{margin:1rem 0;padding:1rem;border:1px solid #d8deea;border-radius:12px;background:rgba(91,124,250,.05)}
+.warehouse-workflow-panel .scan-center-panel{margin-top:1rem;background:var(--card-bg,#fff)}
+.warehouse-scan-history{margin-top:1rem;max-height:220px}
+
+/* Schritt 40k: Gerätemanager */
+.device-manager-card details{margin-top:.8rem;border:1px solid var(--border,#d7dde5);border-radius:.65rem;padding:.55rem .7rem;background:rgba(255,255,255,.02)}
+.device-manager-card summary{cursor:pointer;padding:.25rem 0}
+.device-manager-card td button+button{margin-left:.4rem}
+
+
+/* Schritt 40k6: dauerhaft sichtbarer Discovery-Livestatus */
+.device-manager-card .device-search-running{font-weight:800;min-width:205px}
+.device-discovery-live-card{position:sticky;top:4.6rem;z-index:8;margin:1rem 0;padding:1rem 1.1rem;border:2px solid var(--accent,#5b7cfa);border-radius:14px;background:var(--card-bg,#fff);box-shadow:0 8px 24px rgba(20,38,80,.16)}
+.device-discovery-title{display:flex;align-items:center;justify-content:space-between;gap:1rem;font-size:1.05rem}
+.device-discovery-title span{display:flex;align-items:center;gap:.55rem}
+.device-discovery-title strong{font-size:1.2rem}
+.device-discovery-live-card progress{width:100%;height:18px;margin:.8rem 0}
+.device-discovery-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:.2rem 0 .8rem}
+.device-discovery-counts span{display:flex;flex-direction:column;align-items:center;padding:.65rem;border:1px solid var(--border,#d7dde5);border-radius:10px;background:rgba(91,124,250,.06)}
+.device-discovery-counts b{font-size:1.45rem;line-height:1.1}
+.device-discovery-counts small{margin-top:.2rem;font-weight:700}
+.device-discovery-phase{display:flex;flex-direction:column;gap:.2rem;padding-top:.7rem;border-top:1px solid var(--border,#d7dde5)}
+.device-discovery-message{font-weight:700;border-left:4px solid var(--accent,#5b7cfa)}
+@media(max-width:680px){.device-discovery-live-card{top:3.8rem}.device-discovery-counts{grid-template-columns:1fr 1fr 1fr}.device-manager-card .device-search-running{min-width:0}}
+.device-discovery-live-card.error{border-color:#b42318;background:#fff7f6}
+.device-discovery-diagnostics{margin:1rem 0;padding:1rem;border:1px solid var(--border,#d8dee8);border-radius:12px;background:var(--card-bg,#fff)}
+.device-discovery-diagnostics h3{margin:0 0 .75rem}
+.device-discovery-phase-list{display:grid;gap:.45rem}
+.device-discovery-phase-row{display:grid;grid-template-columns:1.5rem minmax(0,1fr) auto;align-items:center;gap:.65rem;padding:.55rem .7rem;border-radius:9px;background:rgba(127,127,127,.08)}
+.device-discovery-phase-row div{display:grid;gap:.12rem}.device-discovery-phase-row small{display:block;color:var(--muted,#667085)}
+.device-discovery-phase-row em{font-style:normal;font-size:.85rem;font-weight:700}.device-discovery-phase-icon{font-size:1.05rem;text-align:center}
+.device-discovery-phase-row.status-completed{background:rgba(35,134,54,.09)}.device-discovery-phase-row.status-running{background:rgba(34,100,210,.1)}.device-discovery-phase-row.status-failed{background:rgba(180,35,24,.1)}.device-discovery-phase-row.status-skipped{background:rgba(180,120,0,.1)}
+@media(max-width:680px){.device-discovery-phase-row{grid-template-columns:1.5rem 1fr}.device-discovery-phase-row em{grid-column:2}}
+
+/* Schritt 40k13: kompakte Diagnose und Geräteklassen-Baum */
+.device-discovery-diagnostics{border:1px solid var(--border);border-radius:12px;margin:14px 0;background:var(--panel,#fff);overflow:hidden}
+.device-discovery-diagnostics>summary{cursor:pointer;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;list-style:none}
+.device-discovery-diagnostics>summary::-webkit-details-marker{display:none}
+.device-discovery-diagnostics>summary:before{content:'▶';display:inline-block;flex:0 0 18px;width:18px;font-size:.8rem;transition:transform .15s ease}
+.device-discovery-diagnostics[open]>summary:before{transform:rotate(90deg)}
+.device-discovery-diagnostics>summary span{display:flex;align-items:baseline;gap:10px;flex:1}
+.device-discovery-diagnostics>summary small{color:var(--muted)}
+.device-discovery-diagnostics.has-error{border-color:#b3261e}
+.device-discovery-diagnostics.has-error>summary{background:rgba(179,38,30,.08)}
+.device-category-tree{display:grid;gap:8px;padding:10px 0 4px}
+.device-category{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--panel,#fff)}
+.device-category>summary{cursor:pointer;padding:11px 14px;list-style:none;user-select:none}
+.device-category>summary::-webkit-details-marker{display:none}
+.device-category>summary:before{content:'▶';display:inline-block;width:18px;font-size:.8rem;transition:transform .15s ease}
+.device-category[open]>summary:before{transform:rotate(90deg)}
+.device-category-label{display:inline-flex;align-items:center;gap:8px}
+.device-category-label em{font-style:normal;color:var(--muted);font-weight:600}
+.device-category>.scroll-table{border-top:1px solid var(--border);margin:0}
+.device-category-empty{padding:10px 4px}
+
+/* Schritt 40k14: Geräteverzeichnis in derselben Klassifizierungsstruktur */
+.inventory-device-tree{display:grid;gap:.55rem;margin-top:.75rem}
+.inventory-device-tree>.device-category{margin:0}
+.inventory-device-tree .scroll-table{max-height:32rem}
+/* Schritt 40k18b: sichtbarer FRITZ!Box-Verbindungstest */
+.fritz-test-result{margin-top:.35rem;padding:1rem 1.1rem;border:2px solid var(--border,#d7dde5);border-radius:12px;background:var(--card-bg,#fff)}
+.fritz-test-result.success{border-color:#25823b;background:rgba(37,130,59,.07)}
+.fritz-test-result.error{border-color:#b42318;background:rgba(180,35,24,.07)}
+.fritz-test-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.45rem}
+.fritz-test-heading b{font-size:1.05rem}.fritz-test-heading span{color:var(--muted,#667085);font-family:monospace}
+.fritz-test-result p{margin:.35rem 0 .75rem}
+.fritz-test-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem;margin:.7rem 0}
+.fritz-test-facts span{display:flex;flex-direction:column;padding:.65rem;border:1px solid rgba(127,127,127,.25);border-radius:9px;background:rgba(255,255,255,.55)}
+.fritz-test-facts small{color:var(--muted,#667085)}.fritz-test-facts b{margin-top:.15rem}
+.fritz-device-preview{margin-top:.8rem}.fritz-device-preview ul{columns:2;margin:.45rem 0;padding-left:1.25rem}.fritz-device-preview li{break-inside:avoid;margin:.18rem 0}
+@media(max-width:760px){.fritz-test-facts{grid-template-columns:1fr 1fr}.fritz-device-preview ul{columns:1}.fritz-test-heading{align-items:flex-start;flex-direction:column}}
+
+/* Schritt 40k19: mehrere FRITZ!Box-Quellen */
+.fritz-source-layout{display:grid;grid-template-columns:minmax(230px,320px) 1fr;gap:1rem;margin-top:1rem}
+.fritz-source-list{display:flex;flex-direction:column;gap:.45rem;border-right:1px solid var(--border,#d7dde5);padding-right:1rem}
+.fritz-source-item{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:.7rem .8rem;border:1px solid var(--border,#d7dde5);border-radius:9px;background:transparent;color:inherit}
+.fritz-source-item.active{box-shadow:inset 3px 0 0 currentColor;background:rgba(127,127,127,.08)}
+.fritz-source-item span:first-child{display:flex;flex-direction:column;gap:.15rem}.fritz-source-item small{color:var(--muted,#667085);font-weight:400}
+@media(max-width:900px){.fritz-source-layout{grid-template-columns:1fr}.fritz-source-list{border-right:0;border-bottom:1px solid var(--border,#d7dde5);padding-right:0;padding-bottom:1rem}}
+
+/* Schritt 40k21a: kompakte Quellen-Hierarchie */
+.device-discovery-sources-overview > summary { display:flex; align-items:center; gap:.35rem; }
+.device-discovery-sources-overview > summary small { font-weight:400; opacity:.75; }
+.device-discovery-source-types { display:grid; gap:.55rem; padding-top:.65rem; }
+.device-discovery-source-types > .device-discovery-source-settings { margin:0; }
+.device-discovery-source-types > .device-discovery-source-settings > summary { padding:.55rem .7rem; }
+
+/* Schritt 40k23: lokale, konfigurationsfreie Quellen */
+.builtin-source-list{display:grid;gap:.6rem;padding:.85rem}.builtin-source-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem .8rem;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.builtin-source-row span{display:grid;gap:.2rem}.builtin-source-row small{color:var(--muted)}.source-toggle{min-width:92px;white-space:nowrap}.source-toggle.enabled{font-weight:700}
+
+/* Schritt 40k30g: sichtbare Chevron-Pfeile fuer alle Discovery-Accordions. */
+.device-discovery-source-settings > summary {
+  position: relative;
+  padding-right: 2.2rem !important;
+  cursor: pointer;
+  list-style: none;
+}
+.device-discovery-source-settings > summary::-webkit-details-marker { display: none; }
+.device-discovery-source-settings > summary .discovery-chevron {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:1rem;
+  flex:0 0 1rem;
+  font-size:.78rem;
+  line-height:1;
+  transform:rotate(0deg);
+  transition:transform .15s ease;
+}
+.device-discovery-source-settings[open] > summary .discovery-chevron {
+  transform:rotate(90deg);
+}
+
+
+/* Schritt 40k31: Anzeige- und Sensordaten-Konfiguration im Gerätemanager */
+.device-display-settings-body{display:grid;gap:1rem;padding:.85rem}
+.device-display-settings-body>p{margin:0}
+.device-setting-group-grid,.planned-source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.device-setting-group,.planned-source-group{border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden}
+.device-setting-group>summary,.planned-source-group>summary{display:flex;justify-content:space-between;gap:.75rem;align-items:center;padding:.75rem .85rem;cursor:pointer;list-style:none}
+.device-setting-group>summary::-webkit-details-marker,.planned-source-group>summary::-webkit-details-marker{display:none}
+.device-setting-group>summary small,.planned-source-group>summary small{color:var(--muted);font-weight:400}
+.device-setting-group .builtin-source-list{padding:.15rem .65rem .65rem}
+.device-setting-group .builtin-source-row{padding:.6rem .7rem}
+.device-planned-title{margin:.25rem 0 -.5rem}
+.planned-source-items{display:grid;gap:.5rem;padding:.15rem .65rem .65rem}
+.planned-source-card{display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:.6rem .7rem;border:1px solid var(--border);border-radius:9px;background:var(--surface)}
+.planned-source-card>span{display:grid;gap:.15rem}.planned-source-card small{color:var(--muted)}
+@media(max-width:950px){.device-setting-group-grid,.planned-source-grid{grid-template-columns:1fr}}
+
+/* Schritt 40k32: differenzierte Discovery-Auswertung */
+.device-discovery-counts-40k32{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:900px){.device-discovery-counts-40k32{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.device-discovery-counts-40k32{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.registered-device-type-select{min-width:220px;max-width:100%;padding:.45rem .6rem;border:1px solid var(--border,#cbd5e1);border-radius:6px;background:var(--surface,#fff);color:inherit}
+
+/* Schritt 40k31h: Geräteanalyse und Qualitätsreports */
+.device-reports-page{display:grid;gap:16px}.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}.report-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}.report-kpi-grid>div{border:1px solid var(--border,#d8dde6);border-radius:12px;padding:14px;background:var(--panel,#fff);display:grid;gap:5px}.report-kpi-grid span{font-size:.82rem;color:#64748b}.report-kpi-grid b{font-size:1.55rem}.report-kpi-grid .warn{border-color:#e7b84b;background:#fff9e8}.report-search{display:grid;gap:6px;font-weight:600}.report-search input{max-width:none}.report-accordion{border:1px solid var(--border,#d8dde6);border-radius:12px;background:var(--panel,#fff);overflow:hidden}.report-accordion summary{cursor:pointer;padding:14px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:700;list-style:none}.report-accordion summary::-webkit-details-marker{display:none}.report-accordion summary:before{content:'▶';font-size:.75rem;margin-right:8px}.report-accordion[open] summary:before{content:'▼'}.report-accordion[open] summary{border-bottom:1px solid var(--border,#d8dde6)}.report-table-wrap{overflow:auto}.report-table-wrap table{margin:0;width:100%}.report-table-wrap td small{display:block;color:#64748b;margin-top:3px}.quality-pill{display:inline-block;min-width:58px;text-align:center;border-radius:999px;padding:4px 8px;font-weight:700}.quality-pill.good{background:#dcfce7;color:#166534}.quality-pill.medium{background:#fef3c7;color:#92400e}.quality-pill.bad{background:#fee2e2;color:#991b1b}.ok-text{color:#15803d;font-weight:600}.duplicate-report-list{display:grid;gap:10px;padding:14px}.duplicate-report-list article{border:1px solid var(--border,#d8dde6);border-radius:10px;padding:12px}.duplicate-report-list article>div{display:flex;justify-content:space-between;gap:10px;padding-top:7px}.duplicate-report-list small{color:#64748b}@media(max-width:720px){.section-head{display:grid}.duplicate-report-list article>div{display:grid}}
+
+/* Schritt 40k31i: Reportfilter, Druckansicht und Maßnahmenliste */
+.report-filter-grid{display:grid;grid-template-columns:minmax(260px,2fr) minmax(180px,1fr) minmax(180px,1fr) auto;gap:12px;align-items:end}.report-filter-grid>label{display:grid;gap:6px;font-weight:600}.report-reset{height:fit-content}.report-actions{flex-wrap:wrap}@media(max-width:950px){.report-filter-grid{grid-template-columns:1fr 1fr}.report-reset{width:100%}}@media(max-width:620px){.report-filter-grid{grid-template-columns:1fr}}@media print{body *{visibility:hidden}.device-reports-page,.device-reports-page *{visibility:visible}.device-reports-page{position:absolute;left:0;top:0;width:100%;padding:0}.device-reports-page .toolbar,.device-reports-page .report-filter-grid{display:none}.report-accordion{break-inside:avoid}.report-accordion>summary{list-style:none}.report-accordion>summary:before{display:none}.report-accordion:not([open])>*:not(summary){display:block}.device-reports-page details{display:block}.device-reports-page details>div,.device-reports-page details>p{display:block!important}}
+
+/* Schritt 40k31k: Geräteart und Gerätename direkt in Reports und Gerätemanager bearbeiten */
+.report-device-editable{display:grid!important;grid-template-columns:auto minmax(150px,220px) minmax(220px,1fr) minmax(210px,280px);align-items:center;gap:10px}
+.report-device-type-leading{font-weight:700;color:var(--text,#172033);white-space:normal}
+.report-device-edit-fields{display:flex;flex-direction:column;gap:3px}
+.report-device-name-input,.registered-device-name-input,.inventory-inline-name-input{width:100%;min-width:150px}
+.report-device-type-select,.inventory-inline-type-select{width:100%;min-width:190px}
+@media(max-width:900px){.report-device-editable{grid-template-columns:auto 1fr}.report-device-type-leading,.report-device-edit-fields,.report-device-type-select{grid-column:2}}
+
+/* Schritt 40k31r: finale Reportzeilen wie im Zielbild */
+.report-accordion>summary{
+  justify-content:flex-start;
+  gap:8px;
+}
+.report-accordion>summary>span{
+  margin:0;
+}
+.report-accordion>summary>b{
+  margin-left:auto;
+  white-space:nowrap;
+}
+.report-selection-tree{
+  display:block;
+  padding:0;
+}
+.report-selection-tree>details{
+  border:0;
+  border-bottom:1px solid var(--border,#d8dde6);
+  border-radius:0;
+  background:var(--panel,#fff);
+}
+.report-selection-tree>details:first-child{border-top:1px solid var(--border,#d8dde6)}
+.report-selection-tree>details>summary{
+  display:flex !important;
+  align-items:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:54px;
+  box-sizing:border-box;
+  padding:8px 18px !important;
+  gap:12px !important;
+  list-style:none !important;
+  background:transparent !important;
+}
+.report-selection-tree>details>summary::-webkit-details-marker{display:none !important}
+.report-selection-tree>details>summary::marker{content:"" !important;display:none !important}
+.report-category-arrow{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1rem;
+  line-height:1;
+  transform:rotate(0deg);
+  transition:transform .15s ease;
+}
+.report-selection-tree>details[open]>summary .report-category-arrow{transform:rotate(90deg)}
+.report-category-icon{
+  flex:0 0 28px;
+  width:28px;
+  height:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.15rem;
+  line-height:1;
+}
+.report-category-title{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  text-align:left !important;
+  overflow:visible !important;
+}
+.report-device-type-badge{
+  display:inline-flex;
+  align-items:center;
+  max-width:100%;
+  min-width:0;
+  padding:4px 10px;
+  border:1px solid color-mix(in srgb,var(--primary,#2563eb) 30%,var(--border,#d8dde6));
+  border-radius:999px;
+  background:color-mix(in srgb,var(--primary,#2563eb) 8%,var(--panel,#fff));
+  color:var(--text,#172033);
+  font-weight:700;
+  line-height:1.25;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.report-category-count{
+  flex:0 0 116px !important;
+  display:grid !important;
+  grid-template-columns:3ch 3.2ch 3ch;
+  align-items:center;
+  justify-content:end;
+  column-gap:.45ch;
+  margin-left:auto !important;
+  font-weight:700;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.report-count-selected,.report-count-total{text-align:right}
+.report-count-word{text-align:center}
+.report-category-checkbox{
+  flex:0 0 22px !important;
+  width:18px !important;
+  height:18px !important;
+  margin:0 0 0 8px !important;
+  position:static !important;
+  transform:none !important;
+}
+@media(max-width:700px){
+  .report-selection-tree>details>summary{padding:8px 10px !important;gap:8px !important}
+  .report-category-count{flex-basis:100px !important;grid-template-columns:2.5ch 3ch 2.5ch}
+  .report-device-type-badge{white-space:normal}
+}
+@media print{
+  .report-selection{display:block !important}
+  .report-selection-toolbar{display:none !important}
+  .report-selection-tree{display:block !important;padding:0 !important}
+  .report-selection-tree>details{break-inside:avoid;page-break-inside:avoid}
+  .report-selection-tree>details>summary{
+    display:flex !important;
+    align-items:center !important;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:30px !important;
+    padding:5px 8px !important;
+    gap:8px !important;
+  }
+  .report-category-icon{flex:0 0 22px;width:22px;height:22px;font-size:1rem}
+  .report-category-title{flex:1 1 auto !important;min-width:0 !important}
+  .report-device-type-badge{padding:2px 7px;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .report-category-count{flex:0 0 96px !important;grid-template-columns:3ch 3.2ch 3ch;font-size:.82rem}
+  .report-category-checkbox{flex:0 0 18px !important;width:16px !important;height:16px !important;margin-left:4px !important}
+  .report-selection-tree>details>div{display:none !important}
+}

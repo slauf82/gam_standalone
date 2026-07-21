@@ -184,6 +184,7 @@ export function iconForModule(key: string): string {
   if (normalized.includes("aufgabe") || normalized.includes("task")) return "/icons/tasks.svg";
   if (normalized.includes("freigabe") || normalized.includes("approval")) return "/icons/approval.svg";
   if (normalized.includes("bestell") || normalized.includes("order")) return "/icons/orders.svg";
+  if (normalized.includes("scan center") || normalized.includes("scancenter")) return "/icons/scan-center.svg";
   if (normalized.includes("marketing")) return "/icons/marketing.svg";
   if (normalized.includes("labor")) return "/icons/laboratory.svg";
   if (normalized.includes("wartezimmer") || normalized.includes("waiting")) return "/icons/waiting-room.svg";

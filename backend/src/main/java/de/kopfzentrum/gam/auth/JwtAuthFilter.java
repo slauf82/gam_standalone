@@ -22,6 +22,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     this.audit = audit;
   }
 
+  /**
+   * StreamingResponseBody setzt die Verarbeitung als ASYNC-Dispatch fort.
+   * OncePerRequestFilter ueberspringt ASYNC standardmaessig; dadurch ging der
+   * JWT-SecurityContext nach Beginn des Discovery-Streams verloren und der
+   * bereits gestartete Stream endete mit AccessDenied/response committed.
+   */
+  @Override
+  protected boolean shouldNotFilterAsyncDispatch() {
+    return false;
+  }
+
   @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
     String auth = request.getHeader("Authorization");
     if (auth != null && auth.startsWith("Bearer ")) {
