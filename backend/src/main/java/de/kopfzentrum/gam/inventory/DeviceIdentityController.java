@@ -98,6 +98,14 @@ public class DeviceIdentityController {
     return service.runLinuxInventory(requireKey(request));
   }
 
+  @PostMapping("/macos/inventory")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public DeviceIdentityService.LinuxActionResult runMacOsInventory(@RequestBody Map<String,String> request) { return service.runMacOsInventory(requireKey(request)); }
+
+  @PostMapping("/macos/ssh-test")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public MacOsInventoryService.TestResult testMacOsSsh(@RequestBody Map<String,String> request) { return service.testMacOsSsh(requireKey(request)); }
+
   @PostMapping("/linux/ssh-test")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
   public LinuxNetworkDiscoveryService.SshTestResult testLinuxSsh(@RequestBody Map<String,String> request) {

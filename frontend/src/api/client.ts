@@ -465,6 +465,11 @@ export type LinuxSshTestResult={sshConfigured:boolean;reachable:boolean;message:
 export const testLinuxSsh=(identityKey:string)=>request<LinuxSshTestResult>('/inventory/discovery/identity/linux/ssh-test',{method:'POST',body:JSON.stringify({identityKey})});
 export const refreshLinuxCache=(identityKey:string)=>request<{refreshed:boolean}>('/inventory/discovery/identity/linux/refresh-cache',{method:'POST',body:JSON.stringify({identityKey})});
 
+// 40k36: macOS über die gemeinsame SSH-Konfiguration.
+export type MacOsSshTestResult={sshConfigured:boolean;reachable:boolean;macOs:boolean;message:string;checkedAt:string};
+export const runMacOsInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/macos/inventory',{method:'POST',body:JSON.stringify({identityKey})});
+export const testMacOsSsh=(identityKey:string)=>request<MacOsSshTestResult>('/inventory/discovery/identity/macos/ssh-test',{method:'POST',body:JSON.stringify({identityKey})});
+
 // 40k35i1: Zentrale SSH-Konfiguration für Linux und künftig macOS.
 export type LinuxSshSettings={enabled:boolean;username:string;authMode:'KEY'|'PASSWORD'|string;passwordConfigured:boolean;keyPath:string;port:number;password?:string;clearPassword?:boolean};
 export const loadLinuxSshSettings=()=>request<LinuxSshSettings>('/inventory/discovery/ssh');

@@ -36,6 +36,7 @@ public class DeviceIdentityService {
   private final PlatformInventoryRepository platformInventory;
   private final WindowsInventoryDiscoveryService windowsLocal;
   private final WindowsRemoteInventoryService windowsRemote;
+  private final MacOsInventoryService macOs;
   private final ObjectMapper objectMapper;
 
   public DeviceIdentityService(DiscoveryRegistrationRepository registrations, DeviceMergeRepository merges,
@@ -43,7 +44,7 @@ public class DeviceIdentityService {
                                AndroidAdbService adb, AppInventoryRepository appInventory,
                                PlatformInventoryRepository platformInventory,
                                WindowsInventoryDiscoveryService windowsLocal, WindowsRemoteInventoryService windowsRemote,
-                               ObjectMapper objectMapper) {
+                               MacOsInventoryService macOs, ObjectMapper objectMapper) {
     this.registrations = registrations;
     this.merges = merges;
     this.mergeService = mergeService;
@@ -53,6 +54,7 @@ public class DeviceIdentityService {
     this.platformInventory = platformInventory;
     this.windowsLocal = windowsLocal;
     this.windowsRemote = windowsRemote;
+    this.macOs = macOs;
     this.objectMapper = objectMapper;
   }
 
@@ -151,6 +153,17 @@ public class DeviceIdentityService {
       device.name(), device.type(), device.manufacturer(), device.protocol(), device.status());
     return new LinuxActionResult(true, "Linux-Inventarisierung wurde durchgeführt.", detail(identityKey));
   }
+
+  /** 40k36: macOS gezielt per gemeinsamer SSH-Konfiguration inventarisieren. */
+  public LinuxActionResult runMacOsInventory(String identityKey) {
+    Map<String,Object> row=registrations.find(identityKey); String address=str(row.get("address"));
+    if(address==null) throw new IllegalArgumentException("Für dieses Gerät ist keine IP-Adresse bekannt.");
+    var result=macOs.inventory(address,str(row.get("name")));
+    if(result.isEmpty()) return new LinuxActionResult(false,"macOS-Inventarisierung nicht möglich. Bitte auf dem Mac 'Entfernte Anmeldung' aktivieren und SSH-Konfiguration prüfen.",detail(identityKey));
+    var d=result.get(); registrations.recordDiscoveryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());
+    return new LinuxActionResult(true,"macOS-Inventarisierung wurde erfolgreich durchgeführt.",detail(identityKey));
+  }
+  public MacOsInventoryService.TestResult testMacOsSsh(String identityKey){Map<String,Object> row=registrations.find(identityKey);String address=str(row.get("address"));if(address==null)throw new IllegalArgumentException("Für dieses Gerät ist keine IP-Adresse bekannt.");return macOs.test(address);}
 
   /** 40k33b8: Reiner SSH-Verbindungstest, ohne vollständige Inventarisierung. */
   public LinuxNetworkDiscoveryService.SshTestResult testLinuxSsh(String identityKey) {
@@ -417,7 +430,7 @@ public class DeviceIdentityService {
         case "Android" -> dispatchAndroidPlatformInventory(identityKey);
         case "Linux" -> dispatchLinuxPlatformInventory(row);
         case "Windows" -> dispatchWindowsPlatformInventory(identityKey, row);
-        case "macOS" -> new PlatformInventoryResult(false, "NICHT_UNTERSTUETZT", "macOS-Inventarisierung ist in dieser Version noch nicht implementiert.", platform);
+        case "macOS" -> dispatchMacOsPlatformInventory(identityKey);
         case "iOS" -> new PlatformInventoryResult(false, "NICHT_UNTERSTUETZT", "iOS-Inventarisierung ist in dieser Version noch nicht implementiert.", platform);
         default -> new PlatformInventoryResult(false, "FEHLGESCHLAGEN", "Unbekannte Plattform: " + platform, platform);
       };
@@ -429,6 +442,12 @@ public class DeviceIdentityService {
       log.warn("[PLATFORM-INVENTORY] {} für {} fehlgeschlagen: {}", platform, identityKey, e.getMessage());
       return new PlatformInventoryResult(false, "FEHLGESCHLAGEN", e.getMessage(), platform);
     }
+  }
+
+
+  private PlatformInventoryResult dispatchMacOsPlatformInventory(String identityKey) {
+    LinuxActionResult r=runMacOsInventory(identityKey);
+    return new PlatformInventoryResult(r.success(),r.success()?"ERFOLGREICH":"FEHLGESCHLAGEN",r.message(),"macOS");
   }
 
   private PlatformInventoryResult dispatchAndroidPlatformInventory(String identityKey) {

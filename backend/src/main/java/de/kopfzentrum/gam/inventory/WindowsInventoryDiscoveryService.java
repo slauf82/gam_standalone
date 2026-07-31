@@ -118,7 +118,13 @@ public class WindowsInventoryDiscoveryService {
     String firewall = value(data, "FIREWALL", null);
     String tpm = value(data, "TPM", null);
     String secureBoot = value(data, "SECURE_BOOT", null);
-    String bitLocker = value(data, "BITLOCKER", null);
+    String bitLocker = value(data, "BITLOCKER_VOLUMES", value(data, "BITLOCKER", null));
+    String bitLockerSummary = value(data, "BITLOCKER_SUMMARY", null);
+    String bitLockerDiagnostic = value(data, "BITLOCKER_DIAGNOSTIC", null);
+    String systemVolumeEncrypted = value(data, "SYSTEM_VOLUME_ENCRYPTED", null);
+    String storagePools = value(data, "STORAGE_POOLS", null);
+    String virtualDisks = value(data, "VIRTUAL_DISKS", null);
+    String physicalDisks = value(data, "PHYSICAL_DISKS", null);
     String pendingUpdatesRaw = value(data, "PENDING_UPDATES", failedModules.contains("UPDATES") ? "Zeitüberschreitung / nicht verfügbar" : null);
     String pendingUpdates = numericWithUnit(pendingUpdatesRaw, "Updates");
     String lastHotfix = value(data, "LAST_HOTFIX", null);
@@ -145,6 +151,8 @@ public class WindowsInventoryDiscoveryService {
         + detail("RAM-Module", ramModules)
         + detail("RAM-Erweiterbarkeit", ramAssessment)
         + detail("Datenträger", disks) + detail("Laufwerke", volumes)
+        + detail("Physische Datenträger", physicalDisks)
+        + detail("Storage Pools", storagePools) + detail("Virtuelle Datenträger", virtualDisks)
         + detail("IPv6", ipv6) + detail("Netzwerkadapter", adapters)
         + detail("Installierte Software", softwareCount == null ? software : softwareCount + " Programme"
             + (softwareRegistryCount == null || softwareRegistryCount.equals(softwareCount) ? "" : " (" + softwareRegistryCount + " Registry-Einträge)")
@@ -152,7 +160,11 @@ public class WindowsInventoryDiscoveryService {
         + detail("Softwarequellen", softwareSourceCounts)
         + detail("Windows-Rollen/Features", roles) + detail("Antivirus", antivirus)
         + detail("Microsoft Defender", defenderStatus) + detail("Firewall", firewall)
-        + detail("TPM", tpm) + detail("Secure Boot", secureBoot) + detail("BitLocker", bitLocker)
+        + detail("TPM", tpm) + detail("Secure Boot", secureBoot)
+        + detail("BitLocker-Zusammenfassung", bitLockerSummary)
+        + detail("BitLocker-Volumes", bitLocker)
+        + detail("Systemlaufwerk verschlüsselt", systemVolumeEncrypted)
+        + detail("BitLocker-Diagnose", bitLockerDiagnostic)
         + detail("Ausstehende Updates", pendingUpdates) + detail("Letzter Hotfix", lastHotfix)
         + detail("Neustart ausstehend", rebootPending) + detail("UAC", uac)
         + detail("Remote Desktop", rdp) + detail("Lokale Administratoren", localAdmins)
@@ -333,12 +345,47 @@ public class WindowsInventoryDiscoveryService {
 
   private static String storageScript() {
     return """
-        $ErrorActionPreference='Stop'
+        $ErrorActionPreference='SilentlyContinue'
         function Emit($k,$v){if($null -ne $v -and ([string]$v).Trim() -ne ''){$clean=(([string]$v)-replace '[\r\n]',' ').Trim();$b64=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($clean));[Console]::Out.WriteLine(('GAMKV|'+$k+'|'+$b64))}}
-        $disks=Get-CimInstance Win32_DiskDrive|ForEach-Object{$s=if($_.Size){[math]::Round($_.Size/1GB,1)}else{0};('{0} ({1} GB, {2})'-f $_.Model,$s,$_.MediaType)}
-        $volumes=Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3'|ForEach-Object{$s=if($_.Size){[math]::Round($_.Size/1GB,1)}else{0};$f=if($_.FreeSpace){[math]::Round($_.FreeSpace/1GB,1)}else{0};('{0} {1}/{2} GB frei'-f $_.DeviceID,$f,$s)}
+        $disks=@(Get-Disk -ErrorAction SilentlyContinue|ForEach-Object{
+          $size=if($_.Size){[math]::Round($_.Size/1GB,1)}else{0}
+          $boot=if($_.IsBoot){', Boot'}else{''};$system=if($_.IsSystem){', System'}else{''}
+          ('Datenträger {0}: {1} · {2} GB · {3} · {4}{5}{6}' -f $_.Number,$_.FriendlyName,$size,$_.BusType,$_.PartitionStyle,$boot,$system)
+        })
+        if(-not $disks){$disks=@(Get-CimInstance Win32_DiskDrive|ForEach-Object{$size=if($_.Size){[math]::Round($_.Size/1GB,1)}else{0};('{0} · {1} GB · {2}'-f $_.Model,$size,$_.MediaType)})}
+        $volumes=@(Get-Volume -ErrorAction SilentlyContinue|ForEach-Object{
+          $drive=if($_.DriveLetter){$_.DriveLetter+':'}else{'ohne Laufwerksbuchstaben'}
+          $size=if($_.Size){[math]::Round($_.Size/1GB,1)}else{0};$free=if($_.SizeRemaining){[math]::Round($_.SizeRemaining/1GB,1)}else{0}
+          ('{0} {1} · {2} · {3} · {4}/{5} GB frei · Zustand {6}' -f $drive,$_.FileSystemLabel,$_.FileSystem,$_.DriveType,$free,$size,$_.HealthStatus)
+        })
+        if(-not $volumes){$volumes=@(Get-CimInstance Win32_LogicalDisk|ForEach-Object{$size=if($_.Size){[math]::Round($_.Size/1GB,1)}else{0};$free=if($_.FreeSpace){[math]::Round($_.FreeSpace/1GB,1)}else{0};('{0} {1} · {2}/{3} GB frei'-f $_.DeviceID,$_.FileSystem,$free,$size)})}
         Emit 'DISKS' ($disks -join '; ')
         Emit 'VOLUMES' ($volumes -join '; ')
+        try{
+          $pools=@(Get-StoragePool -ErrorAction Stop|Where-Object{$_.IsPrimordial -eq $false}|ForEach-Object{('{0}: Zustand {1}, Gesundheit {2}, Kapazität {3} GB, frei {4} GB'-f $_.FriendlyName,$_.OperationalStatus,$_.HealthStatus,[math]::Round($_.Size/1GB,1),[math]::Round(($_.Size-$_.AllocatedSize)/1GB,1))})
+          Emit 'STORAGE_POOLS' ($pools -join '; ')
+          $virtual=@(Get-VirtualDisk -ErrorAction SilentlyContinue|ForEach-Object{('{0}: {1}, {2}, {3} GB, Zustand {4}/{5}'-f $_.FriendlyName,$_.ResiliencySettingName,$_.ProvisioningType,[math]::Round($_.Size/1GB,1),$_.OperationalStatus,$_.HealthStatus)})
+          Emit 'VIRTUAL_DISKS' ($virtual -join '; ')
+          $physical=@(Get-PhysicalDisk -ErrorAction SilentlyContinue|ForEach-Object{('{0}: {1}, {2}, {3} GB, Zustand {4}'-f $_.FriendlyName,$_.MediaType,$_.BusType,[math]::Round($_.Size/1GB,1),$_.HealthStatus)})
+          Emit 'PHYSICAL_DISKS' ($physical -join '; ')
+        }catch{}
+        try{
+          $bl=@(Get-BitLockerVolume -ErrorAction Stop)
+          $rows=@();$encrypted=0;$protected=0;$locked=0;$osProtected=$false;$removable=0
+          foreach($v in $bl){
+            $mount=if($v.MountPoint){$v.MountPoint}else{'ohne Mountpoint'}
+            $protectors=@($v.KeyProtector|ForEach-Object{$_.KeyProtectorType.ToString()}|Sort-Object -Unique)
+            $protectorText=if($protectors.Count){$protectors -join ','}else{'keine'}
+            if($v.VolumeStatus -ne 'FullyDecrypted'){$encrypted++};if($v.ProtectionStatus -eq 'On'){$protected++};if($v.LockStatus -eq 'Locked'){$locked++}
+            if($v.VolumeType -eq 'OperatingSystem' -and $v.ProtectionStatus -eq 'On'){$osProtected=$true}
+            $driveType=(Get-Volume -DriveLetter ($mount.TrimEnd(':')) -ErrorAction SilentlyContinue).DriveType
+            if($driveType -eq 'Removable'){$removable++}
+            $rows+=('{0}: Typ {1}, Status {2}, Schutz {3}, Sperre {4}, Methode {5}, {6}%, Auto-Unlock {7}, Protektoren {8}' -f $mount,$v.VolumeType,$v.VolumeStatus,$v.ProtectionStatus,$v.LockStatus,$v.EncryptionMethod,$v.EncryptionPercentage,$v.AutoUnlockEnabled,$protectorText)
+          }
+          Emit 'BITLOCKER_VOLUMES' ($rows -join '; ')
+          Emit 'BITLOCKER_SUMMARY' ('{0} Volumes · {1} verschlüsselt · {2} geschützt · {3} gesperrt · {4} BitLocker To Go' -f $bl.Count,$encrypted,$protected,$locked,$removable)
+          Emit 'SYSTEM_VOLUME_ENCRYPTED' $(if($osProtected){'Ja'}else{'Nein'})
+        }catch{Emit 'BITLOCKER_DIAGNOSTIC' ('BitLocker-Daten nicht verfügbar: '+$_.Exception.Message)}
         """;
   }
 

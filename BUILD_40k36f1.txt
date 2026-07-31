@@ -1,0 +1,9 @@
+GAM 2.0 – Schritt 40k36f1
+
+Fehlerbehebung Reports-Modul:
+- fehlende Funktion printReport im Scope von ReportsPage ergänzt
+- Schaltfläche „Drucken / PDF“ ruft wieder zuverlässig window.print() auf
+- verhindert den Laufzeitfehler „printReport is not defined“
+
+Basis: 40k36f
+Versionsstand: 40k36f1

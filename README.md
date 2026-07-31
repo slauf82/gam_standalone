@@ -526,3 +526,12 @@ GAM-eigener Android-Verbindungsworkflow mit Pairing, gespeicherter Wiederverbind
 
 ### Schritt 40k35j
 Android-Verbindungsstatus verwendet nach einem manuellen Connect sofort den neu eingegebenen ADB-Port; Meldungen eines früheren Ports werden nicht mehr als aktueller Zustand angezeigt.
+
+
+### Schritt 40k36
+
+- macOS-Erkennung und schreibgeschützte Inventarisierung über SSH
+- gemeinsamer SSH-Verbindungsworkflow für Linux und macOS
+- Freigabeanleitung für „Entfernte Anmeldung“ direkt im Dialog
+- Erfassung von macOS-Version, Build, Modell, Architektur, CPU, RAM, Seriennummer, Laufwerk, Benutzern, Programmen und launchd-Diensten
+- automatische Plattformkorrektur auf macOS nach erfolgreicher Darwin-Erkennung

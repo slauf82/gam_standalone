@@ -1,0 +1,10 @@
+GAM 2.1.0 – Schritt 40k36f2
+
+Korrektur und tatsächliche Einbindung des macOS-Tests:
+- Der Bereich „macOS-Verbindung und -Inventarisierung“ ist im Gerätedialog standardmäßig geöffnet.
+- Der Abschnitt „macOS-Test“ ist immer sichtbar, auch vor dem ersten Inventarlauf.
+- Ein eigener Button „macOS-Test starten“ führt die vollständige macOS-Inventarisierung über SSH aus.
+- Nach dem Lauf werden Verbindung, Betriebssystem, Hardware, Speicher, Verschlüsselung, Benutzer & Software, Netzwerk und Energie bewertet.
+- Vor dem ersten Lauf wird ausdrücklich „Noch kein Testergebnis vorhanden“ angezeigt.
+- Vorhandene Testergebnisse können erneut erzeugt und in die Zwischenablage kopiert werden.
+- Die doppelte Inventarisierungsschaltfläche wurde entfernt; SSH-Konfiguration und Verbindungstest bleiben separat verfügbar.

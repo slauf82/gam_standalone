@@ -1,0 +1,11 @@
+GAM 2.0 – Schritt 40k36g
+
+Reports / Geräteteil an Gerätemanager angeglichen:
+- identische Standard-Kategorien und identische Reihenfolge
+- identische zentrale Geräteklassifizierung über classifyDevice()
+- manuell gesetzte Kategorien registrierter Geräte bleiben erhalten
+- automatisch erkannte Geräte werden im Report in derselben Kategorie angezeigt wie im Gerätemanager
+- Kategorieauswahl, Kategoriekennzahlen, sichtbare Kategorie-Badges und Umsortierauswahl verwenden die vereinheitlichte Kategorie
+- Sonstige Geräte ersetzt die abweichende Report-Sonderkategorie „Unbekannte Geräte“
+
+Basis: 40k36f2

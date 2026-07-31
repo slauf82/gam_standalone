@@ -1,0 +1,11 @@
+GAM 2.0 – Schritt 40k36f
+
+Abschluss des macOS-Inventarisierungsblocks.
+
+- Bereichsbezogener macOS-Testreport für Verbindung, Betriebssystem, Hardware, Speicher, Verschlüsselung, Benutzer/Software, Netzwerk und Energie
+- Gesamtstatus BESTANDEN oder BESTANDEN MIT HINWEISEN
+- konkrete Diagnosehinweise für unvollständig gelieferte Datenbereiche
+- kopierbarer Testreport für den einmaligen Praxistest an einem Mac
+- vollständige Inventardaten standardmäßig platzsparend einklappbar
+- Desktop-Macs ohne Akku werden im Energiebericht gesondert berücksichtigt
+- Versionsstand 40k36f

@@ -1,0 +1,6 @@
+GAM 2.0 – Schritt 40k36
+
+macOS-Unterstützung auf der gemeinsamen SSH-Basis.
+
+Vorbereitung am Mac:
+Systemeinstellungen → Allgemein → Freigabe → Entfernte Anmeldung aktivieren.

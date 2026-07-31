@@ -345,3 +345,13 @@
   columns: 1;
 }
 .device-detail-list li { margin: .18rem 0; break-inside: avoid; }
+
+/* 40k36k: einheitlicher Statuskopf für alle Geräteverbindungen */
+.connection-management-card{display:grid;gap:.35rem;border-left:4px solid var(--border-color,#9aa4b2)}
+.connection-management-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.connection-management-detail{margin-top:.15rem}
+
+/* 40k36k: einheitlicher Statuskopf für alle Geräteverbindungen */
+.connection-management-card{display:grid;gap:.35rem;border-left:4px solid var(--border-color,#9aa4b2)}
+.connection-management-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.connection-management-detail{margin-top:.15rem}

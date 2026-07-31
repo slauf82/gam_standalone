@@ -1,0 +1,13 @@
+GAM Standalone 2.1.0 – Schritt 40k36h
+
+Linux: Datenträger und Verschlüsselung
+- vollständige Blockgeräteliste mit lsblk-Metadaten
+- LUKS-Container und aktive dm-crypt-Mapper
+- Root-Dateisystem und Root-Verschlüsselungsstatus
+- /etc/crypttab und verschlüsselter Swap
+- LVM, mdadm-RAID, Btrfs und ZFS
+- TPM-/systemd-cryptenroll-Hinweise
+- Diagnose verfügbarer Storage-Werkzeuge
+- zusammenfassender Verschlüsselungsstatus im Linux-Gerätedialog
+
+Alle Abfragen sind schreibgeschützt. Fehlende optionale Werkzeuge brechen die Inventarisierung nicht ab.

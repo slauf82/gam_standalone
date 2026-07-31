@@ -1,0 +1,18 @@
+GAM 2.0 – Schritt 40k36e
+
+macOS Energie-, Akku- und Ruhezustandsinventarisierung
+
+Neu:
+- Erkennung, ob ein interner Akku vorhanden ist
+- Stromquelle, Akkuladestand, Ladezustand und Restlaufzeit
+- Ladezyklen, Akkuzustand, maximale Kapazität, Volllade- und Designkapazität
+- Akkuhersteller, Seriennummer und Firmware, soweit macOS diese Daten liefert
+- Netzteilstatus, Leistung und Seriennummer
+- Stromsparmodus, Hibernatemode sowie Display-, System- und Festplatten-Ruhezustand
+- Power Nap, Wake on Network und automatisches Ausschalten
+- aktive Energieanforderungen (pmset assertions)
+- letzter Wake-/DarkWake-Grund
+- geplante Energieereignisse
+- thermischer Status
+
+Alle Abfragen sind schreibgeschützt. Nicht verfügbare Angaben brechen die übrige Inventarisierung nicht ab.

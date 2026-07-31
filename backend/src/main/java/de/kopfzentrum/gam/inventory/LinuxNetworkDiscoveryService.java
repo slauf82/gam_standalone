@@ -278,6 +278,8 @@ public class LinuxNetworkDiscoveryService {
       inventory.get("CPU") != null,
       inventory.get("MEMORY") != null,
       inventory.get("DISKS") != null,
+      inventory.get("BLOCK_DEVICES") != null,
+      inventory.get("ENCRYPTION_SUMMARY") != null,
       inventory.get("NETWORK") != null,
       roles != null,
       !services.isEmpty(),
@@ -306,6 +308,20 @@ public class LinuxNetworkDiscoveryService {
     detail(protocol, "Arbeitsspeicher", inventory.get("MEMORY"));
     detail(protocol, "Datenträger", inventory.get("DISKS"));
     detail(protocol, "Dateisysteme", inventory.get("FILESYSTEMS"));
+    detail(protocol, "Blockgeräte", inventory.get("BLOCK_DEVICES"));
+    detail(protocol, "Verschlüsselungsübersicht", inventory.get("ENCRYPTION_SUMMARY"));
+    detail(protocol, "LUKS-Container", inventory.get("LUKS_VOLUMES"));
+    detail(protocol, "Aktive dm-crypt-Mapper", inventory.get("DM_CRYPT"));
+    detail(protocol, "Root-Dateisystem", inventory.get("ROOT_SOURCE"));
+    detail(protocol, "Root-Verschlüsselung", inventory.get("ROOT_ENCRYPTED"));
+    detail(protocol, "crypttab", inventory.get("CRYPTTAB"));
+    detail(protocol, "Verschlüsselter Swap", inventory.get("SWAP_ENCRYPTED"));
+    detail(protocol, "LVM", inventory.get("LVM"));
+    detail(protocol, "Software-RAID", inventory.get("RAID"));
+    detail(protocol, "Btrfs", inventory.get("BTRFS"));
+    detail(protocol, "ZFS", inventory.get("ZFS"));
+    detail(protocol, "TPM / systemd-cryptenroll", inventory.get("TPM_CRYPT"));
+    detail(protocol, "Storage-Werkzeuge", inventory.get("STORAGE_TOOLS"));
     detail(protocol, "Netzwerkadapter", inventory.get("NETWORK"));
     detail(protocol, "Standardgateway", inventory.get("GATEWAY"));
     detail(protocol, "DNS-Server", inventory.get("DNS"));
@@ -611,6 +627,22 @@ public class LinuxNetworkDiscoveryService {
       "printf 'DNS='; (awk '/^nameserver/{printf \"%s \",$2}' /etc/resolv.conf 2>/dev/null); printf '\\n'; " +
       "printf 'PKG_MANAGER='; (command -v apt >/dev/null 2>&1 && echo apt) || (command -v dnf >/dev/null 2>&1 && echo dnf) || (command -v yum >/dev/null 2>&1 && echo yum) || (command -v pacman >/dev/null 2>&1 && echo pacman) || (command -v zypper >/dev/null 2>&1 && echo zypper) || echo unbekannt; " +
       "printf 'UPGRADABLE_NAMES='; (apt list --upgradable 2>/dev/null | sed '1d' | cut -d/ -f1 | head -n 6 | paste -sd, - || dnf check-update -q 2>/dev/null | awk '{print $1}' | head -n 6 | paste -sd, - || true); printf '\\n'; " +
+      // 40k36h: Vertiefte Linux-Datentraeger- und Verschluesselungsinventarisierung.
+      // Alle Abfragen sind schreibgeschuetzt; fehlende optionale Werkzeuge brechen den Lauf nicht ab.
+      "printf 'BLOCK_DEVICES='; lsblk -P -o NAME,KNAME,TYPE,SIZE,FSTYPE,MOUNTPOINT,UUID,PARTUUID,LABEL,PKNAME 2>/dev/null | tr '\\n' ';'; printf '\\n'; " +
+      "printf 'LUKS_VOLUMES='; lsblk -rno NAME,KNAME,TYPE,SIZE,FSTYPE,MOUNTPOINT,PKNAME 2>/dev/null | awk '$5==\"crypto_LUKS\"{printf \"%s|%s|%s|%s|%s|%s;\",$1,$2,$4,$5,$6,$7}'; printf '\\n'; " +
+      "printf 'DM_CRYPT='; (dmsetup ls --target crypt 2>/dev/null | awk '{printf \"%s;\",$1}' || true); printf '\\n'; " +
+      "printf 'ROOT_SOURCE='; (findmnt -n -o SOURCE / 2>/dev/null || awk '$2==\"/\"{print $1;exit}' /proc/mounts); printf '\\n'; " +
+      "printf 'ROOT_ENCRYPTED='; root=$(findmnt -n -o SOURCE / 2>/dev/null); case \"$root\" in /dev/mapper/*|/dev/dm-*) echo ja;; *) cur=$root; enc=nein; i=0; while [ -n \"$cur\" ] && [ $i -lt 8 ]; do fs=$(lsblk -nro FSTYPE \"$cur\" 2>/dev/null | head -n1); typ=$(lsblk -nro TYPE \"$cur\" 2>/dev/null | head -n1); if [ \"$fs\" = crypto_LUKS ] || [ \"$typ\" = crypt ]; then enc=ja; break; fi; parent=$(lsblk -nro PKNAME \"$cur\" 2>/dev/null | head -n1); [ -z \"$parent\" ] && break; cur=/dev/$parent; i=$((i+1)); done; echo $enc;; esac; " +
+      "printf 'CRYPTTAB='; if [ -r /etc/crypttab ]; then awk '!/^[[:space:]]*#/ && NF{printf \"%s->%s;\",$1,$2}' /etc/crypttab; else printf 'nicht vorhanden oder nicht lesbar'; fi; printf '\\n'; " +
+      "printf 'SWAP_ENCRYPTED='; swap=$(awk 'NR>1{print $1}' /proc/swaps 2>/dev/null | head -n1); if [ -z \"$swap\" ]; then echo 'kein Swap'; else case \"$swap\" in /dev/mapper/*|/dev/dm-*) echo ja;; *) t=$(lsblk -nro TYPE \"$swap\" 2>/dev/null | head -n1); [ \"$t\" = crypt ] && echo ja || echo nein;; esac; fi; " +
+      "printf 'LVM='; if command -v lvs >/dev/null 2>&1; then lvs --noheadings --separator '|' -o vg_name,lv_name,lv_size,lv_attr,pool_lv 2>/dev/null | awk '{$1=$1;printf \"%s;\",$0}'; else printf 'nicht installiert'; fi; printf '\\n'; " +
+      "printf 'RAID='; if grep -q '^md' /proc/mdstat 2>/dev/null; then awk '/^md/{printf \"%s \",$0;getline;printf \"%s;\",$0}' /proc/mdstat; else printf 'kein mdadm-RAID erkannt'; fi; printf '\\n'; " +
+      "printf 'BTRFS='; if command -v btrfs >/dev/null 2>&1; then btrfs filesystem show 2>/dev/null | tr '\\n' ' ' | sed 's/[[:space:]][[:space:]]*/ /g'; else printf 'nicht installiert'; fi; printf '\\n'; " +
+      "printf 'ZFS='; if command -v zpool >/dev/null 2>&1; then zpool list -H -o name,size,alloc,free,health 2>/dev/null | awk '{printf \"%s|%s|%s|%s|%s;\",$1,$2,$3,$4,$5}'; else printf 'nicht installiert'; fi; printf '\\n'; " +
+      "printf 'TPM_CRYPT='; if { [ -c /dev/tpmrm0 ] || [ -c /dev/tpm0 ]; }; then printf 'TPM vorhanden'; else printf 'kein TPM-Gerät erkannt'; fi; command -v systemd-cryptenroll >/dev/null 2>&1 && printf ', systemd-cryptenroll vorhanden'; printf '\\n'; " +
+      "printf 'STORAGE_TOOLS='; for c in lsblk findmnt blkid cryptsetup dmsetup pvs vgs lvs mdadm btrfs zpool systemd-cryptenroll; do command -v $c >/dev/null 2>&1 && printf '%s:ja;' $c || printf '%s:nein;' $c; done; printf '\\n'; " +
+      "printf 'ENCRYPTION_SUMMARY='; luks=$(lsblk -rno FSTYPE 2>/dev/null | awk '$1==\"crypto_LUKS\"{n++}END{print n+0}'); open=$(dmsetup ls --target crypt 2>/dev/null | wc -l); root=$(findmnt -n -o SOURCE / 2>/dev/null); case \"$root\" in /dev/mapper/*|/dev/dm-*) re=ja;; *) re=nein;; esac; printf 'LUKS:%s;geöffnet:%s;Root verschlüsselt:%s' \"$luks\" \"$open\" \"$re\"; printf '\\n'; " +
       // 40k33b7: SSH-Hostkey-Fingerabdruck fuer die Integritaetspruefung - aendert sich
       // ein spaeter erneut abgerufener Fingerabdruck, deutet das stark auf ein anderes
       // physisches Geraet an derselben Identitaet hin (siehe DeviceIdentityService).
