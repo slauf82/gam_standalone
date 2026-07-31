@@ -41,6 +41,20 @@ public final class DeviceIdentityConfidenceEngine {
     if (same(leftSerial, rightSerial)) { score += serialWeight(left, right, settings); matches.add("Seriennummer/Geräte-ID"); }
     else if (both(leftSerial, rightSerial) && isHardwareSerial(left, right)) conflicts.add("abweichende Seriennummer");
 
+    // 40k34e: Android-Ergänzung derselben Engine (keine zweite Bewertungslogik) - trotz
+    // bereits übereinstimmender starker Identität (MAC oder Seriennummer, z.B. per ADB
+    // ermittelt) widerspricht ein unterschiedlicher Build-Fingerprint dieser Identität und
+    // wird als eigenständiger, hoch eingestufter Konflikt gemeldet (siehe conflictSeverity()
+    // in DiscoveryRegistrationRepository).
+    boolean strongIdentityMatch = same(leftMac, rightMac) || same(leftSerial, rightSerial);
+    if (strongIdentityMatch) {
+      String leftFingerprint = normalizeText(DiscoveryRegistrationRepository.detailValues(left.protocol()).get("Build-Fingerprint"));
+      String rightFingerprint = normalizeText(DiscoveryRegistrationRepository.detailValues(right.protocol()).get("Build-Fingerprint"));
+      if (both(leftFingerprint, rightFingerprint) && !leftFingerprint.equals(rightFingerprint)) {
+        conflicts.add("abweichender Build-Fingerprint trotz gleicher starker Identität");
+      }
+    }
+
     String leftName = normalizeName(left.name());
     String rightName = normalizeName(right.name());
     if (same(leftName, rightName)) {
@@ -56,6 +70,13 @@ public final class DeviceIdentityConfidenceEngine {
     String leftIp = normalizeIp(left.address());
     String rightIp = normalizeIp(right.address());
     if (same(leftIp, rightIp)) { score += settings.ipWeight(); matches.add("IP-Adresse"); }
+    // 40k33b6a: unterschiedliche, jeweils gültige IP-Adressen bei gleichzeitig als
+    // erreichbar gemeldeten Geräten sind ein eigenständiger, deutlich sichtbarer
+    // Konflikt (z.B. Geräte-Umzug ins falsche Segment) - rein zusätzliche
+    // Erkennung, keine Änderung der bestehenden Schwellenwerte/Gewichtung.
+    else if (both(leftIp, rightIp) && isReachable(left.status()) && isReachable(right.status())) {
+      conflicts.add("abweichende IP-Adresse bei gleichzeitig erreichbaren Geräten");
+    }
 
     String leftManufacturer = normalizeText(left.manufacturer());
     String rightManufacturer = normalizeText(right.manufacturer());
@@ -71,6 +92,26 @@ public final class DeviceIdentityConfidenceEngine {
     // Harte Konflikte begrenzen die Automatik. Eine identische IP allein darf nie mergen.
     if (settings.hardConflictsBlockMerge() && !conflicts.isEmpty() && !same(leftMac, rightMac) && !same(leftSerial, rightSerial)) score = Math.min(score, settings.autoMergeThreshold()-1);
     if (settings.ipNeverMergesAlone() && matches.size() == 1 && matches.contains("IP-Adresse")) score = Math.min(settings.ipWeight(), settings.possibleDuplicateThreshold()-1);
+    // 40k34e: der Build-Fingerprint-Konflikt muss einen automatischen Merge in jedem Fall
+    // verhindern, auch wenn die vorstehende Bedingung (mac/seriell weichen ab) hier nicht
+    // zutrifft - eigenständige, additive Deckelung.
+    if (settings.hardConflictsBlockMerge() && conflicts.stream().anyMatch(c -> c.contains("Build-Fingerprint"))) {
+      score = Math.min(score, settings.autoMergeThreshold()-1);
+    }
+
+    // 40k33b4: IP-Merge-Bruecke. Wenn ein Treffer eine bekannte MAC-Adresse hat, der andere
+    // Treffer fuer dieselbe IP noch KEINE MAC-Adresse besitzt, keine widersprechende bekannte
+    // MAC existiert und auch sonst kein Konflikt vorliegt (z.B. abweichende Seriennummer), ist
+    // die gemeinsame IP ein starkes Identitaetsmerkmal - typischerweise derselbe physische
+    // Wechselrichter/Server, einmal per mDNS ohne MAC und einmal per ARP/Windows mit MAC erkannt.
+    // Zwei GEGENSAETZLICHE bekannte MAC-Adressen loesen diese Bruecke ausdruecklich NICHT aus.
+    boolean exactlyOneKnownMac = leftMac.isEmpty() != rightMac.isEmpty();
+    boolean ipBridgeEligible = same(leftIp, rightIp) && exactlyOneKnownMac && conflicts.isEmpty();
+    if (ipBridgeEligible) {
+      score = Math.max(score, settings.autoMergeThreshold());
+      if (!matches.contains("IP-Adresse")) matches.add("IP-Adresse");
+      matches.add("IP-Merge-Brücke (bekannte MAC ergänzt fehlende MAC ohne Widerspruch)");
+    }
 
     int confidence = Math.min(100, Math.max(0, (int)Math.round(score / 1.6)));
     Decision decision = settings.automaticMergeEnabled() && score >= settings.autoMergeThreshold() ? Decision.AUTO_MERGE
@@ -88,7 +129,7 @@ public final class DeviceIdentityConfidenceEngine {
 
   private static boolean isHardwareSerial(DiscoveredDevice left, DiscoveredDevice right) {
     String p = (safe(left.protocol()) + " " + safe(right.protocol())).toLowerCase(Locale.ROOT);
-    return p.contains("wmi") || p.contains("winrm") || p.contains("ssh") || p.contains("proxmox") || p.contains("bios");
+    return p.contains("wmi") || p.contains("winrm") || p.contains("ssh") || p.contains("proxmox") || p.contains("bios") || p.contains("adb");
   }
 
   private static int sourceAgreementBonus(String a, String b, Settings settings) {
@@ -161,4 +202,5 @@ public final class DeviceIdentityConfidenceEngine {
   private static boolean same(String a, String b) { return both(a,b) && a.equals(b); }
   private static boolean both(String a, String b) { return a != null && b != null && !a.isBlank() && !b.isBlank(); }
   private static String safe(String value) { return value == null ? "" : value; }
+  private static boolean isReachable(String status) { return status != null && status.trim().equalsIgnoreCase("ONLINE"); }
 }

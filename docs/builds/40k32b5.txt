@@ -1,0 +1,17 @@
+# 40k32b5 – Modulare Windows-Inventarisierung
+
+Die Windows-Inventarisierung wurde von wenigen großen PowerShell-Skripten auf neun unabhängige Module umgestellt.
+
+## Änderungen
+
+- separate Prozesse und Timeouts für System, BIOS/Mainboard, CPU/RAM, Speicher, Netzwerk, Software, Sicherheit, Wartung und Windows Update
+- Teilergebnisse bleiben erhalten, wenn einzelne Module fehlschlagen oder ihr Zeitlimit überschreiten
+- Ausgabe als robuste `SCHLÜSSEL=WERT`-Zeilen statt eines einzigen langen Datensatzes
+- UTF-8-Ausgabe und weiterhin sichere Übergabe per `-EncodedCommand`
+- Diagnose zeigt für jedes Modul Start, Erfolg, Anzahl gelesener Werte oder konkrete Teilfehler
+- registrierte Geräte erhalten alle erfolgreich ermittelten Zusatzinformationen
+- Protokoll nennt erfolgreiche und nicht verfügbare Module
+
+## Testhinweis
+
+Nach dem Start eine Suche mit aktivierter Windows-Inventarisierung durchführen. In der Diagnose sollten die neun Module einzeln erscheinen. Auch bei einem Timeout der Updateprüfung müssen System-, Hardware-, Speicher- und Netzwerkdaten gespeichert werden.

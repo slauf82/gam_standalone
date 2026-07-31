@@ -6,17 +6,21 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/inventory")
 public class InventoryWriteController {
   private final JdbcTemplate jdbc;
   private final InventoryRepository repository;
   private final DiscoveryRegistrationRepository registrations;
+  private final InventoryIdentityLinkRepository identityLinks;
 
-  public InventoryWriteController(JdbcTemplate jdbc, InventoryRepository repository, DiscoveryRegistrationRepository registrations) {
+  public InventoryWriteController(JdbcTemplate jdbc, InventoryRepository repository, DiscoveryRegistrationRepository registrations, InventoryIdentityLinkRepository identityLinks) {
     this.jdbc = jdbc;
     this.repository = repository;
     this.registrations = registrations;
+    this.identityLinks = identityLinks;
   }
 
   @PostMapping("/devices/new")
@@ -116,9 +120,39 @@ public class InventoryWriteController {
       "Aus registrierten Geräten in den Gerätebestand übernommen"
     );
     InventoryDeviceDetail detail = createNewDevice(request);
+    // 40k34t: Verknüpfung zur kanonischen Discovery-Identität JETZT herstellen -
+    // zu diesem Zeitpunkt ist die Zuordnung zu 100% sicher (kein Ratespiel), da wir
+    // sowohl die Quelle (identityKey) als auch das gerade erzeugte Zielgerät kennen.
+    // Vorher ging diese Verbindung durch das anschließende deregisterByKey()
+    // unwiderruflich verloren - das war die eigentliche Ursache dafür, dass
+    // Plattforminventarisierung/-status im Gerätebestand strukturell nicht
+    // erscheinen konnten (siehe docs/40k34t-...).
+    identityLinks.link(detail.device().source(), detail.device().id(), identityKey, "Verschieben in den Gerätebestand");
     registrations.deregisterByKey(identityKey);
     return detail;
   }
+
+  /**
+   * 40k34t: Best-Effort-Nachverknüpfung bereits vorhandener Gerätebestand-Einträge
+   * mit einer aktuell noch existierenden, eindeutigen Discovery-Identität (siehe
+   * InventoryIdentityLinkRepository für die genaue Zuordnungsreihenfolge). Rein
+   * lokale Datenbankabfragen, kein Remote-Aufruf, idempotent (bereits verknüpfte
+   * Geräte werden übersprungen).
+   */
+  @PostMapping("/devices/link-existing")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public InventoryIdentityLinkRepository.LinkSummary linkExistingDevices() {
+    List<InventoryDevice> all = repository.search(new InventorySearchCriteria(null, null, null, null, 10000, 0));
+    return identityLinks.linkExistingUnlinkedDevices(all);
+  }
+
+  // 40k34t: BEWUSST KEIN zweiter Plattforminventarisierungs-Endpunkt hier - sobald
+  // ein Gerätebestand-Eintrag über InventoryDeviceDetail.identityKey verknüpft ist,
+  // ruft das Frontend direkt den bereits bestehenden, generischen Endpunkt
+  // POST /api/inventory/discovery/identity/platform-inventory (DeviceIdentityController,
+  // seit 40k34p unverändert) auf - derselbe Dispatcher, dieselbe API, unabhängig
+  // davon, ob die Aktion aus dem Geräteidentitäts-Dialog oder aus dem Gerätebestand
+  // ausgelöst wird.
 
   @DeleteMapping("/discovery/registered/{identityKey}")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")

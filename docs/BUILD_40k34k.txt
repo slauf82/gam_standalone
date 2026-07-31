@@ -1,0 +1,44 @@
+GAM Standalone v2.1.0 – Schritt 40k34k
+Sofortige Umsortierung nach Kategorieaenderungen
+
+Schwerpunkte:
+- Verifizierte Hauptursache (automatischer Pfad): onRegistered() (laedt
+  registeredDevices neu) wurde am Suchlauf-Ende nur INNERHALB des
+  AUTO_INVENTORY-Zweigs aufgerufen - Standardeinstellung ist AUS. Dadurch
+  wurde die registrierte Geraeteliste nach einem Suchlauf in der
+  Standardkonfiguration ueberhaupt nicht neu geladen, obwohl die Evidence-
+  Nachklassifizierung (40k34h-j) serverseitig bereits eine neue Kategorie
+  gespeichert hatte.
+- Fix: onRegistered() wird jetzt IMMER am Ende eines vollstaendigen
+  Suchlaufs aufgerufen (nicht mehr an AUTO_INVENTORY gebunden). Kein neues
+  Polling, kein setTimeout - derselbe bereits bestehende Reload-Mechanismus,
+  nur nicht mehr bedingt.
+- Manueller Pfad (aendern per <select>): Code-Analyse ergab, dass der
+  bestehende Update-Pfad BEREITS korrekt immutable ist (neue Array-/Objekt-
+  Referenz, keine Mutation, kontrolliertes <select>, stabile Keys,
+  registeredGroups/filteredRegisteredDevices sind nicht gecachte consts).
+  Ehrlich benannt: keine zusaetzliche Ursache im Code gefunden - dies wird
+  als offene Unsicherheit dokumentiert statt als angeblich behoben.
+- Konsolidierung: neue kleine Hilfsfunktion applyRegisteredDeviceUpdate()
+  wird jetzt von Typ- UND Namensaenderung gemeinsam verwendet (vorher zwei
+  identische, getrennt gepflegte .map()-Ausdruecke).
+- Keine Aenderung an Sortier-/Gruppierungslogik, keine Discovery-/Evidence-/
+  Merge-Aenderung, keine DB-Migration.
+- Kein echter Build moeglich - ausdruecklich benannt. TypeScript-Syntax-
+  Check (0 Diagnosen), manuelle Pruefung auf Mutation/Dependencies/
+  Race-Conditions durchgefuehrt.
+
+Zusatzauftrag (Compiler-Warnung "unchecked operations" in
+DiscoveryRegistrationRepository.java): NICHT behoben. Gruendliche
+mehrstufige Suche (Casts auf parameterisierte Typen, rohe Typdeklarationen,
+generische Array-Erzeugung, Abgleich mit dem einzigen bekannten Analogfall
+in DeviceMergeController.java) blieb ergebnislos. Da kein echter Compiler
+mit -Xlint:unchecked in dieser Sandbox verfuegbar ist, wurde bewusst KEINE
+pauschale @SuppressWarnings-Annotation ohne bekannte Ursache ergaenzt (haette
+die Warnung nur verdeckt, nicht behoben). Bitte die exakte Zeile aus einem
+lokalen Build mit -Xlint:unchecked mitteilen, dann folgt eine gezielte
+Korrektur.
+
+Ausfuehrliche Dokumentation: docs/40k34k-sofortige-kategorie-umsortierung.md
+
+Basis: 40k34j

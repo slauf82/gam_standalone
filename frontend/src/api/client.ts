@@ -133,7 +133,7 @@ export type InventoryDevice = { id:number; source:string; name?:string; type?:st
 export type DeviceAssignment = { id:number; branchId?:number; branchCode?:string; branchName?:string; companyId?:number; companyName?:string };
 export type DeviceConsumable = { id:number; materialId?:number; name?:string; properties?:string; amount?:number; manufacturerEmail?:string };
 export type DeviceSoftware = { id:number; name?:string; workplaceId?:number };
-export type InventoryDeviceDetail = { device: InventoryDevice; assignments: DeviceAssignment[]; consumables: DeviceConsumable[]; software: DeviceSoftware[] };
+export type InventoryDeviceDetail = { device: InventoryDevice; assignments: DeviceAssignment[]; consumables: DeviceConsumable[]; software: DeviceSoftware[]; identityKey?: string; platform?: string; platformStatus?: PlatformInventoryStatusRow[]; discoveryProtocol?: string };
 export type InventoryStats = { legacyDeviceCount:number; newDeviceCount:number; branchAssignmentCount:number; medicalDeviceCount:number; electricalDeviceCount:number; outOfServiceCount:number };
 export const loadInventoryDevices = (q = "", source = "all", activeOnly = false, limit = 100) => request<InventoryDevice[]>(`/inventory/devices?q=${encodeURIComponent(q)}&source=${encodeURIComponent(source)}&activeOnly=${activeOnly}&limit=${limit}`);
 export const loadInventoryDevice = (source: string, id: number) => request<InventoryDeviceDetail>(`/inventory/devices/${encodeURIComponent(source)}/${id}`);
@@ -382,6 +382,11 @@ export type FirstRunSetupRequest = {
 export const loadFirstRunStatus = () => request<FirstRunStatus>("/setup/status");
 export const initializeFirstRun = (payload:FirstRunSetupRequest) => request<Record<string,unknown>>("/setup/initialize", {method:"POST", body:JSON.stringify(payload)});
 
+// Schritt 40k33a11: Beispieldaten nach der Ersteinrichtung importieren
+export type DemoDatabaseStatus={available:boolean;file:string;accountCount:number;patientCount:number;invoiceCount:number;message:string};
+export const loadDemoDatabaseStatus=()=>request<DemoDatabaseStatus>("/database/demo/status");
+export const importDemoDatabase=()=>request<Record<string,unknown>>("/database/demo/import",{method:"POST"});
+
 // Schritt 40k: Gerätemanager und Discovery-Grundlage
 export type DiscoveredDevice = {
   id:string;
@@ -401,6 +406,11 @@ export const loadDeviceDiscoveryCapabilities = () => request<DeviceDiscoveryCapa
 export type BuiltinDiscoverySources=Record<string,boolean>;
 export const loadBuiltinDiscoverySources=()=>request<BuiltinDiscoverySources>('/inventory/discovery/builtin-sources');
 export const saveBuiltinDiscoverySources=(payload:BuiltinDiscoverySources)=>request<BuiltinDiscoverySources>('/inventory/discovery/builtin-sources',{method:'PUT',body:JSON.stringify(payload)});
+export type WinRmDiscoverySettings={enabled:boolean;username:string;passwordConfigured:boolean;port:number;https:boolean};
+export type WinRmDiscoveryTest={configured:boolean;reachable:boolean;message:string;checkedAt:string};
+export const loadWinRmDiscoverySettings=()=>request<WinRmDiscoverySettings>('/inventory/discovery/winrm');
+export const saveWinRmDiscoverySettings=(payload:{enabled:boolean;username:string;password?:string;clearPassword?:boolean;port:number;https:boolean})=>request<WinRmDiscoverySettings>('/inventory/discovery/winrm',{method:'PUT',body:JSON.stringify(payload)});
+export const testWinRmDiscovery=(host:string)=>request<WinRmDiscoveryTest>('/inventory/discovery/winrm/test',{method:'POST',body:JSON.stringify({host})});
 export type DeviceIdentityMergeSettings={autoMergeThreshold:number;possibleDuplicateThreshold:number;macWeight:number;hardwareSerialWeight:number;snmpSerialWeight:number;deviceIdWeight:number;hostnameWeight:number;ipWeight:number;manufacturerWeight:number;typeWeight:number;twoSourceBonus:number;threeSourceBonus:number;automaticMergeEnabled:boolean;hardConflictsBlockMerge:boolean;ipNeverMergesAlone:boolean};
 export const loadDeviceIdentityMergeSettings=()=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings');
 export const saveDeviceIdentityMergeSettings=(payload:DeviceIdentityMergeSettings)=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings',{method:'PUT',body:JSON.stringify(payload)});
@@ -409,14 +419,96 @@ export const scanForDevices = () => request<DiscoveredDevice[]>('/inventory/disc
 export const registerDiscoveredDevice = (device:Pick<DiscoveredDevice,'address'|'name'|'hardwareAddress'|'serialNumber'>) => request<Record<string,unknown>>('/inventory/discovery/register',{method:'POST',body:JSON.stringify(device)});
 export const deregisterDiscoveredDevice = (device:Pick<DiscoveredDevice,'address'|'name'|'hardwareAddress'|'serialNumber'>) => request<Record<string,unknown>>('/inventory/discovery/deregister',{method:'POST',body:JSON.stringify(device)});
 export const registerAllDiscoveredDevices=(devices:DiscoveredDevice[])=>request<{registered:number;requested:number}>('/inventory/discovery/register-all',{method:'POST',body:JSON.stringify(devices)});
-export type RegisteredDiscoveryDevice={identityKey:string;name?:string;deviceType?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;protocol?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;registeredAt?:string;detectionCount?:number;lastScanHits?:number;manualDeviceType?:boolean};
+export type RegisteredDiscoveryDevice={identityKey:string;name?:string;deviceType?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;protocol?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;registeredAt?:string;detectionCount?:number;lastScanHits?:number;manualDeviceType?:boolean;manualName?:boolean;adbHost?:string;adbPort?:number;adbLastConnectedAt?:string};
 export const loadRegisteredDiscoveryDevices=()=>request<RegisteredDiscoveryDevice[]>('/inventory/discovery/registered');
 export const updateRegisteredDeviceType=(identityKey:string,deviceType:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/registered/device-type',{method:'PUT',body:JSON.stringify({identityKey,deviceType})});
 export const updateRegisteredDeviceName=(identityKey:string,name:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/registered/device-name',{method:'PUT',body:JSON.stringify({identityKey,name})});
 export const moveRegisteredDeviceToInventory=(identityKey:string)=>request<InventoryDeviceDetail>(`/inventory/discovery/registered/${encodeURIComponent(identityKey)}/inventory`,{method:'POST'});
 export const revokeRegisteredDevice=(identityKey:string)=>request<Record<string,unknown>>('/inventory/discovery/registered/revoke',{method:'POST',body:JSON.stringify({identityKey})});
 export const revokeAllRegisteredDevices=()=>request<Record<string,unknown>>('/inventory/discovery/registered',{method:'DELETE'});
+
+// 40k33b4: Manuelle Gerätezusammenführung.
+export type DeviceMergeFieldRow={label:string;valueA?:string;valueB?:string;differs:boolean};
+export type DeviceMergeCandidate={keyA:string;nameA?:string;typeA?:string;addressA?:string;macA?:string;keyB:string;nameB?:string;typeB?:string;addressB?:string;macB?:string;score:number;confidencePercent:number;decision:string;warningLevel:'RED'|'YELLOW'|'GREEN'|string;matchedSignals:string[];conflicts:string[];criticalityLevel?:'KRITISCH'|'HOCH'|'PRUEFHINWEIS'|string;criticalMessage?:string;fieldComparison:DeviceMergeFieldRow[];manualConfirmationRequired:boolean};
+export type DeviceMergePreview={targetKey:string;sourceKeys:string[];name?:string;manualName:boolean;deviceType?:string;manualDeviceType:boolean;address?:string;mac?:string;serialNumber?:string;manufacturer?:string;protocol?:string;status?:string;detectionCount:number;lastScanHits:number;macConflicts:string[];macConflictConfirmationRequired:boolean;criticalityLevel?:'KRITISCH'|'HOCH'|'PRUEFHINWEIS'|string;criticalMessage?:string;fieldComparison:DeviceMergeFieldRow[];manualConfirmationRequired:boolean};
+export type DeviceMergeLogEntry={id:number;targetIdentityKey:string;mergedIdentityKeys:string;summary?:string;performedBy?:string;performedAt:string};
+export const loadDeviceMergeCandidates=()=>request<DeviceMergeCandidate[]>('/inventory/discovery/merge/candidates');
+export const previewDeviceMerge=(targetKey:string,sourceKeys:string[],overrides?:Record<string,unknown>)=>request<DeviceMergePreview>('/inventory/discovery/merge/preview',{method:'POST',body:JSON.stringify({targetKey,sourceKeys,overrides:overrides||{}})});
+export const confirmDeviceMerge=(targetKey:string,sourceKeys:string[],overrides?:Record<string,unknown>)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/merge/confirm',{method:'POST',body:JSON.stringify({targetKey,sourceKeys,overrides:overrides||{}})});
+export const ignoreDeviceMergeCandidate=(keyA:string,keyB:string)=>request<Record<string,unknown>>('/inventory/discovery/merge/ignore',{method:'POST',body:JSON.stringify({keyA,keyB})});
+export const loadDeviceMergeLog=(limit=50)=>request<DeviceMergeLogEntry[]>(`/inventory/discovery/merge/log?limit=${limit}`);
+
+// 40k33b5: Geräteidentität, Quellenübersicht und Identitätsverwaltung.
+export type DeviceIdentityRow={identityKey:string;name?:string;manualName:boolean;deviceType?:string;manualDeviceType:boolean;category?:string;subcategory?:string;platform?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;detectionCount:number;lastScanHits:number;sources:string[];sourceCount:number;aliases:string[];aliasCount:number;mergeCount:number;confidenceLabel:string;confidenceReasons:string[];hasOpenCandidate:boolean;protocol?:string;adbHost?:string;adbPort?:number;adbLastConnectedAt?:string};
+export type DeviceIdentityHistoryEntry={timestamp:string;kind:'KATEGORIE'|'ALIAS'|'MERGE'|string;description:string};
+export type DeviceIdentityReassessResult={identity:DeviceIdentityRow;openCandidates:DeviceMergeCandidate[]};
+export const loadDeviceIdentityOverview=()=>request<DeviceIdentityRow[]>('/inventory/discovery/identity/overview');
+export const loadDeviceIdentityDetail=(identityKey:string)=>request<DeviceIdentityRow>(`/inventory/discovery/identity/detail?identityKey=${encodeURIComponent(identityKey)}`);
+export const loadDeviceIdentityHistory=(identityKey:string)=>request<DeviceIdentityHistoryEntry[]>(`/inventory/discovery/identity/history?identityKey=${encodeURIComponent(identityKey)}`);
+
+// 40k33b6b: Erweiterte Linux-Analyse (Lazy Loading je einklappbarem Bereich).
+export type LinuxOnDemandSection={section:string;label:string;content:string;available:boolean;fetchedAt:string;fromCache:boolean};
+export const loadLinuxOnDemandSection=(identityKey:string,section:string)=>request<LinuxOnDemandSection>(`/inventory/discovery/linux/section?identityKey=${encodeURIComponent(identityKey)}&section=${encodeURIComponent(section)}`);
+
+// 40k33b7: Geräteintegritätsprüfung und Wiederauftrennung.
+export type IntegrityFieldRow={label:string;currentValue?:string;comparedValue?:string;differs:boolean};
+export type IntegrityResult={status:'Integrität hoch'|'Bitte überprüfen'|'Integritätswarnung'|string;reasons:string[];comparisonTable:IntegrityFieldRow[];comparedIdentityKey?:string;checkedAt:string;conflictCount:number;criticalityLevel?:'KRITISCH'|'HOCH'|'PRUEFHINWEIS'|string;criticalMessage?:string;manualConfirmationRequired:boolean};
+export const loadDeviceIdentityIntegrity=(identityKey:string)=>request<IntegrityResult>(`/inventory/discovery/identity/integrity?identityKey=${encodeURIComponent(identityKey)}`);
+export type SplitCandidate={ref:string;label:string;name?:string;deviceType?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;fullSnapshot:boolean};
+export const loadDeviceIdentitySplitCandidates=(identityKey:string)=>request<SplitCandidate[]>(`/inventory/discovery/identity/split-candidates?identityKey=${encodeURIComponent(identityKey)}`);
+export const splitDeviceIdentity=(identityKey:string,ref:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/identity/split',{method:'POST',body:JSON.stringify({identityKey,ref})});
+
+// 40k33b8: Manuelle Linux-Aktionen (gezielt für ein Gerät, ohne kompletten Suchlauf).
+export type LinuxActionResult={success:boolean;message:string;identity:DeviceIdentityRow};
+export const runLinuxInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/linux/inventory',{method:'POST',body:JSON.stringify({identityKey})});
+export type LinuxSshTestResult={sshConfigured:boolean;reachable:boolean;message:string;checkedAt:string};
+export const testLinuxSsh=(identityKey:string)=>request<LinuxSshTestResult>('/inventory/discovery/identity/linux/ssh-test',{method:'POST',body:JSON.stringify({identityKey})});
+export const refreshLinuxCache=(identityKey:string)=>request<{refreshed:boolean}>('/inventory/discovery/identity/linux/refresh-cache',{method:'POST',body:JSON.stringify({identityKey})});
+
+// 40k35i1: Zentrale SSH-Konfiguration für Linux und künftig macOS.
+export type LinuxSshSettings={enabled:boolean;username:string;authMode:'KEY'|'PASSWORD'|string;passwordConfigured:boolean;keyPath:string;port:number;password?:string;clearPassword?:boolean};
+export const loadLinuxSshSettings=()=>request<LinuxSshSettings>('/inventory/discovery/ssh');
+export const saveLinuxSshSettings=(settings:LinuxSshSettings)=>request<LinuxSshSettings>('/inventory/discovery/ssh',{method:'PUT',body:JSON.stringify(settings)});
+
+// 40k34b: ADB-Status, Pairing, Verbindung, Inventarisierung.
+export type AdbDevice={serial:string;state:string;transportId?:string;model?:string;product?:string;device?:string;network:boolean};
+export type AdbStatus={available:boolean;path?:string;version?:string;serverActive:boolean;devices:AdbDevice[];authorized:number;unauthorized:number;offline:number;otherState:number;checkedAt:string};
+export type AdbActionResult={success:boolean;message:string};
+export const loadAndroidAdbStatus=()=>request<AdbStatus>('/inventory/discovery/identity/android/adb-status');
+export const pairAndroidDevice=(host:string,pairingPort:number,pairingCode:string)=>request<AdbActionResult>('/inventory/discovery/identity/android/pair',{method:'POST',body:JSON.stringify({host,pairingPort,pairingCode})});
+export const connectAndroidDevice=(host:string,port:number,identityKey?:string)=>request<AdbActionResult>('/inventory/discovery/identity/android/connect',{method:'POST',body:JSON.stringify({host,port,identityKey})});
+export const disconnectAndroidDevice=(host:string,port:number)=>request<AdbActionResult>('/inventory/discovery/identity/android/disconnect',{method:'POST',body:JSON.stringify({host,port})});
+export const runAndroidInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/android/inventory',{method:'POST',body:JSON.stringify({identityKey})});
+export const reconnectKnownAndroidDevices=()=>request<{results:string[]}>('/inventory/discovery/identity/android/reconnect-known',{method:'POST'});
+
+// 40k34c: Android-App-/Paketinventar.
+export type InstalledApp={packageName:string;androidUserId?:number;androidUserName?:string;displayName?:string;versionName?:string;versionCode?:number;installTime?:string;updateTime?:string;installerPackage?:string;system:boolean;updatedSystem:boolean;enabled:boolean;debuggable:boolean;testOnly:boolean;minSdk?:number;targetSdk?:number;roles?:string;firstSeenAt:string;lastSeenAt:string;removedAt?:string};
+export type AppInventoryRun={id:number;startedAt:string;finishedAt?:string;status:string;appCount:number;userAppCount:number;systemAppCount:number;changesSummary?:string;message?:string};
+export type AppInventoryRunResult={success:boolean;status:string;message:string;appCount:number;userAppCount:number;systemAppCount:number;changesSummary?:string};
+export const loadAndroidApps=(identityKey:string)=>request<InstalledApp[]>(`/inventory/discovery/identity/android/apps?identityKey=${encodeURIComponent(identityKey)}`);
+export const loadAndroidAppRuns=(identityKey:string,limit=10)=>request<AppInventoryRun[]>(`/inventory/discovery/identity/android/apps/runs?identityKey=${encodeURIComponent(identityKey)}&limit=${limit}`);
+export const runAndroidAppInventory=(identityKey:string)=>request<AppInventoryRunResult>('/inventory/discovery/identity/android/apps/inventory',{method:'POST',body:JSON.stringify({identityKey})});
+
+// 40k34m: Plattforminventarisierung - Erst-/Nachinventarisierung je Plattform, unabhängig von Discovery.
+export type SupportedPlatform='Windows'|'Linux'|'Android'|'macOS'|'iOS';
+export type PlatformInventoryResult={success:boolean;status:string;message?:string;platform:string};
+export type PlatformInventoryStatusRow={platform:string;status:string;startedAt?:string;finishedAt?:string;message?:string;durationSeconds?:number;triggeredBy?:string};
+export const runPlatformInventory=(identityKey:string,platform:SupportedPlatform)=>request<PlatformInventoryResult>('/inventory/discovery/identity/platform-inventory',{method:'POST',body:JSON.stringify({identityKey,platform})});
+export const runAllKnownPlatforms=(identityKey:string)=>request<PlatformInventoryResult[]>('/inventory/discovery/identity/platform-inventory/all',{method:'POST',body:JSON.stringify({identityKey})});
+export const loadPlatformInventoryStatus=(identityKey:string)=>request<PlatformInventoryStatusRow[]>(`/inventory/discovery/identity/platform-inventory/status?identityKey=${encodeURIComponent(identityKey)}`);
+
+// 40k34f: Aggregierte App-Zusammenfassung für den Android-Report (eine Sammelabfrage).
+export type AndroidAppsGlobalSummary={totalApps?:number;deviceCount?:number;userApps?:number;systemApps?:number;disabledApps?:number;updatedSystemApps?:number;installerDistribution:{installer:string;count:number}[]};
+export const loadAndroidAppsGlobalSummary=()=>request<AndroidAppsGlobalSummary>('/inventory/discovery/identity/android/apps/global-summary');
+export const reassessDeviceIdentity=(identityKey:string)=>request<DeviceIdentityReassessResult>('/inventory/discovery/identity/reassess',{method:'POST',body:JSON.stringify({identityKey})});
+export const addDeviceIdentityAlias=(identityKey:string,alias:string)=>request<{identityKey:string;aliases:string[]}>('/inventory/discovery/identity/alias',{method:'POST',body:JSON.stringify({identityKey,alias})});
+export const renameDeviceIdentityAlias=(identityKey:string,oldAlias:string,newAlias:string)=>request<{identityKey:string;aliases:string[]}>('/inventory/discovery/identity/alias',{method:'PUT',body:JSON.stringify({identityKey,oldAlias,newAlias})});
+export const removeDeviceIdentityAlias=(identityKey:string,alias:string)=>request<{identityKey:string;aliases:string[]}>('/inventory/discovery/identity/alias/remove',{method:'POST',body:JSON.stringify({identityKey,alias})});
+export const setDeviceIdentityMainName=(identityKey:string,name:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/identity/main-name',{method:'PUT',body:JSON.stringify({identityKey,name})});
 export const emptyEntireInventoryToRegistered=()=>request<Record<string,unknown>>('/inventory/devices/empty-to-registered',{method:'POST'});
+// 40k34t: Best-Effort-Nachverknuepfung bestehender Gerätebestand-Einträge mit der Discovery-Identität.
+export type InventoryIdentityLinkSummary={linked:number;alreadyLinked:number;ambiguous:number;unresolved:number};
+export const linkExistingInventoryDevices=()=>request<InventoryIdentityLinkSummary>('/inventory/devices/link-existing',{method:'POST'});
 export const removeInventoryDeviceToRegistered=(id:number)=>request<Record<string,unknown>>(`/inventory/devices/new/${id}/remove-from-inventory`,{method:'POST'});
 
 export type DeviceDiscoveryDiagnostic = {sessionId:string;timestamp:string;phase:string;status:'STARTED'|'RUNNING'|'COMPLETED'|'SKIPPED'|'FAILED';message:string;deviceCount:number};
@@ -450,16 +542,21 @@ export async function scanForDevicesStreaming(onEvent:(event:DeviceDiscoveryStre
     if(!response.ok){throw new Error((await response.text())||`HTTP ${response.status}`);}
     const packet=await response.json() as {events?:DeviceDiscoveryStreamEvent[];finished?:boolean;lastEventId?:number};
     const events=Array.isArray(packet.events)?packet.events:[];
-    for(const event of events){
+    for(let index=0;index<events.length;index++){
+      const event=events[index];
       const eventId=Number((event as DeviceDiscoveryStreamEvent&{eventId?:number}).eventId||0);
       if(eventId>after)after=eventId;
       trace('LIVE_EVENT',{eventType:event.type,eventId,sessionId:session.sessionId,sessionNo:session.sessionNo});
       onEvent(event);
-      await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
+      // 40k35: Niemals auf requestAnimationFrame warten. Browser halten RAF in
+      // inaktiven Tabs an oder drosseln ihn stark. Der Scan läuft serverseitig
+      // weiter und die Ereignisse werden nun auch bei einem Tabwechsel vollständig
+      // abgeholt. Nach größeren Paketen geben wir nur per Microtask kurz frei.
+      if(index>0&&index%50===0)await Promise.resolve();
     }
     if(typeof packet.lastEventId==='number'&&packet.lastEventId>after)after=packet.lastEventId;
     finished=packet.finished===true;
-    if(!finished&&events.length===0){await new Promise<void>(resolve=>setTimeout(resolve,25));}
+    if(!finished&&events.length===0){await new Promise<void>(resolve=>setTimeout(resolve,100));}
   }
   trace('LIVE_CHANNEL_FINISHED',{sessionId:session.sessionId,sessionNo:session.sessionNo,lastEventId:after});
 }

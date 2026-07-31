@@ -39,4 +39,15 @@ public class GlobalApiExceptionHandler {
   ResponseEntity<ApiError> badRequest(IllegalArgumentException ex, HttpServletRequest request) {
     return ResponseEntity.badRequest().body(ApiError.of(400, "BAD_REQUEST", ex.getMessage(), request.getRequestURI()));
   }
+
+  /**
+   * 40k33b4: Wird u.a. von der manuellen Gerätezusammenführung genutzt, um einen
+   * ungelösten MAC-Adress-Konflikt verständlich statt als generischen Serverfehler
+   * zurückzugeben (der Benutzer muss die Zusammenführung dann ausdrücklich bestätigen).
+   */
+  @ExceptionHandler(IllegalStateException.class)
+  ResponseEntity<ApiError> conflict(IllegalStateException ex, HttpServletRequest request) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+      .body(ApiError.of(409, "CONFLICT", ex.getMessage(), request.getRequestURI()));
+  }
 }

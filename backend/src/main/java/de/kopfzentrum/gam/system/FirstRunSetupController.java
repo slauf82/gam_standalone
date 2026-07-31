@@ -47,7 +47,7 @@ public class FirstRunSetupController {
       databaseExists = true;
       try (ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM accounts")) {
         if (rs.next()) accounts = rs.getLong(1);
-        initialized = true;
+        initialized = coreTablesPresent(connection);
       } catch (Exception ignored) {
         initialized = false;
       }
@@ -59,8 +59,10 @@ public class FirstRunSetupController {
     result.put("initialized", initialized);
     result.put("accountCount", accounts);
     result.put("database", databaseName());
-    result.put("emptyDatabaseAvailable", locateSql("gam_v2_1_0_preview2_empty.sql") != null);
-    result.put("demoDatabaseAvailable", locateSql("gam_demo_v2_1_0_preview2_anonymisiert.sql") != null);
+    result.put("emptyDatabaseAvailable", locateSql("gam_v2_1_0_preview3_empty.sql") != null
+        && locateSql("gam_v2_1_0_preview3_runtime_schema.sql") != null);
+    result.put("demoDatabaseAvailable", locateSql("gam_demo_v2_1_0_preview3_anonymisiert.sql") != null
+        && locateSql("gam_v2_1_0_preview3_runtime_schema.sql") != null);
     result.put("error", error);
     return result;
   }
@@ -76,15 +78,18 @@ public class FirstRunSetupController {
 
     String mode = normalize(request.mode(), "empty");
     String sqlFile = "demo".equals(mode)
-        ? "gam_demo_v2_1_0_preview2_anonymisiert.sql"
-        : "gam_v2_1_0_preview2_empty.sql";
+        ? "gam_demo_v2_1_0_preview3_anonymisiert.sql"
+        : "gam_v2_1_0_preview3_empty.sql";
     Path script = locateSql(sqlFile);
     if (script == null) throw new IllegalStateException("Die Datenbankvorlage " + sqlFile + " wurde nicht gefunden.");
 
     createDatabaseIfMissing();
     resetApplicationSchema();
     executeSqlScript(script);
+    ensureRuntimeSchema();
+    verifyBaseSchema(script);
     createAdministrator(request);
+    verifyAdministrator(request.adminUsername().trim());
     applyPracticeDetails(request);
 
     return Map.of(
@@ -95,6 +100,69 @@ public class FirstRunSetupController {
         "language", normalize(request.language(), "de"),
         "message", "GAM wurde erfolgreich eingerichtet."
     );
+  }
+
+
+  private boolean coreTablesPresent(Connection connection) {
+    for (String table : List.of("accounts", "news", "rechnungsgesellschaft", "gam_settings")) {
+      try (var ps = connection.prepareStatement(
+          "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=? AND table_name=?")) {
+        ps.setString(1, databaseName());
+        ps.setString(2, table);
+        try (ResultSet rs = ps.executeQuery()) {
+          if (!rs.next() || rs.getInt(1) != 1) return false;
+        }
+      } catch (Exception ex) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void ensureRuntimeSchema() throws Exception {
+    try (Connection connection = DriverManager.getConnection(datasourceUrl, datasourceUser, datasourcePassword);
+         Statement statement = connection.createStatement()) {
+      statement.executeUpdate("CREATE TABLE IF NOT EXISTS gam_settings (" +
+          "setting_key VARCHAR(120) NOT NULL, setting_value TEXT NULL, " +
+          "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+          "updated_by VARCHAR(255) NULL, PRIMARY KEY(setting_key)) " +
+          "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+  }
+
+  private void verifyBaseSchema(Path script) throws Exception {
+    String sqlText = Files.readString(script, StandardCharsets.UTF_8);
+    var matcher = java.util.regex.Pattern.compile("(?im)^CREATE TABLE `([^`]+)`").matcher(sqlText);
+    List<String> expected = new ArrayList<>();
+    while (matcher.find()) expected.add(matcher.group(1));
+    List<String> missing = new ArrayList<>();
+    try (Connection connection = DriverManager.getConnection(datasourceUrl, datasourceUser, datasourcePassword)) {
+      for (String table : expected) {
+        try (var ps = connection.prepareStatement(
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=? AND table_name=?")) {
+          ps.setString(1, databaseName());
+          ps.setString(2, table);
+          try (ResultSet rs = ps.executeQuery()) {
+            if (!rs.next() || rs.getInt(1) != 1) missing.add(table);
+          }
+        }
+      }
+    }
+    if (!missing.isEmpty()) {
+      throw new IllegalStateException("Datenbankimport unvollständig. Fehlende Tabellen: " + String.join(", ", missing));
+    }
+  }
+
+  private void verifyAdministrator(String username) throws Exception {
+    try (Connection connection = DriverManager.getConnection(datasourceUrl, datasourceUser, datasourcePassword);
+         var ps = connection.prepareStatement("SELECT COUNT(*) FROM accounts WHERE username=? AND role='superadmin'")) {
+      ps.setString(1, username);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next() || rs.getInt(1) != 1) {
+          throw new IllegalStateException("Administrator wurde nicht vollständig angelegt.");
+        }
+      }
+    }
   }
 
   private void validate(SetupRequest request) {

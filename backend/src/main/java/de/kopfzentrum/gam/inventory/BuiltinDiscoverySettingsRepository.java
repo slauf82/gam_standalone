@@ -40,6 +40,9 @@ public class BuiltinDiscoverySettingsRepository {
     m.put("DNS_NAMES",true);
     m.put("MDNS",true);
     m.put("WS_DISCOVERY",true);
+    m.put("WINDOWS_INVENTORY",true);
+    m.put("LINUX_INVENTORY",true);
+    m.put("LINUX_NETWORK",true);
     m.put("NETBIOS",true);
     m.put("DHCP_LEASES",true);
     m.put("USB_LOCAL",false);

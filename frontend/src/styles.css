@@ -303,3 +303,45 @@
 @media print{
  .report-selection-tree .report-category-icon{flex:0 0 22px!important;width:22px!important;height:22px!important;font-size:1rem!important}
 }
+
+/* 40k32b9 – einheitlich einklappbare Geräteanalyse */
+.device-technical-panel .device-detail-section {
+  margin: 0 0 .65rem;
+  border: 1px solid var(--border, #d7dde5);
+  border-radius: .55rem;
+  background: var(--surface, #fff);
+  overflow: hidden;
+}
+.device-technical-panel .device-detail-section > summary {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .62rem .78rem;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+  list-style: none;
+}
+.device-technical-panel .device-detail-section > summary::-webkit-details-marker { display: none; }
+.device-technical-panel .device-detail-section > summary::before {
+  content: '▶';
+  width: 1rem;
+  flex: 0 0 1rem;
+  font-size: .8rem;
+  transition: transform .16s ease;
+}
+.device-technical-panel .device-detail-section[open] > summary::before { transform: rotate(90deg); }
+.device-technical-panel .device-detail-section > summary em {
+  margin-left: auto;
+  font-style: normal;
+  font-weight: 600;
+  opacity: .72;
+}
+.device-detail-section-body { padding: .15rem .8rem .75rem; }
+.device-detail-list-count { margin-bottom: .35rem; font-weight: 700; }
+.device-detail-list {
+  margin: .2rem 0 .25rem;
+  padding-left: 1.3rem;
+  columns: 1;
+}
+.device-detail-list li { margin: .18rem 0; break-inside: avoid; }

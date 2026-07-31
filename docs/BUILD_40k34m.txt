@@ -1,0 +1,45 @@
+GAM Standalone v2.1.0 – Schritt 40k34m
+Zentraler DeviceClassifier statt drei unabhaengiger Kopien
+
+Ausgeloest durch GitHub-Verbesserungsvorschlag: erst alle Klassifizierungs-
+funktionen analysieren, Konsolidierung pruefen, nur bei Unmoeglichkeit
+enrichDevice() isoliert erweitern.
+
+Analyse ergab: DREI (nicht nur zwei wie in 40k34l behoben) unabhaengige
+Kopien derselben Regelkette:
+- enrichDiscoveredDevice() (modul-weit, genutzt von DeviceManagerPanel UND
+  InventoryPage) - eine in 40k34l UEBERSEHENE dritte Kopie mit denselben
+  urspruenglichen Fehlern (Doogee fehlte, "access point" ohne Bindestrich-
+  Toleranz, Huawei-Kollision).
+- enrichDevice() (DeviceManagerPanel) - in 40k34l teilverbessert.
+- classifyInventoryDevice() (InventoryPage) - in 40k34l teilverbessert,
+  dabei fehlten zusaetzlich VIER Kategorien komplett (Audio & Receiver,
+  Haushaltsgeraete, Robotik, Klima & Gebaeudetechnik).
+
+Ergebnis: Konsolidierung ist technisch UND architektonisch moeglich -
+keine der drei Funktionen brauchte strukturell andere Regeln. Neue,
+modul-weite Funktion classifyDevice() enthaelt jetzt das VOLLSTAENDIGE
+Regelwerk an genau einer Stelle; alle drei Funktionen delegieren daran.
+
+Bewusst NICHT vereinheitlicht: der Default-Rueckgabewert bei keinem Treffer
+("Unbekannte Geraete" vs. "Sonstige Geraete") - an die jeweils eigene
+categoryOrder-Konstante gebunden, keine zufaellige Abweichung. classifyDevice()
+liefert deshalb null, jeder Aufrufer wendet seinen eigenen Default an.
+Ebenfalls nicht konsolidiert: die drei separaten categoryOrder-Arrays und
+die zwei OUI-Tabellen (reine Datenkonstanten, keine Logik, ausserhalb des
+Auftragsumfangs).
+
+Zwei zusaetzliche, durch die Konsolidierung selbst aufgedeckte und
+mitbehobene Fehler: (1) Audio & Receiver/Haushaltsgeraete/Robotik/Klima
+fehlten in classifyInventoryDevice() komplett; (2) "iPhone"-Hostnamen
+wurden vorher teils zuerst von der Telefonie-Regel abgefangen (enthaelt
+"phone" als Substring).
+
+Kein Backend geaendert. Kein echter Build moeglich - ausdruecklich benannt.
+TypeScript-Syntax-Check (0 Diagnosen), Grep-Bestaetigung "genau eine
+Regelkette verbleibt", sowie empirischer Node.js-Test aller bekannten und
+neu aufgedeckten Referenzfaelle durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34m-zentraler-device-classifier.md
+
+Basis: 40k34l

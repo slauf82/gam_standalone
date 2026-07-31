@@ -1,0 +1,19 @@
+GAM Standalone v2.1.0 – Schritt 40k33b6b
+Erweiterte Linux-Analyse
+
+Schwerpunkte:
+- Neun neue, einklappbare Bereiche in der erweiterten Linux-Analyse:
+  Installierte Software, Docker, Podman, Snap, Flatpak, Virtualisierung,
+  Container, Entwicklungsumgebung, Monitoring.
+- Lazy Loading: jeder Bereich wird ausschliesslich beim Oeffnen per SSH
+  abgerufen, nicht automatisch waehrend des Suchlaufs.
+- Serverseitiger 10-Minuten-Zwischenspeicher je Geraet/Bereich (In-Memory,
+  keine neue Datenbanktabelle) plus Zwischenspeicher im geoeffneten Dialog.
+- Lokale Filterung grosser Listen ohne erneuten Serverzugriff.
+- Wiederverwendung derselben SSH-Verbindungslogik und -Zugangsdaten wie die
+  bestehende Linux-Inventarisierung (LinuxNetworkDiscoveryService) - keine
+  zweite Softwareverwaltung, keine zweite Identitaetsverwaltung.
+
+Ausfuehrliche Dokumentation: docs/40k33b6b-erweiterte-linux-analyse.md
+
+Basis: 40k33b6a

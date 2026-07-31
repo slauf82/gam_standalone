@@ -15,7 +15,7 @@
 tr.selected{background:#eef4ff}
 .card .stats b{font-size:1.15rem}.card .stats span{color:#697386}
 @media(max-width:1100px){.wide{grid-template-columns:1fr}}
-.danger{background:#b91c1c;color:white}.toolbar.small{padding:0;margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap}.note.ok{border-left-color:#15803d;background:#ecfdf5}.note.warn{border-left-color:#d97706;background:#fffbeb}.new table input{min-width:90px}.new table .danger{padding:.5rem .7rem}
+.danger{background:#b91c1c;color:white}.toolbar.small{padding:0;margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap}.note.ok{border-left-color:#15803d;background:#ecfdf5}.note.warn{border-left-color:#d97706;background:#fffbeb}.integrity-conflict-row td,.merge-field-conflict td{background:#fef2f2;color:#7f1d1d;font-weight:600}.merge-critical-banner{border:3px solid #b91c1c;background:#fef2f2;color:#7f1d1d;border-radius:.6rem;padding:.9rem 1.1rem;margin:.7rem 0;font-weight:600}.merge-critical-banner p{margin:.25rem 0}.merge-row-critical td{background:#fef2f2;border-top:2px solid #b91c1c;border-bottom:2px solid #b91c1c}.merge-row-high td{background:#fff7ed}.merge-high-banner{border-color:#d97706 !important;background:#fffbeb !important;color:#7c4a03 !important}.android-package-cell{overflow-wrap:anywhere;max-width:220px;font-size:.85rem}.merge-percent-critical{color:#7f1d1d;font-weight:700}.new table input{min-width:90px}.new table .danger{padding:.5rem .7rem}
 
 /* Schritt 13: Rechnungs-UX aufgeräumt */
 .invoice-menu{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
@@ -1269,6 +1269,17 @@ body.gam-modal-open {
 .device-discovery-diagnostics.has-error>summary{background:rgba(179,38,30,.08)}
 .device-category-tree{display:grid;gap:8px;padding:10px 0 4px}
 .device-category{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--panel,#fff)}
+.device-category-dragover{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.35);background:#eff6ff}
+.registered-device-row-draggable{cursor:grab}
+.row-action-menu-trigger{width:2.2em;padding:0 0;font-size:1.1em;line-height:1;font-weight:700}
+.row-action-menu-dropdown{z-index:1000;min-width:240px;max-width:280px;max-height:70vh;overflow-y:auto;background:var(--panel,#fff);border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:4px 0;display:flex;flex-direction:column}
+.row-action-menu-dropdown button{all:unset;box-sizing:border-box;width:100%;padding:.45em .9em;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.92em}
+.row-action-menu-dropdown button:hover:not(:disabled){background:var(--hover-bg,#f1f5f9)}
+.row-action-menu-dropdown button:disabled{opacity:.5;cursor:not-allowed}
+.row-action-menu-dropdown .row-action-menu-danger{color:#b91c1c}
+.row-action-menu-group-label{padding:.3em .9em;font-size:.75em;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-fg,#64748b)}
+.row-action-menu-divider{height:1px;margin:4px 0;background:var(--border)}
+.registered-device-row-draggable:active{cursor:grabbing}
 .device-category>summary{cursor:pointer;padding:11px 14px;list-style:none;user-select:none}
 .device-category>summary::-webkit-details-marker{display:none}
 .device-category>summary:before{content:'▶';display:inline-block;width:18px;font-size:.8rem;transition:transform .15s ease}
@@ -1506,4 +1517,27 @@ body.gam-modal-open {
   .report-category-count{flex:0 0 96px !important;grid-template-columns:3ch 3.2ch 3ch;font-size:.82rem}
   .report-category-checkbox{flex:0 0 18px !important;width:16px !important;height:16px !important;margin-left:4px !important}
   .report-selection-tree>details>div{display:none !important}
+}
+
+/* 40k33b6a: Linux-Systeminventarisierung / Merge-Konflikt-Ampel */
+.warn{color:#b45309;font-weight:600}
+.merge-conflict-diff-row td{padding:0 0 .6rem 0;background:transparent;border:none}
+.merge-conflict-diff-table{margin:.3rem 0 0 0}
+.merge-conflict-diff-table td.warn,.merge-conflict-diff-table th.warn{color:#b91c1c;background:#fee2e2;font-weight:700}
+.device-identity-sources{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0}
+
+/* 40k35h: klare Hierarchie der Android-App-Gruppen im Bereich „Registriert“ */
+.registered-app-groups-heading{display:flex;flex-direction:column;gap:.15rem;margin:1rem 0 .55rem}
+.registered-app-groups-heading span{font-size:.9rem;opacity:.72}
+.registered-app-section{margin-left:.35rem}
+.registered-user-app-groups{margin:.25rem 0 .4rem 1.35rem;padding-left:.75rem;border-left:2px solid var(--border,#d7dde5)}
+.registered-user-app-section{margin:.4rem 0}
+.registered-user-app-section>.device-detail-section-body{padding-left:1.15rem}
+.registered-app-list{margin:.25rem 0;padding-left:1.25rem}
+.note.success{border-color:#86efac;background:#f0fdf4;color:#166534}
+
+/* 40k35h3: Grundsatzregel – neu geöffnete/aktualisierte Aufmerksamkeitspunkte
+   werden zentral angesteuert; der Abstand schützt vor dem Sticky-Header. */
+.gam-attention-target {
+  scroll-margin-top: 88px;
 }

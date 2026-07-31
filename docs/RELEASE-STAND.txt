@@ -1,3 +1,4 @@
+GAM 2.0 v2.1.0 Preview 3 – Schritt 40k32 Windows-Erkennung (erster Grundausbau)
 GAM 2.1.0 Preview 1
 Basis: Schritt 40h3
 Ergänzung: integrierter mehrsprachiger Erststart- und Datenbankassistent
@@ -10,3 +11,7 @@ Enthalten:
 - Erfassung optionaler Praxisdaten
 - automatische Anzeige nur bei fehlender/uninitialisierter Datenbank
 - beide SQL-Datenbankvorlagen im Verzeichnis database
+
+40k33b: Linux-Netzwerkerkennung und optionale SSH-Tiefeninventarisierung ergänzt.
+
+40k35: Benutzerzentrierte Geräteworkflows und tabwechsel-feste Hintergrundsuche.

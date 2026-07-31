@@ -1,0 +1,3 @@
+40k32b – Windows-Software- und Sicherheitsinventarisierung
+
+Erweitert die lokale Windows-Inventarisierung um installierte Software, Windows-Features, Antivirus, Microsoft Defender, Firewall, TPM, Secure Boot, BitLocker, ausstehende Updates, letzten Hotfix, Neustartstatus, UAC, Remote Desktop und lokale Administratoren.

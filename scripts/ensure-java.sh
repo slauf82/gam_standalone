@@ -9,10 +9,18 @@ REQUIRED_MAJOR=21
 java_major() {
   local executable="$1"
   [ -x "$executable" ] || { echo 0; return; }
-  local output version
+
+  local output first_line version
   output="$($executable -version 2>&1 || true)"
-  version="$(printf '%s\n' "$output" | sed -nE 's/.*version "([0-9]+)(\.[0-9]+)?.*/\1/p' | head -1)"
-  [ -n "$version" ] || version="$(printf '%s\n' "$output" | sed -nE 's/.*[^0-9]([0-9]+)\.[0-9]+.*/\1/p' | head -1)"
+  first_line="$(printf '%s\n' "$output" | head -n 1)"
+
+  # java:  openjdk version "21.0.11" ...
+  # javac: javac 21.0.11
+  # Die bisherige allgemeine sed-Regel war bei javac-Ausgaben zu gierig und
+  # erkannte aus "javac 21.0.11" faelschlich die Hauptversion 0.
+  version="$(printf '%s\n' "$first_line" | sed -nE 's/^[^0-9]*([0-9]+)(\.[0-9]+.*)?$/\1/p')"
+  [ -n "$version" ] || version="$(printf '%s\n' "$first_line" | sed -nE 's/.*version[[:space:]]+"?([0-9]+).*/\1/p')"
+
   echo "${version:-0}"
 }
 
@@ -84,6 +92,13 @@ mkdir -p "$TMP_DIR/unpack"; tar -xzf "$ARCHIVE" -C "$TMP_DIR/unpack"
 JAVA_ROOT="$(find "$TMP_DIR/unpack" -type f -path '*/bin/javac' -print -quit | sed 's#/bin/javac$##')"
 [ -n "$JAVA_ROOT" ] || { echo "[FEHLER] Das Java-Archiv enthaelt kein nutzbares JDK." >&2; exit 1; }
 rm -rf "$RUNTIME_DIR"; mkdir -p "$(dirname "$RUNTIME_DIR")"; mv "$JAVA_ROOT" "$RUNTIME_DIR"
-validate_home "$RUNTIME_DIR" >/dev/null || { echo "[FEHLER] JDK konnte nicht validiert werden." >&2; exit 1; }
+if ! validated_home="$(validate_home "$RUNTIME_DIR")"; then
+  echo "[FEHLER] JDK konnte nicht validiert werden." >&2
+  echo "[DIAGNOSE] Java:  $RUNTIME_DIR/bin/java -> $(java_major "$RUNTIME_DIR/bin/java")" >&2
+  echo "[DIAGNOSE] Javac: $RUNTIME_DIR/bin/javac -> $(java_major "$RUNTIME_DIR/bin/javac")" >&2
+  "$RUNTIME_DIR/bin/java" -version 2>&1 | head -n 1 | sed 's/^/[DIAGNOSE] /' >&2 || true
+  "$RUNTIME_DIR/bin/javac" -version 2>&1 | head -n 1 | sed 's/^/[DIAGNOSE] /' >&2 || true
+  exit 1
+fi
 printf '%s\n' "$RUNTIME_DIR" > "$SELECTION_FILE"
 echo "[GAM] JDK $(java_major "$RUNTIME_DIR/bin/java") wurde lokal eingerichtet."

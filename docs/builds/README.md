@@ -1,65 +1,14 @@
-# GAM 2.0
+# Build-Historie
 
-**Modern Enterprise Management Platform**
+- **40k32a** – Erweiterte lokale Windows-Systeminventarisierung (OS, BIOS, Mainboard, CPU, RAM, Speicher und Netzwerk)
 
-🇩🇪 **Deutsch:** [README_DE.md](README_DE.md)
+- **40k32b** – Windows-Software-, Sicherheits- und Updateinventarisierung
 
-## Overview
+- **40k32b1** – Zusatzinformationen und Aufklappansicht für registrierte Geräte
 
-GAM 2.0 is the successor to a long-running enterprise management
-application. It started as a migration from a Java EE / JSF / GlassFish
-system but has evolved into a modern platform with capabilities beyond
-the original application.
+- **40k32b2** – Vollständige Windows-Detailpersistenz für registrierte Geräte
 
-Core technologies:
+- **40k32b3** – Robuste PowerShell-Ausführung per UTF-16LE/Base64 und `-EncodedCommand`
+- **40k32b4** – Robuste Windows-Teilabfragen mit individuellen Timeouts und verwertbaren Teilergebnissen
 
--   Java / Spring Boot
--   React + TypeScript
--   MariaDB
--   JWT, TOTP and WebAuthn Passkeys
-
-## Highlights
-
--   Multilingual user interface
--   Enterprise administration
--   Workflow engine
--   Invoice administration
--   Accessible PDF generation (PDF/UA)
--   WCAG-oriented document workflows
--   ZUGFeRD / Factur-X support
--   Multilingual text-to-speech
--   Reporting and exports
--   Multi-source device discovery and inventory management
--   Modular architecture
-
-## Multi-source Device Manager
-
-Instead of manually maintaining devices, GAM collects information from
-multiple sources, consolidates matching records and automatically
-maintains the central inventory.
-
-## Accessibility
-
-GAM integrates accessibility into the document workflow:
-
--   Tagged PDF generation
--   PDF/UA compatible documents
--   WCAG-oriented document structure
--   Multilingual invoices
--   Text-to-speech support
-
-## Architecture
-
-Backend: - Spring Boot - REST APIs - MariaDB
-
-Frontend: - React - TypeScript - Vite
-
-## Vision
-
-GAM is designed as a long-lived enterprise platform that combines
-administration, workflows, inventory management and accessible document
-generation within one modular system.
-
-## License
-
-GNU GPL v3.0
+- **40k32b5** – Modulare Windows-Inventarisierung mit unabhängigen PowerShell-Abfragen und Teilergebnissen

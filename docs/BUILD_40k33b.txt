@@ -1,0 +1,23 @@
+GAM Standalone 2.1.0 Preview 3 – Schritt 40k33b
+
+Linux-Erkennung allgemein:
+- lokale Linux-Inventarisierung bleibt vollständig erhalten
+- neue netzwerkweite Linux-/Unix-Erkennung
+- SSH-Banner und typische Dienste: NFS/rpcbind, Samba, Cockpit, Proxmox VE,
+  Home Assistant, Grafana, Portainer und DNS-Appliances
+- automatische Klassifizierung als Linux-Server, Dateiserver, Container-Host,
+  Virtualisierungsserver, Smart-Home-Zentrale oder Einplatinencomputer
+- optionale schreibgeschützte SSH-Tiefeninventarisierung über Benutzer und Schlüssel
+- SSH-Inventar: Distribution, Kernel, Architektur, Hersteller, UUID/Seriennummer,
+  CPU, RAM, Datenträger, Dateisysteme, Netzwerk, Virtualisierung, Container,
+  laufende Dienste, Paketanzahl und verfügbare Updates
+- neue einzeln schaltbare Quelle LINUX_NETWORK im Gerätemanager
+- Diagnosephase LINUX_NETWORK mit erkannt/inventarisiert-Zählung
+
+SSH-Konfiguration (optional):
+GAM_LINUX_SSH_USER=<benutzer>
+GAM_LINUX_SSH_KEY=/absoluter/pfad/zum/privaten_schluessel
+GAM_LINUX_SSH_PORT=22
+
+Ohne SSH-Konfiguration bleibt die passive Netzwerkerkennung vollständig nutzbar.
+Passwortbasierte Anmeldung wird bewusst nicht automatisch ausgeführt.

@@ -1,0 +1,36 @@
+GAM Standalone v2.1.0 – Schritt 40k34j
+Android-Realgeraeteklassifizierung verbessern
+
+Schwerpunkte:
+- Ursache analysiert (nicht vermutet): bestehende Muster wie "galaxy a"
+  pruefen auf ein Leerzeichen, reale Hostnamen trennen aber mit Bindestrich
+  ("Galaxy-A56") - griff deshalb nie. Zusaetzlich fehlte "Doogee"
+  vollstaendig, und ein reiner Herstellername ohne "phone"/"tablet"-Wort
+  lieferte bisher gar keine Evidence.
+- Ausschliesslich AndroidDeviceClassifier geaendert. DeviceEvidenceEngine,
+  WindowsDeviceClassifier, LinuxDeviceClassifier unveraendert.
+- Leerzeichen-normalisierte Zusatzpruefung fuer Kategorie-Woerter (mDNS-
+  Diensttypen wie _googlecast bleiben auf Original-Text).
+- Neuer, eigenstaendiger Hinweis: Hersteller im Hostnamen zaehlt jetzt als
+  eigene HOCH-Evidenz, auch ohne "phone"/"tablet"-Wort.
+- Neuer Hinweis: bereits von anderer Quelle bekannter Hersteller zaehlt
+  ebenfalls (wichtig fuer reine Modellnummern-Hostnamen).
+- Neue, vorsichtige MITTEL-Evidenz fuer generisches Modellnummern-Muster
+  (z.B. A56, S96, F107) - niemals allein ausreichend.
+- Herstellerliste erweitert: Doogee, Oppo, Vivo (mit Wortgrenze), Fairphone,
+  Nokia, Asus/Zenfone/ROG. "Nothing" bewusst NICHT als bloszes Wort ergaenzt
+  (Fehltreffer-Risiko), bleibt bei "nothing phone".
+- Ergebnis (Logik-Simulation gegen alle 6 Referenzgeraete): 4 von 6 werden
+  bereits allein durch den Hostnamen korrekt erkannt. Die restlichen 2
+  (A56-von-Egon, F107-Pro) enthalten keinerlei Herstellerhinweis im
+  Hostnamen selbst und benoetigen einen bereits von anderer Quelle
+  bekannten Hersteller - dies ist eine im Auftrag selbst vorgegebene,
+  bewusste Grenze, keine uebersehene Luecke.
+- Kein echter Build moeglich - ausdruecklich benannt. Automatisierter
+  Record-Konstruktor-Check (0 Abweichungen) sowie Python-Nachbau der
+  tatsaechlichen Java-Logik zur Verifikation gegen alle 6 Referenzgeraete
+  durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34j-android-realgeraete.md
+
+Basis: 40k34i

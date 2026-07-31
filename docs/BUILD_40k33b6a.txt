@@ -1,0 +1,26 @@
+GAM Standalone v2.1.0 – Schritt 40k33b6a
+Linux-Systeminventarisierung
+
+Schwerpunkte:
+- SSH-Tiefeninventarisierung erweitert: Distribution/-Version, Systemlaufzeit,
+  Standardgateway, DNS-Server, erkannter Paketmanager, Namen aktualisierbarer
+  Pakete (zusaetzlich zur bisherigen Anzahl).
+- Neue, credential-freie Rollen-Indizien (Ports 80/443/3306/5432) sowie
+  "Erkannte Rollen" (Webserver/Datenbankserver/Containerhost/Fileserver/
+  SSH-Fernzugriff/Cockpit/Virtualisierungshost/Smart-Home-Zentrale/
+  Monitoring), abgeleitet aus bereits erfassten Diensten - keine neue
+  Netzwerkerkennung.
+- Bestehende Geraete-Detailabschnitte auf die geforderten, einklappbaren
+  Linux-Bereichsnamen umgruppiert (Betriebssystem, Hardware, Netzwerk,
+  Dienste, Paketmanager, Rollen, Dateisystem, Sicherheit & Wartung,
+  Linux-Analyse) - dieselbe bestehende Pfeil-/Detailstruktur, keine neue
+  Ansicht.
+- Merge-Konflikte deutlicher hervorgehoben: Warnstufen-Ampel (Sehr sicher /
+  Bitte pruefen / Hoher Konflikt) je Zusammenfuehrungskandidat, tabellarische
+  Unterschiedsanzeige (IP/MAC/Kategorie) bei Konflikten. Neu: abweichende
+  IP-Adressen bei gleichzeitig erreichbaren Geraeten gelten jetzt als
+  Konflikt. Keine Aenderung der bestehenden Merge-/Schwellenwertlogik.
+
+Ausfuehrliche Dokumentation: docs/40k33b6a-linux-systeminventarisierung.md
+
+Basis: 40k33b5

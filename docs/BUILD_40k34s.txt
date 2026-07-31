@@ -1,0 +1,50 @@
+GAM Standalone v2.1.0 – Schritt 40k34s
+Diagnose, Reparatur und Vervollstaendigung der Plattforminventarisierung
+
+PROBLEM 2 (automatische Inventarisierung) - URSACHE GEFUNDEN UND BEHOBEN:
+- Bug 1: applicablePlatforms() las row.get("platform") - dieser Schluessel
+  existiert in DiscoveryRegistrationRepository.find()'s Rueckgabe NIE
+  (keine solche Spalte im SELECT). War daher IMMER null.
+- Bug 2 (tieferliegend): selbst platformOf() selbst erkannte "Smartphones &
+  Tablets" (die generische Zielkategorie, die die evidenzbasierte
+  Nachklassifizierung 40k34h-n fuer ALLE Android-Geraete unabhaengig von
+  Hersteller/Modell/Name schreibt) nicht als Android - nur woertliches
+  "android"/"chromecast"/"fire tv"/"shield".
+- Beide Ursachen mit den EXAKT gemeldeten Geraetenamen (Sebastian-Doogee-
+  S96-Pro, Fossibot F107 Pro) per Python-Simulation empirisch bestaetigt.
+- Behoben: platformOf() erkennt jetzt "Smartphones & Tablets" als Android
+  (ausser iPhone/iPad); applicablePlatforms() ruft jetzt tatsaechlich
+  platformOf() auf statt des nie existierenden Feldes.
+- Als Nebeneffekt: das "Plattform"-Feld im Identitaets-Dialog zeigt jetzt
+  korrekt "Android" statt "-" fuer diese Geraete.
+
+PROBLEM 1 (fehlender Button) - URSACHE NICHT GEFUNDEN, EHRLICH SO
+DOKUMENTIERT:
+- Strukturelle Analyse zeigt: der auslösende Button, DeviceIdentityDialog
+  (nachweislich die tatsaechlich verwendete Komponente) und
+  PlatformInventorySection sind alle UNBEDINGT vorhanden - kein Code-Beweis
+  fuer einen fehlenden/blockierten Button gefunden.
+- Echte, aber andersartige Luecke gefunden: "Gerätebestand" (InventoryPage)
+  nutzt ein komplett separates Datenmodell (InventoryDevice) OHNE
+  identityKey - falls die gemeldeten Geraete dort betrachtet wurden, kann
+  PlatformInventorySection dort strukturell nicht erscheinen. Nicht behoben
+  (waere eine neue Funktion, ausdruecklich verboten in diesem Schritt).
+- Nicht abschliessend geklaert, welche Ansicht der Nutzer tatsaechlich
+  betrachtet hat.
+
+Ergaenzt: ausfuehrliche [AUTO-INVENTORY]-Debug-Protokollierung entlang der
+gesamten geforderten Kette (geeignet? ja/nein mit Begruendung, Cooldown,
+laeuft bereits, Dispatcher aufgerufen, Android-System/App-Inventar-Erfolg,
+Detailfeldanzahl, Abschluss).
+
+Keine neuen Features - ausschliesslich Fehlerbehebung an bereits in
+40k34p/r vorhandener, aber fehlerhaft verdrahteter Logik.
+
+Kein echter Build/Praxistest mit den neun Geraeten moeglich - ausdruecklich
+benannt. Record-Konstruktor-Check (0 Abweichungen), Balance-Checks sowie
+Python-Simulation der korrigierten Logik mit den exakten Geraetenamen
+durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34s-diagnose-plattforminventarisierung.md
+
+Basis: 40k34r

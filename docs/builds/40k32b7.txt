@@ -1,0 +1,27 @@
+# GAM 2.0 – Schritt 40k32b7
+
+## Softwareparser und variable Zeitlimits
+
+40k32b7 stabilisiert die modulare Windows-Inventarisierung an den beiden zuletzt sichtbaren Problemstellen.
+
+### Änderungen
+
+- PowerShell-Werte werden nicht mehr als ungeschützte `SCHLÜSSEL=WERT`-Zeilen übertragen.
+- Jedes Ergebnis wird als eindeutig markierter `GAMKV`-Datensatz mit Base64-kodiertem UTF-8-Wert ausgegeben.
+- Zusammengeklebte PowerShell-Ausgaben können dadurch zuverlässig getrennt werden.
+- Lange Softwarelisten und Sonderzeichen bleiben vollständig erhalten.
+- Ein zusätzlicher Fallback-Parser erkennt weiterhin ältere `SCHLÜSSEL=WERT`-Ausgaben und trennt mehrere Felder innerhalb einer Zeile.
+- Software-Abfrage: Zeitlimit 30 Sekunden.
+- Sicherheits-Abfrage: Zeitlimit 20 Sekunden.
+- Windows-Update-Abfrage: Zeitlimit 60 Sekunden.
+- Ein Timeout eines Einzelmoduls bleibt ein Teilfehler und verwirft keine übrigen Inventardaten.
+
+### Behobene Symptome
+
+- `SOFTWARE_COUNT=... SOFTWARE=...` wird nicht mehr als unbrauchbare Gesamtzeile übersprungen.
+- Die Windows-Update-Abfrage endet nicht mehr bereits nach fünf Sekunden.
+- CLIXML- oder Fortschrittsausgaben beeinflussen die Nutzdaten nicht mehr.
+
+### Technischer Test
+
+Die geänderte Java-Klasse wurde mit Java 21 und minimalen Typ-Stubs syntaktisch kompiliert.

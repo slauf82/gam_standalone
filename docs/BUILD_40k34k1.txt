@@ -1,0 +1,34 @@
+GAM Standalone v2.1.0 – Schritt 40k34k1
+Kategorie "Smartphones & Tablets" korrekt als Geraetegruppe anlegen
+
+Schwerpunkte:
+- Untersuchung ergab: "Smartphones & Tablets" existiert bereits vollstaendig
+  als Gruppendefinition (inventoryCategoryOrder, Icon, Sortierposition) -
+  KEINE fehlende Gruppen-Registrierung, KEINE separate Pfeil-Logik im Code
+  gefunden (natives <details>/<summary> fuer jede Kategorie gleich).
+- Tatsaechliche Abweichung: AndroidDeviceClassifier schrieb "📱 Smartphone"/
+  "📱 Tablet" (Emoji, andere Schreibweise) statt exakt "Smartphones &
+  Tablets" (der zentrale, im Frontend bereits vorhandene Schluessel).
+- Fix: alle vier Stellen in AndroidDeviceClassifier.java (guessCategory()
+  Tablet-Zweig, Smartphone-Zweig, classifyWithEvidence()-Fallback, davon
+  abgeleitete roles-Zuweisung) schreiben jetzt exakt "Smartphones &
+  Tablets" - identisch zum Frontend-Schluessel. Emoji geht nicht verloren
+  (Frontend fuegt es ueber inventoryIcon() weiterhin hinzu).
+- DeviceEvidenceEngine unveraendert - nur der Kategorienname wurde
+  vereinheitlicht, keine Evidence-Bewertung/-Erkennung angefasst.
+- Ehrlich dokumentiert: automatische Nachklassifizierung funktionierte via
+  Fuzzy-Fallback (classifyInventoryDevice) technisch bereits vorher meist
+  korrekt (per Node.js-Test verifiziert) - der Fix macht dies aber robust
+  und unabhaengig von dieser fragilen Fuzzy-Logik, besonders relevant fuer
+  manuelle Zuordnung (dort gilt strikter Vergleich, kein Fuzzy-Fallback).
+- Verwandter, aber NICHT behobener Befund dokumentiert: WindowsInventory-
+  DiscoveryService schreibt "Windows-PC", was ebenfalls keiner bestehenden
+  classifyInventoryDevice()-Regel entspricht - liegt aber ausserhalb des
+  beauftragten Umfangs (nur Smartphones & Tablets).
+- Kein Frontend-Code geaendert, onRegistered()-Fix aus 40k34k unangetastet.
+- Kein echter Build moeglich - ausdruecklich benannt. Record-Konstruktor-
+  Check (0 Abweichungen) sowie empirischer Node.js-Regex-Test durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34k1-smartphones-tablets-gruppe.md
+
+Basis: 40k34k

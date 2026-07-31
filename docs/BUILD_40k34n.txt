@@ -1,0 +1,36 @@
+GAM Standalone v2.1.0 – Schritt 40k34n
+Generischer Kategorie-Rueckfall aus dem gemeldeten Typfeld
+
+Gemeldeter Fall: zwei Geraete mit Typ "Computer / Netzwerkadapter" landeten
+in "Sonstige Geraete" statt "Computer" - obwohl "Computer" bereits eindeutig
+im Typfeld stand.
+
+Ursache: die bestehende Computer-Regel verlangte entweder eine EXAKTE
+Uebereinstimmung ("Computer" ohne Zusatz) oder ein enges Modell-Schluesselwort
+(Notebook/Laptop/...) - "Computer / Netzwerkadapter" passte zu keinem von
+beiden.
+
+Umgesetzt (wie vorgeschlagen, generisch statt Einzelfall): neue Funktion
+canonicalCategoryFromType() prueft, ob das gemeldete Typfeld eines der
+bereits bestehenden ~20 Kategorienamen als eigenstaendiges Wort enthaelt
+(computer, router, switch, nas, drucker, kamera, server, ...) - deckt
+kuenftige "<Kategorie> / <Zusatz>"-Formulierungen generisch ab.
+
+Bewusste Ausnahme: "Access Points" ist NICHT in der generischen Wortliste -
+genau diese Kategorie war Ursache der in 40k34l/m behobenen Android-
+Fehlklassifizierung; ein blindes Vertrauen in ein evtl. veraltetes Typfeld
+haette diese Korrektur rueckgaengig gemacht. Per Regressionstest bestaetigt.
+
+Platzierung: ausschliesslich als ALLERLETZTER Rueckfall in classifyDevice(),
+nach allen ~20 bestehenden, spezifischeren Regeln - rettet ausschliesslich
+Geraete, die vorher tatsaechlich in "Sonstige/Unbekannte Geraete" gelandet
+waeren, keine Aenderung fuer bereits korrekt klassifizierte Geraete.
+
+Kein Backend geaendert. Kein echter Build moeglich - ausdruecklich benannt.
+TypeScript-Syntax-Check (0 Diagnosen), empirischer Node.js-Test der beiden
+exakt gemeldeten Faelle sowie ein gezielter Access-Points-Regressionstest
+durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34n-generischer-kategorie-ruckfall.md
+
+Basis: 40k34m

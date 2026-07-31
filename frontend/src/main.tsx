@@ -1,11 +1,28 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Download, FilePlus2,FlaskConical, FileText, LogOut, Search, ShieldCheck, UserRound, UsersRound, LayoutDashboard, Package, Warehouse, CheckSquare, ClipboardCheck, BriefcaseBusiness, Landmark, FileBarChart, ClipboardList, KeyRound, QrCode, Smartphone, CalendarDays, Settings, ListTodo, ScanLine} from 'lucide-react';
+import {Download, FilePlus2,FlaskConical, FileText, LogOut, Search, ShieldCheck, UserRound, UsersRound, LayoutDashboard, Package, Warehouse, CheckSquare, ClipboardCheck, BriefcaseBusiness, Landmark, FileBarChart, ClipboardList, KeyRound, QrCode, Smartphone, CalendarDays, Settings, ListTodo, ScanLine, Info, RefreshCw, History, ArrowRightCircle, XCircle, TerminalSquare, MoreVertical} from 'lucide-react';
+import {createPortal} from 'react-dom';
 import {QRCodeSVG} from 'qrcode.react';
 import {BrowserMultiFormatReader} from '@zxing/browser';
-import {AccountAdminDto, AccountDto, ModuleRecord, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, createAccount, deleteAccount, updateAccountPassword, loadPermissionAccess, loadPermissionApplications, createPermissionAccess, updatePermissionAccess, deletePermissionAccess, PermissionAccessDto, PermissionApplicationDto, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamNews, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadInventoryBranches, loadInventoryCompanies, loadInventoryMaterials, createInventoryDevice, updateInventoryDevice, deleteInventoryDevice, setInventoryDeviceAssignment, addInventoryDeviceMaterial, removeInventoryDeviceMaterial, loadWarehouseItems, loadWarehouseStats, createWarehouseItem, updateWarehouseItem, deleteWarehouseItem, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary, InvoiceTotals, loadTtsAudio, loadTtsStatus, loadUiTranslations, loadUiTranslationsLive, MasterDataCatalog, loadMasterDataCatalogs, loadMasterDataRows, createMasterDataRow, updateMasterDataRow, deleteMasterDataRow, WorkflowTask, WorkflowApproval, WorkflowStats, loadWorkflowTasks, createWorkflowTask, updateWorkflowTask, deleteWorkflowTask, loadWorkflowApprovals, createWorkflowApproval, updateWorkflowApproval, deleteWorkflowApproval, loadWorkflowStats, sendOrderEmail, loadCommunicationSettings, loadLoginNews, CommunicationSettings, LoginNews, uploadInvoiceLogo, loadInvoiceWorkflow, transitionInvoiceWorkflow, InvoiceWorkflowState, InvoiceWorkflowSettings, loadInvoiceWorkflowSettings, saveInvoiceWorkflowSettings, ModuleSettings, loadPublicModuleSettings, loadModuleSettings, saveModuleSettings, loadPaymentWorkflow, updatePaymentWorkflow, PaymentWorkflowState, loadPaymentDocuments, createPaymentDocument, openPaymentDocumentPdf, PaymentDocument, PaymentWorkflowSettings, loadPaymentWorkflowSettings, savePaymentWorkflowSettings, ComplianceWorkflowSettings, loadComplianceWorkflowSettings, saveComplianceWorkflowSettings, MarketingWorkflowSettings, loadMarketingWorkflowSettings, saveMarketingWorkflowSettings, MarketingCampaign, MarketingReferences, loadMarketingCampaigns, createMarketingCampaign, scanMarketingCampaign, undoLastMarketingScan, transitionMarketingCampaign, loadMarketingCampaignHistory, loadMarketingReferences, CommunicationWorkflowSettings, CommunicationWorkflowItem, loadCommunicationWorkflowSettings, saveCommunicationWorkflowSettings, loadCommunicationWorkflowItems, createCommunicationWorkflowItem, updateCommunicationWorkflowItem, deleteCommunicationWorkflowItem, TaskWorkflowSettings, loadTaskWorkflowSettings, saveTaskWorkflowSettings, LaboratoryOrder, LaboratoryOrderRequest, loadLaboratoryOrders, createLaboratoryOrder, updateLaboratoryOrder, deleteLaboratoryOrder, WaitingRoomVisit, loadWaitingRoomVisits, createWaitingRoomVisit, transitionWaitingRoomVisit, deleteWaitingRoomVisit, loadFirstRunStatus, initializeFirstRun, FirstRunStatus, FirstRunSetupRequest, DiscoveredDevice, loadDeviceDiscoveryCapabilities, loadBuiltinDiscoverySources, saveBuiltinDiscoverySources, BuiltinDiscoverySources, DeviceIdentityMergeSettings, loadDeviceIdentityMergeSettings, saveDeviceIdentityMergeSettings, resetDeviceIdentityMergeSettings, scanForDevicesStreaming, cancelDeviceDiscoverySession, registerDiscoveredDevice, registerAllDiscoveredDevices, deregisterDiscoveredDevice, RegisteredDiscoveryDevice, loadRegisteredDiscoveryDevices, updateRegisteredDeviceType, updateRegisteredDeviceName, moveRegisteredDeviceToInventory, revokeRegisteredDevice, revokeAllRegisteredDevices, emptyEntireInventoryToRegistered, removeInventoryDeviceToRegistered, DeviceDiscoveryDiagnostic, FritzBoxDiscoverySource, loadFritzBoxDiscoverySources, createFritzBoxDiscoverySource, saveFritzBoxDiscoverySource, deleteFritzBoxDiscoverySource, testFritzBoxDiscoverySource, HomeAssistantDiscoverySource, loadHomeAssistantDiscoverySources, createHomeAssistantDiscoverySource, saveHomeAssistantDiscoverySource, deleteHomeAssistantDiscoverySource, testHomeAssistantDiscoverySource, TuyaDiscoverySource, loadTuyaDiscoverySources, createTuyaDiscoverySource, saveTuyaDiscoverySource, deleteTuyaDiscoverySource, deleteAllTuyaDiscoverySources, testTuyaDiscoverySource} from './api/client';
+import {AccountAdminDto, AccountDto, ModuleRecord, InventoryDevice, InventoryDeviceDetail, InventoryStats, WarehouseItem, WarehouseStats, InvoiceCompany, InvoiceCreateLineRequest, InvoiceDetail, InvoiceSummary, LbdRecipient, ProductDto, RoleDto, SystemStatus, calculateInvoice, createInvoice, deleteInvoiceDraft, loadAccounts, createAccount, deleteAccount, updateAccountPassword, loadPermissionAccess, loadPermissionApplications, createPermissionAccess, updatePermissionAccess, deletePermissionAccess, PermissionAccessDto, PermissionApplicationDto, loadCompanies, loadDraft, loadExportCheck, loadGamApprovals, loadGamCashbook, loadGamCompliance, loadGamModules, loadGamNews, loadGamPersonnel, loadGamReportSummary, loadGamTasks, loadInventoryDevice, loadInventoryDevices, loadInventoryStats, loadInventoryBranches, loadInventoryCompanies, loadInventoryMaterials, createInventoryDevice, updateInventoryDevice, deleteInventoryDevice, setInventoryDeviceAssignment, addInventoryDeviceMaterial, removeInventoryDeviceMaterial, loadWarehouseItems, loadWarehouseStats, createWarehouseItem, updateWarehouseItem, deleteWarehouseItem, updateWarehouseStock, loadInvoice, loadInvoices, loadLbdPreview, loadMenu, loadNextInvoiceNumber, loadProducts, loadRoles, loadSystemStatus, login, logout, me, pdfUrl, token, updateAccount, updateInvoice, updateInvoiceStatus, createCancellationInvoice, createCreditNote, createProformaInvoice, zugferdXmlUrl, loadDeviceMaterialLinks, loadMaterialMovements, bookMaterial, setupTotp, confirmTotp, loadPasskeyStatus, passkeyRegisterOptions, passkeyRegisterFinish, passkeyLoginOptions, passkeyLoginFinish, loadInvoiceTextPreview, InvoiceTextPreview, loadInvoiceAccess, invoiceAccessQrUrl, loadInvoiceReportRows, loadInvoiceReportSummary, downloadInvoiceReport, InvoiceReportRow, InvoiceReportSummary, InvoiceTotals, loadTtsAudio, loadTtsStatus, loadUiTranslations, loadUiTranslationsLive, MasterDataCatalog, loadMasterDataCatalogs, loadMasterDataRows, createMasterDataRow, updateMasterDataRow, deleteMasterDataRow, WorkflowTask, WorkflowApproval, WorkflowStats, loadWorkflowTasks, createWorkflowTask, updateWorkflowTask, deleteWorkflowTask, loadWorkflowApprovals, createWorkflowApproval, updateWorkflowApproval, deleteWorkflowApproval, loadWorkflowStats, sendOrderEmail, loadCommunicationSettings, loadLoginNews, CommunicationSettings, LoginNews, uploadInvoiceLogo, loadInvoiceWorkflow, transitionInvoiceWorkflow, InvoiceWorkflowState, InvoiceWorkflowSettings, loadInvoiceWorkflowSettings, saveInvoiceWorkflowSettings, ModuleSettings, loadPublicModuleSettings, loadModuleSettings, saveModuleSettings, loadPaymentWorkflow, updatePaymentWorkflow, PaymentWorkflowState, loadPaymentDocuments, createPaymentDocument, openPaymentDocumentPdf, PaymentDocument, PaymentWorkflowSettings, loadPaymentWorkflowSettings, savePaymentWorkflowSettings, ComplianceWorkflowSettings, loadComplianceWorkflowSettings, saveComplianceWorkflowSettings, MarketingWorkflowSettings, loadMarketingWorkflowSettings, saveMarketingWorkflowSettings, MarketingCampaign, MarketingReferences, loadMarketingCampaigns, createMarketingCampaign, scanMarketingCampaign, undoLastMarketingScan, transitionMarketingCampaign, loadMarketingCampaignHistory, loadMarketingReferences, CommunicationWorkflowSettings, CommunicationWorkflowItem, loadCommunicationWorkflowSettings, saveCommunicationWorkflowSettings, loadCommunicationWorkflowItems, createCommunicationWorkflowItem, updateCommunicationWorkflowItem, deleteCommunicationWorkflowItem, TaskWorkflowSettings, loadTaskWorkflowSettings, saveTaskWorkflowSettings, LaboratoryOrder, LaboratoryOrderRequest, loadLaboratoryOrders, createLaboratoryOrder, updateLaboratoryOrder, deleteLaboratoryOrder, WaitingRoomVisit, loadWaitingRoomVisits, createWaitingRoomVisit, transitionWaitingRoomVisit, deleteWaitingRoomVisit, loadFirstRunStatus, initializeFirstRun, loadDemoDatabaseStatus, importDemoDatabase, FirstRunStatus, FirstRunSetupRequest, DiscoveredDevice, loadDeviceDiscoveryCapabilities, loadBuiltinDiscoverySources, saveBuiltinDiscoverySources, BuiltinDiscoverySources, DeviceIdentityMergeSettings, loadDeviceIdentityMergeSettings, saveDeviceIdentityMergeSettings, resetDeviceIdentityMergeSettings, scanForDevicesStreaming, cancelDeviceDiscoverySession, registerDiscoveredDevice, registerAllDiscoveredDevices, deregisterDiscoveredDevice, RegisteredDiscoveryDevice, loadRegisteredDiscoveryDevices, updateRegisteredDeviceType, updateRegisteredDeviceName, moveRegisteredDeviceToInventory, revokeRegisteredDevice, revokeAllRegisteredDevices, DeviceMergeCandidate, DeviceMergePreview, loadDeviceMergeCandidates, previewDeviceMerge, confirmDeviceMerge, ignoreDeviceMergeCandidate, DeviceIdentityRow, DeviceIdentityHistoryEntry, loadDeviceIdentityOverview, loadDeviceIdentityDetail, loadDeviceIdentityHistory, reassessDeviceIdentity, addDeviceIdentityAlias, renameDeviceIdentityAlias, removeDeviceIdentityAlias, setDeviceIdentityMainName, LinuxOnDemandSection, loadLinuxOnDemandSection, IntegrityResult, loadDeviceIdentityIntegrity, SplitCandidate, loadDeviceIdentitySplitCandidates, splitDeviceIdentity, runLinuxInventory, LinuxSshTestResult, testLinuxSsh, refreshLinuxCache, loadLinuxSshSettings, saveLinuxSshSettings, AdbStatus, AdbDevice, AdbActionResult, loadAndroidAdbStatus, pairAndroidDevice, connectAndroidDevice, disconnectAndroidDevice, runAndroidInventory, reconnectKnownAndroidDevices, InstalledApp, AppInventoryRun, AppInventoryRunResult, loadAndroidApps, loadAndroidAppRuns, runAndroidAppInventory, AndroidAppsGlobalSummary, loadAndroidAppsGlobalSummary, SupportedPlatform, PlatformInventoryResult, PlatformInventoryStatusRow, runPlatformInventory, runAllKnownPlatforms, loadPlatformInventoryStatus, emptyEntireInventoryToRegistered, InventoryIdentityLinkSummary, linkExistingInventoryDevices, removeInventoryDeviceToRegistered, DeviceDiscoveryDiagnostic, FritzBoxDiscoverySource, loadFritzBoxDiscoverySources, createFritzBoxDiscoverySource, saveFritzBoxDiscoverySource, deleteFritzBoxDiscoverySource, testFritzBoxDiscoverySource, HomeAssistantDiscoverySource, loadHomeAssistantDiscoverySources, createHomeAssistantDiscoverySource, saveHomeAssistantDiscoverySource, deleteHomeAssistantDiscoverySource, testHomeAssistantDiscoverySource, TuyaDiscoverySource, loadTuyaDiscoverySources, createTuyaDiscoverySource, saveTuyaDiscoverySource, deleteTuyaDiscoverySource, deleteAllTuyaDiscoverySources, testTuyaDiscoverySource, WinRmDiscoverySettings, loadWinRmDiscoverySettings, saveWinRmDiscoverySettings, testWinRmDiscovery} from './api/client';
+import type {LinuxSshSettings} from './api/client';
 import './style.css';
 import { UI_LANGUAGES, normalizeUiLanguage, tUi, iconForModule, moduleKeyFromLabel, germanUiEntries, type UiLanguage } from "./i18n";
+
+
+window.addEventListener('error',(event)=>{
+  const root=document.getElementById('root');
+  if(root&&!root.hasChildNodes()){
+    root.innerHTML=`<div id="gam-startup-error" style="padding:24px;font-family:Arial,sans-serif"><h2>GAM konnte nicht gestartet werden</h2><p>${String(event.message||'Unbekannter Frontend-Fehler')}</p><p>Bitte Browserkonsole und Frontend-Protokoll prüfen.</p></div>`;
+  }
+});
+window.addEventListener('unhandledrejection',(event)=>{
+  const root=document.getElementById('root');
+  if(root&&!root.hasChildNodes()){
+    const reason=(event.reason&&event.reason.message)?event.reason.message:String(event.reason||'Unbekannter Frontend-Fehler');
+    root.innerHTML=`<div id="gam-startup-error" style="padding:24px;font-family:Arial,sans-serif"><h2>GAM konnte nicht gestartet werden</h2><p>${reason}</p><p>Bitte Browserkonsole und Frontend-Protokoll prüfen.</p></div>`;
+  }
+});
 
 const UI_LABELS: Record<string, Record<string, string>> = {
   de: {
@@ -2886,19 +2903,19 @@ const SETUP_LANGUAGES = [
   ['tr','Türkçe'],['ru','Русский'],['es','Español'],['pt','Português'],['nl','Nederlands'],['pl','Polski'],['cs','Čeština']
 ] as const;
 const SETUP_TEXT:Record<string,Record<string,string>>={
- de:{welcome:'Willkommen bei GAM 2.1.0 Preview 2',intro:'GAM ist technisch vorbereitet. Richten Sie jetzt Ihre Praxis vollständig und in Ihrer Sprache ein.',language:'Sprache',admin:'Administrator',practice:'Praxis',database:'Datenbank',next:'Weiter',back:'Zurück',install:'GAM einrichten',username:'Benutzername',password:'Passwort',name:'Vollständiger Name',email:'E-Mail (optional)',practiceName:'Praxisname (optional)',country:'Land',timezone:'Zeitzone',empty:'Neue leere Praxis',emptyHint:'Erstellt die vollständige Struktur mit Grundeinstellungen, aber ohne Beispieldaten.',demo:'Beispieldatenbank installieren',demoHint:'Enthält ausschließlich anonymisierte Patienten, Termine, Labor-, Wartezimmer-, Kommunikations-, Aufgaben- und Rechnungsbeispiele.',security:'Das Passwort muss mindestens 8 Zeichen lang sein.',working:'GAM wird eingerichtet …',done:'Einrichtung abgeschlossen. GAM ist jetzt bereit.',error:'Einrichtung fehlgeschlagen',systemCheck:'Technische Vorbereitung abgeschlossen'},
- en:{welcome:'Welcome to GAM 2.1.0 Preview 2',intro:'GAM is technically ready. Complete the setup of your practice in your language.',language:'Language',admin:'Administrator',practice:'Practice',database:'Database',next:'Next',back:'Back',install:'Set up GAM',username:'Username',password:'Password',name:'Full name',email:'Email (optional)',practiceName:'Practice name (optional)',country:'Country',timezone:'Time zone',empty:'Create an empty practice',emptyHint:'Creates the complete structure and defaults without sample data.',demo:'Install sample database',demoHint:'Contains anonymized patients, appointments, laboratory, waiting-room, communication, task and invoice examples only.',security:'The password must contain at least 8 characters.',working:'Setting up GAM …',done:'Setup completed. GAM is now ready.',error:'Setup failed',systemCheck:'Technical preparation completed'},
- fr:{welcome:'Bienvenue dans GAM 2.1.0 Preview 2',intro:'GAM est techniquement prêt. Configurez maintenant votre cabinet entièrement dans votre langue.',language:'Langue',admin:'Administrateur',practice:'Cabinet',database:'Base de données',next:'Suivant',back:'Retour',install:'Configurer GAM',username:"Nom d’utilisateur",password:'Mot de passe',name:'Nom complet',email:'E-mail (facultatif)',practiceName:'Nom du cabinet (facultatif)',country:'Pays',timezone:'Fuseau horaire',empty:'Créer un cabinet vide',emptyHint:'Crée la structure complète sans données de démonstration.',demo:'Installer la base de démonstration',demoHint:'Contient uniquement des exemples anonymisés.',security:'Le mot de passe doit comporter au moins 8 caractères.',working:'Configuration de GAM …',done:'Configuration terminée. GAM est prêt.',error:'Échec de la configuration',systemCheck:'Préparation technique terminée'},
- uk:{welcome:'Ласкаво просимо до GAM 2.1.0 Preview 2',intro:'GAM технічно готовий. Налаштуйте вашу практику повністю українською мовою.',language:'Мова',admin:'Адміністратор',practice:'Практика',database:'База даних',next:'Далі',back:'Назад',install:'Налаштувати GAM',username:'Ім’я користувача',password:'Пароль',name:'Повне ім’я',email:'Електронна пошта (необов’язково)',practiceName:'Назва практики (необов’язково)',country:'Країна',timezone:'Часовий пояс',empty:'Створити порожню практику',emptyHint:'Створює повну структуру без демонстраційних даних.',demo:'Встановити демонстраційну базу',demoHint:'Містить лише анонімізовані приклади.',security:'Пароль має містити щонайменше 8 символів.',working:'Налаштування GAM …',done:'Налаштування завершено. GAM готовий.',error:'Помилка налаштування',systemCheck:'Технічну підготовку завершено'},
- it:{welcome:'Benvenuti in GAM 2.1.0 Preview 2',intro:'GAM è tecnicamente pronto. Configura ora lo studio completamente nella tua lingua.',language:'Lingua',admin:'Amministratore',practice:'Studio',database:'Database',next:'Avanti',back:'Indietro',install:'Configura GAM',username:'Nome utente',password:'Password',name:'Nome completo',email:'E-mail (facoltativa)',practiceName:'Nome dello studio (facoltativo)',country:'Paese',timezone:'Fuso orario',empty:'Crea uno studio vuoto',emptyHint:'Crea la struttura completa senza dati di esempio.',demo:'Installa database di esempio',demoHint:'Contiene solo esempi anonimizzati.',security:'La password deve contenere almeno 8 caratteri.',working:'Configurazione di GAM …',done:'Configurazione completata. GAM è pronto.',error:'Configurazione non riuscita',systemCheck:'Preparazione tecnica completata'},
- sv:{welcome:'Välkommen till GAM 2.1.0 Preview 2',intro:'GAM är tekniskt klart. Konfigurera nu mottagningen helt på ditt språk.',language:'Språk',admin:'Administratör',practice:'Mottagning',database:'Databas',next:'Nästa',back:'Tillbaka',install:'Konfigurera GAM',username:'Användarnamn',password:'Lösenord',name:'Fullständigt namn',email:'E-post (valfritt)',practiceName:'Mottagningens namn (valfritt)',country:'Land',timezone:'Tidszon',empty:'Skapa en tom mottagning',emptyHint:'Skapar hela strukturen utan exempeldata.',demo:'Installera exempeldatabas',demoHint:'Innehåller endast anonymiserade exempel.',security:'Lösenordet måste innehålla minst 8 tecken.',working:'GAM konfigureras …',done:'Konfigurationen är klar. GAM är redo.',error:'Konfigurationen misslyckades',systemCheck:'Teknisk förberedelse klar'},
- tr:{welcome:'GAM 2.1.0 Preview 2’ye hoş geldiniz',intro:'GAM teknik olarak hazır. Şimdi muayenehanenizi tamamen kendi dilinizde yapılandırın.',language:'Dil',admin:'Yönetici',practice:'Muayenehane',database:'Veritabanı',next:'İleri',back:'Geri',install:'GAM’ı kur',username:'Kullanıcı adı',password:'Parola',name:'Tam ad',email:'E-posta (isteğe bağlı)',practiceName:'Muayenehane adı (isteğe bağlı)',country:'Ülke',timezone:'Saat dilimi',empty:'Boş muayenehane oluştur',emptyHint:'Örnek veri olmadan tam yapıyı oluşturur.',demo:'Örnek veritabanını kur',demoHint:'Yalnızca anonimleştirilmiş örnekler içerir.',security:'Parola en az 8 karakter olmalıdır.',working:'GAM kuruluyor …',done:'Kurulum tamamlandı. GAM hazır.',error:'Kurulum başarısız',systemCheck:'Teknik hazırlık tamamlandı'},
- ru:{welcome:'Добро пожаловать в GAM 2.1.0 Preview 2',intro:'GAM технически готов. Теперь полностью настройте практику на вашем языке.',language:'Язык',admin:'Администратор',practice:'Практика',database:'База данных',next:'Далее',back:'Назад',install:'Настроить GAM',username:'Имя пользователя',password:'Пароль',name:'Полное имя',email:'Эл. почта (необязательно)',practiceName:'Название практики (необязательно)',country:'Страна',timezone:'Часовой пояс',empty:'Создать пустую практику',emptyHint:'Создаёт полную структуру без демонстрационных данных.',demo:'Установить демонстрационную базу',demoHint:'Содержит только анонимизированные примеры.',security:'Пароль должен содержать не менее 8 символов.',working:'Настройка GAM …',done:'Настройка завершена. GAM готов.',error:'Ошибка настройки',systemCheck:'Техническая подготовка завершена'},
- es:{welcome:'Bienvenido a GAM 2.1.0 Preview 2',intro:'GAM está técnicamente preparado. Configure ahora su consulta completamente en su idioma.',language:'Idioma',admin:'Administrador',practice:'Consulta',database:'Base de datos',next:'Siguiente',back:'Atrás',install:'Configurar GAM',username:'Nombre de usuario',password:'Contraseña',name:'Nombre completo',email:'Correo electrónico (opcional)',practiceName:'Nombre de la consulta (opcional)',country:'País',timezone:'Zona horaria',empty:'Crear una consulta vacía',emptyHint:'Crea la estructura completa sin datos de ejemplo.',demo:'Instalar base de datos de ejemplo',demoHint:'Contiene únicamente ejemplos anonimizados.',security:'La contraseña debe tener al menos 8 caracteres.',working:'Configurando GAM …',done:'Configuración finalizada. GAM está listo.',error:'Error de configuración',systemCheck:'Preparación técnica completada'},
- pt:{welcome:'Bem-vindo ao GAM 2.1.0 Preview 2',intro:'O GAM está tecnicamente pronto. Configure agora a clínica completamente no seu idioma.',language:'Idioma',admin:'Administrador',practice:'Clínica',database:'Base de dados',next:'Seguinte',back:'Voltar',install:'Configurar GAM',username:'Nome de utilizador',password:'Palavra-passe',name:'Nome completo',email:'E-mail (opcional)',practiceName:'Nome da clínica (opcional)',country:'País',timezone:'Fuso horário',empty:'Criar uma clínica vazia',emptyHint:'Cria a estrutura completa sem dados de exemplo.',demo:'Instalar base de dados de exemplo',demoHint:'Contém apenas exemplos anonimizados.',security:'A palavra-passe deve ter pelo menos 8 caracteres.',working:'A configurar o GAM …',done:'Configuração concluída. O GAM está pronto.',error:'Falha na configuração',systemCheck:'Preparação técnica concluída'},
- nl:{welcome:'Welkom bij GAM 2.1.0 Preview 2',intro:'GAM is technisch gereed. Richt uw praktijk nu volledig in uw eigen taal in.',language:'Taal',admin:'Beheerder',practice:'Praktijk',database:'Database',next:'Volgende',back:'Terug',install:'GAM instellen',username:'Gebruikersnaam',password:'Wachtwoord',name:'Volledige naam',email:'E-mail (optioneel)',practiceName:'Praktijknaam (optioneel)',country:'Land',timezone:'Tijdzone',empty:'Een lege praktijk maken',emptyHint:'Maakt de volledige structuur zonder voorbeeldgegevens.',demo:'Voorbeelddatabase installeren',demoHint:'Bevat uitsluitend geanonimiseerde voorbeelden.',security:'Het wachtwoord moet minimaal 8 tekens bevatten.',working:'GAM wordt ingesteld …',done:'Instelling voltooid. GAM is gereed.',error:'Instelling mislukt',systemCheck:'Technische voorbereiding voltooid'},
- pl:{welcome:'Witamy w GAM 2.1.0 Preview 2',intro:'GAM jest technicznie gotowy. Skonfiguruj teraz praktykę w całości w swoim języku.',language:'Język',admin:'Administrator',practice:'Praktyka',database:'Baza danych',next:'Dalej',back:'Wstecz',install:'Skonfiguruj GAM',username:'Nazwa użytkownika',password:'Hasło',name:'Imię i nazwisko',email:'E-mail (opcjonalnie)',practiceName:'Nazwa praktyki (opcjonalnie)',country:'Kraj',timezone:'Strefa czasowa',empty:'Utwórz pustą praktykę',emptyHint:'Tworzy pełną strukturę bez danych przykładowych.',demo:'Zainstaluj przykładową bazę',demoHint:'Zawiera wyłącznie zanonimizowane przykłady.',security:'Hasło musi mieć co najmniej 8 znaków.',working:'Konfigurowanie GAM …',done:'Konfiguracja zakończona. GAM jest gotowy.',error:'Konfiguracja nie powiodła się',systemCheck:'Przygotowanie techniczne zakończone'},
- cs:{welcome:'Vítejte v GAM 2.1.0 Preview 2',intro:'GAM je technicky připraven. Nyní nastavte ordinaci kompletně ve svém jazyce.',language:'Jazyk',admin:'Administrátor',practice:'Ordinace',database:'Databáze',next:'Další',back:'Zpět',install:'Nastavit GAM',username:'Uživatelské jméno',password:'Heslo',name:'Celé jméno',email:'E-mail (volitelně)',practiceName:'Název ordinace (volitelně)',country:'Země',timezone:'Časové pásmo',empty:'Vytvořit prázdnou ordinaci',emptyHint:'Vytvoří úplnou strukturu bez ukázkových dat.',demo:'Nainstalovat ukázkovou databázi',demoHint:'Obsahuje pouze anonymizované příklady.',security:'Heslo musí mít alespoň 8 znaků.',working:'Nastavuje se GAM …',done:'Nastavení dokončeno. GAM je připraven.',error:'Nastavení se nezdařilo',systemCheck:'Technická příprava dokončena'}
+ de:{welcome:'Willkommen bei GAM 2.1.0 Preview 3',intro:'GAM ist technisch vorbereitet. Richten Sie jetzt Ihre Praxis vollständig und in Ihrer Sprache ein.',language:'Sprache',admin:'Administrator',practice:'Praxis',database:'Datenbank',next:'Weiter',back:'Zurück',install:'GAM einrichten',username:'Benutzername',password:'Passwort',name:'Vollständiger Name',email:'E-Mail (optional)',practiceName:'Praxisname (optional)',country:'Land',timezone:'Zeitzone',empty:'Neue leere Praxis',emptyHint:'Erstellt die vollständige Struktur mit Grundeinstellungen, aber ohne Beispieldaten.',demo:'Beispieldatenbank installieren',demoHint:'Enthält ausschließlich anonymisierte Patienten, Termine, Labor-, Wartezimmer-, Kommunikations-, Aufgaben- und Rechnungsbeispiele.',security:'Das Passwort muss mindestens 8 Zeichen lang sein.',working:'GAM wird eingerichtet …',done:'Einrichtung abgeschlossen. GAM ist jetzt bereit.',error:'Einrichtung fehlgeschlagen',systemCheck:'Technische Vorbereitung abgeschlossen'},
+ en:{welcome:'Welcome to GAM 2.1.0 Preview 3',intro:'GAM is technically ready. Complete the setup of your practice in your language.',language:'Language',admin:'Administrator',practice:'Practice',database:'Database',next:'Next',back:'Back',install:'Set up GAM',username:'Username',password:'Password',name:'Full name',email:'Email (optional)',practiceName:'Practice name (optional)',country:'Country',timezone:'Time zone',empty:'Create an empty practice',emptyHint:'Creates the complete structure and defaults without sample data.',demo:'Install sample database',demoHint:'Contains anonymized patients, appointments, laboratory, waiting-room, communication, task and invoice examples only.',security:'The password must contain at least 8 characters.',working:'Setting up GAM …',done:'Setup completed. GAM is now ready.',error:'Setup failed',systemCheck:'Technical preparation completed'},
+ fr:{welcome:'Bienvenue dans GAM 2.1.0 Preview 3',intro:'GAM est techniquement prêt. Configurez maintenant votre cabinet entièrement dans votre langue.',language:'Langue',admin:'Administrateur',practice:'Cabinet',database:'Base de données',next:'Suivant',back:'Retour',install:'Configurer GAM',username:"Nom d’utilisateur",password:'Mot de passe',name:'Nom complet',email:'E-mail (facultatif)',practiceName:'Nom du cabinet (facultatif)',country:'Pays',timezone:'Fuseau horaire',empty:'Créer un cabinet vide',emptyHint:'Crée la structure complète sans données de démonstration.',demo:'Installer la base de démonstration',demoHint:'Contient uniquement des exemples anonymisés.',security:'Le mot de passe doit comporter au moins 8 caractères.',working:'Configuration de GAM …',done:'Configuration terminée. GAM est prêt.',error:'Échec de la configuration',systemCheck:'Préparation technique terminée'},
+ uk:{welcome:'Ласкаво просимо до GAM 2.1.0 Preview 3',intro:'GAM технічно готовий. Налаштуйте вашу практику повністю українською мовою.',language:'Мова',admin:'Адміністратор',practice:'Практика',database:'База даних',next:'Далі',back:'Назад',install:'Налаштувати GAM',username:'Ім’я користувача',password:'Пароль',name:'Повне ім’я',email:'Електронна пошта (необов’язково)',practiceName:'Назва практики (необов’язково)',country:'Країна',timezone:'Часовий пояс',empty:'Створити порожню практику',emptyHint:'Створює повну структуру без демонстраційних даних.',demo:'Встановити демонстраційну базу',demoHint:'Містить лише анонімізовані приклади.',security:'Пароль має містити щонайменше 8 символів.',working:'Налаштування GAM …',done:'Налаштування завершено. GAM готовий.',error:'Помилка налаштування',systemCheck:'Технічну підготовку завершено'},
+ it:{welcome:'Benvenuti in GAM 2.1.0 Preview 3',intro:'GAM è tecnicamente pronto. Configura ora lo studio completamente nella tua lingua.',language:'Lingua',admin:'Amministratore',practice:'Studio',database:'Database',next:'Avanti',back:'Indietro',install:'Configura GAM',username:'Nome utente',password:'Password',name:'Nome completo',email:'E-mail (facoltativa)',practiceName:'Nome dello studio (facoltativo)',country:'Paese',timezone:'Fuso orario',empty:'Crea uno studio vuoto',emptyHint:'Crea la struttura completa senza dati di esempio.',demo:'Installa database di esempio',demoHint:'Contiene solo esempi anonimizzati.',security:'La password deve contenere almeno 8 caratteri.',working:'Configurazione di GAM …',done:'Configurazione completata. GAM è pronto.',error:'Configurazione non riuscita',systemCheck:'Preparazione tecnica completata'},
+ sv:{welcome:'Välkommen till GAM 2.1.0 Preview 3',intro:'GAM är tekniskt klart. Konfigurera nu mottagningen helt på ditt språk.',language:'Språk',admin:'Administratör',practice:'Mottagning',database:'Databas',next:'Nästa',back:'Tillbaka',install:'Konfigurera GAM',username:'Användarnamn',password:'Lösenord',name:'Fullständigt namn',email:'E-post (valfritt)',practiceName:'Mottagningens namn (valfritt)',country:'Land',timezone:'Tidszon',empty:'Skapa en tom mottagning',emptyHint:'Skapar hela strukturen utan exempeldata.',demo:'Installera exempeldatabas',demoHint:'Innehåller endast anonymiserade exempel.',security:'Lösenordet måste innehålla minst 8 tecken.',working:'GAM konfigureras …',done:'Konfigurationen är klar. GAM är redo.',error:'Konfigurationen misslyckades',systemCheck:'Teknisk förberedelse klar'},
+ tr:{welcome:'GAM 2.1.0 Preview 3’ye hoş geldiniz',intro:'GAM teknik olarak hazır. Şimdi muayenehanenizi tamamen kendi dilinizde yapılandırın.',language:'Dil',admin:'Yönetici',practice:'Muayenehane',database:'Veritabanı',next:'İleri',back:'Geri',install:'GAM’ı kur',username:'Kullanıcı adı',password:'Parola',name:'Tam ad',email:'E-posta (isteğe bağlı)',practiceName:'Muayenehane adı (isteğe bağlı)',country:'Ülke',timezone:'Saat dilimi',empty:'Boş muayenehane oluştur',emptyHint:'Örnek veri olmadan tam yapıyı oluşturur.',demo:'Örnek veritabanını kur',demoHint:'Yalnızca anonimleştirilmiş örnekler içerir.',security:'Parola en az 8 karakter olmalıdır.',working:'GAM kuruluyor …',done:'Kurulum tamamlandı. GAM hazır.',error:'Kurulum başarısız',systemCheck:'Teknik hazırlık tamamlandı'},
+ ru:{welcome:'Добро пожаловать в GAM 2.1.0 Preview 3',intro:'GAM технически готов. Теперь полностью настройте практику на вашем языке.',language:'Язык',admin:'Администратор',practice:'Практика',database:'База данных',next:'Далее',back:'Назад',install:'Настроить GAM',username:'Имя пользователя',password:'Пароль',name:'Полное имя',email:'Эл. почта (необязательно)',practiceName:'Название практики (необязательно)',country:'Страна',timezone:'Часовой пояс',empty:'Создать пустую практику',emptyHint:'Создаёт полную структуру без демонстрационных данных.',demo:'Установить демонстрационную базу',demoHint:'Содержит только анонимизированные примеры.',security:'Пароль должен содержать не менее 8 символов.',working:'Настройка GAM …',done:'Настройка завершена. GAM готов.',error:'Ошибка настройки',systemCheck:'Техническая подготовка завершена'},
+ es:{welcome:'Bienvenido a GAM 2.1.0 Preview 3',intro:'GAM está técnicamente preparado. Configure ahora su consulta completamente en su idioma.',language:'Idioma',admin:'Administrador',practice:'Consulta',database:'Base de datos',next:'Siguiente',back:'Atrás',install:'Configurar GAM',username:'Nombre de usuario',password:'Contraseña',name:'Nombre completo',email:'Correo electrónico (opcional)',practiceName:'Nombre de la consulta (opcional)',country:'País',timezone:'Zona horaria',empty:'Crear una consulta vacía',emptyHint:'Crea la estructura completa sin datos de ejemplo.',demo:'Instalar base de datos de ejemplo',demoHint:'Contiene únicamente ejemplos anonimizados.',security:'La contraseña debe tener al menos 8 caracteres.',working:'Configurando GAM …',done:'Configuración finalizada. GAM está listo.',error:'Error de configuración',systemCheck:'Preparación técnica completada'},
+ pt:{welcome:'Bem-vindo ao GAM 2.1.0 Preview 3',intro:'O GAM está tecnicamente pronto. Configure agora a clínica completamente no seu idioma.',language:'Idioma',admin:'Administrador',practice:'Clínica',database:'Base de dados',next:'Seguinte',back:'Voltar',install:'Configurar GAM',username:'Nome de utilizador',password:'Palavra-passe',name:'Nome completo',email:'E-mail (opcional)',practiceName:'Nome da clínica (opcional)',country:'País',timezone:'Fuso horário',empty:'Criar uma clínica vazia',emptyHint:'Cria a estrutura completa sem dados de exemplo.',demo:'Instalar base de dados de exemplo',demoHint:'Contém apenas exemplos anonimizados.',security:'A palavra-passe deve ter pelo menos 8 caracteres.',working:'A configurar o GAM …',done:'Configuração concluída. O GAM está pronto.',error:'Falha na configuração',systemCheck:'Preparação técnica concluída'},
+ nl:{welcome:'Welkom bij GAM 2.1.0 Preview 3',intro:'GAM is technisch gereed. Richt uw praktijk nu volledig in uw eigen taal in.',language:'Taal',admin:'Beheerder',practice:'Praktijk',database:'Database',next:'Volgende',back:'Terug',install:'GAM instellen',username:'Gebruikersnaam',password:'Wachtwoord',name:'Volledige naam',email:'E-mail (optioneel)',practiceName:'Praktijknaam (optioneel)',country:'Land',timezone:'Tijdzone',empty:'Een lege praktijk maken',emptyHint:'Maakt de volledige structuur zonder voorbeeldgegevens.',demo:'Voorbeelddatabase installeren',demoHint:'Bevat uitsluitend geanonimiseerde voorbeelden.',security:'Het wachtwoord moet minimaal 8 tekens bevatten.',working:'GAM wordt ingesteld …',done:'Instelling voltooid. GAM is gereed.',error:'Instelling mislukt',systemCheck:'Technische voorbereiding voltooid'},
+ pl:{welcome:'Witamy w GAM 2.1.0 Preview 3',intro:'GAM jest technicznie gotowy. Skonfiguruj teraz praktykę w całości w swoim języku.',language:'Język',admin:'Administrator',practice:'Praktyka',database:'Baza danych',next:'Dalej',back:'Wstecz',install:'Skonfiguruj GAM',username:'Nazwa użytkownika',password:'Hasło',name:'Imię i nazwisko',email:'E-mail (opcjonalnie)',practiceName:'Nazwa praktyki (opcjonalnie)',country:'Kraj',timezone:'Strefa czasowa',empty:'Utwórz pustą praktykę',emptyHint:'Tworzy pełną strukturę bez danych przykładowych.',demo:'Zainstaluj przykładową bazę',demoHint:'Zawiera wyłącznie zanonimizowane przykłady.',security:'Hasło musi mieć co najmniej 8 znaków.',working:'Konfigurowanie GAM …',done:'Konfiguracja zakończona. GAM jest gotowy.',error:'Konfiguracja nie powiodła się',systemCheck:'Przygotowanie techniczne zakończone'},
+ cs:{welcome:'Vítejte v GAM 2.1.0 Preview 3',intro:'GAM je technicky připraven. Nyní nastavte ordinaci kompletně ve svém jazyce.',language:'Jazyk',admin:'Administrátor',practice:'Ordinace',database:'Databáze',next:'Další',back:'Zpět',install:'Nastavit GAM',username:'Uživatelské jméno',password:'Heslo',name:'Celé jméno',email:'E-mail (volitelně)',practiceName:'Název ordinace (volitelně)',country:'Země',timezone:'Časové pásmo',empty:'Vytvořit prázdnou ordinaci',emptyHint:'Vytvoří úplnou strukturu bez ukázkových dat.',demo:'Nainstalovat ukázkovou databázi',demoHint:'Obsahuje pouze anonymizované příklady.',security:'Heslo musí mít alespoň 8 znaků.',working:'Nastavuje se GAM …',done:'Nastavení dokončeno. GAM je připraven.',error:'Nastavení se nezdařilo',systemCheck:'Technická příprava dokončena'}
 };
 
 function setupText(language:string,key:string){return SETUP_TEXT[language]?.[key]||SETUP_TEXT.en[key]||key;}
@@ -2925,6 +2942,7 @@ function FirstRunWizard({status,onComplete}:{status:FirstRunStatus;onComplete:()
 function ReportsPage(){
  const [inventory,setInventory]=useState<InventoryDevice[]>([]);
  const [registered,setRegistered]=useState<RegisteredDiscoveryDevice[]>([]);
+ const [androidAppSummary,setAndroidAppSummary]=useState<AndroidAppsGlobalSummary|null>(null);
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState('');
  const [filter,setFilter]=useState('');
@@ -2934,6 +2952,7 @@ function ReportsPage(){
  const [selectionInitialized,setSelectionInitialized]=useState(false);
  const loadReports=async()=>{setLoading(true);setError('');try{const [i,r]=await Promise.all([loadInventoryDevices('','all',false,1000),loadRegisteredDiscoveryDevices()]);setInventory(i);setRegistered(r);}catch(e:any){setError(e?.message||'Geräteberichte konnten nicht geladen werden.')}finally{setLoading(false)}};
  useEffect(()=>{void loadReports()},[]);
+ useEffect(()=>{loadAndroidAppsGlobalSummary().then(setAndroidAppSummary).catch(()=>setAndroidAppSummary(null))},[]);
  const text=(v:unknown)=>String(v??'').trim();
  const norm=(v:unknown)=>text(v).toLowerCase().replace(/[^a-z0-9äöüß]+/g,'');
  const deviceRows=[
@@ -2962,7 +2981,32 @@ function ReportsPage(){
  const duplicateGroups=Array.from(duplicateMap.entries()).filter(([,rows])=>new Set(rows.map(r=>`${r.kind}|${r.name}|${r.serial}|${r.address}`)).size>1).map(([key,rows])=>({key,rows:Array.from(new Map(rows.map(r=>[`${r.kind}|${r.name}|${r.serial}|${r.address}`,r])).values())}));
  const avgCompleteness=Math.round(selectedRows.reduce((s,d)=>s+completeness(d),0)/Math.max(1,selectedRows.length));
  const recommendations=selectedRows.map(d=>({device:d,missing:missing(d),quality:completeness(d)})).filter(x=>x.missing.length>0).sort((a,b)=>a.quality-b.quality);
- const printReport=()=>window.print();
+ const androidPairs=(protocol?:string)=>{const parts=(protocol||'').split(' · ').map(x=>x.trim()).filter(Boolean);const pairs:Record<string,string>={};parts.forEach(part=>{const c=part.indexOf(':');if(c>0)pairs[part.slice(0,c).trim()]=part.slice(c+1).trim();});return pairs;};
+ const isAndroidDevice=(d:RegisteredDiscoveryDevice)=>{const hay=((d.deviceType||'')+' '+(d.protocol||'')).toLowerCase();return hay.includes('android')||hay.includes('chromecast')||hay.includes('fire tv')||hay.includes('nvidia shield')||hay.includes('google tv');};
+ const androidDevices=registered.filter(isAndroidDevice);
+ const androidSourceCount=(d:RegisteredDiscoveryDevice)=>(d.protocol||'').split(' · ').map(x=>x.trim()).filter(x=>x&&!x.includes(':')).length;
+ const androidDistribution=(pick:(p:Record<string,string>)=>string|undefined)=>{const counts=new Map<string,number>();androidDevices.forEach(d=>{const v=pick(androidPairs(d.protocol))||'unbekannt';counts.set(v,(counts.get(v)||0)+1)});return Array.from(counts.entries()).map(([value,count])=>({value,count})).sort((a,b)=>b.count-a.count)};
+ const androidRoleCount=(label:string)=>androidDevices.filter(d=>{const p=androidPairs(d.protocol);return !!p[label]&&p[label]!=='null'}).length;
+ const androidStatusCount=(status:'erfolgreich'|'teilweise'|'fehlgeschlagen')=>androidDevices.filter(d=>{const s=(androidPairs(d.protocol)['Inventarisierungsstatus']||'').toLowerCase();if(status==='erfolgreich')return s==='erfolgreich';if(status==='teilweise')return s.includes('fehlgeschlagen')===false&&s!=='erfolgreich'&&s!=='';return s.includes('fehlgeschlagen')}).length;
+ const androidSection=androidDevices.length>0&&<>
+ <details className="report-accordion"><summary><span>📱 Android-Geräteübersicht</span><b>{androidDevices.length} Geräte</b></summary><div className="report-table-wrap"><table><thead><tr><th>Gerät</th><th>Hersteller</th><th>Modell</th><th>Android-Version</th><th>Security-Patch</th><th>Discovery-Quellen</th><th>ADB</th><th>Letzter App-Lauf</th><th>Rollen</th></tr></thead><tbody>{androidDevices.map((d,i)=>{const p=androidPairs(d.protocol);return <tr key={d.identityKey||i}><td><b>{d.name||d.identityKey}</b><small>{d.address||''}</small></td><td>{d.manufacturer||'—'}</td><td>{p['Modell']||'—'}</td><td>{p['Android-Version']||'—'}</td><td>{p['Sicherheits-Patch-Level']||'—'}</td><td>{androidSourceCount(d)}</td><td>{d.adbHost?`${d.adbHost}:${d.adbPort}`:'nicht verbunden'}</td><td>{p['Letzter App-Inventarlauf']?new Date(p['Letzter App-Inventarlauf']).toLocaleDateString('de-DE'):'—'}</td><td>{p['Erkannte Rollen']||'—'}</td></tr>})}</tbody></table></div></details>
+ <details className="report-accordion"><summary><span>Android – Inventar-Zusammenfassung</span><b>{androidDevices.length} Geräte</b></summary>
+   <div className="report-kpi-grid"><div><span>Geräte insgesamt</span><b>{androidDevices.length}</b></div><div><span>Mit ADB verbunden</span><b>{androidDevices.filter(d=>d.adbHost).length}</b></div><div><span>Ohne ADB</span><b>{androidDevices.filter(d=>!d.adbHost).length}</b></div><div><span>Mit Device Owner</span><b>{androidRoleCount('Device Owner')}</b></div><div><span>Mit Accessibility Services</span><b>{androidRoleCount('Accessibility Services')}</b></div><div><span>Mit VPN-Hinweis</span><b>{androidRoleCount('VPN aktiv')}</b></div><div><span>Mit mehreren Quellen</span><b>{androidDevices.filter(d=>androidSourceCount(d)>1).length}</b></div></div>
+   <div className="report-table-wrap"><table><thead><tr><th>Hersteller</th><th>Geräte</th></tr></thead><tbody>{androidDistribution(p=>p['Hersteller']).map(r=><tr key={r.value}><td>{r.value}</td><td>{r.count}</td></tr>)}</tbody></table></div>
+   <div className="report-table-wrap"><table><thead><tr><th>Android-Version</th><th>Geräte</th></tr></thead><tbody>{androidDistribution(p=>p['Android-Version']).map(r=><tr key={r.value}><td>{r.value}</td><td>{r.count}</td></tr>)}</tbody></table></div>
+ </details>
+ <details className="report-accordion"><summary><span>Android – Inventarqualität</span><b>{androidDevices.length} Geräte</b></summary><div className="report-table-wrap"><table><thead><tr><th>Status</th><th>Geräte</th></tr></thead><tbody><tr><td><span className="quality-pill good">vollständig</span></td><td>{androidStatusCount('erfolgreich')}</td></tr><tr><td><span className="quality-pill medium">teilweise</span></td><td>{androidStatusCount('teilweise')}</td></tr><tr><td><span className="quality-pill bad">fehlgeschlagen</span></td><td>{androidStatusCount('fehlgeschlagen')}</td></tr></tbody></table></div></details>
+ {androidAppSummary&&<details className="report-accordion"><summary><span>Android – App-Auswertung</span><b>{androidAppSummary.totalApps??0} Pakete</b></summary>
+   <div className="report-kpi-grid"><div><span>Apps gesamt</span><b>{androidAppSummary.totalApps??0}</b></div><div><span>Geräte mit Apps</span><b>{androidAppSummary.deviceCount??0}</b></div><div><span>Ø Apps je Gerät</span><b>{androidAppSummary.deviceCount?Math.round((androidAppSummary.totalApps||0)/androidAppSummary.deviceCount):0}</b></div><div><span>Benutzer-Apps</span><b>{androidAppSummary.userApps??0}</b></div><div><span>System-Apps</span><b>{androidAppSummary.systemApps??0}</b></div><div><span>Deaktiviert</span><b>{androidAppSummary.disabledApps??0}</b></div><div><span>Aktualisierte System-Apps</span><b>{androidAppSummary.updatedSystemApps??0}</b></div></div>
+   <div className="report-table-wrap"><table><thead><tr><th>Installationsquelle</th><th>Pakete</th></tr></thead><tbody>{androidAppSummary.installerDistribution.map(r=><tr key={r.installer}><td>{r.installer}</td><td>{r.count}</td></tr>)}</tbody></table></div>
+ </details>}
+ <details className="report-accordion"><summary><span>Android – Rollen-Auswertung</span><b>{androidDevices.length} Geräte</b></summary><div className="report-table-wrap"><table><thead><tr><th>Rolle</th><th>Geräte</th></tr></thead><tbody>
+   {[['Device Owner','Device Owner'],['Profile Owner','Profile Owner'],['Standard-IME','Standard-IME'],['Accessibility Services','Accessibility Services'],['Notification Listener','Notification Listener'],['VPN aktiv','VPN'],['Standard-Assistent','Assistent']].map(([label,title])=>
+     <tr key={label}><td>{title}</td><td>{androidRoleCount(label)}</td></tr>
+   )}
+ </tbody></table></div></details>
+ </>;
+
  const exportHtml=()=>{const rows=filtered.map(d=>`<tr><td>${d.kind}</td><td>${d.name}</td><td>${d.type}</td><td>${d.manufacturer||'—'}</td><td>${d.address||'—'}</td><td>${d.serial||'—'}</td><td>${d.source}</td><td>${completeness(d)} %</td><td>${missing(d).join(', ')||'vollständig'}</td></tr>`).join('');const html=`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>GAM Gerätebericht</title><style>body{font-family:Arial,sans-serif;margin:32px;color:#172033}h1{margin-bottom:4px}small{color:#64748b}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;font-size:12px}th{background:#eef2f7}.kpis{display:flex;gap:12px;flex-wrap:wrap}.kpis div{border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px}</style></head><body><h1>GAM Geräteanalyse</h1><small>Erstellt am ${new Date().toLocaleString('de-DE')}</small><div class="kpis"><div>Ausgewählte Geräte: <b>${filtered.length}</b></div><div>Datenqualität: <b>${avgCompleteness} %</b></div><div>Dubletten: <b>${duplicateGroups.length}</b></div></div><table><thead><tr><th>Status</th><th>Name</th><th>Kategorie</th><th>Hersteller</th><th>Adresse</th><th>Seriennummer</th><th>Quelle</th><th>Qualität</th><th>Fehlende Angaben</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`gam-geraetebericht-${new Date().toISOString().slice(0,10)}.html`;a.click();URL.revokeObjectURL(url)};
  const exportCsv=()=>{const esc=(v:unknown)=>`"${String(v??'').replace(/"/g,'""')}"`;const lines=[['Status','Name','Kategorie','Hersteller','Adresse','Seriennummer','Quelle','Vollständigkeit','Fehlende Felder'].map(esc).join(';'),...filtered.map(d=>[d.kind,d.name,d.type,d.manufacturer,d.address,d.serial,d.source,`${completeness(d)} %`,missing(d).join(', ')].map(esc).join(';'))];const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`gam-geraetebericht-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url)};
  if(loading)return <section><h2>Reports</h2><p className="muted">Geräteberichte werden berechnet …</p></section>;
@@ -2978,6 +3022,7 @@ function ReportsPage(){
 
  <details className="report-accordion"><summary><span>Empfohlene Nacharbeiten</span><b>{recommendations.length} Geräte</b></summary>{recommendations.length?<div className="report-table-wrap"><table><thead><tr><th>Priorität</th><th>Gerät</th><th>Qualität</th><th>Empfohlene Ergänzungen</th></tr></thead><tbody>{recommendations.map((r,i)=><tr key={`${r.device.kind}-${r.device.name}-${i}`}><td>{r.quality<50?'Hoch':r.quality<80?'Mittel':'Niedrig'}</td><td><b>{r.device.name}</b><small>{r.device.kind} · {r.device.type}</small></td><td><span className={`quality-pill ${r.quality>=80?'good':r.quality>=50?'medium':'bad'}`}>{r.quality} %</span></td><td>{r.missing.join(', ')}</td></tr>)}</tbody></table></div>:<p className="note ok">Für alle Geräte sind die geprüften Kernangaben vollständig.</p>}</details>
  <details className="report-accordion"><summary><span>Änderungs- und Registrierungsübersicht</span><b>{registered.filter(d=>selectedDeviceIds.has(deviceId({kind:'Registriert',name:text(d.name)||d.identityKey,type:text(d.deviceType)||'Unbekannt',address:text(d.address),serial:text(d.serialNumber),manufacturer:text(d.manufacturer),source:text(d.protocol)||'Discovery'}))).length} Einträge</b></summary><div className="report-table-wrap"><table><thead><tr><th>Gerät</th><th>Kategorie</th><th>Zuordnung</th><th>Erstmals gesehen</th><th>Zuletzt gesehen</th><th>Treffer</th></tr></thead><tbody>{registered.filter(d=>selectedDeviceIds.has(deviceId({kind:'Registriert',name:text(d.name)||d.identityKey,type:text(d.deviceType)||'Unbekannt',address:text(d.address),serial:text(d.serialNumber),manufacturer:text(d.manufacturer),source:text(d.protocol)||'Discovery'}))).map((d,i)=><tr key={d.identityKey||i}><td><b>{d.name||d.identityKey}</b><small>{d.address||d.serialNumber||''}</small></td><td>{d.deviceType||'Unbekannt'}</td><td>{d.manualDeviceType?'Manuell':'Automatisch'}</td><td>{d.firstSeenAt||d.registeredAt||'—'}</td><td>{d.lastSeenAt||'—'}</td><td>{d.detectionCount??d.lastScanHits??'—'}</td></tr>)}</tbody></table></div></details>
+ {androidSection}
  </section>
 }
 
@@ -3757,33 +3802,27 @@ function enrichDiscoveredDevice(d:DiscoveredDevice){
  const vendor=d.manufacturer||(!localMac?discoveredOuiVendors[mac.slice(0,8)]:undefined);
  const hay=[d.name,d.type,d.protocol,vendor,d.address].filter(Boolean).join(' ').toLowerCase();
  const identityHay=[d.name,vendor].filter(Boolean).join(' ').toLowerCase();
- const explicitComputerType=/desktop|notebook|laptop|workstation|thin client|mini[- ]?pc|macbook|imac/i.test(d.type||'');
- const explicitComputerIdentity=/\bwindows(?: 10| 11)?\b|\bdesktop\b|\bnotebook\b|\blaptop\b|\bworkstation\b|\bthin client\b|\bmini[- ]?pc\b|\bmacbook\b|\bimac\b|\bmac mini\b|\bchromebook\b|\boptiplex\b|\belitedesk\b|\bprodesk\b|\bthinkcentre\b|\bthinkpad\b|\blatitude\b|\bprecision\b|\bsurface pro\b/.test(identityHay);
- let category='Unbekannte Geräte';
- if(/usb|plug[ -]?and[ -]?play|\bpnp\b|windows pnp|usb_local/.test(hay))category='USB / Plug and Play';
- else if(/camera|kamera|onvif|rtsp|ip-kamera/.test(hay))category='Kameras';
- else if(/router|firewall|gateway/.test(hay))category='Router & Firewalls';
- else if(/repeater|access point|wlan|wireless ap/.test(hay))category='Access Points';
- else if(/synology|qnap|nas/.test(hay))category='NAS-Systeme';
- else if(/printer|drucker|scanner|epson|brother|canon|xerox|hp laser/.test(hay))category='Drucker & Scanner';
- else if(/inverter|wechselrichter|solar(?:anlage|gerät|system)?|photovoltaik|\bpv\b|energy|energiesystem|battery|batterie|speicher|powerwall|felicity|kostal|plenticore|piko|ksem|fronius|sma|solaredge|sun2000|huawei|victron|enphase|growatt|goodwe|sungrow|deye|solax|foxess|fox ess|byd|pylontech|lux[- ]?x|ivgm|smart meter|energiemesser|solarlog|shinewifi|data manager/.test(hay))category='Wechselrichter & Energiesysteme';
- else if(/home assistant|raspberry|server|docker|proxmox|virtualbox|vmware|hyper-v/.test(hay))category='Server & virtuelle Systeme';
- else if(explicitComputerType||explicitComputerIdentity)category='Computer';
- else if(/switch|bridge|ethernet/.test(hay))category='Switches & Netzwerk';
- else if(/phone|telefon|voip|sip/.test(hay))category='Telefonie';
- else if(/marantz|denon|heos|receiver|verstärker|amplifier|webradio|noxon|sonos|audio/.test(hay))category='Audio & Receiver';
- else if(/tv|television|chromecast|roku|fire tv|multimedia|dlna|media renderer|telefunken/.test(hay))category='Fernseher & Multimedia';
- else if(/iphone|ipad|android|smartphone|tablet|mobile|galaxy|windows phone/.test(hay))category='Smartphones & Tablets';
- else if(/dishwasher|geschirrspüler|geschirrspueler|home connect|washing machine|waschmaschine|dryer|trockner|kühlschrank|kuehlschrank|oven|backofen|appliance/.test(hay))category='Haushaltsgeräte';
- else if(/rasen[- ]?robi|rasenroboter|mähroboter|maehroboter|robot mower|staubsaugerroboter|vacuum robot|robotik/.test(hay))category='Robotik';
- else if(/luftwärmetauscher|luftwaermetauscher|heizung|wärmepumpe|waermepumpe|klima|ventilation|hvac|building automation/.test(hay))category='Klima & Gebäudetechnik';
- else if(/fritz[!. -]?(box|repeater|fon|wlan|powerline)|fritz\.box/.test(identityHay))category='AVM-Systeme';
- else if(/iot|smart|tuya|shelly|zigbee|homekit|matter|thermostat|sensor/.test(hay))category='Smart Home & IoT';
+ const nameTypeHay=[d.name,d.type].filter(Boolean).join(' ').toLowerCase();
+ const category=classifyDevice({hay,identityHay,nameTypeHay,dType:d.type})??'Unbekannte Geräte';
  const generic=!d.name||d.name.startsWith('Netzwerkgerät ')||d.name==='Unbekanntes Gerät'||/^.*\/.*upnp/i.test(d.name);
  const vendorUseful=vendor&&!['Netzwerkgerät','Druck-/Netzwerkgerät','IP-Kamera'].includes(vendor);
  const displayName=!generic?d.name:vendorUseful?`${vendor} ${category==='Unbekannte Geräte'?'Gerät':category.replace(/ & .*/, '').replace(/e$/, '')}`:category==='Unbekannte Geräte'?`Netzwerkgerät ${d.address||''}`:`${category.replace(/ & .*/, '')} ${d.address||''}`;
  return {...d,manufacturer:vendor,category,displayName,locallyAdministeredMac:localMac};
 }
+
+/**
+ * 40k33b10: Verständliche Schutzstufen-Darstellung. Nutzt ausschließlich die vom
+ * Backend gelieferte Einordnung (criticalityLevel/warningLevel) - keine eigene
+ * Bewertung im Frontend. Symbol + Wort, damit die Bedeutung auch ohne
+ * Farberkennung klar bleibt (barrierearme Darstellung).
+ */
+const criticalityBadge=(criticalityLevel:string|undefined,warningLevel:string)=>{
+ if(criticalityLevel==='KRITISCH')return <span className="note danger"><b>❗ KRITISCH</b></span>;
+ if(criticalityLevel==='HOCH')return <span className="note warn">🟠 Hoher Konflikt</span>;
+ if(criticalityLevel==='PRUEFHINWEIS')return <span className="note warn">🟡 Prüfhinweis</span>;
+ if(warningLevel==='GREEN')return <span className="note ok">🟢 Sehr sicher</span>;
+ return <span className="note warn">🟡 Bitte prüfen</span>;
+};
 
 const discoverySourceBadges=(protocol?:string)=>{
   const raw=(protocol||'').trim();
@@ -3793,7 +3832,7 @@ const discoverySourceBadges=(protocol?:string)=>{
   const add=(key:string,icon:string,label:string,className:string)=>{if(!badges.some(x=>x.key===key))badges.push({key,icon,label,className});};
   if(value.includes('home assistant'))add('home-assistant','🏠','Home Assistant','discovery-source-ha');
   if(value.includes('tuya')||value.includes('smart life'))add('tuya','☁','Tuya Cloud','discovery-source-tuya');
-  if(value.includes('windows arp')||value.includes('get-netneighbor'))add('windows','🖥','Windows','discovery-source-windows');
+  if(value.includes('windows-inventarisierung')||value.includes('powershell cim')||value.includes('windows arp')||value.includes('get-netneighbor'))add('windows','🖥','Windows','discovery-source-windows');
   if(value.includes('fritz')||value.includes('tr-064'))add('fritzbox','📶','FRITZ!Box','discovery-source-fritz');
   if(value.includes('snmp'))add('snmp','🌐','SNMP','discovery-source-snmp');
   if(value.includes('docker'))add('docker','🐳','Docker','discovery-source-docker');
@@ -3815,6 +3854,1192 @@ const discoverySourceBadges=(protocol?:string)=>{
   return <span className="discovery-source-badges" title={raw}>{badges.map(b=><span key={b.key} className={`discovery-source-badge ${b.className}`}><span aria-hidden="true">{b.icon}</span>{b.label}</span>)}</span>;
  };
 
+/**
+ * 40k33b6b: Einklappbarer Bereich der erweiterten Linux-Analyse. Ruft die
+ * Information erst ab, wenn der Benutzer den Bereich tatsächlich öffnet
+ * (Lazy Loading), merkt sich das Ergebnis für die Dauer des geöffneten
+ * Dialogs (kein erneuter Netzwerkzugriff beim wiederholten Auf-/Zuklappen)
+ * und filtert große Listen ausschließlich lokal im Browser.
+ */
+function LazyLinuxSection({identityKey,section,title}:{identityKey:string;section:string;title:string}){
+  const [loaded,setLoaded]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [result,setResult]=useState<LinuxOnDemandSection|null>(null);
+  const [errorText,setErrorText]=useState('');
+  const [filter,setFilter]=useState('');
+
+  const load=async()=>{
+    if(loaded||loading) return;
+    setLoading(true); setErrorText('');
+    try{ setResult(await loadLinuxOnDemandSection(identityKey,section)); }
+    catch(e:any){ setErrorText(e?.message||'Abruf fehlgeschlagen.'); }
+    finally{ setLoading(false); setLoaded(true); }
+  };
+
+  const lines=(result?.content||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  const filterNormalized=filter.trim().toLowerCase();
+  const filtered=filterNormalized?lines.filter(l=>l.toLowerCase().includes(filterNormalized)):lines;
+
+  return <details className="device-detail-section linux-lazy-section" onToggle={e=>{if((e.currentTarget as HTMLDetailsElement).open)void load();}}>
+    <summary><span>{title}</span></summary>
+    <div className="device-detail-section-body">
+      {loading&&<p className="muted">Wird direkt von diesem Gerät abgerufen …</p>}
+      {errorText&&<p className="note warn">{errorText}</p>}
+      {loaded&&result&&<>
+        <small className="muted">Quelle: Linux-Discovery (On-Demand) · {result.fromCache?'aus Zwischenspeicher':'gerade abgerufen'} · {result.fetchedAt?new Date(result.fetchedAt).toLocaleString('de-DE'):'—'}</small>
+        {lines.length>5&&<div className="toolbar small"><input placeholder="Lokal filtern …" value={filter} onChange={e=>setFilter(e.target.value)}/>{filter&&<small className="muted">{filtered.length} von {lines.length}</small>}</div>}
+        {result.available&&filtered.length>0?<ul className="device-detail-list">{filtered.map((l,i)=><li key={i}>{l}</li>)}</ul>:<p className="muted">{result.content}</p>}
+      </>}
+    </div>
+  </details>;
+}
+
+/**
+ * 40k33b8: Bereich "Linux-Inventarisierung" - im Gegensatz zu den lazy
+ * geladenen Bereichen der erweiterten Linux-Analyse (40k33b6b) IMMER sichtbar
+ * und zeigt direkt die bereits vorhandenen Felder aus der regulären
+ * Inventarisierung (40k33b3/40k33b6a), die zuvor im Dialog gar nicht
+ * dargestellt wurden (nur in der Tabellenzeile der Geräteliste). Zusätzlich
+ * ein klarer Status und drei gezielte manuelle Aktionen, ohne einen
+ * kompletten Suchlauf anzustoßen.
+ */
+/**
+ * 40k34c: Unterbereich "Installierte Apps" - eigenständig von der
+ * Android-Systeminventarisierung (begriffliche Trennung: Gerät ≠ App).
+ * Lazy geladen (erst beim Öffnen), mit Filter/Suche/Sortierung und
+ * aufklappbarer Detailzeile. Apps erscheinen NIE in der allgemeinen
+ * Geräteliste - nur hier, als Unterdaten genau eines Android-Geräts.
+ */
+function AndroidAppsSection({identityKey}:{identityKey:string}){
+  const [loaded,setLoaded]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [apps,setApps]=useState<InstalledApp[]>([]);
+  const [runs,setRuns]=useState<AppInventoryRun[]>([]);
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState('');
+  const [search,setSearch]=useState('');
+  const [filter,setFilter]=useState<'all'|'user'|'system'|'disabled'|'updatedSystem'|'launcher'|'browser'>('all');
+  const [sortKey,setSortKey]=useState<'name'|'package'|'version'|'installed'|'updated'|'type'>('name');
+  const [expanded,setExpanded]=useState<string|null>(null);
+
+  const load=async()=>{
+    if(loading) return;
+    setLoading(true);
+    try{
+      const [a,r]=await Promise.all([loadAndroidApps(identityKey),loadAndroidAppRuns(identityKey)]);
+      setApps(a); setRuns(r);
+    }catch(e:any){ gamNotify('error',e?.message||'App-Liste konnte nicht geladen werden.',0); }
+    finally{ setLoading(false); setLoaded(true); }
+  };
+
+  const runInventory=async()=>{
+    setBusy(true); setMessage('');
+    try{
+      const r=await runAndroidAppInventory(identityKey);
+      setMessage(r.message);
+      await load();
+    }catch(e:any){ gamNotify('error',e?.message||'App-Inventarisierung fehlgeschlagen.',0); }
+    finally{ setBusy(false); }
+  };
+
+  const lastRun=runs.find(r=>r.status==='VOLLSTAENDIG')||runs[0];
+  const active=apps.filter(a=>!a.removedAt);
+  const userCount=active.filter(a=>!a.system).length;
+  const systemCount=active.filter(a=>a.system).length;
+  const disabledCount=active.filter(a=>!a.enabled).length;
+
+  const searchNorm=search.trim().toLowerCase();
+  const filtered=active.filter(a=>{
+    if(searchNorm){
+      const hay=[a.displayName,a.packageName,a.versionName,a.installerPackage,a.roles].filter(Boolean).join(' ').toLowerCase();
+      if(!hay.includes(searchNorm)) return false;
+    }
+    if(filter==='user') return !a.system;
+    if(filter==='system') return a.system;
+    if(filter==='disabled') return !a.enabled;
+    if(filter==='updatedSystem') return a.updatedSystem;
+    if(filter==='launcher') return !!a.roles?.includes('Launcher');
+    if(filter==='browser') return !!a.roles?.includes('Standardbrowser');
+    return true;
+  }).sort((a,b)=>{
+    if(sortKey==='name') return (a.displayName||a.packageName).localeCompare(b.displayName||b.packageName);
+    if(sortKey==='package') return a.packageName.localeCompare(b.packageName);
+    if(sortKey==='version') return (a.versionName||'').localeCompare(b.versionName||'');
+    if(sortKey==='installed') return (a.installTime||'').localeCompare(b.installTime||'');
+    if(sortKey==='updated') return (a.updateTime||'').localeCompare(b.updateTime||'');
+    return (a.system?'1':'0').localeCompare(b.system?'1':'0');
+  });
+
+  return <details className="device-detail-section" open>
+    <summary><span>Installierte Apps{loaded?` (${active.length}: ${userCount} Benutzer, ${systemCount} System)`:''}</span></summary>
+    <div className="device-detail-section-body">
+      {loading&&<p className="muted">Wird geladen …</p>}
+      {loaded&&<>
+        <p className="muted">
+          Gesamt: {active.length} · Benutzer-Apps: {userCount} · System-Apps: {systemCount} · deaktiviert: {disabledCount}
+          {lastRun&&<> · letzter vollständiger Lauf: {lastRun.finishedAt?new Date(lastRun.finishedAt).toLocaleString('de-DE'):'—'} · Status: {lastRun.status}</>}
+        </p>
+        {runs[0]&&runs[0].changesSummary&&<p className="muted">Seit letztem Lauf: {runs[0].changesSummary}</p>}
+        {runs[0]&&runs[0].status==='TEILWEISE'&&<p className="note warn">Teilinventarisierung: {runs[0].message}</p>}
+
+        <div className="toolbar">
+          <label><Search size={16}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Name, Paket, Version, Quelle, Rolle …"/></label>
+          <label>Filter<select value={filter} onChange={e=>setFilter(e.target.value as any)}>
+            <option value="all">Alle</option><option value="user">Benutzer-Apps</option><option value="system">System-Apps</option>
+            <option value="disabled">Deaktiviert</option><option value="updatedSystem">Aktualisierte System-Apps</option>
+            <option value="launcher">Launcher/Home</option><option value="browser">Browser</option>
+          </select></label>
+          <label>Sortierung<select value={sortKey} onChange={e=>setSortKey(e.target.value as any)}>
+            <option value="name">App-Name</option><option value="package">Paketname</option><option value="version">Version</option>
+            <option value="installed">Installationsdatum</option><option value="updated">Aktualisierungsdatum</option><option value="type">Typ</option>
+          </select></label>
+          <span className="muted">{filtered.length} von {active.length}</span>
+        </div>
+
+        {loading?<p className="muted">App-Liste wird geladen …</p>:apps.length===0?<p className="muted">Noch keine gespeicherten Apps gefunden. Bitte die App-Inventarisierung erneut ausführen.</p>:
+        <div className="scroll-table scroll-table-tall">
+          <table className="compact-table">
+            <thead><tr><th>App</th><th>Paketname</th><th>Version</th><th>Typ</th><th>Status</th><th>Installationsquelle</th><th>Installiert</th><th>Aktualisiert</th><th>Rollen</th></tr></thead>
+            <tbody>{filtered.map(a=><React.Fragment key={a.packageName}>
+              <tr onClick={()=>setExpanded(expanded===a.packageName?null:a.packageName)} style={{cursor:'pointer'}}>
+                <td>{a.displayName||<span className="muted">Anzeigename nicht verfügbar</span>}</td>
+                <td className="android-package-cell">{a.packageName}</td>
+                <td>{a.versionName||'—'}</td>
+                <td>{a.system?(a.updatedSystem?'Aktualisierte System-App':'System-App'):'Benutzer-App'}</td>
+                <td>{a.enabled?'aktiviert':'deaktiviert'}</td>
+                <td>{a.installerPackage||'unbekannt'}</td>
+                <td>{a.installTime?new Date(a.installTime).toLocaleDateString('de-DE'):'—'}</td>
+                <td>{a.updateTime?new Date(a.updateTime).toLocaleDateString('de-DE'):'—'}</td>
+                <td>{a.roles||'—'}</td>
+              </tr>
+              {expanded===a.packageName&&<tr><td colSpan={9}>
+                <table className="compact-table"><tbody>
+                  <tr><td>Version Code</td><td>{a.versionCode??'—'}</td></tr>
+                  <tr><td>Min SDK</td><td>{a.minSdk??'—'}</td></tr>
+                  <tr><td>Target SDK</td><td>{a.targetSdk??'—'}</td></tr>
+                  <tr><td>Debuggable</td><td>{a.debuggable?'ja':'nein'}</td></tr>
+                  <tr><td>Test Only</td><td>{a.testOnly?'ja':'nein'}</td></tr>
+                  <tr><td>Zuletzt gesehen</td><td>{new Date(a.lastSeenAt).toLocaleString('de-DE')}</td></tr>
+                </tbody></table>
+              </td></tr>}
+            </React.Fragment>)}
+          </tbody>
+          </table>
+        </div>}
+
+        <div className="toolbar">
+          <button type="button" disabled={busy} onClick={()=>void runInventory()}>{apps.length>0?'App-Inventarisierung erneut ausführen':'App-Inventarisierung starten'}</button>
+        </div>
+        {message&&<p className="note">{message}</p>}
+      </>}
+    </div>
+  </details>;
+}
+
+/**
+ * 40k35h3: Zentraler Aufmerksamkeits-Navigator. Neue Dialoge, Statusbereiche
+ * und automatisch geöffnete Diagnoseflächen führen den Benutzer einheitlich
+ * zum relevanten Inhalt. Der Sticky-Header-Abstand wird zentral berücksichtigt.
+ */
+function useAttentionNavigation<T extends HTMLElement>(trigger:unknown, focusRef?:React.RefObject<HTMLElement|null>){
+  const targetRef=useRef<T|null>(null);
+  useEffect(()=>{
+    if(!trigger) return;
+    const timer=window.setTimeout(()=>{
+      const target=targetRef.current;
+      if(!target) return;
+      target.scrollIntoView({behavior:'smooth',block:'start'});
+      window.setTimeout(()=>window.scrollBy({top:-88,left:0,behavior:'smooth'}),120);
+      focusRef?.current?.focus({preventScroll:true});
+    },0);
+    return ()=>window.clearTimeout(timer);
+  },[trigger,focusRef]);
+  return targetRef;
+}
+
+/**
+ * 40k34b: Bereich "Android-Inventarisierung" - immer sichtbar (auch ohne ADB,
+ * analog zu LinuxInventorySection), zeigt ADB-Status, bekannte Verbindung und
+ * bereits über ADB erfasste Merkmale, mit den geforderten Aktionen.
+ */
+function AndroidInventorySection({identity,onUpdated}:{identity:DeviceIdentityRow;onUpdated:(row:DeviceIdentityRow)=>void}){
+  const [adbStatus,setAdbStatus]=useState<AdbStatus|null>(null);
+  const [busy,setBusy]=useState(false);
+  const [operation,setOperation]=useState('');
+  const [actionMessage,setActionMessage]=useState('');
+  const [actionSuccess,setActionSuccess]=useState<boolean|null>(null);
+  const [pairDialogOpen,setPairDialogOpen]=useState(false);
+  const [connectDialogOpen,setConnectDialogOpen]=useState(false);
+  // 40k35j: Der aktuell bestätigte ADB-Endpunkt wird lokal geführt. Dadurch
+  // prüft die Oberfläche nach einem manuellen Connect sofort den NEUEN Port
+  // und nicht bis zum nächsten vollständigen Geräte-Reload den alten DB-Stand.
+  const [currentAdbHost,setCurrentAdbHost]=useState(identity.adbHost||'');
+  const [currentAdbPort,setCurrentAdbPort]=useState<number|null>(identity.adbPort??null);
+  const operationRef=useAttentionNavigation<HTMLDivElement>(operation);
+  const actionResultRef=useAttentionNavigation<HTMLDivElement>(actionMessage);
+
+  const protocol=String(identity.protocol||'');
+  const parts=protocol.split(' · ').map(x=>x.trim()).filter(Boolean);
+  const pairs=parts.slice(1).map(part=>{const colon=part.indexOf(':');return colon>0?[part.slice(0,colon).trim(),part.slice(colon+1).trim()] as [string,string]:null;}).filter(Boolean) as Array<[string,string]>;
+  const value=(label:string)=>pairs.find(([l])=>l===label)?.[1];
+  const inventoryStatus=value('Inventarisierungsstatus');
+  useEffect(()=>{
+    setCurrentAdbHost(identity.adbHost||'');
+    setCurrentAdbPort(identity.adbPort??null);
+  },[identity.identityKey,identity.adbHost,identity.adbPort]);
+  const hasAdbInfo=!!(currentAdbHost&&currentAdbPort);
+  const serial=hasAdbInfo?`${currentAdbHost}:${currentAdbPort}`:'';
+  const currentDevice=adbStatus?.devices.find(d=>d.serial===serial);
+  const isConnected=currentDevice?.state==='device';
+  const isUnauthorized=currentDevice?.state==='unauthorized';
+  const isOffline=currentDevice?.state==='offline';
+
+  const loadStatus=async(showFeedback=false,endpoint?:{host:string;port:number})=>{
+    if(showFeedback){setBusy(true);setOperation('Verbindung wird geprüft …');setActionMessage('');setActionSuccess(null);}
+    try{
+      const status=await loadAndroidAdbStatus();
+      setAdbStatus(status);
+      const checkedHost=endpoint?.host??currentAdbHost;
+      const checkedPort=endpoint?.port??currentAdbPort;
+      const checkedSerial=checkedHost&&checkedPort?`${checkedHost}:${checkedPort}`:'';
+      if(showFeedback){
+        if(!status.available){setActionSuccess(false);setActionMessage('ADB ist auf diesem GAM-System nicht verfügbar.');}
+        else if(!checkedSerial){setActionSuccess(false);setActionMessage('Für dieses Gerät ist noch keine Verbindung gespeichert. Bitte „Gerät verbinden“ oder „Gerät koppeln“ wählen.');}
+        else{
+          const device=status.devices.find(d=>d.serial===checkedSerial);
+          if(device?.state==='device'){setActionSuccess(true);setActionMessage(`Android-Gerät ${checkedSerial} ist verbunden und autorisiert.`);}
+          else if(device?.state==='unauthorized'){setActionSuccess(false);setActionMessage('Das Gerät ist erreichbar, wartet aber auf die Bestätigung der ADB-Freigabe am Android-Gerät.');}
+          else setActionSuccess(false),setActionMessage(`Keine aktive Verbindung zu ${checkedSerial}. Bitte prüfen, ob „Drahtloses Debugging“ eingeschaltet ist und ob sich der dort angezeigte Port geändert hat. Öffnen Sie anschließend „Gerät verbinden“ und tragen Sie den aktuellen Port ein.`);
+        }
+      }
+    }catch(e:any){
+      const msg=e?.message||'Verbindungsstatus konnte nicht geladen werden.';
+      setActionSuccess(false);setActionMessage(msg);gamNotify('error',msg,0);
+    }finally{if(showFeedback){setBusy(false);setOperation('');}}
+  };
+  useEffect(()=>{ void loadStatus(false); },[identity.identityKey,currentAdbHost,currentAdbPort]);
+
+  const runInventory=async()=>{
+    setBusy(true); setOperation('Verbindung wird geprüft und Android-Inventarisierung gestartet …'); setActionMessage(''); setActionSuccess(null);
+    try{
+      const result=await runAndroidInventory(identity.identityKey);
+      onUpdated(result.identity);
+      setActionSuccess(result.success);
+      setActionMessage(result.message);
+      await loadStatus(false);
+    }catch(e:any){setActionSuccess(false);setActionMessage(e?.message||'Android-Inventarisierung fehlgeschlagen.');}
+    finally{setBusy(false);setOperation('');}
+  };
+
+  const disconnect=async()=>{
+    if(!currentAdbHost||!currentAdbPort) return;
+    setBusy(true);setOperation(`Verbindung zu ${serial} wird getrennt …`);setActionMessage('');setActionSuccess(null);
+    try{
+      const r=await disconnectAndroidDevice(currentAdbHost,currentAdbPort);
+      setActionSuccess(r.success);setActionMessage(r.message);
+      await loadStatus(false);
+    }catch(e:any){setActionSuccess(false);setActionMessage(e?.message||'Trennen fehlgeschlagen.');}
+    finally{setBusy(false);setOperation('');}
+  };
+
+  const statusLine=!adbStatus?'⏳ Verbindungsstatus wird geladen …':!adbStatus.available?'⚪ Android-Verbindung nicht verfügbar':
+    isConnected?'🟢 Verbunden und autorisiert':isUnauthorized?'🟠 Verbindung wartet auf Freigabe':isOffline?'🟡 Gerät ist offline':hasAdbInfo?'🔴 Nicht verbunden':'⚪ Noch nicht eingerichtet';
+
+  return <details className="device-detail-section" open={hasAdbInfo}>
+    <summary><span>Android-Gerät verwalten</span></summary>
+    <div className="device-detail-section-body">
+      <div className={`note ${isConnected?'success':hasAdbInfo?'warn':''}`}><b>{statusLine}</b>{hasAdbInfo&&<><br/><span>{serial}</span></>}</div>
+      {operation&&<div ref={operationRef} className="note gam-attention-target"><b>⏳ {operation}</b></div>}
+      {adbStatus&&adbStatus.available&&<p className="muted">ADB-Version: {adbStatus.version||'—'} · verbundene Geräte: {adbStatus.devices.length} · autorisiert: {adbStatus.authorized} · nicht autorisiert: {adbStatus.unauthorized} · offline: {adbStatus.offline}</p>}
+      {isUnauthorized&&<p className="note warn">Bitte die ADB-Freigabe direkt auf dem Fossibot bestätigen.</p>}
+      {hasAdbInfo&&!isConnected&&!isUnauthorized&&<div className="note warn"><b>Verbindung ist derzeit nicht aktiv.</b><br/>Prüfen Sie am Android-Gerät unter <b>Entwickleroptionen → Drahtloses Debugging</b>, ob WLAN-Debugging eingeschaltet ist. Vergleichen Sie außerdem den dort angezeigten Port mit <b>{currentAdbPort}</b>. Hat er sich geändert, wählen Sie unten <b>„Gerät verbinden“</b> und tragen Sie den aktuellen Port ein. Erst wenn das scheitert, ist <b>„Gerät koppeln“</b> nötig.</div>}
+      {identity.adbLastConnectedAt&&<p className="muted">Letzte erfolgreiche Verbindung: {new Date(identity.adbLastConnectedAt).toLocaleString('de-DE')}</p>}
+      {value('Inventarisierungsdauer')&&<p className="muted">Letzte Inventarisierung: {inventoryStatus||'—'} · Dauer: {value('Inventarisierungsdauer')}</p>}
+
+      <div className="toolbar">
+        <button type="button" disabled={busy} onClick={()=>void loadStatus(true)}>Verbindung prüfen</button>
+        <button type="button" className="secondary" disabled={busy} onClick={()=>{setActionMessage('');setActionSuccess(null);setPairDialogOpen(true);}}>Gerät koppeln</button>
+        <button type="button" className="secondary" disabled={busy} onClick={()=>{setActionMessage('');setActionSuccess(null);setConnectDialogOpen(true);}}>Gerät verbinden</button>
+        {hasAdbInfo&&<button type="button" className="secondary" disabled={busy||!isConnected} onClick={()=>void disconnect()}>Verbindung trennen</button>}
+        {hasAdbInfo&&<button type="button" disabled={busy||!isConnected} onClick={()=>void runInventory()}>Inventarisierung erneut ausführen</button>}
+      </div>
+      {actionMessage&&<div ref={actionResultRef} className={`note gam-attention-target ${actionSuccess===true?'success':actionSuccess===false?'warn':''}`}><b>{actionSuccess===true?'✓ ':actionSuccess===false?'⚠ ':''}{actionMessage}</b></div>}
+
+      <AndroidAppsSection identityKey={identity.identityKey}/>
+      {pairDialogOpen&&<AndroidPairDialog identityKey={identity.identityKey} defaultHost={currentAdbHost||identity.address||''} onClose={()=>setPairDialogOpen(false)} onDone={(host,port)=>{
+        setPairDialogOpen(false); setCurrentAdbHost(host); setCurrentAdbPort(port);
+        onUpdated({...identity,adbHost:host,adbPort:port,adbLastConnectedAt:new Date().toISOString()});
+        void loadStatus(true,{host,port});
+      }}/>}
+      {connectDialogOpen&&<AndroidConnectDialog identityKey={identity.identityKey} defaultHost={currentAdbHost||identity.address||''} defaultPort={currentAdbPort?String(currentAdbPort):''} onClose={()=>setConnectDialogOpen(false)} onDone={(host,port)=>{
+        setConnectDialogOpen(false); setCurrentAdbHost(host); setCurrentAdbPort(port);
+        onUpdated({...identity,adbHost:host,adbPort:port,adbLastConnectedAt:new Date().toISOString()});
+        void loadStatus(true,{host,port});
+      }}/>}
+    </div>
+  </details>;
+}
+
+/**
+ * 40k34b: Geführter Pairing-Dialog für modernes Wireless Debugging. Getrennte
+ * Eingaben für IP, Pairing-Port, Pairing-Code und (danach) ADB-Verbindungs-Port,
+ * da diese Ports unterschiedlich sein können. Der Pairing-Code verlässt das
+ * Eingabefeld nur für den einen Kopplungs-Aufruf und wird nirgends gespeichert.
+ */
+function AndroidPairDialog({identityKey,defaultHost,onClose,onDone}:{identityKey:string;defaultHost:string;onClose:()=>void;onDone:(host:string,port:number)=>void}){
+  const [host,setHost]=useState(defaultHost);
+  const [pairingPort,setPairingPort]=useState('');
+  const [pairingCode,setPairingCode]=useState('');
+  const [adbPort,setAdbPort]=useState('5555');
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState('');
+  const [paired,setPaired]=useState(false);
+  const hostInputRef=useRef<HTMLInputElement|null>(null);
+  const dialogRef=useAttentionNavigation<HTMLElement>(true,hostInputRef);
+
+  const doPair=async()=>{
+    setBusy(true); setMessage('');
+    try{
+      const r=await pairAndroidDevice(host.trim(),Number(pairingPort),pairingCode.trim());
+      setMessage(r.message); setPaired(r.success);
+    }catch(e:any){ setMessage(e?.message||'Pairing fehlgeschlagen.'); }
+    finally{ setBusy(false); }
+  };
+  const doConnect=async()=>{
+    setBusy(true); setMessage('');
+    try{
+      const r=await connectAndroidDevice(host.trim(),Number(adbPort),identityKey);
+      setMessage(r.message);
+      if(r.success){ gamNotify('success','Android-Gerät verbunden.'); onDone(host.trim(),Number(adbPort)); }
+    }catch(e:any){ setMessage(e?.message||'Verbindung fehlgeschlagen.'); }
+    finally{ setBusy(false); }
+  };
+
+  return <div className="gam-modal-backdrop" onClick={onClose}>
+    <section ref={dialogRef} className="card gam-modal-card gam-attention-target" onClick={e=>e.stopPropagation()}>
+      <div className="modal-title-row"><h2>Android-Gerät koppeln</h2><button className="secondary icon-only" type="button" onClick={onClose} aria-label="Dialog schließen">×</button></div>
+      <p className="muted">Wireless Debugging in den Entwickleroptionen des Android-Geräts aktivieren und die dort angezeigte IP-Adresse, den Pairing-Port und den Pairing-Code hier eintragen.</p>
+      <label>IP-Adresse<input ref={hostInputRef} value={host} onChange={e=>setHost(e.target.value)} placeholder="192.168.2.50"/></label>
+      <label>Pairing-Port<input value={pairingPort} onChange={e=>setPairingPort(e.target.value)} placeholder="z.B. 41234"/></label>
+      <label>Pairing-Code<input value={pairingCode} onChange={e=>setPairingCode(e.target.value)} placeholder="6-stelliger Code" maxLength={6}/></label>
+      <div className="toolbar"><button type="button" disabled={busy||!host.trim()||!pairingPort.trim()||!pairingCode.trim()} onClick={()=>void doPair()}>Gerät koppeln</button></div>
+      {message&&<p className="note">{message}</p>}
+      {paired&&<>
+        <p className="muted">Pairing erfolgreich. Für die eigentliche ADB-Verbindung ist der ADB-Verbindungs-Port häufig ein ANDERER Port als der Pairing-Port.</p>
+        <label>ADB-Verbindungs-Port<input value={adbPort} onChange={e=>setAdbPort(e.target.value)}/></label>
+        <div className="toolbar"><button type="button" disabled={busy||!adbPort.trim()} onClick={()=>void doConnect()}>Verbinden</button></div>
+      </>}
+    </section>
+  </div>;
+}
+
+/** 40k34b: Klassisches ADB over TCP/IP - Port 5555 als editierbarer Vorschlag. */
+function AndroidConnectDialog({identityKey,defaultHost,defaultPort,onClose,onDone}:{identityKey:string;defaultHost:string;defaultPort:string;onClose:()=>void;onDone:(host:string,port:number)=>void}){
+  const [host,setHost]=useState(defaultHost);
+  const [port,setPort]=useState(defaultPort);
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState('');
+  const hostInputRef=useRef<HTMLInputElement|null>(null);
+  const dialogRef=useAttentionNavigation<HTMLElement>(true,hostInputRef);
+
+  const doConnect=async()=>{
+    setBusy(true); setMessage('');
+    try{
+      const r=await connectAndroidDevice(host.trim(),Number(port),identityKey);
+      setMessage(r.message);
+      if(r.success){ gamNotify('success','Android-Gerät verbunden.'); onDone(host.trim(),Number(port)); }
+    }catch(e:any){ setMessage(e?.message||'Verbindung fehlgeschlagen.'); }
+    finally{ setBusy(false); }
+  };
+
+  return <div className="gam-modal-backdrop" onClick={onClose}>
+    <section ref={dialogRef} className="card gam-modal-card gam-attention-target" onClick={e=>e.stopPropagation()}>
+      <div className="modal-title-row"><h2>ADB-Verbindung herstellen</h2><button className="secondary icon-only" type="button" onClick={onClose} aria-label="Dialog schließen">×</button></div>
+      <p className="muted">Tragen Sie den aktuell unter Entwickleroptionen → Drahtloses Debugging angezeigten Verbindungsport ein. Dieser Port kann sich ändern und ist häufig nicht mit dem Pairing-Port identisch.</p>
+      <label>IP-Adresse oder Hostname<input ref={hostInputRef} value={host} onChange={e=>setHost(e.target.value)} placeholder="192.168.2.50"/></label>
+      <label>Port<input value={port} onChange={e=>setPort(e.target.value)}/></label>
+      <div className="toolbar"><button type="button" disabled={busy||!host.trim()||!port.trim()} onClick={()=>void doConnect()}>{busy?'Verbindung wird hergestellt …':'Mit aktuellem Port verbinden'}</button></div>
+      {message&&<p className="note">{message}</p>}
+    </section>
+  </div>;
+}
+
+const PLATFORM_INVENTORY_STATUS_LABELS:Record<string,string>={
+ NOCH_NIE:'noch nie inventarisiert', LAEUFT:'läuft gerade', ERFOLGREICH:'erfolgreich',
+ TEILWEISE:'teilweise erfolgreich', FEHLGESCHLAGEN:'fehlgeschlagen',
+ NICHT_UNTERSTUETZT:'nicht unterstützt', NICHT_ERREICHBAR:'nicht erreichbar', NICHT_AUTORISIERT:'nicht autorisiert',
+};
+const PLATFORM_INVENTORY_STATUS_ICONS:Record<string,string>={
+ NOCH_NIE:'⚪', LAEUFT:'⏳', ERFOLGREICH:'✅', TEILWEISE:'🟡', FEHLGESCHLAGEN:'❌',
+ NICHT_UNTERSTUETZT:'➖', NICHT_ERREICHBAR:'⚠️', NICHT_AUTORISIERT:'🔒',
+};
+/**
+ * 40k34m: Plattforminventarisierung - zeigt für jedes Gerät (unabhängig von der
+ * erkannten Plattform) den Inventarisierungsstatus aller fünf unterstützten
+ * Plattformen und erlaubt eine gezielte Erst- oder Nachinventarisierung, jederzeit
+ * unabhängig von Discovery. Ruft ausschließlich bereits bestehende Backend-Methoden
+ * auf (Android-System-/App-Inventarisierung aus 40k34b/c, Linux-Inspektion aus
+ * 40k33b3) - keine zweite Inventarisierungslogik.
+ */
+function PlatformInventorySection({identityKey,readOnly}:{identityKey:string;readOnly?:boolean}){
+ const [rows,setRows]=useState<PlatformInventoryStatusRow[]>([]);
+ const [loading,setLoading]=useState(true);
+ const [busyPlatform,setBusyPlatform]=useState<string|null>(null);
+ const [message,setMessage]=useState('');
+
+ const load=async()=>{
+  setLoading(true);
+  try{ setRows(await loadPlatformInventoryStatus(identityKey)); }
+  catch(e:any){ setMessage(e?.message||'Status konnte nicht geladen werden.'); }
+  finally{ setLoading(false); }
+ };
+ useEffect(()=>{ void load(); },[identityKey]);
+
+ // 40k34r: kurzes, sich selbst begrenzendes Nachfragen, solange für dieses Gerät
+ // irgendeine Plattform als "läuft" gemeldet ist - macht die jetzt automatisch
+ // im Hintergrund gestartete Inventarisierung (nach Discovery) sichtbar, ohne
+ // dauerhaftes Polling: sobald keine Plattform mehr läuft, stoppt es sich selbst.
+ useEffect(()=>{
+  if(!rows.some(r=>r.status==='LAEUFT')) return;
+  const timer=window.setTimeout(()=>{ void load(); },4000);
+  return ()=>window.clearTimeout(timer);
+ },[rows,identityKey]);
+
+ const runOne=async(platform:SupportedPlatform)=>{
+  setBusyPlatform(platform); setMessage('');
+  try{
+   const result=await runPlatformInventory(identityKey,platform);
+   setMessage(`${platform}: ${result.message||result.status}`);
+   gamNotify(result.success?'success':'error',`${platform}-Inventarisierung: ${result.message||result.status}`,result.success?undefined:0);
+  }catch(e:any){ setMessage(e?.message||'Inventarisierung fehlgeschlagen.'); }
+  finally{ setBusyPlatform(null); await load(); }
+ };
+ const runAll=async()=>{
+  setBusyPlatform('__ALL__'); setMessage('');
+  try{
+   const results=await runAllKnownPlatforms(identityKey);
+   if(results.length===0) setMessage('Für dieses Gerät konnte keine passende Plattform ermittelt werden.');
+   else setMessage(results.map(r=>`${r.platform}: ${r.message||r.status}`).join(' · '));
+  }catch(e:any){ setMessage(e?.message||'Inventarisierung fehlgeschlagen.'); }
+  finally{ setBusyPlatform(null); await load(); }
+ };
+
+ if(loading) return <p className="muted">Lade Inventarisierungsstatus …</p>;
+ return <div className="platform-inventory-section">
+  {!readOnly&&<div className="toolbar small">
+   <button type="button" className="secondary" disabled={busyPlatform!==null} onClick={()=>void runAll()} title="Startet ausschließlich die Plattforminventarisierung erneut - keine neue Discovery.">
+    {busyPlatform==='__ALL__'?'Läuft …':'▶ Neu inventarisieren (alle bekannten Plattformen)'}
+   </button>
+  </div>}
+  {readOnly&&<p className="muted">Nur-Lese-Ansicht - technische Analysen und eine erneute Inventarisierung werden ausschließlich im Bereich „Registriert" gestartet.</p>}
+  <table className="compact-table">
+   <thead><tr><th>Plattform</th><th>Status</th><th>Letzter Lauf</th><th>Meldung</th>{!readOnly&&<th></th>}</tr></thead>
+   <tbody>{rows.map(r=><tr key={r.platform}>
+    <td><b>{r.platform}</b></td>
+    <td>{PLATFORM_INVENTORY_STATUS_ICONS[r.status]||'❔'} {PLATFORM_INVENTORY_STATUS_LABELS[r.status]||r.status}</td>
+    <td>{r.startedAt?new Date(r.startedAt).toLocaleString('de-DE'):'—'}{r.durationSeconds!=null&&<><br/><small>{r.durationSeconds}s</small></>}</td>
+    <td><small className="muted">{r.message||'—'}</small></td>
+    {!readOnly&&<td><button type="button" disabled={busyPlatform!==null} onClick={()=>void runOne(r.platform as SupportedPlatform)}>
+     {busyPlatform===r.platform?'Läuft …':'Inventarisieren'}
+    </button></td>}
+   </tr>)}</tbody>
+  </table>
+  {message&&<p className="muted">{message}</p>}
+  {!readOnly&&<>
+   <p className="muted">Seit 40k34r wird die passende Plattforminventarisierung außerdem automatisch angestoßen, sobald ein Suchlauf dieses Gerät erneut findet (mit Cooldown, siehe Dokumentation) - der Button oben bleibt für eine sofortige, manuelle Neuinventarisierung jederzeit verfügbar.</p>
+   <p className="muted">macOS- und iOS-Inventarisierung sind in dieser Version noch nicht implementiert (siehe Dokumentation) - ein Klick liefert eine klare Statusmeldung statt eines vorgetäuschten Ergebnisses.</p>
+  </>}
+ </div>;
+}
+
+function LinuxInventorySection({identity,onUpdated}:{identity:DeviceIdentityRow;onUpdated:(row:DeviceIdentityRow)=>void}){
+  const [busy,setBusy]=useState(false);
+  const [actionMessage,setActionMessage]=useState('');
+  const [sshTest,setSshTest]=useState<LinuxSshTestResult|null>(null);
+  const [configOpen,setConfigOpen]=useState(false);
+  const [sshConfig,setSshConfig]=useState<LinuxSshSettings>({enabled:false,username:'',authMode:'KEY',passwordConfigured:false,keyPath:'',port:22});
+  const [sshPassword,setSshPassword]=useState('');
+  const sshUserRef=useRef<HTMLInputElement|null>(null);
+  const sshConfigRef=useAttentionNavigation<HTMLDivElement>(configOpen,sshUserRef);
+  useEffect(()=>{loadLinuxSshSettings().then(setSshConfig).catch(()=>{});},[]);
+
+  const protocol=String(identity.protocol||'');
+  const parts=protocol.split(' · ').map(x=>x.trim()).filter(Boolean);
+  const pairs=parts.slice(1).map(part=>{const colon=part.indexOf(':');return colon>0?[part.slice(0,colon).trim(),part.slice(colon+1).trim()] as [string,string]:null;}).filter(Boolean) as Array<[string,string]>;
+  const value=(label:string)=>pairs.find(([l])=>l===label)?.[1];
+
+  const linuxConfirmed=value('Linux bestätigt')==='ja';
+  const inventoryStatus=value('Inventarisierungsstatus');
+  const isSuccessful=inventoryStatus==='erfolgreich';
+
+  const statusLine=(()=>{
+    if(!linuxConfirmed) return '⚠ Linux-Inventarisierung noch nicht durchgeführt';
+    if(inventoryStatus==null) return '⚠ Linux-Inventarisierung noch nicht durchgeführt';
+    if(inventoryStatus.includes('nicht konfiguriert')) return '⚠ SSH-Zugang noch nicht eingerichtet';
+    if(inventoryStatus.includes('nicht erreichbar')) return '⚠ SSH-Port nicht erreichbar';
+    if(inventoryStatus.includes('fehlgeschlagen')||inventoryStatus.includes('keine Daten')) return '⚠ Letzte Inventarisierung fehlgeschlagen';
+    if(isSuccessful) return '✔ Linux erfolgreich inventarisiert';
+    return '⚠ Linux-Inventarisierung noch nicht durchgeführt';
+  })();
+
+  const fields:[string,string][]=[
+    ['Distribution','Distributions-ID'],['Version','Distributions-Version'],['Kernel','Kernel'],
+    ['Architektur','Architektur'],['Laufzeit seit Start','Laufzeit seit Start'],['CPU','CPU'],
+    ['CPU-Kerne/Threads','CPU-Threads'],['Arbeitsspeicher','Arbeitsspeicher'],['Laufwerke','Datenträger'],
+    ['Dateisysteme','Dateisysteme'],['Netzwerkschnittstellen','Netzwerkadapter'],['Gateway','Standardgateway'],
+    ['DNS','DNS-Server'],['Paketmanager','Paketmanager'],['Installierte Pakete','Installierte Pakete'],
+    ['Laufende Dienste','Laufende Dienste'],['Erkannte Rollen','Erkannte Rollen'],
+    ['SSH-Informationen','Erkennungsmerkmale'],['SSH-Hostkey','SSH-Hostkey'],
+  ];
+
+  const runInventory=async()=>{
+    setBusy(true); setActionMessage('');
+    try{
+      const result=await runLinuxInventory(identity.identityKey);
+      onUpdated(result.identity);
+      setActionMessage(result.message);
+    }catch(e:any){ gamNotify('error',e?.message||'Linux-Inventarisierung fehlgeschlagen.',0); }
+    finally{ setBusy(false); }
+  };
+  const runSshTest=async()=>{
+    setBusy(true); setActionMessage('');
+    try{ setSshTest(await testLinuxSsh(identity.identityKey)); }
+    catch(e:any){ gamNotify('error',e?.message||'SSH-Verbindungstest fehlgeschlagen.',0); }
+    finally{ setBusy(false); }
+  };
+  const saveSshConfig=async(testAfter=false)=>{
+    setBusy(true); setActionMessage(testAfter?'SSH-Einstellungen werden gespeichert und geprüft …':'SSH-Einstellungen werden gespeichert …');
+    try{
+      const saved=await saveLinuxSshSettings({...sshConfig,password:sshPassword||undefined}); setSshConfig(saved); setSshPassword('');
+      setActionMessage('SSH-Konfiguration wurde gespeichert.');
+      if(testAfter){const result=await testLinuxSsh(identity.identityKey);setSshTest(result);setActionMessage(result.message);}
+    }catch(e:any){setActionMessage(e?.message||'SSH-Konfiguration konnte nicht gespeichert werden.');}
+    finally{setBusy(false);}
+  };
+  const runRefreshCache=async()=>{
+    setBusy(true); setActionMessage('');
+    try{ await refreshLinuxCache(identity.identityKey); gamNotify('success','Zwischenspeicher wurde geleert - die erweiterte Linux-Analyse ruft beim nächsten Öffnen frisch ab.'); }
+    catch(e:any){ gamNotify('error',e?.message||'Zwischenspeicher konnte nicht geleert werden.',0); }
+    finally{ setBusy(false); }
+  };
+
+  return <details className="device-detail-section" open={linuxConfirmed}>
+    <summary><span>Linux-Inventarisierung</span></summary>
+    <div className="device-detail-section-body">
+      <p><b>{statusLine}</b></p>
+      <p className="muted">
+        Letzter Inventarisierungsversuch: {value('Letzter Inventarisierungsversuch')?new Date(value('Letzter Inventarisierungsversuch')!).toLocaleString('de-DE'):'—'}
+        {isSuccessful&&<> · letzter Erfolg: {identity.lastSeenAt?new Date(identity.lastSeenAt).toLocaleString('de-DE'):'—'}</>}
+        {value('Inventarisierungsdauer')&&<> · Dauer: {value('Inventarisierungsdauer')}</>}
+        {value('Erfasste Merkmale')&&<> · gelesene Informationen: {value('Erfasste Merkmale')}</>}
+      </p>
+      {!isSuccessful&&inventoryStatus&&(inventoryStatus.includes('nicht konfiguriert')||inventoryStatus.includes('nicht erreichbar')
+        ? <p className="note">ℹ SSH ist optional - {inventoryStatus.includes('nicht konfiguriert')?'noch kein gemeinsamer SSH-Zugang eingerichtet':'SSH-Port aktuell nicht erreichbar'}. Für eine vollständige Linux-Inventarisierung kann optional SSH eingerichtet werden.</p>
+        : <p className="note warn">Fehlermeldung: {inventoryStatus}</p>)}
+      {sshTest&&<p className={sshTest.reachable?'note ok':'note warn'}>SSH-Verbindungsstatus: {sshTest.message} (geprüft {new Date(sshTest.checkedAt).toLocaleString('de-DE')})</p>}
+
+      {value('Inventarisierungsgrad')&&<div className="linux-completeness">
+        <p><b>Inventarisierungsgrad: {value('Inventarisierungsgrad')}</b></p>
+        <p className="muted">Quellen:</p>
+        <ul>
+          {(value('Verwendete Quellen')||'').split(' · ').filter(Boolean).map(s=><li key={s}>✔ {s}</li>)}
+          {!isSuccessful&&<li>⚠ SSH nicht eingerichtet (optional)</li>}
+        </ul>
+        {value('Zusätzlich über SSH verfügbar')&&<p className="muted">Zusätzlich über SSH verfügbar wäre: {value('Zusätzlich über SSH verfügbar')}</p>}
+      </div>}
+
+      {pairs.length>0&&<table className="compact-table"><tbody>
+        {fields.filter(([,key])=>value(key)!=null).map(([label,key])=><tr key={key}><td>{label}</td><td>{value(key)}</td></tr>)}
+      </tbody></table>}
+
+      <div className="toolbar">
+        <button type="button" disabled={busy} onClick={()=>void runInventory()}>{linuxConfirmed?'Inventarisierung erneut durchführen':'Linux-Inventarisierung starten'}</button>
+        <button type="button" className="secondary" disabled={busy} onClick={()=>setConfigOpen(true)}>SSH konfigurieren</button>
+        <button type="button" className="secondary" disabled={busy} onClick={()=>void runSshTest()}>Verbindung prüfen</button>
+        <button type="button" className="secondary" disabled={busy} onClick={()=>void runRefreshCache()}>Cache aktualisieren</button>
+      </div>
+      {configOpen&&<div ref={sshConfigRef} className="note" style={{marginTop:12}}>
+        <h4>Linux über SSH verbinden</h4>
+        <p className="muted">Diese zentrale Konfiguration wird für Linux und künftig auch für macOS verwendet. Vor jeder Inventarisierung prüft GAM die SSH-Verbindung erneut.</p>
+        <label className="checkbox-row"><input type="checkbox" checked={sshConfig.enabled} onChange={e=>setSshConfig({...sshConfig,enabled:e.target.checked})}/> SSH-Verbindung verwenden</label>
+        <div className="form-grid">
+          <label>Benutzername<input ref={sshUserRef} value={sshConfig.username} onChange={e=>setSshConfig({...sshConfig,username:e.target.value})}/></label>
+          <label>Port<input type="number" min={1} max={65535} value={sshConfig.port} onChange={e=>setSshConfig({...sshConfig,port:Number(e.target.value)||22})}/></label>
+          <label>Authentifizierung<select value={sshConfig.authMode} onChange={e=>setSshConfig({...sshConfig,authMode:e.target.value})}><option value="KEY">SSH-Schlüssel</option><option value="PASSWORD">Passwort</option></select></label>
+          {sshConfig.authMode==='KEY'?<label>Pfad zum privaten Schlüssel<input value={sshConfig.keyPath} placeholder="z. B. C:\Users\...\.ssh\id_ed25519" onChange={e=>setSshConfig({...sshConfig,keyPath:e.target.value})}/></label>:<label>Passwort<input type="password" value={sshPassword} placeholder={sshConfig.passwordConfigured?'gespeichert – leer lassen zum Beibehalten':'Passwort'} onChange={e=>setSshPassword(e.target.value)}/></label>}
+        </div>
+        <div className="toolbar"><button type="button" disabled={busy} onClick={()=>void saveSshConfig(false)}>Speichern</button><button type="button" disabled={busy} onClick={()=>void saveSshConfig(true)}>Speichern und Verbindung prüfen</button><button type="button" className="secondary" onClick={()=>setConfigOpen(false)}>Schließen</button></div>
+        <p className="muted">Bei geschlossenem Port weist GAM auf einen deaktivierten SSH-Dienst oder eine Firewall hin; bei erreichbarem Port und fehlgeschlagener Anmeldung auf Benutzername bzw. Schlüssel/Passwort.</p>
+      </div>}
+      {busy&&<p className="note">⏳ {actionMessage||'Aktion wird ausgeführt …'}</p>}
+      {!busy&&actionMessage&&<p className="note">{actionMessage}</p>}
+    </div>
+  </details>;
+}
+
+/**
+ * 40k33b7: Einklappbarer Bereich "Integritätsprüfung". Wird - wie die Bereiche
+ * der erweiterten Linux-Analyse - erst beim Öffnen abgerufen (Lazy Loading),
+ * nicht automatisch. Zeigt Status, Begründungen, Zeitpunkt der letzten Prüfung
+ * und bei einer Integritätswarnung zusätzlich die tabellarische
+ * Gegenüberstellung der widersprüchlichen Merkmale.
+ */
+function IntegritySection({identityKey}:{identityKey:string}){
+  const [loaded,setLoaded]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [result,setResult]=useState<IntegrityResult|null>(null);
+  const [errorText,setErrorText]=useState('');
+
+  const load=async()=>{
+    if(loaded||loading) return;
+    setLoading(true); setErrorText('');
+    try{ setResult(await loadDeviceIdentityIntegrity(identityKey)); }
+    catch(e:any){ setErrorText(e?.message||'Integritätsprüfung fehlgeschlagen.'); }
+    finally{ setLoading(false); setLoaded(true); }
+  };
+
+  const statusIcon=(status:string)=>status==='Integritätswarnung'?'🔴':status==='Bitte überprüfen'?'🟡':'🟢';
+  const statusClass=(status:string)=>status==='Integritätswarnung'?'danger':status==='Bitte überprüfen'?'warn':'ok';
+
+  return <details className="device-detail-section" open>
+    <summary><span>Integritätsprüfung</span></summary>
+    <div className="device-detail-section-body">
+      {loading&&<p className="muted">Wird anhand der aktuell bekannten Discoverydaten geprüft …</p>}
+      {errorText&&<p className="note warn">{errorText}</p>}
+      {loaded&&result&&<>
+        <p><span className={`note ${statusClass(result.status)}`}>{statusIcon(result.status)} {result.status}</span></p>
+        <p className="muted">{result.conflictCount} erkannte(r) Konflikt(e) · zuletzt geprüft: {result.checkedAt?new Date(result.checkedAt).toLocaleString('de-DE'):'—'}</p>
+        {result.criticalityLevel==='KRITISCH'&&<div className="merge-critical-banner" role="alert">
+          <p><b>❗ KRITISCHE SCHUTZREGEL AKTIV</b></p>
+          <p>{result.criticalMessage||'Es wurde ein kritischer Widerspruch zu einem anderen Gerät erkannt.'}</p>
+          <p>Bitte vor einer möglichen Zusammenführung vollständig prüfen.</p>
+        </div>}
+        {result.criticalityLevel==='HOCH'&&<div className="merge-critical-banner merge-high-banner" role="alert">
+          <p><b>⚠ Hoher Konflikt</b></p>
+          <p>{result.criticalMessage||'Es wurde ein deutlicher Widerspruch zu einem anderen Gerät erkannt.'}</p>
+          <p>Bitte vor einer möglichen Zusammenführung prüfen.</p>
+        </div>}
+        <ul>{result.reasons.map((r,i)=><li key={i}>{r}</li>)}</ul>
+        {result.status==='Integritätswarnung'&&result.comparisonTable.length>0&&<>
+          <p className="muted">Tabellarische Gegenüberstellung der widersprüchlichen Merkmale{result.comparedIdentityKey?` · Vergleichsgerät: ${result.comparedIdentityKey}`:''}:</p>
+          <table className="compact-table"><thead><tr><th>Merkmal</th><th>Dieses Gerät</th><th>Vergleichsgerät</th></tr></thead><tbody>
+            {result.comparisonTable.map(f=><tr key={f.label} className={f.differs?'integrity-conflict-row':''}><td>{f.label}</td><td>{f.currentValue||'—'}</td><td>{f.comparedValue||'—'}</td></tr>)}
+          </tbody></table>
+        </>}
+      </>}
+    </div>
+  </details>;
+}
+
+/**
+ * 40k33b7: Geführter Dialog zur manuellen Wiederauftrennung. Zeigt Aliase und -
+ * sofern ab 40k33b7 mit vollständigem Schnappschuss gesichert - frühere
+ * Zusammenführungsbestandteile an. Der Benutzer wählt genau einen Bestandteil,
+ * der als neues, eigenständiges Gerät angelegt wird. Das Ursprungsgerät bleibt
+ * dabei vollständig erhalten - es werden keine Informationen gelöscht, nur ein
+ * neues Gerät ergänzt (und bei einer alias-basierten Auswahl der betreffende
+ * Alias vom Ursprungsgerät entfernt, da er jetzt als eigenes Gerät geführt wird).
+ */
+function DeviceSplitDialog({identityKey,onClose,onSplit}:{identityKey:string;onClose:()=>void;onSplit:()=>void}){
+  const [candidates,setCandidates]=useState<SplitCandidate[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState('');
+  const [selectedRef,setSelectedRef]=useState<string|null>(null);
+  const [busy,setBusy]=useState(false);
+
+  const reload=async()=>{
+    setLoading(true); setError('');
+    try{ setCandidates(await loadDeviceIdentitySplitCandidates(identityKey)); }
+    catch(e:any){ setError(e?.message||'Auftrennungs-Kandidaten konnten nicht geladen werden.'); }
+    finally{ setLoading(false); }
+  };
+  useEffect(()=>{ void reload(); },[identityKey]);
+
+  const confirmSplit=async()=>{
+    if(!selectedRef) return;
+    if(!confirm('Diesen Bestandteil wirklich als eigenständiges Gerät abspalten? Das Ursprungsgerät bleibt dabei vollständig erhalten.')) return;
+    setBusy(true);
+    try{
+      await splitDeviceIdentity(identityKey,selectedRef);
+      gamNotify('success','Wiederauftrennung durchgeführt - es wurde ein neues, eigenständiges Gerät angelegt.');
+      onSplit();
+    }catch(e:any){ gamNotify('error',e?.message||'Wiederauftrennung fehlgeschlagen.',0); }
+    finally{ setBusy(false); }
+  };
+
+  return <div className="gam-modal-backdrop" onClick={onClose}>
+    <section className="card gam-modal-card device-split-dialog" onClick={e=>e.stopPropagation()}>
+      <div className="modal-title-row"><h2>Wiederauftrennung</h2><button className="secondary icon-only" type="button" onClick={onClose} aria-label="Dialog schließen">×</button></div>
+      <p className="muted">Wähle aus, welcher Bestandteil dieser Geräteidentität künftig als eigenständiges Gerät geführt werden soll. Das Ursprungsgerät bleibt vollständig erhalten - es entsteht zusätzlich ein neues, separates Gerät. Es wird nichts automatisch entschieden.</p>
+      {error&&<p className="note warn">{error}</p>}
+      {loading?<p className="muted">Wird geladen …</p>:candidates.length===0?<p className="muted">Für dieses Gerät sind aktuell keine abspaltbaren Bestandteile bekannt (weder Aliase noch frühere Zusammenführungen mit gesichertem Schnappschuss).</p>:
+      <table className="compact-table"><thead><tr><th></th><th>Bestandteil</th><th>Name</th><th>Kategorie</th><th>Adresse</th><th>MAC / Seriennummer</th></tr></thead><tbody>
+        {candidates.map(c=><tr key={c.ref}>
+          <td><input type="radio" name="split-candidate" checked={selectedRef===c.ref} onChange={()=>setSelectedRef(c.ref)}/></td>
+          <td>{c.label}{!c.fullSnapshot&&<><br/><small className="muted">Details vor 40k33b7 zusammengeführt - nicht mehr vollständig verfügbar.</small></>}</td>
+          <td>{c.name||'—'}</td>
+          <td>{c.deviceType||'—'}</td>
+          <td>{c.address||'—'}</td>
+          <td>{c.hardwareAddress||c.serialNumber||'—'}</td>
+        </tr>)}
+      </tbody></table>}
+      <div className="toolbar">
+        <button type="button" disabled={!selectedRef||busy} onClick={()=>void confirmSplit()}>Als eigenständiges Gerät abspalten</button>
+        <button type="button" className="secondary" onClick={onClose}>Abbrechen</button>
+      </div>
+    </section>
+  </div>;
+}
+
+/**
+ * 40k33b5: Dialog "Geräteidentität". Fasst Identität, Quellenübersicht, Aliase,
+ * Vertrauensbewertung und Identitätsverlauf für EIN Gerät zusammen und bietet
+ * die neuen manuellen Identitätsfunktionen (Alias hinzufügen/entfernen/umbenennen,
+ * Hauptnamen ändern, neu bewerten). Die bestehende Mergefunktion (40k33b4) wird
+ * hier bewusst NICHT verändert, nur referenziert. Seit 40k33b6b zusätzlich mit
+ * der erweiterten, lazy geladenen Linux-Analyse (LazyLinuxSection). Seit 40k33b7
+ * zusätzlich mit Integritätsprüfung (IntegritySection) und geführter
+ * Wiederauftrennung (DeviceSplitDialog).
+ */
+function DeviceIdentityDialog({identityKey,device,onClose,onChanged}:{identityKey:string;device?:RegisteredDiscoveryDevice;onClose:()=>void;onChanged:()=>void}){
+  const [identity,setIdentity]=useState<DeviceIdentityRow|null>(null);
+  const [history,setHistory]=useState<DeviceIdentityHistoryEntry[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState('');
+  const [newAlias,setNewAlias]=useState('');
+  const [mainNameInput,setMainNameInput]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [reassessNote,setReassessNote]=useState('');
+  const [splitDialogOpen,setSplitDialogOpen]=useState(false);
+
+  const reload=async()=>{
+    setLoading(true); setError('');
+    try{
+      const [detail,hist]=await Promise.all([loadDeviceIdentityDetail(identityKey),loadDeviceIdentityHistory(identityKey)]);
+      setIdentity(detail); setHistory(hist); setMainNameInput(detail.name||'');
+    }catch(e:any){ setError(e?.message||'Geräteidentität konnte nicht geladen werden.'); }
+    finally{ setLoading(false); }
+  };
+  useEffect(()=>{ void reload(); },[identityKey]);
+
+  const addAlias=async()=>{
+    const alias=newAlias.trim(); if(!alias) return;
+    setBusy(true);
+    try{ await addDeviceIdentityAlias(identityKey,alias); setNewAlias(''); await reload(); onChanged(); }
+    catch(e:any){ gamNotify('error',e?.message||'Alias konnte nicht hinzugefügt werden.',0); }
+    finally{ setBusy(false); }
+  };
+  const removeAlias=async(alias:string)=>{
+    if(!confirm(`Alias „${alias}“ wirklich entfernen?`)) return;
+    setBusy(true);
+    try{ await removeDeviceIdentityAlias(identityKey,alias); await reload(); onChanged(); }
+    catch(e:any){ gamNotify('error',e?.message||'Alias konnte nicht entfernt werden.',0); }
+    finally{ setBusy(false); }
+  };
+  const renameAlias=async(oldAlias:string)=>{
+    const next=prompt(`Neuer Name für Alias „${oldAlias}“:`,oldAlias); if(!next||next.trim()===''||next===oldAlias) return;
+    setBusy(true);
+    try{ await renameDeviceIdentityAlias(identityKey,oldAlias,next.trim()); await reload(); onChanged(); }
+    catch(e:any){ gamNotify('error',e?.message||'Alias konnte nicht umbenannt werden.',0); }
+    finally{ setBusy(false); }
+  };
+  const promoteAlias=async(alias:string)=>{
+    setBusy(true);
+    try{ await setDeviceIdentityMainName(identityKey,alias); gamNotify('success',`„${alias}“ ist jetzt der Hauptname.`); await reload(); onChanged(); }
+    catch(e:any){ gamNotify('error',e?.message||'Hauptname konnte nicht geändert werden.',0); }
+    finally{ setBusy(false); }
+  };
+  const saveMainName=async()=>{
+    const name=mainNameInput.trim(); if(!name||name===identity?.name) return;
+    setBusy(true);
+    try{ await setDeviceIdentityMainName(identityKey,name); gamNotify('success','Hauptname wurde geändert.'); await reload(); onChanged(); }
+    catch(e:any){ gamNotify('error',e?.message||'Hauptname konnte nicht geändert werden.',0); }
+    finally{ setBusy(false); }
+  };
+  const reassess=async()=>{
+    setBusy(true); setReassessNote('');
+    try{
+      const result=await reassessDeviceIdentity(identityKey);
+      setIdentity(result.identity);
+      setReassessNote(result.openCandidates.length>0
+        ? `${result.openCandidates.length} möglicher Zusammenführungskandidat(en) gefunden - siehe „Gerätezusammenführung prüfen“.`
+        : 'Keine offenen Zusammenführungskandidaten für dieses Gerät.');
+    }catch(e:any){ gamNotify('error',e?.message||'Neubewertung fehlgeschlagen.',0); }
+    finally{ setBusy(false); }
+  };
+
+  const displayName=identity?.name||device?.name||identityKey;
+
+  return <div className="gam-modal-backdrop" onClick={onClose}>
+    <section className="card gam-modal-card device-identity-dialog" onClick={e=>e.stopPropagation()}>
+      <div className="modal-title-row"><h2>Geräteidentität: {displayName}</h2><button className="secondary icon-only" type="button" onClick={onClose} aria-label="Dialog schließen">×</button></div>
+      {error&&<p className="note warn">{error}</p>}
+      {loading?<p className="muted">Wird geladen …</p>:identity&&<>
+        <h3>Identität</h3>
+        <table className="compact-table">
+          <tbody>
+            <tr><td>Hauptname</td><td><input value={mainNameInput} onChange={e=>setMainNameInput(e.target.value)} onBlur={saveMainName} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>{identity.manualName&&<small> (manuell)</small>}</td></tr>
+            <tr><td>Hersteller</td><td>{identity.manufacturer||'—'}</td></tr>
+            <tr><td>Kategorie</td><td>{identity.category||'—'}{identity.manualDeviceType&&<small> (manuell)</small>}</td></tr>
+            <tr><td>Unterkategorie</td><td>{identity.subcategory||'—'}</td></tr>
+            <tr><td>Plattform</td><td>{identity.platform||'—'}</td></tr>
+            <tr><td>Seriennummer</td><td>{identity.serialNumber||'—'}</td></tr>
+            <tr><td>MAC-Adresse</td><td>{identity.hardwareAddress||'—'}</td></tr>
+            <tr><td>IP-Adresse</td><td>{identity.address||'—'}</td></tr>
+            <tr><td>Registrierungsstatus</td><td>{identity.status||'—'}</td></tr>
+            <tr><td>Zuletzt erkannt</td><td>{identity.lastSeenAt?new Date(identity.lastSeenAt).toLocaleString('de-DE'):'—'}</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Quellenübersicht</h3>
+        <p className="muted">{identity.sourceCount} Quelle(n) haben zu dieser Geräteidentität beigetragen. Erster Treffer: {identity.firstSeenAt?new Date(identity.firstSeenAt).toLocaleString('de-DE'):'—'} · Letzter Treffer: {identity.lastSeenAt?new Date(identity.lastSeenAt).toLocaleString('de-DE'):'—'} · Treffer insgesamt: {identity.detectionCount}×</p>
+        <div className="device-identity-sources">{identity.sources.length?identity.sources.map(s=><span key={s} className="discovery-source-badge discovery-source-local">{s}</span>):<span className="muted">Keine strukturierten Quellenangaben verfügbar.</span>}</div>
+
+        <h3>Vertrauensbewertung</h3>
+        <p><b>{identity.confidenceLabel}</b>{identity.hasOpenCandidate&&<span className="note warn"> · Es besteht ein offener Zusammenführungsvorschlag für dieses Gerät.</span>}</p>
+        <ul>{identity.confidenceReasons.map((r,i)=><li key={i}>{r}</li>)}</ul>
+
+        <h3>Plattforminventarisierung</h3>
+        <PlatformInventorySection identityKey={identityKey}/>
+
+        <h3>Linux-Inventarisierung</h3>
+        <LinuxInventorySection identity={identity} onUpdated={setIdentity}/>
+
+        <h3>Android-Verbindung und -Inventarisierung</h3>
+        {identity.platform!=='Android'&&!identity.adbHost&&<p className="muted">Dieser Verbindungsworkflow ist bewusst auch bei noch falsch oder unbekannt klassifizierten Geräten verfügbar. Eine erfolgreiche ADB-Inventarisierung korrigiert die Plattformzuordnung automatisch.</p>}
+        <AndroidInventorySection identity={identity} onUpdated={setIdentity}/>
+
+        {identity.platform==='Linux'&&<>
+          <h3>Erweiterte Linux-Analyse</h3>
+          <p className="muted">Diese Bereiche werden erst abgerufen, wenn du sie öffnest (Lazy Loading), und für 10 Minuten zwischengespeichert.</p>
+          <LazyLinuxSection identityKey={identityKey} section="packages" title="Installierte Software"/>
+          <LazyLinuxSection identityKey={identityKey} section="docker" title="Docker"/>
+          <LazyLinuxSection identityKey={identityKey} section="podman" title="Podman"/>
+          <LazyLinuxSection identityKey={identityKey} section="snap" title="Snap"/>
+          <LazyLinuxSection identityKey={identityKey} section="flatpak" title="Flatpak"/>
+          <LazyLinuxSection identityKey={identityKey} section="virtualization" title="Virtualisierung"/>
+          <LazyLinuxSection identityKey={identityKey} section="containers" title="Container"/>
+          <LazyLinuxSection identityKey={identityKey} section="devenv" title="Entwicklungsumgebung"/>
+          <LazyLinuxSection identityKey={identityKey} section="monitoring" title="Monitoring"/>
+        </>}
+
+        <IntegritySection identityKey={identityKey}/>
+
+        <h3>Aliasverwaltung</h3>
+        {identity.aliases.length===0?<p className="muted">Für dieses Gerät sind noch keine Aliasnamen bekannt.</p>:
+        <table className="compact-table"><thead><tr><th>Aliasname</th><th>Aktionen</th></tr></thead><tbody>
+          {identity.aliases.map(a=><tr key={a}><td>{a}</td><td className="device-inline-actions">
+            <button type="button" disabled={busy} onClick={()=>void promoteAlias(a)}>Als Hauptname übernehmen</button>
+            <button type="button" className="secondary" disabled={busy} onClick={()=>void renameAlias(a)}>Umbenennen</button>
+            <button type="button" className="secondary" disabled={busy} onClick={()=>void removeAlias(a)}>Entfernen</button>
+          </td></tr>)}
+        </tbody></table>}
+        <div className="toolbar"><input value={newAlias} onChange={e=>setNewAlias(e.target.value)} placeholder="Neuer Aliasname" onKeyDown={e=>{if(e.key==='Enter')void addAlias();}}/><button type="button" disabled={busy||!newAlias.trim()} onClick={()=>void addAlias()}>Alias hinzufügen</button></div>
+
+        <h3>Identitätsverlauf</h3>
+        {history.length===0?<p className="muted">Für dieses Gerät liegt noch kein Identitätsverlauf vor.</p>:
+        <ul className="device-identity-history">{history.map((h,i)=><li key={i}><small>{h.timestamp?new Date(h.timestamp).toLocaleString('de-DE'):'—'}</small> · {h.description}</li>)}</ul>}
+
+        <div className="toolbar">
+          <button type="button" disabled={busy} onClick={()=>void reassess()}>Identität erneut prüfen</button>
+          <button type="button" className="secondary" disabled={busy} onClick={()=>{onClose();gamNotify('success','Ein neuer Suchlauf kann über „Suche starten“ im Gerätemanager gestartet werden - er ergänzt automatisch nur zusätzliche Quellen für bereits bekannte Geräte.');}}>Discovery erneut ausführen</button>
+          <button type="button" className="secondary" disabled={busy} onClick={()=>setSplitDialogOpen(true)}>Wiederauftrennung</button>
+        </div>
+        {reassessNote&&<p className="note">{reassessNote}</p>}
+      </>}
+    </section>
+    {splitDialogOpen&&<DeviceSplitDialog identityKey={identityKey} onClose={()=>setSplitDialogOpen(false)} onSplit={()=>{setSplitDialogOpen(false);void reload();onChanged();}}/>}
+  </div>;
+}
+
+/**
+ * 40k33b4: Dialog zur manuellen Gerätezusammenführung. Zeigt automatisch ermittelte
+ * Kandidaten (Wiederverwendung der bestehenden Identitäts-Engine im Backend) sowie
+ * eine freie Auswahl beliebiger registrierter Geräte. Vor jeder Zusammenführung wird
+ * zwingend eine Vorschau angezeigt und muss bestätigt werden.
+ */
+function DeviceMergeDialog({onClose,onMerged,devices}:{onClose:()=>void;onMerged:()=>void;devices:RegisteredDiscoveryDevice[]}){
+  const [candidates,setCandidates]=useState<DeviceMergeCandidate[]>([]);
+  const [loadingCandidates,setLoadingCandidates]=useState(true);
+  const [error,setError]=useState('');
+  const [selected,setSelected]=useState<Set<string>>(new Set());
+  const [preview,setPreview]=useState<DeviceMergePreview|null>(null);
+  const [previewSources,setPreviewSources]=useState<string[]>([]);
+  const [confirmMacConflict,setConfirmMacConflict]=useState(false);
+  const [busy,setBusy]=useState(false);
+
+  const nameFor=(key:string)=>devices.find(d=>d.identityKey===key)?.name||key;
+
+  const reloadCandidates=async()=>{
+    setLoadingCandidates(true);
+    try{ setCandidates(await loadDeviceMergeCandidates()); }
+    catch(e:any){ setError(e?.message||'Zusammenführungskandidaten konnten nicht geladen werden.'); }
+    finally{ setLoadingCandidates(false); }
+  };
+  useEffect(()=>{ void reloadCandidates(); },[]);
+
+  const openPreview=async(target:string,sources:string[])=>{
+    setError(''); setPreview(null); setConfirmMacConflict(false); setBusy(true);
+    try{
+      const result=await previewDeviceMerge(target,sources);
+      setPreview(result); setPreviewSources(sources);
+    }catch(e:any){ setError(e?.message||'Vorschau konnte nicht erstellt werden.'); }
+    finally{ setBusy(false); }
+  };
+
+  const confirmMerge=async()=>{
+    if(!preview) return;
+    setBusy(true); setError('');
+    try{
+      await confirmDeviceMerge(preview.targetKey,previewSources,confirmMacConflict?{confirmMacConflict:true,confirmCriticalConflict:true}:{});
+      gamNotify('success','Geräte wurden erfolgreich zusammengeführt.');
+      setPreview(null); setSelected(new Set());
+      onMerged();
+    }catch(e:any){ setError(e?.message||'Zusammenführung konnte nicht durchgeführt werden.'); }
+    finally{ setBusy(false); }
+  };
+
+  const ignoreCandidate=async(c:DeviceMergeCandidate)=>{
+    try{ await ignoreDeviceMergeCandidate(c.keyA,c.keyB); gamNotify('success','Vorschlag wurde ignoriert.'); await reloadCandidates(); }
+    catch(e:any){ gamNotify('error',e?.message||'Vorschlag konnte nicht ignoriert werden.',0); }
+  };
+
+  const toggleSelected=(key:string)=>{
+    setSelected(current=>{ const next=new Set(current); next.has(key)?next.delete(key):next.add(key); return next; });
+  };
+
+  return <div className="gam-modal-backdrop" onClick={onClose}>
+    <section className="card gam-modal-card device-merge-dialog" onClick={e=>e.stopPropagation()}>
+      <div className="modal-title-row"><h2>Gerätezusammenführung prüfen</h2><button className="secondary icon-only" type="button" onClick={onClose} aria-label="Dialog schließen">×</button></div>
+      {error&&<p className="note warn">{error}</p>}
+
+      {preview?<div className="device-merge-preview">
+        <h3>Vorschau der Zusammenführung</h3>
+        <p className="muted">Zielgerät: <b>{preview.targetKey}</b> · wird zusammengeführt mit {previewSources.length} weiterem Gerät(en): {previewSources.map(nameFor).join(', ')}</p>
+
+        {preview.criticalityLevel==='KRITISCH'&&<div className="merge-critical-banner" role="alert">
+          <p><b>❗ KRITISCHE SCHUTZREGEL AKTIV</b></p>
+          <p>{preview.criticalMessage||'Es wurde ein kritischer Widerspruch zwischen den ausgewählten Geräten erkannt.'}</p>
+          <p>Bitte vor dem Zusammenführen vollständig prüfen.</p>
+        </div>}
+        {preview.criticalityLevel==='HOCH'&&<div className="merge-critical-banner merge-high-banner" role="alert">
+          <p><b>⚠ Hoher Konflikt</b></p>
+          <p>{preview.criticalMessage||'Es wurde ein deutlicher Widerspruch zwischen den ausgewählten Geräten erkannt.'}</p>
+          <p>Bitte vor dem Zusammenführen prüfen.</p>
+        </div>}
+
+        <table className="compact-table">
+          <tbody>
+            <tr><td>Name</td><td><b>{preview.name||'—'}</b>{preview.manualName&&<small> (manuell)</small>}</td></tr>
+            <tr><td>Kategorie</td><td><b>{preview.deviceType||'—'}</b>{preview.manualDeviceType&&<small> (manuell)</small>}</td></tr>
+            <tr><td>Adresse</td><td>{preview.address||'—'}</td></tr>
+            <tr><td>MAC-Adresse</td><td>{preview.mac||'—'}</td></tr>
+            <tr><td>Seriennummer</td><td>{preview.serialNumber||'—'}</td></tr>
+            <tr><td>Hersteller</td><td>{preview.manufacturer||'—'}</td></tr>
+            <tr><td>Discovery-Quellen</td><td>{preview.protocol||'—'}</td></tr>
+            <tr><td>Treffer (letzte Suche / gesamt)</td><td>{preview.lastScanHits}× / {preview.detectionCount}×</td></tr>
+          </tbody>
+        </table>
+
+        {preview.criticalityLevel==='KRITISCH'&&<p>⚠ Der Übereinstimmungswert hebt die Schutzregel nicht auf.</p>}
+
+        {preview.fieldComparison.length>0&&<>
+          <p className="muted">Tabellarische Gegenüberstellung der widersprüchlichen Merkmale:</p>
+          <table className="compact-table merge-conflict-diff-table">
+            <thead><tr><th>Merkmal</th><th>Gerät A (Ziel)</th><th>Gerät B (Quelle)</th></tr></thead>
+            <tbody>{preview.fieldComparison.map((f,i)=><tr key={i} className={f.differs?'merge-field-conflict':''}><td>{f.label}</td><td>{f.valueA||'—'}</td><td>{f.valueB||'—'}</td></tr>)}</tbody>
+          </table>
+        </>}
+
+        {preview.macConflictConfirmationRequired&&<p className="note warn">Achtung: widersprüchliche MAC-Adressen erkannt ({preview.macConflicts.join(', ')}).</p>}
+        {/* 40k34g: EINE zentrale Eigenschaft (manualConfirmationRequired) entscheidet, ob eine
+            bewusste Bestätigung nötig ist - keine Severity-Abfrage mehr im Frontend. KRITISCH
+            und HOCH bleiben nur optisch unterschiedlich (siehe Banner oben und Klassenname). */}
+        {preview.manualConfirmationRequired&&<div className={`merge-critical-banner ${preview.criticalityLevel==='HOCH'?'merge-high-banner':''}`} role="alert">
+          <p><b>{preview.criticalityLevel==='KRITISCH'?'❗ Kritische Schutzregel aktiv':'⚠ Hoher Konflikt - bitte bestätigen'}</b></p>
+          <label className="toggle-field"><input type="checkbox" checked={confirmMacConflict} onChange={e=>setConfirmMacConflict(e.target.checked)}/> Ich habe die widersprüchlichen Merkmale geprüft und möchte die Geräte trotzdem zusammenführen. (Konflikt bewusst geprüft)</label>
+        </div>}
+        <div className="toolbar">
+          <button type="button"
+            className={preview.manualConfirmationRequired?'danger':''}
+            disabled={busy||(preview.manualConfirmationRequired&&!confirmMacConflict)}
+            onClick={confirmMerge}>
+            {preview.manualConfirmationRequired?'❗ Trotzdem zusammenführen':'Zusammenführung bestätigen'}
+          </button>
+          <button type="button" className="secondary" onClick={()=>{setPreview(null);setPreviewSources([]);}}>Zurück</button>
+        </div>
+      </div>:<>
+        <h3>Automatisch erkannte Kandidaten</h3>
+        {loadingCandidates?<p className="muted">Kandidaten werden geprüft …</p>:candidates.length===0?<p className="muted">Aktuell keine Zusammenführungskandidaten gefunden.</p>:<>
+        {candidates.some(c=>c.criticalityLevel==='KRITISCH')&&<div className="merge-critical-banner" role="alert">
+          <p><b>❗ KRITISCHE SCHUTZREGEL AKTIV</b></p>
+          <p>{candidates.filter(c=>c.criticalityLevel==='KRITISCH').length} Kandidat(en) in dieser Liste weisen eine kritische Schutzregel auf. Ein hoher Übereinstimmungswert hebt diese Warnung nicht auf - bitte vor jeder Zusammenführung vollständig prüfen.</p>
+        </div>}
+        <div className="scroll-table">
+          <table className="compact-table">
+            <thead><tr><th>Schutzstufe</th><th>Gerät A</th><th>Gerät B</th><th>Übereinstimmungen</th><th>Übereinstimmung</th><th>Aktionen</th></tr></thead>
+            <tbody>{candidates.map(c=>{
+              const critical=c.criticalityLevel==='KRITISCH';
+              const hoch=c.criticalityLevel==='HOCH';
+              return <React.Fragment key={`${c.keyA}-${c.keyB}`}><tr className={critical?'merge-row-critical':hoch?'merge-row-high':''}>
+              <td>{criticalityBadge(c.criticalityLevel,c.warningLevel)}</td>
+              <td>{c.nameA||c.keyA}<br/><small>{c.typeA||'—'}</small></td>
+              <td>{c.nameB||c.keyB}<br/><small>{c.typeB||'—'}</small></td>
+              <td><small>{c.matchedSignals.join(', ')}</small>{c.conflicts.length>0&&<><br/><small className="warn">Konflikt: {c.conflicts.join(', ')}</small></>}</td>
+              <td className={critical?'merge-percent-critical':''}>
+                {c.confidencePercent}% Übereinstimmung
+                {critical?<><br/><b>❗ Kritische Schutzregel aktiv</b></>:!hoch&&c.decision!=='AUTO_MERGE'?<><br/><small>möglicher Kandidat</small></>:!hoch&&<><br/><small>sichere Übereinstimmung</small></>}
+              </td>
+              <td className="device-inline-actions">
+                <button type="button" className={critical?'danger':''} onClick={()=>void openPreview(c.keyA,[c.keyB])}>{critical?'❗ Details prüfen':'Vorschau'}</button>
+                <button type="button" className="secondary" onClick={()=>void ignoreCandidate(c)}>Nicht zusammenführen</button>
+              </td>
+            </tr>
+            {(critical||hoch)&&c.criticalMessage&&<tr className="merge-critical-detail-row"><td colSpan={6}>
+              <div className={`merge-critical-banner ${hoch?'merge-high-banner':''}`} role="alert">
+                <p><b>{critical?'❗ Kritische Schutzregel':'⚠ Hoher Konflikt'}</b></p>
+                <p>{c.criticalMessage}</p>
+              </div>
+              <table className="compact-table merge-conflict-diff-table">
+                <thead><tr><th>Merkmal</th><th>Gerät A</th><th>Gerät B</th></tr></thead>
+                <tbody>{c.fieldComparison.map(f=><tr key={f.label} className={f.differs?'merge-field-conflict':''}><td>{f.label}</td><td>{f.valueA||'—'}</td><td>{f.valueB||'—'}</td></tr>)}</tbody>
+              </table>
+            </td></tr>}</React.Fragment>;
+            })}</tbody>
+          </table>
+        </div></>}
+
+
+        <h3>Freie Auswahl</h3>
+        <p className="muted">Wähle mindestens zwei Geräte aus, die zu einem gemeinsamen physischen Gerät zusammengeführt werden sollen.</p>
+        <div className="scroll-table scroll-table-tall">
+          <table className="compact-table">
+            <thead><tr><th></th><th>Name</th><th>Kategorie</th><th>Adresse</th><th>MAC / Seriennummer</th></tr></thead>
+            <tbody>{devices.map(d=><tr key={d.identityKey}>
+              <td><input type="checkbox" checked={selected.has(d.identityKey)} onChange={()=>toggleSelected(d.identityKey)}/></td>
+              <td>{d.name||'—'}</td>
+              <td>{d.deviceType||'—'}</td>
+              <td>{d.address||'—'}</td>
+              <td>{d.hardwareAddress||d.serialNumber||'—'}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+        <div className="toolbar">
+          <button type="button" disabled={selected.size<2||busy} onClick={()=>{const keys=[...selected]; void openPreview(keys[0],keys.slice(1));}}>Vorschau für Auswahl</button>
+          <button type="button" className="secondary" onClick={onClose}>Schließen</button>
+        </div>
+      </>}
+    </section>
+  </div>;
+}
+
+// 40k34l: Geteilte Regel für Smartphone-/Tablet-Erkennung sowie eine
+// bindestrich-/leerzeichen-tolerante Access-Point-Erkennung. Wird sowohl von
+// enrichDevice() (Ansicht "Gefundene Geräte", DeviceManagerPanel) als auch von
+// classifyInventoryDevice() (Gerätebestand/Registrierte Geräte, InventoryPage)
+// verwendet - vorher hatte jede der beiden Funktionen ihre eigene, unabhängig
+// gepflegte Kopie derselben Schlüsselwortliste, wodurch Verbesserungen (z.B.
+// die in 40k34j für Android ergänzten Hersteller Doogee/Oppo/Vivo/Fairphone/
+// Nokia/Asus) nur in einer der beiden Stellen ankamen.
+//
+// Prüft ausschließlich Name/Typ (NICHT Hersteller/Protokoll/Adresse) und läuft
+// deshalb bewusst VOR den generischen, herstellernamen-basierten Kategorien
+// (insbesondere Wechselrichter & Energiesysteme, die u.a. "huawei" als
+// Solarwechselrichter-Marke listet) - das verhindert, dass ein Smartphone mit
+// eindeutigem Namenshinweis (z.B. "Galaxy") durch einen zufällig falsch
+// zugeordneten Hersteller in eine unpassende Kategorie gerät.
+function smartphoneOrTabletCategory(nameTypeHay:string):string|null{
+ const spaced=nameTypeHay.replace(/[-_]/g,' ');
+ if(/iphone|ipad|android|smartphone|tablet|mobile|kindle|e-book|ereader|windows phone/.test(nameTypeHay)
+  ||/galaxy tab|galaxy s|galaxy a|galaxy z|galaxy note|redmi|poco |mi phone|doogee|oneplus|motorola|moto |honor|realme|oppo|vivo|nothing phone|fairphone|nokia|zenfone|rog phone/.test(spaced)){
+  return 'Smartphones & Tablets';
+ }
+ return null;
+}
+// 40k34l: reale Hostnamen schreiben "AccessPoint"/"Accesspoint" oft ohne
+// Trennzeichen zusammen - die bisherige Prüfung verlangte zwingend ein
+// Leerzeichen ("access point") und griff dadurch bei solchen Hostnamen nie.
+function isAccessPointHay(hay:string):boolean{
+ return /repeater|access[ -]?point|accesspoint|wireless ap|wlan/.test(hay.replace(/[-_]/g,' '));
+}
+// 40k34m: Analyse aller Klassifizierungsfunktionen (siehe Auftrag) ergab eine
+// DRITTE, bislang übersehene, nahezu identische Kopie derselben Kategorie-
+// Erkennung (enrichDiscoveredDevice(), modul-weit, siehe unten) - zusätzlich zu
+// enrichDevice() und classifyInventoryDevice() (beide in 40k34l bereits mit
+// den geteilten Hilfsfunktionen smartphoneOrTabletCategory()/isAccessPointHay()
+// ausgestattet). Eine Konsolidierung auf einen einzigen zentralen Classifier
+// ist technisch und architektonisch möglich: alle drei Funktionen entscheiden
+// letztlich anhand derselben Art von Eingabe (zusammengesetzter Freitext aus
+// Name/Typ/Protokoll/Hersteller/Adresse) über dieselben ~20 Zielkategorien.
+// Einzige echte, bewusst NICHT vereinheitlichte Divergenz: der Rückgabewert
+// bei keinem Treffer unterscheidet sich je nach Aufrufer ("Unbekannte Geräte"
+// für die beiden discovery-bezogenen Funktionen vs. "Sonstige Geräte" für den
+// Gerätebestand) - das ist keine zufällige Abweichung, sondern an die jeweils
+// eigene categoryOrder-Konstante gebunden (nur dort ist der jeweilige String
+// überhaupt als Kategorie gelistet). Deshalb liefert classifyDevice() bei
+// keinem Treffer `null` und jeder Aufrufer wendet seinen eigenen,
+// semantisch passenden Standardwert an - alles andere (das vollständige
+// Regelwerk selbst) liegt jetzt an genau dieser einen Stelle.
+// 40k34n: Generischer Rückfall, wenn das gemeldete Typfeld selbst bereits
+// (Teile) einer bekannten Zielkategorie nennt - z.B. "Computer /
+// Netzwerkadapter" enthält eindeutig das Wort "Computer", wurde bisher aber
+// nur bei EXAKTER Übereinstimmung ("Computer" ohne Zusatz) oder einem der
+// engen Modell-Schlüsselwörter (Notebook/Laptop/...) erkannt. Statt die
+// Markenlisten immer weiter zu erweitern, wird hier zusätzlich geprüft, ob
+// der Typtext eines der bereits bestehenden Kategorienamen als eigenständiges
+// Wort enthält - das deckt beliebige künftige "<Kategorie> / <Zusatz>"-
+// Formulierungen ab, ohne jede einzeln als Sonderfall kodieren zu müssen.
+// "Access Points" ist bewusst NICHT in dieser generischen Liste enthalten:
+// genau diese Kategorie war die Ursache der in 40k34l/m behobenen
+// Fehlklassifizierung (Android-Geräte, die zuvor fälschlich als "Access
+// Point" gespeichert waren) - ein blindes Vertrauen in ein möglicherweise
+// veraltetes/falsches Typfeld würde diese Korrektur sonst wieder aufheben.
+const CANONICAL_CATEGORY_WORDS:[string,string][]=[
+ ['USB / Plug and Play','usb'],['AVM-Systeme','avm'],['Server & virtuelle Systeme','server'],
+ ['Router & Firewalls','router'],['Router & Firewalls','firewall'],['Switches & Netzwerk','switch'],
+ ['NAS-Systeme','nas'],['Drucker & Scanner','drucker'],['Drucker & Scanner','scanner'],
+ ['Kameras','kamera'],['Kameras','kameras'],['Telefonie','telefonie'],['Smart Home & IoT','smart home'],
+ ['Wechselrichter & Energiesysteme','wechselrichter'],['Fernseher & Multimedia','fernseher'],
+ ['Audio & Receiver','receiver'],['Smartphones & Tablets','smartphones'],['Smartphones & Tablets','tablets'],
+ ['Haushaltsgeräte','haushaltsgeräte'],['Robotik','robotik'],['Klima & Gebäudetechnik','gebäudetechnik'],
+ ['Medizingeräte','medizingeräte'],['Elektrogeräte','elektrogeräte'],['Computer','computer'],
+];
+function canonicalCategoryFromType(dType?:string):string|null{
+ if(!dType)return null;
+ const t=dType.toLowerCase();
+ for(const[category,word]of CANONICAL_CATEGORY_WORDS){
+  if(new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'i').test(t))return category;
+ }
+ return null;
+}
+type DeviceClassifierInput={hay:string;identityHay:string;nameTypeHay:string;dType?:string;medicalDevice?:boolean;electricalDevice?:boolean};
+function classifyDevice({hay,identityHay,nameTypeHay,dType,medicalDevice,electricalDevice}:DeviceClassifierInput):string|null{
+ const explicitComputerType=/desktop|notebook|laptop|workstation|thin client|mini[- ]?pc|macbook|imac/i.test(dType||'');
+ const explicitComputerIdentity=/\bwindows(?: 10| 11)?\b|\bdesktop\b|\bnotebook\b|\blaptop\b|\bworkstation\b|\bthin client\b|\bmini[- ]?pc\b|\bmacbook\b|\bimac\b|\bmac mini\b|\bchromebook\b|\boptiplex\b|\belitedesk\b|\bprodesk\b|\bthinkcentre\b|\bthinkpad\b|\blatitude\b|\bprecision\b|\bsurface pro\b/.test(identityHay);
+ const nameBasedMobile=smartphoneOrTabletCategory(nameTypeHay);
+ if(/usb|plug[ -]?and[ -]?play|\bpnp\b|windows pnp|usb_local|lokale?s? usb[- ]?gerät/.test(hay))return 'USB / Plug and Play';
+ if(/\bavm\b|fritz[!. -]?(box|repeater|fon|wlan|powerline)|fritz\.box/.test(hay))return 'AVM-Systeme';
+ if(/camera|kamera|onvif|rtsp|ip-kamera/.test(hay))return 'Kameras';
+ if(/router|firewall|gateway/.test(hay))return 'Router & Firewalls';
+ if(isAccessPointHay(hay))return 'Access Points';
+ if(/synology|qnap|nas/.test(hay))return 'NAS-Systeme';
+ if(/printer|drucker|scanner|epson|brother|canon|xerox|hp laser/.test(hay))return 'Drucker & Scanner';
+ if(nameBasedMobile)return nameBasedMobile;
+ if(/inverter|wechselrichter|solar(?:anlage|gerät|system)?|photovoltaik|\bpv\b|energy|energiesystem|battery|batterie|speicher|powerwall|felicity|kostal|plenticore|piko|ksem|fronius|sma|solaredge|sun2000|huawei|victron|enphase|growatt|goodwe|sungrow|deye|solax|foxess|fox ess|byd|pylontech|lux[- ]?x|ivgm|smart meter|energiemesser|solarlog|shinewifi|data manager/.test(hay))return 'Wechselrichter & Energiesysteme';
+ if(/home assistant|raspberry|server|docker|proxmox|virtualbox|vmware|hyper-v/.test(hay))return 'Server & virtuelle Systeme';
+ if(/^computer$/i.test((dType||'').trim())||explicitComputerType||explicitComputerIdentity)return 'Computer';
+ if(/switch|bridge|ethernet/.test(hay))return 'Switches & Netzwerk';
+ if(/phone|telefon|voip|sip/.test(hay))return 'Telefonie';
+ if(/marantz|denon|heos|receiver|verstärker|amplifier|webradio|noxon|sonos|audio/.test(hay))return 'Audio & Receiver';
+ if(/tv|television|chromecast|roku|fire tv|multimedia|dlna|media renderer|telefunken|shield|google tv/.test(hay))return 'Fernseher & Multimedia';
+ if(/dishwasher|geschirrspüler|geschirrspueler|home connect|washing machine|waschmaschine|dryer|trockner|kühlschrank|kuehlschrank|oven|backofen|appliance/.test(hay))return 'Haushaltsgeräte';
+ if(/rasen[- ]?robi|rasenroboter|mähroboter|maehroboter|robot mower|staubsaugerroboter|vacuum robot|robotik/.test(hay))return 'Robotik';
+ if(/luftwärmetauscher|luftwaermetauscher|heizung|wärmepumpe|waermepumpe|klima|ventilation|hvac|building automation/.test(hay))return 'Klima & Gebäudetechnik';
+ if(/iot|smart|tuya|shelly|zigbee|homekit|matter|thermostat|sensor|appliance/.test(hay))return 'Smart Home & IoT';
+ if(medicalDevice)return 'Medizingeräte';
+ if(electricalDevice)return 'Elektrogeräte';
+ return canonicalCategoryFromType(dType);
+}
 function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false}:{onRegistered:()=>void;onDiscoveryChange?:(devices:DiscoveredDevice[])=>void;hideDeviceList?:boolean}){
  const [found,setFound]=useState<DiscoveredDevice[]>([]);
  useEffect(()=>{onDiscoveryChange?.(found);},[found,onDiscoveryChange]);
@@ -3825,6 +5050,10 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
  const [phase,setPhase]=useState('');
  const [diagnostics,setDiagnostics]=useState<DeviceDiscoveryDiagnostic[]>([]);
  const [diagnosticsOpen,setDiagnosticsOpen]=useState(false);
+ const [winrmOpen,setWinrmOpen]=useState(false);
+ const discoveryStatusRef=useAttentionNavigation<HTMLDivElement>(state==='running'||state==='complete'||state==='error'?state:'');
+ const diagnosticsRef=useAttentionNavigation<HTMLDetailsElement>(diagnosticsOpen);
+ const winrmRef=useAttentionNavigation<HTMLDetailsElement>(winrmOpen);
  const [ignored,setIgnored]=useState<string[]>(()=>{try{return JSON.parse(localStorage.getItem('gam_ignored_discovered_devices')||'[]')}catch{return []}});
  const registeredReloadTimer=useRef<number|undefined>(undefined);
  const scanRunningRef=useRef(false);
@@ -3840,7 +5069,7 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
  const emptyHa:HomeAssistantDiscoverySource={id:0,name:'Home Assistant',enabled:true,baseUrl:'http://homeassistant.local:8123',accessTokenConfigured:false,location:''};
  const [haSources,setHaSources]=useState<HomeAssistantDiscoverySource[]>([]);const [ha,setHa]=useState<HomeAssistantDiscoverySource>(emptyHa);const [haToken,setHaToken]=useState('');const [haBusy,setHaBusy]=useState(false);const [haMessage,setHaMessage]=useState('');const [haTest,setHaTest]=useState<any>(null);
  const emptyTuya:TuyaDiscoverySource={id:0,name:'Smart Life',enabled:true,connectionMode:'ACCOUNT_LOGIN',homeAssistantSourceId:null,appType:'SMART_LIFE',region:'EUROPE',clientId:'',clientSecretConfigured:false,userUid:'',accountUsername:'',accountPasswordConfigured:false,countryCode:'49',appSchema:'smartlife',location:''};
- const [builtinSources,setBuiltinSources]=useState<BuiltinDiscoverySources>({LOCAL_ADAPTERS:true,NEIGHBOR:true,ACTIVE_SCAN:true,SSDP:true,DNS_NAMES:true,MDNS:true,WS_DISCOVERY:true,NETBIOS:true,DHCP_LEASES:true,USB_LOCAL:false,BLUETOOTH_LOCAL:false,DOCKER_LOCAL:false,SNMP:true,AUTO_REGISTER:true,AUTO_INVENTORY:false,AUTO_CATEGORY:true});
+ const [builtinSources,setBuiltinSources]=useState<BuiltinDiscoverySources>({LOCAL_ADAPTERS:true,NEIGHBOR:true,ACTIVE_SCAN:true,SSDP:true,DNS_NAMES:true,MDNS:true,WS_DISCOVERY:true,WINDOWS_INVENTORY:true,LINUX_INVENTORY:true,LINUX_NETWORK:true,NETBIOS:true,DHCP_LEASES:true,USB_LOCAL:false,BLUETOOTH_LOCAL:false,DOCKER_LOCAL:false,SNMP:true,AUTO_REGISTER:true,AUTO_INVENTORY:false,AUTO_CATEGORY:true});
  const displaySettingGroups=[
   {title:'Allgemein',items:[['VIEW_COMPACT','Kompakte Darstellung','Weniger Abstand und zunächst nur Kerninformationen.'],['VIEW_HIDE_EMPTY','Leere Werte ausblenden','Felder ohne verwertbaren Inhalt werden nicht dargestellt.'],['VIEW_HIDE_UNKNOWN','Unbekannte Werte ausblenden','unknown, unavailable und vergleichbare Platzhalter verbergen.'],['VIEW_SHOW_TIMESTAMPS','Zeitstempel anzeigen','Zeitpunkt der letzten Aktualisierung je Wert anzeigen.'],['VIEW_SHOW_UNITS','Einheiten anzeigen','Einheiten wie V, A, W, %, °C oder Hz anzeigen.'],['VIEW_SHOW_ENTITY_IDS','Technische Entity-ID anzeigen','Home-Assistant-Entity-IDs zusätzlich zum Anzeigenamen einblenden.'],['VIEW_FAVORITES_FIRST','Favoriten zuerst','Markierte Werte in der Geräteakte an den Anfang stellen.'],['VIEW_HIGHLIGHT_CHANGES','Änderungen hervorheben','Neu eingetroffene oder geänderte Werte kurz hervorheben.']]},
   {title:'Home Assistant',items:[['VIEW_SHOW_DIAGNOSTICS','Diagnose-Entitäten anzeigen','Diagnosewerte und technische Zustände einbeziehen.'],['VIEW_SHOW_CONFIG_ENTITIES','Konfigurations-Entitäten anzeigen','Einstellbare Entitäten in der Sensoransicht berücksichtigen.'],['VIEW_SHOW_DISABLED_ENTITIES','Deaktivierte Entitäten anzeigen','Auch in Home Assistant deaktivierte Entitäten vorbereiten.'],['VIEW_SHOW_HIDDEN_ENTITIES','Versteckte Entitäten anzeigen','Verborgene Entitäten bei der Geräteakte berücksichtigen.']]},
@@ -3848,7 +5077,7 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
  ] as const;
  const plannedSourceGroups=[
   {title:'Netzwerk und Basisdienste',items:[['PLAN_LLDP','LLDP / CDP'],['PLAN_DNS','DNS'],['PLAN_DHCP','DHCP-Leases'],['PLAN_RADIUS','RADIUS / 802.1X'],['PLAN_IPMI','IPMI / Redfish']]},
-  {title:'Windows, Verzeichnis und Geräteverwaltung',items:[['PLAN_WMI','WMI (Windows)'],['PLAN_WINRM','WinRM / PowerShell Remoting'],['PLAN_ACTIVE_DIRECTORY','Active Directory / LDAP'],['PLAN_ENTRA_ID','Microsoft Entra ID'],['PLAN_INTUNE','Microsoft Intune'],['PLAN_MECM','Microsoft Configuration Manager (MECM/SCCM)']]},
+  {title:'Windows, Verzeichnis und Geräteverwaltung',items:[['PLAN_WMI','WMI (Windows)'],['PLAN_ACTIVE_DIRECTORY','Active Directory / LDAP'],['PLAN_ENTRA_ID','Microsoft Entra ID'],['PLAN_INTUNE','Microsoft Intune'],['PLAN_MECM','Microsoft Configuration Manager (MECM/SCCM)']]},
   {title:'Linux, macOS und Endgeräte',items:[['PLAN_SSH','SSH (Linux/Unix)'],['PLAN_MACOS','macOS Remote'],['PLAN_JAMF','Jamf Pro'],['PLAN_ANSIBLE','Ansible Inventory'],['PLAN_CHROME_ENTERPRISE','Chrome Enterprise / ChromeOS']]},
   {title:'Home Automation / IoT',items:[['PLAN_MQTT','MQTT'],['PLAN_ZIGBEE2MQTT','Zigbee2MQTT'],['PLAN_ZHA','ZHA'],['PLAN_MATTER','Matter'],['PLAN_THREAD','Thread'],['PLAN_HOMEKIT','Apple HomeKit'],['PLAN_OPENHAB','openHAB'],['PLAN_SHELLY','Shelly'],['PLAN_TASMOTA','Tasmota'],['PLAN_ESPHOME','ESPHome']]},
   {title:'Virtualisierung',items:[['PLAN_PROXMOX','Proxmox VE'],['PLAN_VMWARE','VMware vCenter / ESXi'],['PLAN_HYPERV','Hyper-V'],['PLAN_VIRTUALBOX','Oracle VirtualBox'],['PLAN_NUTANIX','Nutanix AHV']]},
@@ -3863,8 +5092,10 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
  const [mergeSettings,setMergeSettings]=useState<DeviceIdentityMergeSettings>(defaultMergeSettings); // nur lesend für die Ergebnisbewertung; Bearbeitung ausschließlich unter Einstellungen
  const [builtinBusy,setBuiltinBusy]=useState(false);
  const [tuyaSources,setTuyaSources]=useState<TuyaDiscoverySource[]>([]);const [tuya,setTuya]=useState<TuyaDiscoverySource>(emptyTuya);const [tuyaSecret,setTuyaSecret]=useState('');const [tuyaAccountPassword,setTuyaAccountPassword]=useState('');const [tuyaBusy,setTuyaBusy]=useState(false);const [tuyaMessage,setTuyaMessage]=useState('');const [tuyaTest,setTuyaTest]=useState<any>(null);
+ const [winrm,setWinrm]=useState<WinRmDiscoverySettings>({enabled:false,username:'',passwordConfigured:false,port:5985,https:false});
+ const [winrmPassword,setWinrmPassword]=useState('');const [winrmHost,setWinrmHost]=useState('');const [winrmBusy,setWinrmBusy]=useState(false);const [winrmMessage,setWinrmMessage]=useState('');const [winrmTest,setWinrmTest]=useState<any>(null);
  const reloadFritz=()=>loadFritzBoxDiscoverySources().then(rows=>{setFritzSources(rows);if(rows.length&&!rows.some(x=>x.id===fritz.id))setFritz(rows[0]);}).catch(()=>{});
- useEffect(()=>{loadDeviceDiscoveryCapabilities().then(setCaps).catch(()=>setCaps({}));loadBuiltinDiscoverySources().then(setBuiltinSources).catch(()=>{});loadDeviceIdentityMergeSettings().then(setMergeSettings).catch(()=>{});loadFritzBoxDiscoverySources().then(rows=>{setFritzSources(rows);if(rows.length)setFritz(rows[0]);}).catch(()=>{});loadHomeAssistantDiscoverySources().then(rows=>{setHaSources(rows);if(rows.length)setHa(rows[0]);}).catch(()=>{});loadTuyaDiscoverySources().then(rows=>{setTuyaSources(rows);if(rows.length)setTuya(rows[0]);}).catch(()=>{});},[]);
+ useEffect(()=>{loadDeviceDiscoveryCapabilities().then(setCaps).catch(()=>setCaps({}));loadBuiltinDiscoverySources().then(setBuiltinSources).catch(()=>{});loadDeviceIdentityMergeSettings().then(setMergeSettings).catch(()=>{});loadFritzBoxDiscoverySources().then(rows=>{setFritzSources(rows);if(rows.length)setFritz(rows[0]);}).catch(()=>{});loadHomeAssistantDiscoverySources().then(rows=>{setHaSources(rows);if(rows.length)setHa(rows[0]);}).catch(()=>{});loadTuyaDiscoverySources().then(rows=>{setTuyaSources(rows);if(rows.length)setTuya(rows[0]);}).catch(()=>{});loadWinRmDiscoverySettings().then(setWinrm).catch(()=>{});},[]);
  const busy=state==='running'||state==='cancelling'||state==='finalizing';
  const visible=found.filter(d=>!ignored.includes(d.id));
  const protocolParts=(d:DiscoveredDevice)=>[...new Set(String(d.protocol||'').split(',').map(x=>x.trim()).filter(Boolean))];
@@ -3979,6 +5210,9 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
  function selectTuya(id:number){const row=tuyaSources.find(x=>x.id===id);if(row){setTuya(row);setTuyaSecret('');setTuyaAccountPassword('');setTuyaTest(null);setTuyaMessage('');}}
  function newTuya(){setTuya({...emptyTuya,name:`Smart Life ${tuyaSources.length+1}`});setTuyaSecret('');setTuyaAccountPassword('');setTuyaTest(null);setTuyaMessage('');}
 
+ async function saveWinrm(){setWinrmBusy(true);setWinrmMessage('');setWinrmTest(null);try{const saved=await saveWinRmDiscoverySettings({enabled:winrm.enabled,username:winrm.username,password:winrmPassword||undefined,port:winrm.port,https:winrm.https});setWinrm(saved);setWinrmPassword('');setWinrmMessage('WinRM-Quelle gespeichert.');gamNotify('success','WinRM-Quelle gespeichert.');}catch(e:any){const text=e?.message||'WinRM-Konfiguration konnte nicht gespeichert werden.';setWinrmMessage(text);gamNotify('error',text);}finally{setWinrmBusy(false);}}
+ async function testWinrm(){setWinrmBusy(true);setWinrmMessage('');setWinrmTest(null);try{if(winrmPassword)await saveWinrm();const result=await testWinRmDiscovery(winrmHost);setWinrmTest(result);gamNotify(result.reachable?'success':'error',result.message);}catch(e:any){const text=e?.message||'WinRM-Verbindungstest fehlgeschlagen.';setWinrmMessage(text);gamNotify('error',text);}finally{setWinrmBusy(false);}}
+
  async function scan(){
   if(scanRunningRef.current)return;
   scanRunningRef.current=true;
@@ -4024,9 +5258,14 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
     if(inventoryCount>0){
      setMessage(`${inventoryCount} registrierte Geräte wurden automatisch in den Gerätebestand übernommen.`);
      gamNotify('success',`${inventoryCount} Geräte wurden automatisch in den Gerätebestand übernommen.`);
-     onRegistered();
     }
    }
+   // 40k34k: registrierte Geräte IMMER am Ende eines vollständigen Suchlaufs neu laden - vorher
+   // geschah das nur innerhalb des AUTO_INVENTORY-Zweigs (Standardeinstellung: aus), wodurch eine
+   // waehrend des Suchlaufs bereits serverseitig erfolgte automatische Nachklassifizierung (Evidence,
+   // 40k34h-j) im Frontend erst beim naechsten Suchlauf sichtbar wurde. onRegistered() laedt exakt
+   // denselben, bereits bestehenden zentralen Update-Pfad wie jede manuelle Aenderung.
+   onRegistered();
    await new Promise<void>(resolve=>setTimeout(resolve,1200));
    setState('idle');
   }catch(e:any){setProgress(Math.min(progress,99));setPhase('Gerätesuche unvollständig beendet');setMessage(e?.message??'Gerätesuche fehlgeschlagen.');setDiagnosticsOpen(true);setState('error');}
@@ -4078,28 +5317,8 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
   const vendor=d.manufacturer||(!localMac?ouiVendors[mac.slice(0,8)]:undefined);
   const hay=[d.name,d.type,d.protocol,vendor,d.address].filter(Boolean).join(' ').toLowerCase();
   const identityHay=[d.name,vendor].filter(Boolean).join(' ').toLowerCase();
-  const explicitComputerType=/desktop|notebook|laptop|workstation|thin client|mini[- ]?pc|macbook|imac/i.test(d.type||'');
-  const explicitComputerIdentity=/\bwindows(?: 10| 11)?\b|\bdesktop\b|\bnotebook\b|\blaptop\b|\bworkstation\b|\bthin client\b|\bmini[- ]?pc\b|\bmacbook\b|\bimac\b|\bmac mini\b|\bchromebook\b|\boptiplex\b|\belitedesk\b|\bprodesk\b|\bthinkcentre\b|\bthinkpad\b|\blatitude\b|\bprecision\b|\bsurface pro\b/.test(identityHay);
-  let category='Unbekannte Geräte';
-  if(/usb|plug[ -]?and[ -]?play|\bpnp\b|windows pnp|usb_local/.test(hay))category='USB / Plug and Play';
-  else if(/camera|kamera|onvif|rtsp|ip-kamera/.test(hay))category='Kameras';
-  else if(/router|firewall|gateway/.test(hay))category='Router & Firewalls';
-  else if(/repeater|access point|wlan|wireless ap/.test(hay))category='Access Points';
-  else if(/synology|qnap|nas/.test(hay))category='NAS-Systeme';
-  else if(/printer|drucker|scanner|epson|brother|canon|xerox|hp laser/.test(hay))category='Drucker & Scanner';
-  else if(/inverter|wechselrichter|solar(?:anlage|gerät|system)?|photovoltaik|\bpv\b|energy|energiesystem|battery|batterie|speicher|powerwall|felicity|kostal|plenticore|piko|ksem|fronius|sma|solaredge|sun2000|huawei|victron|enphase|growatt|goodwe|sungrow|deye|solax|foxess|fox ess|byd|pylontech|lux[- ]?x|ivgm|smart meter|energiemesser|solarlog|shinewifi|data manager/.test(hay))category='Wechselrichter & Energiesysteme';
-  else if(/home assistant|raspberry|server|docker|proxmox|virtualbox|vmware|hyper-v/.test(hay))category='Server & virtuelle Systeme';
-  else if(explicitComputerType||explicitComputerIdentity)category='Computer';
-  else if(/switch|bridge|ethernet/.test(hay))category='Switches & Netzwerk';
-  else if(/phone|telefon|voip|sip/.test(hay))category='Telefonie';
-  else if(/marantz|denon|heos|receiver|verstärker|amplifier|webradio|noxon|sonos|audio/.test(hay))category='Audio & Receiver';
-  else if(/tv|television|chromecast|roku|fire tv|multimedia|dlna|media renderer|telefunken/.test(hay))category='Fernseher & Multimedia';
-  else if(/iphone|ipad|android|smartphone|tablet|mobile|galaxy|windows phone/.test(hay))category='Smartphones & Tablets';
-  else if(/dishwasher|geschirrspüler|geschirrspueler|home connect|washing machine|waschmaschine|dryer|trockner|kühlschrank|kuehlschrank|oven|backofen|appliance/.test(hay))category='Haushaltsgeräte';
-  else if(/rasen[- ]?robi|rasenroboter|mähroboter|maehroboter|robot mower|staubsaugerroboter|vacuum robot|robotik/.test(hay))category='Robotik';
-  else if(/luftwärmetauscher|luftwaermetauscher|heizung|wärmepumpe|waermepumpe|klima|ventilation|hvac|building automation/.test(hay))category='Klima & Gebäudetechnik';
-  else if(/fritz[!. -]?(box|repeater|fon|wlan|powerline)|fritz\.box/.test(identityHay))category='AVM-Systeme';
-  else if(/iot|smart|tuya|shelly|zigbee|homekit|matter|thermostat|sensor/.test(hay))category='Smart Home & IoT';
+  const nameTypeHay=[d.name,d.type].filter(Boolean).join(' ').toLowerCase();
+  const category=classifyDevice({hay,identityHay,nameTypeHay,dType:d.type})??'Unbekannte Geräte';
   const generic=!d.name||d.name.startsWith('Netzwerkgerät ')||d.name==='Unbekanntes Gerät'||/^.*\/.*upnp/i.test(d.name);
   const vendorUseful=vendor&&!['Netzwerkgerät','Druck-/Netzwerkgerät','IP-Kamera'].includes(vendor);
   const displayName=!generic?d.name:vendorUseful?`${vendor} ${category==='Unbekannte Geräte'?'Gerät':category.replace(/ & .*/, '').replace(/e$/, '')}`:category==='Unbekannte Geräte'?`Netzwerkgerät ${d.address||''}`:`${category.replace(/ & .*/, '')} ${d.address||''}`;
@@ -4115,27 +5334,28 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
   catch(e:any){setBuiltinSources(builtinSources);gamNotify('error',e?.message??(registrationSetting?'Registrierungsmodus konnte nicht gespeichert werden.':displaySetting?'Anzeigeeinstellung konnte nicht gespeichert werden.':'Discovery-Quelle konnte nicht gespeichert werden.'));}
   finally{setBuiltinBusy(false);}
  }
-  const phaseLabel=(phaseCode:string)=>({DISCOVERY:'Gesamtsuche',LOCAL_ADAPTERS:'Lokale Adapter',FRITZBOX:'FRITZ!Box TR-064',HOME_ASSISTANT:'Home Assistant REST API',TUYA:'Smart Life / Tuya Cloud',NEIGHBOR_INITIAL:'Erste ARP-/Neighbor-Auswertung',ACTIVE_SCAN:'Aktiver Subnetzscan',NEIGHBOR_REFRESH:'Zweite ARP-/Neighbor-Auswertung',SSDP:'SSDP / UPnP',MDNS:'mDNS / Bonjour',DNS_NAMES:'DNS-Namensauflösung',WS_DISCOVERY:'WS-Discovery / ONVIF',NETBIOS:'NetBIOS',DHCP_LEASES:'DHCP-Leases',USB_LOCAL:'Lokale USB-Geräte',BLUETOOTH_LOCAL:'Lokale Bluetooth-Geräte',DOCKER_LOCAL:'Docker-Container',SNMP:'SNMP (integriert)',FINALIZE:'Konsolidierung'} as Record<string,string>)[phaseCode]||phaseCode;
+  const phaseLabel=(phaseCode:string)=>({DISCOVERY:'Gesamtsuche',LOCAL_ADAPTERS:'Lokale Adapter',FRITZBOX:'FRITZ!Box TR-064',HOME_ASSISTANT:'Home Assistant REST API',TUYA:'Smart Life / Tuya Cloud',NEIGHBOR_INITIAL:'Erste ARP-/Neighbor-Auswertung',ACTIVE_SCAN:'Aktiver Subnetzscan',NEIGHBOR_REFRESH:'Zweite ARP-/Neighbor-Auswertung',SSDP:'SSDP / UPnP',MDNS:'mDNS / Bonjour',DNS_NAMES:'DNS-Namensauflösung',WS_DISCOVERY:'WS-Discovery / ONVIF',WINDOWS_INVENTORY:'Windows-Inventarisierung',LINUX_INVENTORY:'Lokale Linux-Inventarisierung',LINUX_NETWORK:'Linux-Netzwerk-Inventarisierung',NETBIOS:'NetBIOS',DHCP_LEASES:'DHCP-Leases',USB_LOCAL:'Lokale USB-Geräte',BLUETOOTH_LOCAL:'Lokale Bluetooth-Geräte',DOCKER_LOCAL:'Docker-Container',SNMP:'SNMP (integriert)',FINALIZE:'Konsolidierung'} as Record<string,string>)[phaseCode]||phaseCode;
 
 
  const sourceFamilies=(protocol?:string)=>{const value=(protocol||'').toLowerCase();const labels:string[]=[];if(value.includes('usb')||value.includes('plug and play')||value.includes('plug-and-play')||value.includes('pnp'))labels.push('USB / Plug and Play');if(value.includes('fritz')||value.includes('tr-064'))labels.push('AVM-Geräte');if(value.includes('home assistant'))labels.push('Home-Assistant-Geräte');if(value.includes('tuya')||value.includes('smart life'))labels.push('Smart-Life-/Tuya-Geräte');if(value.includes('windows arp')||value.includes('local')||value.includes('neighbor')||value.includes('mdns')||value.includes('ssdp'))labels.push('Lokale Netzwerkgeräte');return [...new Set(labels)].join(' · ')||'Weitere Gerätequelle';};
  const row=(d:ReturnType<typeof enrichDevice>,mode:'new'|'registered'|'ignored')=><tr key={d.id}><td><b>{d.displayName||'Unbekanntes Gerät'}</b>{mode==='new'&&<span className="device-new-badge"> (neu)</span>}<br/><small>{sourceFamilies(d.protocol)}{d.locallyAdministeredMac?' · private MAC':''}</small></td><td><small className="muted">Gefunden über</small><br/>{discoverySourceBadges(d.protocol)}</td><td>{d.address||'—'}<br/><small>{d.hardwareAddress||'—'}</small></td><td>{d.status}</td><td>{d.lastSeen?new Date(d.lastSeen).toLocaleString('de-DE'):'—'}</td><td>{mode==='new'?<><button type="button" onClick={()=>register(d)}>Registrieren</button><button className="secondary" type="button" onClick={()=>ignore(d.id)}>Ignorieren</button></>:mode==='ignored'?<button className="secondary" type="button" onClick={()=>restore(d.id)}>Wieder anzeigen</button>:<><button type="button" onClick={()=>addRegisteredToInventory(d)}>In Gerätebestand übernehmen</button><button className="secondary" type="button" onClick={()=>deregister(d,false)}>Registrierung aufheben</button><button className="secondary" type="button" onClick={()=>deregister(d,true)}>Registrierung aufheben und ignorieren</button></>}</td></tr>;
  const groupedTree=(rows:DiscoveredDevice[],emptyText:string)=><div className="device-category-tree">{grouped(rows).map(group=><details className="device-category" key={group.category}><summary><span className="device-category-label"><span aria-hidden="true">{iconFor(group.category)}</span><b>{group.category}</b><em>({group.rows.length})</em></span></summary><div className="scroll-table"><table className="compact-table"><thead><tr><th>Gerät / Herkunft</th><th>Fundquelle</th><th>Adresse / Kennung</th><th>Status</th><th>Zuletzt gesehen</th><th>Aktion</th></tr></thead><tbody>{group.rows.map(d=>row(d,d.alreadyRegistered?'registered':'new'))}</tbody></table></div></details>)}{rows.length===0&&<p className="muted device-category-empty">{emptyText}</p>}</div>;
  const ignoredTree=(rows:DiscoveredDevice[],emptyText:string)=><div className="device-category-tree">{grouped(rows).map(group=><details className="device-category" key={group.category}><summary><span className="device-category-label"><span aria-hidden="true">{iconFor(group.category)}</span><b>{group.category}</b><em>({group.rows.length})</em></span></summary><div className="scroll-table"><table className="compact-table"><thead><tr><th>Gerät / Herkunft</th><th>Fundquelle</th><th>Adresse / Kennung</th><th>Status</th><th>Zuletzt gesehen</th><th>Aktion</th></tr></thead><tbody>{group.rows.map(d=>row(d,'ignored'))}</tbody></table></div></details>)}{rows.length===0&&<p className="muted device-category-empty">{emptyText}</p>}</div>;
- return <section className="card device-manager-card"><div className="row"><div><h2>Gerätemanager</h2><p className="muted">Schritt 40k31g1: freie Gerätekategorien und nachvollziehbare Merge-Diagnose mit Punktwerten, Treffern und Konflikten; deduplizierte, kompakte Quellen-Badges; klare Trennung zwischen zentralen Merge-Regeln und Anzeigeeinstellungen; Merge-Einstellungen unter Einstellungen → Geräteverwaltung; gewichtete Confidence-/Merge-Engine sowie Auswertung nach neu, bestätigt, ergänzt und möglicher Dublette; SNMP als eigenständige Erkennungsquelle, Anzeige- und Sensordaten-Konfiguration sowie vorbereitete Integrationsquellen; alle Einstellungen bleiben dauerhaft in der GAM-Datenbank gespeichert. Neu erkannte, registrierte und bereits in den Gerätebestand übernommene Geräte werden als getrennte Stufen angezeigt.</p></div><button className={busy?'device-search-running danger':''} type="button" disabled={state==='cancelling'||state==='finalizing'} onClick={busy?cancelScan:scan}><Search size={16}/>{state==='cancelling'?' Abbruch läuft …':busy?' Gerätesuche abbrechen':' Geräte suchen'}</button></div>
+ return <section className="card device-manager-card"><div className="row"><div><h2>Gerätemanager</h2><p className="note"><b>Aufgabenorientierter Workflow:</b> Gerät finden → verbinden → inventarisieren → verwalten. Die technische Quelle wird passend zur Plattform automatisch im Hintergrund verwendet.</p><p className="muted">Schritt 40k33b: lokale und netzwerkweite Linux-Inventarisierung; Windows-System-, Software- und Sicherheitsinventarisierung; freie Gerätekategorien und nachvollziehbare Merge-Diagnose mit Punktwerten, Treffern und Konflikten; deduplizierte, kompakte Quellen-Badges; klare Trennung zwischen zentralen Merge-Regeln und Anzeigeeinstellungen; Merge-Einstellungen unter Einstellungen → Geräteverwaltung; gewichtete Confidence-/Merge-Engine sowie Auswertung nach neu, bestätigt, ergänzt und möglicher Dublette; SNMP als eigenständige Erkennungsquelle, Anzeige- und Sensordaten-Konfiguration sowie vorbereitete Integrationsquellen; alle Einstellungen bleiben dauerhaft in der GAM-Datenbank gespeichert. Neu erkannte, registrierte und bereits in den Gerätebestand übernommene Geräte werden als getrennte Stufen angezeigt.</p></div><button className={busy?'device-search-running danger':''} type="button" disabled={state==='cancelling'||state==='finalizing'} onClick={busy?cancelScan:scan}><Search size={16}/>{state==='cancelling'?' Abbruch läuft …':busy?' Gerätesuche abbrechen':' Geräte suchen'}</button></div>
  <details className="device-discovery-source-settings device-registration-mode-settings" open><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Registrierungsmodus</b><small> · Verhalten nach der Erkennung, unabhängig von den Erkennungsquellen</small></summary><div className="builtin-source-list"><p className="muted device-registration-mode-intro">Steuert die Stufen <b>Erkannt → Registriert → Gerätebestand</b>. Jede Stufe kann automatisch oder bewusst manuell durchlaufen werden.</p><div className="builtin-source-row"><span><b>Erkannte Geräte automatisch registrieren</b><small>Standard: aktiv. Der Zwischenschritt „Registrieren“ entfällt; erkannte Geräte bleiben dauerhaft als bekannte Identitäten erhalten.</small></span><button type="button" className={builtinSources.AUTO_REGISTER?'source-toggle enabled':'source-toggle'} disabled={builtinBusy} onClick={()=>toggleBuiltinSource('AUTO_REGISTER')} aria-pressed={builtinSources.AUTO_REGISTER}>{builtinSources.AUTO_REGISTER?'🟢 Automatisch':'⚪ Manuell'}</button></div><div className="builtin-source-row"><span><b>Registrierte Geräte automatisch in den Gerätebestand übernehmen</b><small>Standard: aus. Registrierte Geräte bleiben zunächst in „Registriert“ und können einzeln in das bewusst gepflegte Inventar übernommen werden.</small></span><button type="button" className={builtinSources.AUTO_INVENTORY?'source-toggle enabled':'source-toggle'} disabled={builtinBusy} onClick={()=>toggleBuiltinSource('AUTO_INVENTORY')} aria-pressed={builtinSources.AUTO_INVENTORY}>{builtinSources.AUTO_INVENTORY?'🟢 Automatisch':'⚪ Manuell'}</button></div><div className="builtin-source-row"><span><b>Geräte automatisch einer Gerätekategorie zuordnen</b><small>Standard: aktiv. GAM verwendet Typ, Hersteller, Protokolle und Identitätsmerkmale für eine passende Kategorie. Bei deaktivierter Option bleibt der von der Quelle gelieferte Gerätetyp erhalten.</small></span><button type="button" className={builtinSources.AUTO_CATEGORY?'source-toggle enabled':'source-toggle'} disabled={builtinBusy} onClick={()=>toggleBuiltinSource('AUTO_CATEGORY')} aria-pressed={builtinSources.AUTO_CATEGORY}>{builtinSources.AUTO_CATEGORY?'🟢 Automatisch':'⚪ Manuell'}</button></div></div></details>
 
  <div className="note"><b>Klare Einstellungstrennung:</b> Gewichtungen, Schwellwerte, Quellenboni sowie Schutz- und Automatikregeln der Confidence-/Merge-Engine werden ausschließlich unter <b>Einstellungen → Geräteverwaltung</b> konfiguriert. Die nachfolgenden Anzeige- und Sensordatenoptionen verbleiben bewusst im Gerätemanager und verändern nur Darstellung, Filterung und Detailtiefe.</div>
- <details className="device-discovery-source-settings device-discovery-sources-overview"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Erkennungsquellen ({fritzSources.length+haSources.length+tuyaSources.length+13})</b><small> · legt ausschließlich fest, wo GAM nach Geräten sucht</small></summary><div className="device-discovery-source-types">
- <details className="device-discovery-source-settings"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Lokale Discovery-Quellen (13)</b><small> · keine Zugangsdaten erforderlich</small></summary><div className="builtin-source-list">{([['LOCAL_ADAPTERS','Lokale Netzwerkadapter','Erkennt die Netzwerkadapter und lokalen IPv4-Netze des GAM-Servers.'],['NEIGHBOR','ARP / Neighbor-Tabellen','Liest bekannte Geräte aus Windows ARP, PowerShell Get-NetNeighbor beziehungsweise Linux/macOS-Nachbartabellen.'],['ACTIVE_SCAN','Aktiver Subnetzscan','Prüft erreichbare Adressen in den erkannten lokalen IPv4-Netzen.'],['SSDP','SSDP / UPnP','Sucht Geräte, die sich im lokalen Netzwerk über SSDP oder UPnP bekanntgeben.'],['DNS_NAMES','DNS-Namensauflösung','Ergänzt verständliche Hostnamen über Reverse DNS.'],['MDNS','mDNS / Bonjour','Sucht lokale Dienste und Geräte mit der integrierten Java-mDNS-/Bonjour-Engine; Avahi beziehungsweise dns-sd dienen nur als Fallback.'],['WS_DISCOVERY','WS-Discovery / ONVIF','Erkennt Windows-/Netzwerkgeräte, Drucker und insbesondere ONVIF-Kameras über UDP-Multicast.'],['NETBIOS','NetBIOS','Ergänzt Windows-Computer- und Arbeitsgruppennamen, sofern das Betriebssystem dies unterstützt.'],['DHCP_LEASES','DHCP-Leases','Liest lokale DHCP-/dnsmasq-Lease-Dateien auf unterstützten Linux-Systemen.'],['USB_LOCAL','Lokale USB-Geräte','Erfasst am GAM-Server angeschlossene USB- und Plug-and-Play-Geräte.'],['BLUETOOTH_LOCAL','Lokale Bluetooth-Geräte','Erfasst gekoppelte beziehungsweise aktuell vorhandene Bluetooth-Geräte.'],['DOCKER_LOCAL','Docker-Container','Erkennt laufende Container des lokalen Docker-Hosts als technische Geräte.'],['SNMP','SNMP (integriert)','Fragt gefundene IPv4-Geräte per SNMP v1 nach sysName, sysDescr und sysObjectID ab. Community, Port und Timeout sind serverseitig konfigurierbar.']] as const).map(([key,label,description])=><div className="builtin-source-row" key={key}><span><b>{label}</b><small>{description}</small></span><button type="button" className={builtinSources[key]?'source-toggle enabled':'source-toggle'} disabled={builtinBusy} onClick={()=>toggleBuiltinSource(key)} aria-pressed={builtinSources[key]}>{builtinSources[key]?'🟢 Aktiv':'⚪ Aus'}</button></div>)}</div></details>
+ <details className="device-discovery-source-settings device-discovery-sources-overview"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Erkennungsquellen ({fritzSources.length+haSources.length+tuyaSources.length+15})</b><small> · legt ausschließlich fest, wo GAM nach Geräten sucht</small></summary><div className="device-discovery-source-types">
+ <details className="device-discovery-source-settings"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Lokale Discovery-Quellen (16)</b><small> · keine Zugangsdaten erforderlich</small></summary><div className="builtin-source-list">{([['LOCAL_ADAPTERS','Lokale Netzwerkadapter','Erkennt die Netzwerkadapter und lokalen IPv4-Netze des GAM-Servers.'],['NEIGHBOR','ARP / Neighbor-Tabellen','Liest bekannte Geräte aus Windows ARP, PowerShell Get-NetNeighbor beziehungsweise Linux/macOS-Nachbartabellen.'],['ACTIVE_SCAN','Aktiver Subnetzscan','Prüft erreichbare Adressen in den erkannten lokalen IPv4-Netzen.'],['SSDP','SSDP / UPnP','Sucht Geräte, die sich im lokalen Netzwerk über SSDP oder UPnP bekanntgeben.'],['DNS_NAMES','DNS-Namensauflösung','Ergänzt verständliche Hostnamen über Reverse DNS.'],['MDNS','mDNS / Bonjour','Sucht lokale Dienste und Geräte mit der integrierten Java-mDNS-/Bonjour-Engine; Avahi beziehungsweise dns-sd dienen nur als Fallback.'],['WS_DISCOVERY','WS-Discovery / ONVIF','Erkennt Windows-/Netzwerkgeräte, Drucker und insbesondere ONVIF-Kameras über UDP-Multicast.'],['WINDOWS_INVENTORY','Windows-Inventarisierung','Liest den lokalen Windows-Rechner über PowerShell/CIM aus: Betriebssystem, Hardware, Speicher, Netzwerk, installierte Software, Windows-Features, Antivirus, Defender, Firewall, TPM, Secure Boot, BitLocker, Updates, UAC und Remote Desktop.'],['LINUX_INVENTORY','Lokale Linux-Inventarisierung','Liest den lokalen Linux-Rechner über Standardwerkzeuge sowie /proc und /sys aus: Distribution, Kernel, Hardware, RAM, Datenträger, Dateisysteme, Netzwerk, Pakete, Firewall, Sicherheitsmodule, Dienste und Updates.'],['LINUX_NETWORK','Linux-Geräte im Netzwerk','Erkennt Linux-/Unix-Systeme über SSH-Banner und typische Dienste wie NFS, Samba, Cockpit, Proxmox, Home Assistant, Grafana und Portainer. Mit konfiguriertem SSH-Benutzer und Schlüssel werden Betriebssystem, Hardware, Speicher, Datenträger, Netzwerk, Container, Dienste, Pakete und Updates schreibgeschützt inventarisiert.'],['NETBIOS','NetBIOS','Ergänzt Windows-Computer- und Arbeitsgruppennamen, sofern das Betriebssystem dies unterstützt.'],['DHCP_LEASES','DHCP-Leases','Liest lokale DHCP-/dnsmasq-Lease-Dateien auf unterstützten Linux-Systemen.'],['USB_LOCAL','Lokale USB-Geräte','Erfasst am GAM-Server angeschlossene USB- und Plug-and-Play-Geräte.'],['BLUETOOTH_LOCAL','Lokale Bluetooth-Geräte','Erfasst gekoppelte beziehungsweise aktuell vorhandene Bluetooth-Geräte.'],['DOCKER_LOCAL','Docker-Container','Erkennt laufende Container des lokalen Docker-Hosts als technische Geräte.'],['SNMP','SNMP (integriert)','Fragt gefundene IPv4-Geräte per SNMP v1 nach sysName, sysDescr und sysObjectID ab. Community, Port und Timeout sind serverseitig konfigurierbar.']] as const).map(([key,label,description])=><div className="builtin-source-row" key={key}><span><b>{label}</b><small>{description}</small></span><button type="button" className={builtinSources[key]?'source-toggle enabled':'source-toggle'} disabled={builtinBusy} onClick={()=>toggleBuiltinSource(key)} aria-pressed={builtinSources[key]}>{builtinSources[key]?'🟢 Aktiv':'⚪ Aus'}</button></div>)}</div></details>
 <details className="device-discovery-source-settings"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>FRITZ!Box-Identitätsquellen ({fritzSources.length})</b></summary><div className="fritz-source-layout"><div className="fritz-source-list"><div className="row"><b>Konfigurierte Quellen</b><button type="button" className="secondary" onClick={newFritz}>+ Hinzufügen</button></div>{fritzSources.length===0&&<p className="muted">Noch keine FRITZ!Box eingerichtet.</p>}{fritzSources.map(source=><button type="button" key={source.id} className={`fritz-source-item ${source.id===fritz.id?'active':''}`} onClick={()=>selectFritz(source.id)}><span><b>{source.name}</b><small>{source.host}:{source.port}{source.location?` · ${source.location}`:''}</small></span><span>{source.enabled?'🟢':'⚪'}</span></button>)}</div><div className="newgrid fritz-source-editor"><label>Bezeichnung<input value={fritz.name} onChange={e=>setFritz({...fritz,name:e.target.value})} placeholder="Zentrale"/></label><label>Standort / Filiale (optional)<input value={fritz.location||''} onChange={e=>setFritz({...fritz,location:e.target.value})} placeholder="Hausanschlussraum / Filiale Berlin"/></label><label><span>Quelle aktiv</span><select value={fritz.enabled?'true':'false'} onChange={e=>setFritz({...fritz,enabled:e.target.value==='true'})}><option value="true">Ja</option><option value="false">Nein</option></select></label><label>FRITZ!Box-Adresse<input value={fritz.host} onChange={e=>setFritz({...fritz,host:e.target.value})} placeholder="fritz.box oder 192.168.2.1"/></label><label>TR-064-Port<input type="number" value={fritz.port} onChange={e=>setFritz({...fritz,port:Number(e.target.value)||49000})}/></label><label>FRITZ!Box-Benutzer (optional)<input value={fritz.username} onChange={e=>setFritz({...fritz,username:e.target.value})} placeholder="leer lassen bei Kennwort-Anmeldung"/></label><label>Passwort<input type="password" value={fritzPassword} onChange={e=>setFritzPassword(e.target.value)} placeholder={fritz.passwordConfigured?'gespeichert – leer lassen zum Beibehalten':'Passwort'}/></label><div className="wide-field row"><button type="button" disabled={fritzBusy} onClick={saveFritz}>Quelle speichern</button><button className="secondary" type="button" disabled={fritzBusy||!fritz.enabled} onClick={testFritz}>{fritzBusy?'Verbindung wird geprüft …':'Verbindung testen'}</button>{fritz.id>0&&<button className="danger" type="button" disabled={fritzBusy} onClick={removeFritz}>Quelle löschen</button>}</div>{fritzMessage&&<p className="note wide-field">{fritzMessage}</p>}{fritzTest&&<div className={`fritz-test-result wide-field ${fritzTest.success?'success':'error'}`}><div className="fritz-test-heading"><b>{fritzTest.success?'🟢 Verbindung erfolgreich':'🔴 Verbindung fehlgeschlagen'}</b><span>{fritzTest.sourceName||fritz.name} · {fritzTest.host}</span></div><p>{fritzTest.message}</p>{fritzTest.success&&<><div className="fritz-test-facts"><span><small>FRITZ!Box</small><b>{fritzTest.modelName||'FRITZ!Box'}</b></span><span><small>FRITZ!OS</small><b>{fritzTest.softwareVersion||'nicht gemeldet'}</b></span><span><small>Geräte insgesamt</small><b>{fritzTest.deviceCount}</b></span><span><small>Davon aktiv</small><b>{fritzTest.activeDeviceCount}</b></span></div>{fritzTest.devicePreview?.length>0&&<div className="fritz-device-preview"><b>Gerätevorschau</b><ul>{fritzTest.devicePreview.map((name:string)=><li key={name}>{name}</li>)}</ul></div>}</>}</div>}<p className="muted wide-field">Mehrere FRITZ!Boxen können parallel aktiviert werden. GAM lädt alle aktiven Quellen und führt Geräte primär über die MAC-Adresse zusammen. Bei getrennten Netzen bleiben identische IP-Adressen durch ihre Quellenherkunft unterscheidbar.</p></div></div></details>
  <details className="device-discovery-source-settings"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Home-Assistant-Identitätsquellen ({haSources.length})</b></summary><div className="fritz-source-layout"><div className="fritz-source-list"><div className="row"><b>Konfigurierte Quellen</b><button type="button" className="secondary" onClick={newHa}>+ Hinzufügen</button></div>{haSources.length===0&&<p className="muted">Noch keine Home-Assistant-Instanz eingerichtet.</p>}{haSources.map(source=><button type="button" key={source.id} className={`fritz-source-item ${source.id===ha.id?'active':''}`} onClick={()=>selectHa(source.id)}><span><b>{source.name}</b><small>{source.baseUrl}{source.location?` · ${source.location}`:''}</small></span><span>{source.enabled?'🟢':'⚪'}</span></button>)}</div><div className="newgrid fritz-source-editor"><label>Bezeichnung<input value={ha.name} onChange={e=>setHa({...ha,name:e.target.value})}/></label><label>Standort / Filiale (optional)<input value={ha.location||''} onChange={e=>setHa({...ha,location:e.target.value})}/></label><label><span>Quelle aktiv</span><select value={ha.enabled?'true':'false'} onChange={e=>setHa({...ha,enabled:e.target.value==='true'})}><option value="true">Ja</option><option value="false">Nein</option></select></label><label className="wide-field">Home-Assistant-URL<input value={ha.baseUrl} onChange={e=>setHa({...ha,baseUrl:e.target.value})} placeholder="http://homeassistant.local:8123"/></label><label className="wide-field">Long-Lived Access Token<input type="password" value={haToken} onChange={e=>setHaToken(e.target.value)} placeholder={ha.accessTokenConfigured?'gespeichert – leer lassen zum Beibehalten':'Token aus Home Assistant'}/></label><div className="wide-field row"><button type="button" disabled={haBusy} onClick={saveHa}>Quelle speichern</button><button className="secondary" type="button" disabled={haBusy||!ha.enabled} onClick={testHa}>{haBusy?'Verbindung wird geprüft …':'Verbindung testen'}</button>{ha.id>0&&<button className="danger" type="button" disabled={haBusy} onClick={removeHa}>Quelle löschen</button>}</div>{haMessage&&<p className="note wide-field">{haMessage}</p>}{haTest&&<div className={`fritz-test-result wide-field ${haTest.success?'success':'error'}`}><div className="fritz-test-heading"><b>{haTest.success?'🟢 Verbindung erfolgreich':'🔴 Verbindung fehlgeschlagen'}</b><span>{haTest.sourceName} · {haTest.baseUrl}</span></div><p>{haTest.message}</p>{haTest.success&&<><div className="fritz-test-facts"><span><small>Home Assistant</small><b>{haTest.version||'Version unbekannt'}</b></span><span><small>Erkannte Geräte</small><b>{haTest.deviceCount}</b></span></div>{haTest.devicePreview?.length>0&&<div className="fritz-device-preview"><b>Gerätevorschau mit Typzuordnung</b><ul>{haTest.devicePreview.map((x:string)=><li key={x}>{x}</li>)}</ul></div>}</>}</div>}<p className="muted wide-field">GAM ordnet Geräte anhand von Domain, Geräteklasse, Name, Hersteller und Modell ein. Nur wenn keine belastbare Zuordnung möglich ist, erscheint „Home Assistant Gerät“.</p></div></div></details>
+ <details ref={winrmRef} className="device-discovery-source-settings gam-attention-target" open={winrmOpen} onToggle={e=>setWinrmOpen((e.currentTarget as HTMLDetailsElement).open)}><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Windows-Geräte verbinden</b><small> · Programme, Dienste und Systemdaten erfassen</small></summary><div className="newgrid fritz-source-editor"><div className="wide-field"><h3>Windows-Verbindung</h3><p className="muted">Hinterlegen Sie einen gemeinsamen Windows-Zugang. GAM verwendet im Hintergrund WinRM und PowerShell; Benutzer müssen diese Technik im täglichen Workflow nicht kennen.</p></div><label>Benutzername<input autoComplete="username" value={winrm.username} onChange={e=>setWinrm({...winrm,username:e.target.value})} placeholder="DOMÄNE\\Benutzer oder COMPUTER\\Benutzer"/></label><label>Kennwort<input type="password" autoComplete="current-password" value={winrmPassword} onChange={e=>setWinrmPassword(e.target.value)} placeholder={winrm.passwordConfigured?'gespeichert – leer lassen zum Beibehalten':''}/></label><label>Protokoll<select value={winrm.https?'https':'http'} onChange={e=>{const https=e.target.value==='https';setWinrm({...winrm,https,port:https?5986:5985})}}><option value="http">HTTP (Port 5985)</option><option value="https">HTTPS (Port 5986)</option></select></label><label>Port<input type="number" min="1" max="65535" value={winrm.port} onChange={e=>setWinrm({...winrm,port:Number(e.target.value)||5985})}/></label><label><span>Quelle aktiv</span><select value={winrm.enabled?'true':'false'} onChange={e=>setWinrm({...winrm,enabled:e.target.value==='true'})}><option value="true">Ja</option><option value="false">Nein</option></select></label><label>Testgerät / Host<input value={winrmHost} onChange={e=>setWinrmHost(e.target.value)} placeholder="192.168.2.100 oder PC-NAME"/></label><div className="wide-field row"><button type="button" disabled={winrmBusy} onClick={saveWinrm}>Speichern</button><button className="secondary" type="button" disabled={winrmBusy||!winrm.enabled||!winrmHost.trim()} onClick={testWinrm}>{winrmBusy?'Verbindung wird geprüft …':'Verbindung testen'}</button></div>{winrmMessage&&<p className="note wide-field">{winrmMessage}</p>}{winrmTest&&<div className={`fritz-test-result wide-field ${winrmTest.reachable?'success':'error'}`}><div className="fritz-test-heading"><b>{winrmTest.reachable?'🟢 WinRM erreichbar':'🔴 WinRM nicht erreichbar'}</b><span>{winrmHost}</span></div><p>{winrmTest.message}</p></div>}</div></details>
  <details className="device-discovery-source-settings"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Smart Life / Tuya ({tuyaSources.length})</b></summary><div className="fritz-source-layout"><div className="fritz-source-list"><div className="row"><b>Verbindungen</b><span className="row"><button type="button" className="secondary" onClick={newTuya}>+ Hinzufügen</button>{tuyaSources.length>0&&<button type="button" className="danger" disabled={tuyaBusy} onClick={removeAllTuya}>Alle löschen</button>}</span></div>{tuyaSources.length===0&&<p className="muted">Noch keine Smart-Life-Verbindung eingerichtet.</p>}{tuyaSources.map(source=><button type="button" key={source.id} className={`fritz-source-item ${source.id===tuya.id?'active':''}`} onClick={()=>selectTuya(source.id)}><span><b>{source.name}</b><small>{source.connectionMode==='ACCOUNT_LOGIN'?'Benutzername und Kennwort':source.connectionMode==='HOME_ASSISTANT'?'Über Home Assistant':'Direkte Tuya Cloud'}{source.location?` · ${source.location}`:''}</small></span><span>{source.enabled?'🟢':'⚪'}</span></button>)}</div><div className="newgrid fritz-source-editor"><div className="wide-field"><h3>Smart Life / Tuya verbinden</h3><p className="muted">Wähle die einfachste passende Variante. Benutzername und Kennwort ist der Standardweg; Home Assistant und die direkte Tuya Cloud bleiben als Alternativen erhalten.</p></div><label>Bezeichnung<input value={tuya.name} onChange={e=>setTuya({...tuya,name:e.target.value})} placeholder="Smart Life Zuhause"/></label><label>Standort / Filiale (optional)<input value={tuya.location||''} onChange={e=>setTuya({...tuya,location:e.target.value})}/></label><label className="wide-field">Einrichtungsart<select value={tuya.connectionMode} onChange={e=>setTuya({...tuya,connectionMode:e.target.value,homeAssistantSourceId:e.target.value==='HOME_ASSISTANT'?(tuya.homeAssistantSourceId||haSources[0]?.id||null):null})}><option value="ACCOUNT_LOGIN">Einfach mit Benutzername und Kennwort</option><option value="HOME_ASSISTANT">Über Home Assistant</option><option value="DIRECT_CLOUD">Direkte Tuya Cloud (Expertenmodus)</option></select></label>{tuya.connectionMode==='ACCOUNT_LOGIN'?<><label>App<select value={tuya.appType} onChange={e=>setTuya({...tuya,appType:e.target.value,appSchema:e.target.value==='TUYA_SMART'?'tuyaSmart':'smartlife'})}><option value="SMART_LIFE">Smart Life</option><option value="TUYA_SMART">Tuya Smart</option></select></label><label>Land / Vorwahl<select value={tuya.countryCode||'49'} onChange={e=>setTuya({...tuya,countryCode:e.target.value})}><option value="49">Deutschland (+49)</option><option value="43">Österreich (+43)</option><option value="41">Schweiz (+41)</option><option value="31">Niederlande (+31)</option><option value="33">Frankreich (+33)</option><option value="44">Vereinigtes Königreich (+44)</option><option value="1">USA / Kanada (+1)</option></select></label><label className="wide-field">E-Mail-Adresse oder Telefonnummer<input autoComplete="username" value={tuya.accountUsername||''} onChange={e=>setTuya({...tuya,accountUsername:e.target.value})}/></label><label className="wide-field">Kennwort<input type="password" autoComplete="current-password" value={tuyaAccountPassword} onChange={e=>setTuyaAccountPassword(e.target.value)} placeholder={tuya.accountPasswordConfigured?'gespeichert – leer lassen zum Beibehalten':''}/></label><details className="wide-field"><summary>Technische Projektanbindung</summary><div className="newgrid"><p className="note wide-field">Die Tuya-Kontoanmeldung benötigt im Hintergrund weiterhin die einmalig hinterlegte Access ID und das Access Secret des Tuya-Projekts. Normale Nutzer müssen diese Werte danach nicht mehr ändern.</p><label>Cloud-Region<select value={tuya.region} onChange={e=>setTuya({...tuya,region:e.target.value})}><option value="EUROPE">Europa</option><option value="AMERICA">Westamerika</option><option value="EASTERN_AMERICA">Ostamerika</option><option value="CHINA">China</option><option value="INDIA">Indien</option></select></label><label>App-Schema<input value={tuya.appSchema||''} onChange={e=>setTuya({...tuya,appSchema:e.target.value})}/></label><label>Client ID / Access ID<input value={tuya.clientId} onChange={e=>setTuya({...tuya,clientId:e.target.value})}/></label><label>Client Secret / Access Secret<input type="password" value={tuyaSecret} onChange={e=>setTuyaSecret(e.target.value)} placeholder={tuya.clientSecretConfigured?'gespeichert – leer lassen zum Beibehalten':''}/></label></div></details></>:tuya.connectionMode==='HOME_ASSISTANT'?<><label className="wide-field">Home-Assistant-Verbindung<select value={tuya.homeAssistantSourceId||''} onChange={e=>setTuya({...tuya,homeAssistantSourceId:e.target.value?Number(e.target.value):null})}><option value="">Bitte auswählen</option>{haSources.map(x=><option key={x.id} value={x.id}>{x.name} · {x.baseUrl}</option>)}</select><small>40k31e übernimmt über diese Brücke nur Geräte, die sich anhand ihrer Home-Assistant-Daten eindeutig Smart Life / Tuya zuordnen lassen. Für die vollständigste Erkennung bleibt „Benutzerkonto + technisches Projekt“ empfohlen.</small></label>{haSources.length===0&&<p className="note wide-field">Richte zuerst unter „Home Assistant REST API“ eine Verbindung ein.</p>}</>:<><div className="wide-field note"><b>Expertenmodus</b><br/>Direkte Verbindung mit einem Tuya-Cloud-Projekt und optionaler Benutzer-UID.</div><label>App<select value={tuya.appType} onChange={e=>setTuya({...tuya,appType:e.target.value})}><option value="SMART_LIFE">Smart Life</option><option value="TUYA_SMART">Tuya Smart</option></select></label><label>Cloud-Region<select value={tuya.region} onChange={e=>setTuya({...tuya,region:e.target.value})}><option value="EUROPE">Europa</option><option value="AMERICA">Westamerika</option><option value="EASTERN_AMERICA">Ostamerika</option><option value="CHINA">China</option><option value="INDIA">Indien</option></select></label><label>Client ID / Access ID<input value={tuya.clientId} onChange={e=>setTuya({...tuya,clientId:e.target.value})}/></label><label>Benutzer-UID<input value={tuya.userUid||''} onChange={e=>setTuya({...tuya,userUid:e.target.value})}/></label><label className="wide-field">Client Secret / Access Secret<input type="password" value={tuyaSecret} onChange={e=>setTuyaSecret(e.target.value)} placeholder={tuya.clientSecretConfigured?'gespeichert – leer lassen zum Beibehalten':''}/></label></>}<label><span>Verbindung aktiv</span><select value={tuya.enabled?'true':'false'} onChange={e=>setTuya({...tuya,enabled:e.target.value==='true'})}><option value="true">Ja</option><option value="false">Nein</option></select></label><div className="wide-field row"><button type="button" disabled={tuyaBusy} onClick={saveTuya}>Speichern</button><button className="secondary" type="button" disabled={tuyaBusy||!tuya.enabled||(tuya.connectionMode==='HOME_ASSISTANT'&&!tuya.homeAssistantSourceId)} onClick={testTuya}>{tuyaBusy?'Verbindung wird geprüft …':'Verbinden und Geräte prüfen'}</button>{tuya.id>0&&<button className="danger" type="button" disabled={tuyaBusy} onClick={removeTuya}>Löschen</button>}</div>{tuyaMessage&&<p className="note wide-field">{tuyaMessage}</p>}{tuyaTest&&<div className={`fritz-test-result wide-field ${tuyaTest.success?'success':'error'}`}><div className="fritz-test-heading"><b>{tuyaTest.success?'🟢 Smart Life verbunden':'🔴 Verbindung nicht vollständig'}</b><span>{tuyaTest.sourceName}</span></div><p>{tuyaTest.message}</p>{tuyaTest.success&&<div className="fritz-test-facts"><span><small>Geräte gefunden</small><b>{tuyaTest.deviceCount}</b></span><span><small>Davon online</small><b>{tuyaTest.onlineDeviceCount}</b></span><span><small>Verbindungsweg</small><b>{tuyaTest.apiMethod==='HOME_ASSISTANT_BRIDGE'?'Home Assistant':tuyaTest.apiMethod}</b></span></div>}{tuyaTest.devicePreview?.length>0&&<div className="fritz-device-preview"><b>Gefundene Geräte</b><ul>{tuyaTest.devicePreview.map((x:string)=><li key={x}>{x}</li>)}</ul></div>}<details><summary>Technische Details</summary>{tuyaTest.diagnostics?.length>0&&<ul>{tuyaTest.diagnostics.map((x:string,i:number)=><li key={`${i}-${x}`}>{x}</li>)}</ul>}</details></div>}</div></div></details>
  </div></details>
  <details className="device-discovery-source-settings device-display-sensor-settings"><summary><span className="discovery-chevron" aria-hidden="true">▶</span><b>Anzeige und Sensordaten</b><small> · reine Anzeigeeinstellungen im Gerätemanager; keine Änderung der Merge-Logik</small></summary><div className="device-display-settings-body"><p className="muted">Die Discovery sammelt weiterhin alle verfügbaren technischen Informationen. Diese Einstellungen steuern nur Darstellung, Gruppierung und spätere Übernahme in die Geräteakte und wirken ohne erneute Suche.</p><div className="device-setting-group-grid">{displaySettingGroups.map(group=><details className="device-setting-group" key={group.title} open={group.title==='Allgemein'}><summary><b>{group.title}</b><small>{group.items.filter(item=>builtinSources[item[0]]).length} aktiv</small></summary><div className="builtin-source-list">{group.items.map(item=><div className="builtin-source-row" key={item[0]}><span><b>{item[1]}</b><small>{item[2]}</small></span><button type="button" className={builtinSources[item[0]]?'source-toggle enabled':'source-toggle'} disabled={builtinBusy} onClick={()=>toggleBuiltinSource(item[0])} aria-pressed={!!builtinSources[item[0]]}>{builtinSources[item[0]]?'🟢 Sichtbar':'⚪ Aus'}</button></div>)}</div></details>)}</div><h3 className="device-planned-title">Vorbereitete Datenquellen und Integrationen</h3><p className="muted">Bereits vorhandene Quellen bleiben unter „Erkennungsquellen“ konfigurierbar. Die folgenden Karten bereiten die Anzeigeoptionen für kommende Adapter vor. „Geplant“ startet noch keine Verbindung.</p><div className="planned-source-grid">{plannedSourceGroups.map(group=><details className="planned-source-group" key={group.title}><summary><b>{group.title}</b><small>{group.items.filter(item=>builtinSources[item[0]]).length} vorgemerkt</small></summary><div className="planned-source-items">{group.items.map(item=><div className="planned-source-card" key={item[0]}><span><b>{item[1]}</b><small>🔵 Geplant</small></span><button type="button" className={builtinSources[item[0]]?'source-toggle enabled':'source-toggle'} disabled={builtinBusy} onClick={()=>toggleBuiltinSource(item[0])} aria-pressed={!!builtinSources[item[0]]}>{builtinSources[item[0]]?'🟡 Vorgemerkt':'⚪ Aus'}</button></div>)}</div></details>)}</div></div></details>
  <div className="stats"><span>Neu erkannt<br/><b>{groups.new.length}</b></span><span>Bestätigt<br/><b>{groups.confirmed.length}</b></span><span>Ergänzt<br/><b>{groups.enriched.length}</b></span><span>Mögliche Dubletten<br/><b>{groups.duplicates.length}</b></span><span>Ignoriert<br/><b>{groups.ignored.length}</b></span><span>Discovery-Adapter<br/><b>{Object.values(caps).filter(v=>v===true).length}</b></span></div>
- {(busy||state==='complete'||state==='error')&&<div className={`device-discovery-live-card ${state==='error'?'error':''}`} role="status" aria-live="polite"><div className="device-discovery-title"><span><Search size={20}/><b>{state==='complete'?'Gerätesuche abgeschlossen':state==='error'?'Gerätesuche unvollständig beendet':'Gerätesuche läuft weiter …'}</b></span><strong>{progress}%</strong></div><progress value={progress} max={100} aria-label="Fortschritt der Gerätesuche"/><div className="device-discovery-counts device-discovery-counts-40k32"><span><b>{groups.new.length}</b><small>neu</small></span><span><b>{groups.confirmed.length}</b><small>bestätigt</small></span><span><b>{groups.enriched.length}</b><small>ergänzt</small></span><span><b>{groups.duplicates.length}</b><small>Dublette?</small></span><span><b>{visible.length}</b><small>insgesamt</small></span></div><div className="device-discovery-phase"><small>Aktuelle Phase</small><b>{phase||'Gerätesuche läuft weiter'}</b></div></div>}
- {diagnostics.length>0&&<details className={`device-discovery-diagnostics ${state==='error'?'has-error':''}`} open={diagnosticsOpen} onToggle={e=>setDiagnosticsOpen((e.currentTarget as HTMLDetailsElement).open)}><summary><span><b>Discovery-Zwischenstände</b><small>{state==='error'?'Fehlerdetails automatisch geöffnet':`${diagnostics.length} Statusmeldungen`}</small></span></summary><div className="device-discovery-phase-list">{diagnostics.map((d,index)=><div key={`${d.phase}-${d.status}-${index}`} className={`device-discovery-phase-row status-${d.status.toLowerCase()}`}><span className="device-discovery-phase-icon">{statusIcon(d.status)}</span><div><b>{phaseLabel(d.phase)}</b><small>{d.message} · {d.deviceCount} Treffer · {new Date(d.timestamp).toLocaleTimeString('de-DE')}</small></div><em>{d.status==='RUNNING'?'läuft':d.status==='COMPLETED'?'abgeschlossen':d.status==='SKIPPED'?'übersprungen':d.status==='FAILED'?'fehlgeschlagen':'gestartet'}</em></div>)}</div></details>}
+ {(busy||state==='complete'||state==='error')&&<div ref={discoveryStatusRef} className={`device-discovery-live-card gam-attention-target ${state==='error'?'error':''}`} role="status" aria-live="polite"><div className="device-discovery-title"><span><Search size={20}/><b>{state==='complete'?'Gerätesuche abgeschlossen':state==='error'?'Gerätesuche unvollständig beendet':'Gerätesuche läuft weiter …'}</b></span><strong>{progress}%</strong></div><progress value={progress} max={100} aria-label="Fortschritt der Gerätesuche"/><div className="device-discovery-counts device-discovery-counts-40k32"><span><b>{groups.new.length}</b><small>neu</small></span><span><b>{groups.confirmed.length}</b><small>bestätigt</small></span><span><b>{groups.enriched.length}</b><small>ergänzt</small></span><span><b>{groups.duplicates.length}</b><small>Dublette?</small></span><span><b>{visible.length}</b><small>insgesamt</small></span></div><div className="device-discovery-phase"><small>Aktuelle Phase</small><b>{phase||'Gerätesuche läuft weiter'}</b></div></div>}
+ {diagnostics.length>0&&<details ref={diagnosticsRef} className={`device-discovery-diagnostics gam-attention-target ${state==='error'?'has-error':''}`} open={diagnosticsOpen} onToggle={e=>setDiagnosticsOpen((e.currentTarget as HTMLDetailsElement).open)}><summary><span><b>Discovery-Zwischenstände</b><small>{state==='error'?'Fehlerdetails automatisch geöffnet':`${diagnostics.length} Statusmeldungen`}</small></span></summary><div className="device-discovery-phase-list">{diagnostics.map((d,index)=><div key={`${d.phase}-${d.status}-${index}`} className={`device-discovery-phase-row status-${d.status.toLowerCase()}`}><span className="device-discovery-phase-icon">{statusIcon(d.status)}</span><div><b>{phaseLabel(d.phase)}</b><small>{d.message} · {d.deviceCount} Treffer · {new Date(d.timestamp).toLocaleTimeString('de-DE')}</small></div><em>{d.status==='RUNNING'?'läuft':d.status==='COMPLETED'?'abgeschlossen':d.status==='SKIPPED'?'übersprungen':d.status==='FAILED'?'fehlgeschlagen':'gestartet'}</em></div>)}</div></details>}
  {message&&<p className={busy?'note device-discovery-message':state==='error'?'error':'note'}>{message}</p>}
  <div className="row device-bulk-actions"><span className="muted">Suchergebnisse: {visible.length} Geräte · {groups.new.length} neu · {groups.confirmed.length} bestätigt · {groups.enriched.length} ergänzt</span><button type="button" disabled={busy||groups.new.length===0} onClick={registerAllFound}>Alle gefundenen Geräte registrieren</button></div>
  <details open={groups.enriched.length>0}><summary><b>Bestehende Geräte ergänzt ({groups.enriched.length})</b><small> · durch eine zusätzliche Quelle oder zusätzliche Identitätsdaten angereichert</small></summary>{groupedTree(groups.enriched,'In dieser Suche wurde noch kein bestehendes Gerät um eine weitere Quelle ergänzt.')}</details>
@@ -4143,7 +5363,203 @@ function DeviceManagerPanel({onRegistered,onDiscoveryChange,hideDeviceList=false
  <details open={groups.duplicates.length>0}><summary><b>Mögliche Dublettentreffer ({groups.duplicates.length})</b><small> · gleiche Namen oder Identitätsmerkmale bei getrennten Datensätzen; keine automatische Zusammenführung</small></summary>{groupedTree(groups.duplicates,'Keine möglichen Dubletten erkannt.')}{duplicatePairs.length>0&&<div className="merge-diagnostic-list"><h4>Merge-Diagnose</h4><p className="muted">Die Bewertung verwendet die aktuell unter Einstellungen → Geräteverwaltung gespeicherten Regeln. Damit ist nachvollziehbar, weshalb zwei Treffer getrennt bleiben oder als mögliche Dublette erscheinen.</p>{duplicatePairs.sort((a,b)=>b.assessment.score-a.assessment.score).map((pair,index)=><details className="merge-diagnostic-card" key={`${pair.left.id}-${pair.right.id}-${index}`}><summary><span><b>{enrichDevice(pair.left).displayName}</b> ↔ <b>{enrichDevice(pair.right).displayName}</b></span><span className={`merge-decision ${pair.assessment.decision.toLowerCase()}`}>{pair.assessment.score} Punkte · {pair.assessment.confidence}%</span></summary><div className="merge-diagnostic-body"><div className="merge-device-comparison"><div><small>Treffer A</small><b>{pair.left.name||'Unbekanntes Gerät'}</b><span>{pair.left.address||'keine IP'} · {pair.left.hardwareAddress||'keine MAC'}</span>{discoverySourceBadges(pair.left.protocol)}</div><div><small>Treffer B</small><b>{pair.right.name||'Unbekanntes Gerät'}</b><span>{pair.right.address||'keine IP'} · {pair.right.hardwareAddress||'keine MAC'}</span>{discoverySourceBadges(pair.right.protocol)}</div></div><div className="merge-score-summary"><span><small>Entscheidung</small><b>Mögliche Dublette</b></span><span><small>Auto-Merge ab</small><b>{mergeSettings.autoMergeThreshold}</b></span><span><small>Dublette ab</small><b>{mergeSettings.possibleDuplicateThreshold}</b></span></div><div className="merge-signal-grid"><div><b>Übereinstimmungen</b>{pair.assessment.matches.length?<ul>{pair.assessment.matches.map((m,i)=><li key={`${m.label}-${i}`}><span>{m.label}</span><strong>+{m.points}</strong></li>)}</ul>:<p className="muted">Keine gewichteten Übereinstimmungen.</p>}</div><div><b>Konflikte / Schutzregeln</b>{pair.assessment.conflicts.length?<ul>{pair.assessment.conflicts.map((c,i)=><li key={`${c}-${i}`}><span>{c}</span><strong>!</strong></li>)}</ul>:<p className="muted">Keine harten Konflikte erkannt.</p>}{pair.assessment.limited&&<p className="note">Eine Schutzregel hat den erreichbaren Punktwert begrenzt.</p>}</div></div></div></details>)}</div>}</details>
  <details open={!builtinSources.AUTO_REGISTER||groups.new.length>0}><summary><b>Neu erkannte Geräte ({groups.new.length})</b><small> · noch nicht registriert</small></summary>{groupedTree(groups.new,'Keine noch nicht registrierten Geräte erkannt.')}</details>
  <details><summary><b>Ignoriert ({groups.ignored.length})</b></summary>{ignoredTree(groups.ignored,'Keine ignorierten Geräte vorhanden.')}</details>
- <p className="muted"><b>Persistenz 40k29:</b> FRITZ!Box-, Home-Assistant-, Tuya- und lokale Quellen werden serverseitig in der GAM-Datenbank gespeichert und nicht im Frontend-Build. Dadurch bleiben sie beim Darüberkopieren neuer Builds erhalten. <b>Klassifizierung:</b> Die fachliche Gruppe wird aus Gerätetyp und Identitätsmerkmalen gebildet. „AVM-Geräte“, „Home-Assistant-Geräte“ und „Smart-Life-/Tuya-Geräte“ bezeichnen nur die kompakte Herkunft – sie bestimmen nicht mehr die Einsortierung. Neue Geräte sind direkt innerhalb ihrer Gruppe mit „(neu)“ markiert.</p></section>;
+ <p className="muted"><b>Persistenz 40k29:</b> FRITZ!Box-, Home-Assistant-, Tuya-, WinRM- und lokale Quellen werden serverseitig in der GAM-Datenbank gespeichert und nicht im Frontend-Build. Dadurch bleiben sie beim Darüberkopieren neuer Builds erhalten. <b>Klassifizierung:</b> Die fachliche Gruppe wird aus Gerätetyp und Identitätsmerkmalen gebildet. „AVM-Geräte“, „Home-Assistant-Geräte“ und „Smart-Life-/Tuya-Geräte“ bezeichnen nur die kompakte Herkunft – sie bestimmen nicht mehr die Einsortierung. Neue Geräte sind direkt innerhalb ihrer Gruppe mit „(neu)“ markiert.</p></section>;
+}
+
+// 40k34v: Ein Menüeintrag - trägt bereits ein Icon (keine reinen Textzeilen)
+// und eine Gruppe (für die Untergliederung im Dropdown). "id" ist stabil und
+// eindeutig je Provider - eine spätere Suchfunktion innerhalb des Menüs
+// (noch nicht umgesetzt) könnte direkt auf label/group filtern, ohne die
+// Datenstruktur zu ändern.
+type DeviceMenuItem={id:string;actionId:string;label:string;icon:React.ReactNode;group:string;onClick:()=>void;disabled?:boolean;title?:string};
+// 40k34v: Kontext, den jeder Provider erhält - ausschließlich die kanonische
+// Geräteidentität (d.identityKey) und bereits vorhandene, generische
+// Aktionen. Kein RowIndex, keine Position, kein Anzeigename als Schlüssel.
+type DeviceMenuContext={d:RegisteredDiscoveryDevice;platform:string|null;busy:boolean;onOpenIdentity:()=>void;runAll:()=>void;onMoveToInventory:()=>void;onRevoke:()=>void};
+type DeviceMenuProvider=(ctx:DeviceMenuContext)=>DeviceMenuItem[];
+
+/**
+ * 40k34v: rein clientseitige Plattform-Kategorisierung, ausschließlich zur
+ * Steuerung, welche Menügruppen sichtbar sind - keine neue Datenquelle,
+ * arbeitet nur mit bereits geladenem deviceType/protocol. Bewusst analog zu
+ * DeviceIdentityService.platformOf() (Backend, seit 40k34s korrigiert)
+ * gehalten, aber nicht identisch aufgerufen (das Backend-Feld wird beim
+ * Laden der Registrierten-Geräte-Liste nicht mitgeliefert) - eine spätere
+ * Vereinheitlichung (z.B. über ein zusätzliches Feld in der Listenantwort)
+ * wäre eine sinnvolle, hier bewusst nicht vorgezogene Verbesserung.
+ */
+function clientPlatformOf(deviceType?:string,protocol?:string):string|null{
+ const all=`${deviceType||''} ${protocol||''}`.toLowerCase();
+ if(all.includes('adb'))return 'Android';
+ if(all.includes('linux'))return 'Linux';
+ if(all.includes('windows')||all.includes('wmi')||all.includes('winrm')||all.includes('powershell'))return 'Windows';
+ if(all.includes('iphone')||all.includes('ipad'))return null;
+ if(all.includes('android')||all.includes('chromecast')||all.includes('fire tv')||all.includes('shield')||all.includes('smartphones & tablets')||all.includes('smartphones und tablets'))return 'Android';
+ return null;
+}
+
+// 40k34v: Menüeintrag-Provider - JEDE Gruppe/jedes künftige Modul registriert
+// hier genau EINE Funktion. Neue Module (Hardwareanalyse, Softwareinventar,
+// Sicherheitsprüfung, Compliance, Netzwerkanalyse, Virtualisierung, Smart
+// Home, Reports, …) ergänzen künftig einfach einen weiteren Eintrag in
+// REGISTERED_DEVICE_MENU_PROVIDERS - RegisteredDeviceActionMenu selbst muss
+// dafür nicht verändert werden.
+const generalDeviceMenuProvider:DeviceMenuProvider=ctx=>[
+ {id:'open-identity',actionId:'general.details',label:'Details öffnen',icon:<Info size={15}/>,group:'Allgemein',onClick:ctx.onOpenIdentity},
+];
+const platformInventoryMenuProvider:DeviceMenuProvider=ctx=>[
+ {id:'reinventory',actionId:'platform.reinventory',label:'Neu inventarisieren',icon:<RefreshCw size={15}/>,group:'Geräteaufgaben',onClick:ctx.runAll,disabled:ctx.busy,title:'Ruft die bereits bestehende Plattforminventarisierung auf (runPlatformInventory) - keine neue Discovery.'},
+ {id:'reinventory-all',actionId:'platform.reinventory-all',label:'Alle bekannten Plattformen erneut inventarisieren',icon:<RefreshCw size={15}/>,group:'Geräteaufgaben',onClick:ctx.runAll,disabled:ctx.busy},
+ {id:'inventory-details',actionId:'platform.details',label:'Inventarisierungsdetails anzeigen',icon:<ListTodo size={15}/>,group:'Geräteaufgaben',onClick:ctx.onOpenIdentity,title:'Öffnet den Geräteidentitäts-Dialog mit der Plattforminventarisierungs-Übersicht.'},
+ {id:'inventory-history',actionId:'platform.history',label:'Historie anzeigen',icon:<History size={15}/>,group:'Geräteaufgaben',onClick:ctx.onOpenIdentity,title:'Öffnet den Geräteidentitäts-Dialog mit dem Identitätsverlauf.'},
+];
+// 40k34v: Nur Einträge, die auf tatsächlich bestehende Abschnitte im
+// Geräteidentitäts-Dialog verweisen (AndroidInventorySection/
+// AndroidAppsSection) - "Akku" wurde bewusst NICHT ergänzt, da der
+// vorhandene Android-Inventarisierer keinen Akkustand liefert (siehe
+// Dokumentation) - keine neuen Daten erfinden.
+const androidDeviceMenuProvider:DeviceMenuProvider=ctx=>[
+ {id:'android-adb',actionId:'android.adb',label:ctx.platform==='Android'?'Android-Verbindung verwalten':'Als Android-Gerät verbinden',icon:<TerminalSquare size={15}/>,group:'Android',onClick:ctx.onOpenIdentity,title:'Öffnet den GAM-Workflow für Kopplung, automatische Wiederverbindung und Android-Inventarisierung. Auch zur Korrektur einer falschen Plattformklassifizierung verfügbar.'},
+ ...(ctx.platform==='Android'?[{id:'android-apps',actionId:'android.apps',label:'Installierte Apps',icon:'📦',group:'Android',onClick:ctx.onOpenIdentity,title:'Öffnet die App-Inventarisierung im Geräteidentitäts-Dialog.'}]:[]),
+];
+// 40k34v: "Dienste"/"Ereignisprotokoll" wurden bewusst NICHT ergänzt - dafür
+// gibt es aktuell keinen eigenen Abschnitt, nur die generischen WinRM-
+// Protokolldetails.
+const windowsDeviceMenuProvider:DeviceMenuProvider=ctx=>ctx.platform!=='Windows'?[]:[
+ {id:'windows-details',actionId:'windows.details',label:'Windows verwalten',icon:'🖥️',group:'Windows',onClick:ctx.onOpenIdentity,title:'Öffnet Verbindung, Inventarisierung und Windows-Systemdaten.'},
+];
+// 40k34v: "systemd"/"Pakete" als eigene Einträge bewusst NICHT ergänzt - die
+// bestehende "Erweiterte Linux-Analyse" deckt einen Teil davon ab, aber ohne
+// eigene, gezielt anspringbare Unteransicht.
+const linuxDeviceMenuProvider:DeviceMenuProvider=ctx=>ctx.platform!=='Linux'?[]:[
+ {id:'linux-details',actionId:'linux.details',label:'Linux verwalten',icon:<TerminalSquare size={15}/>,group:'Linux',onClick:ctx.onOpenIdentity,title:'Öffnet Verbindung, Inventarisierung und Linux-Systemdaten.'},
+];
+// 40k34v: ONVIF (Snapshot/Stream/PTZ) und SNMP-Lesen wurden NICHT ergänzt -
+// es existiert aktuell keine entsprechende Funktion im Projekt (keine
+// Kamerasteuerung, kein gezielter SNMP-Lesevorgang je Gerät) - "nicht
+// verfügbare Aktionen möglichst ausblenden statt deaktivieren" wurde damit
+// durch vollständiges Weglassen umgesetzt, nicht durch erfundene,
+// deaktivierte Einträge.
+const inventoryDeviceMenuProvider:DeviceMenuProvider=ctx=>[
+ {id:'move-to-inventory',actionId:'inventory.move',label:'In Gerätebestand übernehmen',icon:<ArrowRightCircle size={15}/>,group:'Gerätebestand',onClick:ctx.onMoveToInventory},
+ {id:'revoke',actionId:'inventory.remove',label:'Registrierung aufheben',icon:<XCircle size={15}/>,group:'Gerätebestand',onClick:ctx.onRevoke},
+];
+const REGISTERED_DEVICE_MENU_PROVIDERS:DeviceMenuProvider[]=[
+ generalDeviceMenuProvider,
+ platformInventoryMenuProvider,
+ androidDeviceMenuProvider,
+ windowsDeviceMenuProvider,
+ linuxDeviceMenuProvider,
+ inventoryDeviceMenuProvider,
+];
+// 40k34v: feste Anzeige-Reihenfolge der Gruppen - neue Provider-Gruppen, die
+// hier nicht gelistet sind, erscheinen einfach am Ende (keine Änderung an
+// dieser Liste nötig, nur eine sinnvolle Voreinstellung).
+const DEVICE_MENU_GROUP_ORDER=['Allgemein','Geräteaufgaben','Android','Windows','Linux','Gerätebestand'];
+
+/**
+ * 40k34v: Kompaktes, gruppiertes, erweiterbares Aktionsmenü für eine Zeile im
+ * Bereich „Registriert" - ersetzt vollständig die bisherige Aktionsspalte
+ * (Details/Identität, In Gerätebestand übernehmen, Registrierung aufheben)
+ * und ergänzt die Plattforminventarisierung sowie plattformspezifische
+ * Kurzeinträge. Alle Aktionen wirken ausschließlich über die kanonische
+ * Geräteidentität d.identityKey - nie über Zeilenposition oder Anzeigename.
+ * Verwendet ausschließlich runAllKnownPlatforms() (40k34p) - keine zweite
+ * Inventarisierungslogik. Über einen React-Portal in document.body gerendert,
+ * damit das Dropdown nicht vom überlaufenden Tabellencontainer (.scroll-table)
+ * abgeschnitten wird.
+ */
+function RegisteredDeviceActionMenu({d,onOpenIdentity,onMoveToInventory,onRevoke}:{
+ d:RegisteredDiscoveryDevice;
+ onOpenIdentity:()=>void;
+ onMoveToInventory:()=>void;
+ onRevoke:()=>void;
+}){
+ const [open,setOpen]=useState(false);
+ const [busy,setBusy]=useState(false);
+ const [pos,setPos]=useState<{top:number;left:number;openUpward:boolean}|null>(null);
+ const triggerRef=useRef<HTMLButtonElement>(null);
+ const menuRef=useRef<HTMLDivElement>(null);
+
+ useEffect(()=>{
+  if(!open) return;
+  const onDocClick=(e:MouseEvent)=>{
+   if(triggerRef.current&&triggerRef.current.contains(e.target as Node))return;
+   if(menuRef.current&&menuRef.current.contains(e.target as Node))return;
+   setOpen(false);
+  };
+  const onKey=(e:KeyboardEvent)=>{ if(e.key==='Escape') setOpen(false); };
+  const onReflow=()=>setOpen(false);
+  document.addEventListener('mousedown',onDocClick);
+  document.addEventListener('keydown',onKey);
+  window.addEventListener('scroll',onReflow,true);
+  window.addEventListener('resize',onReflow);
+  return ()=>{ document.removeEventListener('mousedown',onDocClick); document.removeEventListener('keydown',onKey); window.removeEventListener('scroll',onReflow,true); window.removeEventListener('resize',onReflow); };
+ },[open]);
+
+ const toggle=()=>{
+  if(open){ setOpen(false); return; }
+  const rect=triggerRef.current?.getBoundingClientRect();
+  if(rect){
+   const spaceBelow=window.innerHeight-rect.bottom;
+   const openUpward=spaceBelow<260&&rect.top>260;
+   // 40k34v: rechtsbündig am Button ausgerichtet und auf die Fensterbreite
+   // begrenzt (mind. 8px Rand) - verhindert ein Herausragen bei schmalen
+   // Fenstern/mobiler Ansicht, ohne die Tabelle selbst zu verbreitern.
+   const left=Math.max(8,Math.min(rect.right-240,window.innerWidth-248));
+   setPos({top:openUpward?rect.top:rect.bottom,left,openUpward});
+  }
+  setOpen(true);
+ };
+
+ const runAll=async()=>{
+  setBusy(true);
+  try{
+   const results=await runAllKnownPlatforms(d.identityKey);
+   if(results.length===0) gamNotify('error',`${d.name||'Gerät'}: Für dieses Gerät konnte keine passende Plattform ermittelt werden.`,0);
+   else gamNotify('success',`${d.name||'Gerät'}: `+results.map(r=>`${r.platform} - ${r.message||r.status}`).join(' · '));
+  }catch(e:any){
+   if(e?.message&&e.message.includes('läuft bereits')) gamNotify('error',`${d.name||'Gerät'}: Inventarisierung läuft bereits.`,0);
+   else gamNotify('error',e?.message||'Inventarisierung fehlgeschlagen.',0);
+  }
+  finally{ setBusy(false); setOpen(false); }
+ };
+
+ const platform=clientPlatformOf(d.deviceType,d.protocol);
+ const ctx:DeviceMenuContext={d,platform,busy,onOpenIdentity:()=>{onOpenIdentity();setOpen(false);},runAll,onMoveToInventory:()=>{onMoveToInventory();setOpen(false);},onRevoke:()=>{onRevoke();setOpen(false);}};
+ // 40k34w: Sortierung ist bewusst UNABHÄNGIG von der Registrierungsreihenfolge in
+ // REGISTERED_DEVICE_MENU_PROVIDERS: Gruppen folgen DEVICE_MENU_GROUP_ORDER, nicht
+ // gelistete Gruppen werden alphabetisch angehängt (nicht nach erstem Auftreten);
+ // Einträge innerhalb einer Gruppe werden nach label sortiert (nicht nach
+ // Provider-Reihenfolge) - ein später registrierter Provider kann so nie die
+ // Position bereits vorhandener Einträge verschieben.
+ const items=REGISTERED_DEVICE_MENU_PROVIDERS.flatMap(provider=>provider(ctx));
+ const unlistedGroups=Array.from(new Set(items.map(i=>i.group)))
+  .filter(g=>!DEVICE_MENU_GROUP_ORDER.includes(g))
+  .sort((a,b)=>a.localeCompare(b,'de-DE'));
+ const groups=DEVICE_MENU_GROUP_ORDER.filter(g=>items.some(i=>i.group===g)).concat(unlistedGroups);
+ const itemsByGroup=(group:string)=>items.filter(i=>i.group===group).sort((a,b)=>a.label.localeCompare(b.label,'de-DE'));
+
+ return <>
+  <button ref={triggerRef} type="button" className="secondary icon-only row-action-menu-trigger" aria-haspopup="true" aria-expanded={open}
+   aria-label={`Aktionen für ${d.name||'Gerät'}`} onClick={toggle}><MoreVertical size={16}/></button>
+  {open&&pos&&createPortal(
+   <div ref={menuRef} className="row-action-menu-dropdown" role="menu"
+    style={{position:'fixed',left:pos.left,top:pos.openUpward?undefined:pos.top,bottom:pos.openUpward?window.innerHeight-pos.top:undefined}}>
+    {groups.map((group,gi)=><React.Fragment key={group}>
+     {gi>0&&<div className="row-action-menu-divider"/>}
+     <div className="row-action-menu-group-label">{group}</div>
+     {itemsByGroup(group).map(item=>
+      <button key={item.actionId} type="button" role="menuitem" disabled={item.disabled} title={item.title} onClick={item.onClick}
+       className={item.actionId==='inventory.remove'?'row-action-menu-danger':undefined}>
+       <span aria-hidden="true">{item.icon}</span> {item.label}
+      </button>
+     )}
+    </React.Fragment>)}
+   </div>,
+   document.body
+  )}
+ </>;
 }
 
 function InventoryPage(){
@@ -4165,40 +5581,33 @@ function InventoryPage(){
  const [expandedInventoryDevices,setExpandedInventoryDevices]=useState<Set<string>>(new Set());
  const [inventoryView,setInventoryView]=useState<'all'|'legacy'|'modern'>('all');
  const [registeredDevices,setRegisteredDevices]=useState<RegisteredDiscoveryDevice[]>([]);
+ const [identityOverview,setIdentityOverview]=useState<Record<string,DeviceIdentityRow>>({});
+ const [identityDialogKey,setIdentityDialogKey]=useState<string|null>(null);
+ const [identityFilter,setIdentityFilter]=useState<'all'|'multiSource'|'hasAliases'|'manuallyMerged'|'unchecked'|'conflict'|'highConfidence'>('all');
+ const [mergeDialogOpen,setMergeDialogOpen]=useState(false);
  const [registeredDeviceSearch,setRegisteredDeviceSearch]=useState('');
+ const [expandedRegisteredDevices,setExpandedRegisteredDevices]=useState<Set<string>>(new Set());
+ const [registeredApps,setRegisteredApps]=useState<Record<string,InstalledApp[]>>({});
+ const [registeredAppsLoading,setRegisteredAppsLoading]=useState<Set<string>>(new Set());
+ const [registeredAppsErrors,setRegisteredAppsErrors]=useState<Record<string,string>>({});
+ // 40k34o: Drag & Drop als zusätzliche, schnellere Alternative zum Dropdown -
+ // das Dropdown bleibt vollständig erhalten (Barrierefreiheit, Tastatur-
+ // Bedienung, neue Kategorie anlegen).
+ const [draggedIdentityKey,setDraggedIdentityKey]=useState<string|null>(null);
+ const [dragOverCategory,setDragOverCategory]=useState<string|null>(null);
  const inventoryFormRef = useRef<HTMLElement | null>(null);
  const inventoryFirstInputRef = useRef<HTMLInputElement | null>(null);
  const scrollToInventoryForm=(focus=false)=>{setInventoryModalOpen(true); setTimeout(()=>{if(focus) inventoryFirstInputRef.current?.focus();},140);};
  const branchLabel=(id?:number)=>{const b=branches.find((x:any)=>x.id===id); return b ? `${b.code??''} ${b.name??''}`.trim() : (id?`#${id}`:'—')};
  const companyLabel=(id?:number)=>{const c=companies.find((x:any)=>x.id===id); return c ? (c.name??`#${id}`) : (id?`#${id}`:'—')};
- const loadAll=async()=>{setErr(''); try{const [r,s,registered]=await Promise.all([loadInventoryDevices(q,source,activeOnly,250),loadInventoryStats(),loadRegisteredDiscoveryDevices()]); setRows(r); setStats(s); setRegisteredDevices(registered);}catch(e:any){setErr(e.message??'Geräte konnten nicht geladen werden')}};
+ const loadAll=async()=>{setErr(''); try{const [r,s,registered,identity]=await Promise.all([loadInventoryDevices(q,source,activeOnly,250),loadInventoryStats(),loadRegisteredDiscoveryDevices(),loadDeviceIdentityOverview().catch(()=>[])]); setRows(r); setStats(s); setRegisteredDevices(registered); setIdentityOverview(Object.fromEntries(identity.map(i=>[i.identityKey,i])));}catch(e:any){setErr(e.message??'Geräte konnten nicht geladen werden')}};
  const inventoryCategoryOrder=['USB / Plug and Play','Computer','AVM-Systeme','Server & virtuelle Systeme','Router & Firewalls','Switches & Netzwerk','Access Points','NAS-Systeme','Drucker & Scanner','Kameras','Telefonie','Smart Home & IoT','Wechselrichter & Energiesysteme','Fernseher & Multimedia','Audio & Receiver','Smartphones & Tablets','Haushaltsgeräte','Robotik','Klima & Gebäudetechnik','Medizingeräte','Elektrogeräte','Sonstige Geräte'];
  const inventoryIcon=(category:string)=>category==='USB / Plug and Play'?'🔌':category==='Computer'?'🖥️':category==='AVM-Systeme'?'📡':category==='Server & virtuelle Systeme'?'🗄️':category==='Router & Firewalls'?'🌐':category==='Switches & Netzwerk'?'🖧':category==='Access Points'?'📶':category==='NAS-Systeme'?'💾':category==='Drucker & Scanner'?'🖨️':category==='Kameras'?'📷':category==='Telefonie'?'☎️':category==='Smart Home & IoT'?'🏠':category==='Wechselrichter & Energiesysteme'?'⚡':category==='Fernseher & Multimedia'?'📺':category==='Smartphones & Tablets'?'📱':category==='Haushaltsgeräte'?'🍽️':category==='Robotik'?'🤖':category==='Audio & Receiver'?'🔊':category==='Klima & Gebäudetechnik'?'🌡️':category==='Medizingeräte'?'🩺':category==='Elektrogeräte'?'🔌':'📦';
  const classifyInventoryDevice=(d:InventoryDevice)=>{
   const hay=[d.name,d.type,d.manufacturer,d.ip,d.location].filter(Boolean).join(' ').toLowerCase();
   const identityHay=[d.name,d.manufacturer,d.location].filter(Boolean).join(' ').toLowerCase();
-  const explicitComputerType=/desktop|notebook|laptop|workstation|thin client|mini[- ]?pc|macbook|imac/i.test(d.type||'');
-  const explicitComputerIdentity=/\bwindows(?: 10| 11)?\b|\bdesktop\b|\bnotebook\b|\blaptop\b|\bworkstation\b|\bthin client\b|\bmini[- ]?pc\b|\bmacbook\b|\bimac\b|\bmac mini\b|\bchromebook\b|\boptiplex\b|\belitedesk\b|\bprodesk\b|\bthinkcentre\b|\bthinkpad\b|\blatitude\b|\bprecision\b|\bsurface pro\b/.test(identityHay);
-  if(/usb|plug[ -]?and[ -]?play|\bpnp\b|windows pnp|usb_local|lokale?s? usb[- ]?gerät/.test(hay))return 'USB / Plug and Play';
-  if(/\bavm\b|fritz[!. -]?(box|repeater|fon|wlan|powerline)|fritz\.box/.test(hay))return 'AVM-Systeme';
-  if(/camera|kamera|onvif|rtsp|ip-kamera/.test(hay))return 'Kameras';
-  if(/router|firewall|gateway/.test(hay))return 'Router & Firewalls';
-  if(/repeater|access point|wlan|wireless ap/.test(hay))return 'Access Points';
-  if(/synology|qnap|nas/.test(hay))return 'NAS-Systeme';
-  if(/printer|drucker|scanner|epson|brother|canon|xerox|hp laser/.test(hay))return 'Drucker & Scanner';
-  if(/inverter|wechselrichter|solar(?:anlage|gerät|system)?|photovoltaik|\bpv\b|energy|energiesystem|battery|batterie|speicher|powerwall|felicity|kostal|plenticore|piko|ksem|fronius|sma|solaredge|sun2000|huawei|victron|enphase|growatt|goodwe|sungrow|deye|solax|foxess|fox ess|byd|pylontech|lux[- ]?x|ivgm|smart meter|energiemesser|solarlog|shinewifi|data manager/.test(hay))return 'Wechselrichter & Energiesysteme';
-  if(/home assistant|raspberry|server|docker|proxmox|virtualbox|vmware|hyper-v/.test(hay))return 'Server & virtuelle Systeme';
-  // Bestehende, bewusst als Computer geführte Inventargeräte bleiben Computer.
-  // Eindeutige AVM-, Netzwerk-, Kamera-, Drucker- und Energiehinweise wurden bereits vorher abgefangen.
-  if(/^computer$/i.test((d.type||'').trim())||explicitComputerType||explicitComputerIdentity)return 'Computer';
-  if(/switch|bridge|ethernet/.test(hay))return 'Switches & Netzwerk';
-  if(/phone|telefon|voip|sip/.test(hay))return 'Telefonie';
-  if(/tv|television|chromecast|roku|fire tv|multimedia|dlna|media renderer/.test(hay))return 'Fernseher & Multimedia';
-  if(/iphone|ipad|android|smartphone|tablet|mobile/.test(hay))return 'Smartphones & Tablets';
-  if(/iot|smart|tuya|shelly|zigbee|homekit|matter|thermostat|sensor|appliance/.test(hay))return 'Smart Home & IoT';
-  if(d.medicalDevice)return 'Medizingeräte';
-  if(d.electricalDevice)return 'Elektrogeräte';
-  return 'Sonstige Geräte';
+  const nameTypeHay=[d.name,d.type].filter(Boolean).join(' ').toLowerCase();
+  return classifyDevice({hay,identityHay,nameTypeHay,dType:d.type,medicalDevice:d.medicalDevice,electricalDevice:d.electricalDevice})??'Sonstige Geräte';
  };
  const discoveredInventoryRows=discoveredDevices.map(d=>{const info=enrichDiscoveredDevice(d);return {kind:'discovered' as const,key:`discovered-${d.id}`,id:d.id,name:info.displayName||d.name||'Erkanntes Gerät',type:info.category||d.type||'Netzwerkgerät',manufacturer:info.manufacturer||'',ip:d.address||'',serialNumber:d.serialNumber||d.hardwareAddress||'',branchName:'',active:d.online!==false,alreadyRegistered:!!d.alreadyRegistered,discovery:d};});
  const persistedInventoryRows=rows.map(d=>({kind:'persisted' as const,key:`${d.source}-${d.id}`,id:d.id,name:d.name||'—',type:d.type||'—',manufacturer:d.manufacturer||'',ip:d.ip||'',serialNumber:d.serialNumber||d.inventoryNumber||'',branchName:d.branchCode||d.branchName||'',active:d.active!==false,source:d.source,device:d,alreadyRegistered:true}));
@@ -4222,9 +5631,128 @@ function InventoryPage(){
  const registeredCategoryOrder=[...inventoryCategoryOrder,...registeredCustomCategories.filter(category=>!inventoryCategoryOrder.some(existing=>existing.toLocaleLowerCase('de-DE')===category.toLocaleLowerCase('de-DE')))];
  const classifyRegisteredDevice=(d:RegisteredDiscoveryDevice)=>d.manualDeviceType&&normalizeCategoryName(d.deviceType||'')?normalizeCategoryName(d.deviceType||''):classifyInventoryDevice({name:d.name||'',type:d.deviceType||'',manufacturer:d.manufacturer||'',ip:d.address||'',location:'',medicalDevice:false,electricalDevice:false} as InventoryDevice);
  const registeredSearchNormalized=registeredDeviceSearch.trim().toLowerCase().replace('ä','ae').replace('ö','oe').replace('ü','ue').replace('ß','ss');
- const registeredDeviceMatches=(d:RegisteredDiscoveryDevice)=>{if(!registeredSearchNormalized)return true;const hay=[d.name,d.deviceType,d.address,d.hardwareAddress,d.serialNumber,d.manufacturer,d.protocol,d.status].filter(Boolean).join(' ').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');return hay.includes(registeredSearchNormalized);};
+ const registeredDeviceMatches=(d:RegisteredDiscoveryDevice)=>{
+  const identity=identityOverview[d.identityKey];
+  if(registeredSearchNormalized){
+   const hay=[d.name,d.deviceType,d.address,d.hardwareAddress,d.serialNumber,d.manufacturer,d.protocol,d.status,...(identity?.aliases||[])].filter(Boolean).join(' ').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+   if(!hay.includes(registeredSearchNormalized))return false;
+  }
+  if(identityFilter==='all')return true;
+  if(!identity)return false;
+  if(identityFilter==='multiSource')return identity.sourceCount>1;
+  if(identityFilter==='hasAliases')return identity.aliasCount>0;
+  if(identityFilter==='manuallyMerged')return identity.mergeCount>0;
+  if(identityFilter==='unchecked')return identity.sourceCount<=1&&identity.aliasCount===0&&identity.mergeCount===0;
+  if(identityFilter==='conflict')return identity.hasOpenCandidate;
+  if(identityFilter==='highConfidence')return identity.confidenceLabel==='Sehr sicher';
+  return true;
+ };
  const filteredRegisteredDevices=registeredDevices.filter(registeredDeviceMatches);
+ const registeredDetailSections=(d:RegisteredDiscoveryDevice)=>{
+  const protocol=String(d.protocol||'');
+  const parts=protocol.split(' · ').map(x=>x.trim()).filter(Boolean);
+  const detailPairs=parts.slice(1).map(part=>{const colon=part.indexOf(':');return colon>0?[part.slice(0,colon).trim(),part.slice(colon+1).trim()] as [string,string]:null;}).filter(Boolean) as Array<[string,string]>;
+  const baseItems:Array<[string,string|undefined]>=[['Gerätename',d.name],['Geräteart',d.deviceType],['Hersteller / Modell',d.manufacturer],['IP-Adresse',d.address],['Seriennummer',d.serialNumber],['MAC-Adresse',d.hardwareAddress],['Status',d.status],['Erkennungsquelle',parts[0]||d.protocol]];
+  const categories=[
+   {title:'Betriebssystem',labels:['Edition','Distribution','Distributions-ID','Distributions-Version','Version','Build','Kernel','Architektur','Installation','Letzter Neustart','Laufzeit','Laufzeit seit Start','Desktop-Umgebung','Init-System','Systemtyp','Domäne/Arbeitsgruppe','Benutzer','System-UUID']},
+   {title:'Hardware',labels:['BIOS','BIOS/UEFI','Mainboard','Prozessor','CPU','CPU-Threads','Virtualisierung','Arbeitsspeicher','Verfügbarer RAM','Swap','RAM-Module']},
+   {title:'Netzwerk',labels:['IPv6','Standardgateway','DNS-Server','Netzwerkadapter']},
+   {title:'Dienste',labels:['Laufende Dienste','Fehlgeschlagene Dienste']},
+   {title:'Paketmanager',labels:['Installierte Software','Softwarequellen','Windows-Rollen/Features','Paketmanager','Installierte Pakete','Ausstehende Updates','Verfügbare Updates','Aktualisierbare Pakete']},
+   {title:'Rollen',labels:['Erkannte Rollen']},
+   {title:'Dateisystem',labels:['Datenträger','Laufwerke','Dateisysteme','Mountpoints']},
+   {title:'Sicherheit & Wartung',labels:['Antivirus','Microsoft Defender','Firewall','AppArmor','SELinux','TPM','Secure Boot','BitLocker','Datenträgerverschlüsselung','Letzter Hotfix','Neustart ausstehend','UAC','Remote Desktop','Lokale Administratoren']},
+   {title:'Linux-Analyse',labels:['Nachprüfung ausgelöst durch','Linux bestätigt','Kategorieentscheidung','Manuelle Kategorie','Erkennungsmerkmale','Inventarisierungsgrad','Verwendete Quellen','Zusätzlich über SSH verfügbar']}
+  ];
+  const used=new Set<string>();
+  const sections=[{title:'Grunddaten',items:baseItems.filter((x):x is [string,string]=>!!x[1])}];
+  for(const category of categories){const items=detailPairs.filter(([label])=>category.labels.includes(label));items.forEach(([label])=>used.add(label));if(items.length)sections.push({title:category.title,items});}
+  const remaining=detailPairs.filter(([label])=>!used.has(label));if(remaining.length)sections.push({title:'Weitere Informationen',items:remaining});
+  return sections.filter(section=>section.items.length>0);
+ };
+
+ const deviceDetailListLabels=new Set(['Installierte Software','Windows-Rollen/Features','Windows Features','Windows-Updates','Windows Updates','Hotfixes','Dateisysteme','Mountpoints','Fehlgeschlagene Dienste','Lokale Administratoren','Netzwerkadapter','Laufwerke','Datenträger','RAM-Module']);
+ const splitDeviceDetailList=(label:string,value:any)=>{
+  const text=String(value??'').trim();
+  if(!text||!deviceDetailListLabels.has(label))return [];
+  return text.split(/\s*;\s*/).map(item=>item.trim()).filter(Boolean);
+ };
+ const deviceSectionCount=(section:any)=>{
+  // Sammelbereiche enthalten mehrere unterschiedliche Listen und erhalten daher
+  // bewusst keinen gemeinsamen, missverständlichen Zähler.
+  if(section.title==='Software & Windows-Funktionen')return null;
+  if(section.title==='Installierte Software'){
+   const software=section.items?.find((item:any)=>item[0]==='Installierte Software');
+   if(software){const match=String(software[1]||'').match(/^\s*(\d+)\s+Programme\b/i);if(match)return Number(match[1]);const list=splitDeviceDetailList('Installierte Software',software[1]);if(list.length)return list.length;}
+  }
+  return null;
+ };
+ const renderDeviceDetailValue=(label:string,value:any)=>{
+  const text=String(value??'');
+  const softwareMatch=label==='Installierte Software'?text.match(/^\s*(\d+)\s+Programme(?:\s*\((\d+)\s+Registry-Einträge\))?\s*[–-]\s*(.*)$/s):null;
+  const list=splitDeviceDetailList(label,softwareMatch?softwareMatch[3]:text);
+  if(list.length)return <>{softwareMatch&&<div className="device-detail-list-count">{softwareMatch[1]} eindeutige Programme{softwareMatch[2]&&softwareMatch[2]!==softwareMatch[1]?` · ${softwareMatch[2]} Registry-Einträge`:''}</div>}<ul className="device-detail-list">{list.map((item,index)=><li key={`${label}-${index}`}>{item}</li>)}</ul></>;
+  return text;
+ };
  const registeredGroups=registeredCategoryOrder.map(category=>({category,rows:filteredRegisteredDevices.filter(d=>classifyRegisteredDevice(d)===category)})).filter(group=>group.rows.length>0);
+ const canShowRegisteredApps=(d:RegisteredDiscoveryDevice)=>{
+  const identity=identityOverview[d.identityKey];
+  const hay=[identity?.platform,d.deviceType,d.protocol,d.name].filter(Boolean).join(' ').toLowerCase();
+  return hay.includes('android')||hay.includes('adb')||hay.includes('smartphone')||hay.includes('tablet');
+ };
+ const loadRegisteredApps=async(identityKey:string)=>{
+  if(registeredApps[identityKey]||registeredAppsLoading.has(identityKey))return;
+  setRegisteredAppsLoading(current=>new Set(current).add(identityKey));
+  setRegisteredAppsErrors(current=>{const next={...current};delete next[identityKey];return next;});
+  try{
+   const apps=await loadAndroidApps(identityKey);
+   setRegisteredApps(current=>({...current,[identityKey]:apps.filter(app=>!app.removedAt)}));
+  }catch(e:any){
+   setRegisteredAppsErrors(current=>({...current,[identityKey]:e?.message||'App-Liste konnte nicht geladen werden.'}));
+  }finally{
+   setRegisteredAppsLoading(current=>{const next=new Set(current);next.delete(identityKey);return next;});
+  }
+ };
+ const renderRegisteredAppItems=(apps:InstalledApp[])=>apps.length===0?<p className="muted">Keine Apps gespeichert.</p>:<ul className="registered-app-list">{apps.map((app,index)=><li key={`${app.androidUserId??0}-${app.packageName}-${index}`}><span><b>{app.displayName||app.packageName}</b>{app.displayName&&<small>{app.packageName}</small>}</span><span className="registered-app-meta">{app.versionName&&<>Version {app.versionName}</>}{app.enabled===false&&<em>deaktiviert</em>}</span></li>)}</ul>;
+ const renderRegisteredAppGroup=(identityKey:string,system:boolean)=>{
+  const loading=registeredAppsLoading.has(identityKey);
+  const error=registeredAppsErrors[identityKey];
+  const loaded=Object.prototype.hasOwnProperty.call(registeredApps,identityKey);
+  const apps=(registeredApps[identityKey]||[]).filter(app=>app.system===system).sort((a,b)=>(a.displayName||a.packageName).localeCompare(b.displayName||b.packageName,'de'));
+  const title=system?'System-Apps':'Benutzer-Apps';
+  const userGroups=!system?Array.from(new Map(apps.map(app=>[app.androidUserId??0,app.androidUserName||((app.androidUserId??0)===0?'Hauptbenutzer':`Benutzer ${app.androidUserId}`)])).entries()).map(([id,name])=>({id,name,apps:apps.filter(app=>(app.androidUserId??0)===id)})).sort((a,b)=>a.id-b.id):[];
+  return <details className="device-detail-section registered-app-section" onToggle={e=>{if((e.currentTarget as HTMLDetailsElement).open)void loadRegisteredApps(identityKey);}}>
+   <summary><span>{title}</span>{' '}<em>({loaded?apps.length:'…'})</em></summary>
+   <div className="device-detail-section-body">{loading&&!loaded?<p className="muted">Apps werden geladen …</p>:error?<p className="error">{error}</p>:apps.length===0?<p className="muted">Keine {title.toLowerCase()} gespeichert.</p>:system?renderRegisteredAppItems(apps):<div className="registered-user-app-groups">{userGroups.map(group=><details className="device-detail-section registered-user-app-section" key={group.id} open={userGroups.length===1}><summary><span>{group.name}</span>{' '}<em>({group.apps.length})</em></summary><div className="device-detail-section-body">{renderRegisteredAppItems(group.apps)}</div></details>)}</div>}</div>
+  </details>;
+ };
+ // 40k34k: EIN zentraler, immutabler Update-Pfad für ein einzelnes registriertes Gerät -
+ // wird von jeder Stelle verwendet, die ein bereits vom Backend zurückgeliefertes,
+ // aktualisiertes Gerät übernehmen will (Typ-Änderung, Namensänderung, künftige weitere
+ // Felder). Erzeugt immer eine neue Array- und Objekt-Referenz, damit die davon
+ // abgeleitete Gruppierung/Sortierung (registeredGroups) beim nächsten Render garantiert
+ // neu berechnet wird - keine Mutation des bestehenden Eintrags.
+ const applyRegisteredDeviceUpdate=(updated:RegisteredDiscoveryDevice)=>{
+  setRegisteredDevices(current=>current.map(x=>x.identityKey===updated.identityKey?{...x,...updated}:x));
+ };
+ // 40k34o: gemeinsame Kernlogik für eine Kategorieänderung, unabhängig vom
+ // Auslöser (Dropdown-Auswahl ODER Drag & Drop) - dieselbe Bestätigung,
+ // derselbe zentrale Update-Pfad (applyRegisteredDeviceUpdate aus 40k34k),
+ // dieselbe Erfolgsmeldung.
+ const applyDeviceTypeChange=async(d:RegisteredDiscoveryDevice,next:string):Promise<boolean>=>{
+  const previous=d.deviceType||'';
+  if(!next||next===previous)return false;
+  if(!confirm(`Gerät „${d.name||'Unbenanntes Gerät'}“ wirklich von „${previous||'ohne Typ'}“ nach „${next}“ verschieben?`))return false;
+  try{
+   const updated=await updateRegisteredDeviceType(d.identityKey,next);
+   applyRegisteredDeviceUpdate(updated);
+   gamNotify('success',`${d.name||'Gerät'} wurde sofort nach „${next}“ umsortiert.`);
+   return true;
+  }catch(err:any){
+   gamNotify('error',err?.message||'Gerätetyp konnte nicht geändert werden.',0);
+   return false;
+  }
+ };
  const changeRegisteredDeviceType=async(d:RegisteredDiscoveryDevice,selectedValue:string,select:HTMLSelectElement)=>{
   const previous=d.deviceType||'';
   let next=selectedValue;
@@ -4237,11 +5765,10 @@ function InventoryPage(){
    const existing=registeredCategoryOrder.find(category=>category.toLocaleLowerCase('de-DE')===next.toLocaleLowerCase('de-DE'));
    if(existing)next=existing;
   }
-  if(!next||next===previous){select.value=previous;return;}
-  if(!confirm(`Gerät „${d.name||'Unbenanntes Gerät'}“ wirklich von „${previous||'ohne Typ'}“ nach „${next}“ verschieben?`)){select.value=previous;return;}
-  try{const updated=await updateRegisteredDeviceType(d.identityKey,next);setRegisteredDevices(current=>current.map(x=>x.identityKey===d.identityKey?{...x,...updated}:x));gamNotify('success',`${d.name||'Gerät'} wurde sofort nach „${next}“ umsortiert.`);}catch(err:any){select.value=previous;gamNotify('error',err?.message||'Gerätetyp konnte nicht geändert werden.',0);}
+  const applied=await applyDeviceTypeChange(d,next);
+  if(!applied)select.value=previous;
  };
- const changeRegisteredDeviceName=async(d:RegisteredDiscoveryDevice,value:string)=>{const next=value.trim();const previous=d.name||'';if(!next||next===previous)return;try{const updated=await updateRegisteredDeviceName(d.identityKey,next);setRegisteredDevices(current=>current.map(x=>x.identityKey===d.identityKey?{...x,...updated}:x));gamNotify('success','Gerätename wurde geändert.');}catch(err:any){gamNotify('error',err?.message||'Gerätename konnte nicht geändert werden.',0);}};
+ const changeRegisteredDeviceName=async(d:RegisteredDiscoveryDevice,value:string)=>{const next=value.trim();const previous=d.name||'';if(!next||next===previous)return;try{const updated=await updateRegisteredDeviceName(d.identityKey,next);applyRegisteredDeviceUpdate(updated);gamNotify('success','Gerätename wurde geändert.');}catch(err:any){gamNotify('error',err?.message||'Gerätename konnte nicht geändert werden.',0);}};
  const updateInventoryRowField=async(d:any,field:'name'|'type',value:string)=>{const next=value.trim();if(!next||next===String(d[field]||''))return;const device=d.device as InventoryDevice;try{await updateInventoryDevice(device.source,device.id,{name:field==='name'?next:device.name,type:field==='type'?next:device.type,serialNumber:device.serialNumber,inventoryNumber:device.inventoryNumber,manufacturer:device.manufacturer,ip:device.ip,location:device.location,branchId:device.branchId,medicalDevice:device.medicalDevice,electricalDevice:device.electricalDevice,inventory:device.inventoryRelevant,active:device.active,inUse:device.inUse,acquisitionDate:device.acquiredAt,note:device.note});await loadAll();gamNotify('success',field==='name'?'Gerätename wurde geändert.':`Gerät wurde nach „${next}“ umsortiert.`);}catch(err:any){gamNotify('error',err?.message||'Gerät konnte nicht geändert werden.',0);}};
  const registeredPersistedCount=persistedInventoryRows.length;
  const registeredDiscoveryFallbackCount=0;
@@ -4261,16 +5788,24 @@ function InventoryPage(){
  return <><DeviceManagerPanel onRegistered={loadAll} onDiscoveryChange={(devices)=>{setDiscoveredDevices(devices); if(devices.some(d=>d.alreadyRegistered)) loadAll();}} hideDeviceList/><section className="grid inventory-admin-grid">
   <section className="card inventory-list-card">
    <details className="device-category" open><summary><span className="device-category-label"><span aria-hidden="true">✅</span><b>Registriert</b><em>({registeredDevices.length})</em></span><small> · dauerhaft gespeichert, noch nicht im Gerätebestand</small></summary>
-    <div className="row device-bulk-actions"><span className="muted">Genauso nach Gerätekategorien gruppiert wie die Suchergebnisse.</span><button type="button" className="danger" disabled={registeredDevices.length===0} onClick={async()=>{if(!confirm(`Registrierung für alle ${registeredDevices.length} Geräte wirklich aufheben? Die Geräte werden bei der nächsten Suche wieder als neu erkannt.`))return;try{const result:any=await revokeAllRegisteredDevices();await loadAll();setDiscoveredDevices(current=>current.map(x=>({...x,alreadyRegistered:false})));gamNotify('success',`${result.registrationsRevoked??registeredDevices.length} Registrierungen wurden aufgehoben.`);}catch(e:any){gamNotify('error',e?.message||'Registrierungen konnten nicht aufgehoben werden.',0);}}}>Registrierung für alle aufheben</button></div>
-    <div className="toolbar sticky-actionbar"><label><Search size={16}/><input value={registeredDeviceSearch} onChange={e=>setRegisteredDeviceSearch(e.target.value)} placeholder="Registrierte Geräte suchen: Name, IP, MAC, Hersteller, Quelle …"/></label>{registeredDeviceSearch&&<button type="button" className="secondary" onClick={()=>setRegisteredDeviceSearch('')}>Suche zurücksetzen</button>}<span className="muted">{filteredRegisteredDevices.length} von {registeredDevices.length} Geräten</span></div>
-    {registeredGroups.map(group=><details className="device-category" key={`registered-${group.category}`}><summary><span className="device-category-label"><span aria-hidden="true">{inventoryIcon(group.category)}</span><b>{group.category}</b><em>({group.rows.length})</em></span></summary><div className="scroll-table"><table className="compact-table"><thead><tr><th>Name</th><th>Typ</th><th>Adresse</th><th>Seriennummer / MAC</th><th>Quelle</th><th>Treffer</th><th>Registriert am</th><th>Aktionen</th></tr></thead><tbody>{group.rows.map(d=><tr key={d.identityKey}><td><input className="registered-device-name-input" defaultValue={d.name||''} placeholder="Unbenanntes Gerät" onBlur={e=>void changeRegisteredDeviceName(d,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur()}}/><br/><small>{d.manufacturer||'—'}</small></td><td><select className="registered-device-type-select" value={d.deviceType||''} onChange={e=>changeRegisteredDeviceType(d,e.target.value,e.currentTarget)}><option value="">— Gerätetyp wählen —</option>{registeredCategoryOrder.map(type=><option key={type} value={type}>{type}</option>)}<option value="__NEW_DEVICE_CATEGORY__">➕ Neue Gerätekategorie …</option></select>{d.manualDeviceType&&<><br/><small>manuell festgelegt</small></>}</td><td>{d.address||'—'}</td><td>{d.serialNumber||d.hardwareAddress||'—'}</td><td>{discoverySourceBadges(d.protocol)}</td><td><b>{d.lastScanHits??0}×</b><br/><small>letzte Suche · insgesamt {d.detectionCount??0}×</small></td><td>{d.registeredAt?new Date(d.registeredAt).toLocaleString('de-DE'):'—'}</td><td><span className="device-inline-actions"><button type="button" onClick={async()=>{try{await moveRegisteredDeviceToInventory(d.identityKey);await loadAll();gamNotify('success',`${d.name||'Gerät'} wurde in den Gerätebestand übernommen.`);}catch(e:any){gamNotify('error',e?.message||'Übernahme fehlgeschlagen.',0);}}}>In Gerätebestand übernehmen</button><button type="button" className="secondary" onClick={async()=>{if(!confirm(`Registrierung für ${d.name||'dieses Gerät'} wirklich aufheben?`))return;try{await revokeRegisteredDevice(d.identityKey);await loadAll();setDiscoveredDevices(current=>current.map(x=>{const sameIp=d.address&&x.address&&d.address.toLowerCase()===x.address.toLowerCase();const sameSerial=(d.serialNumber||d.hardwareAddress)&&(x.serialNumber||x.hardwareAddress)&&String(d.serialNumber||d.hardwareAddress).toLowerCase()===String(x.serialNumber||x.hardwareAddress).toLowerCase();return sameIp||sameSerial?{...x,alreadyRegistered:false}:x;}));gamNotify('success','Registrierung wurde aufgehoben. Das Gerät wird bei einer neuen Suche wieder als neu geführt.');}catch(e:any){gamNotify('error',e?.message||'Registrierung konnte nicht aufgehoben werden.',0);}}}>Registrierung aufheben</button></span></td></tr>)}</tbody></table></div></details>)}{filteredRegisteredDevices.length===0&&<p className="muted">Keine registrierten Geräte entsprechen der Suche.</p>}
+    <div className="row device-bulk-actions"><span className="muted">Genauso nach Gerätekategorien gruppiert wie die Suchergebnisse.</span><button type="button" className="danger" disabled={registeredDevices.length===0} onClick={async()=>{if(!confirm(`Registrierung für alle ${registeredDevices.length} Geräte wirklich aufheben? Die Geräte werden bei der nächsten Suche wieder als neu erkannt.`))return;try{const result:any=await revokeAllRegisteredDevices();await loadAll();setDiscoveredDevices(current=>current.map(x=>({...x,alreadyRegistered:false})));gamNotify('success',`${result.registrationsRevoked??registeredDevices.length} Registrierungen wurden aufgehoben.`);}catch(e:any){gamNotify('error',e?.message||'Registrierungen konnten nicht aufgehoben werden.',0);}}}>Registrierung für alle aufheben</button><button type="button" className="secondary" onClick={()=>setMergeDialogOpen(true)}>Gerätezusammenführung prüfen</button>{mergeDialogOpen&&<DeviceMergeDialog onClose={()=>setMergeDialogOpen(false)} onMerged={()=>{setMergeDialogOpen(false);void loadAll();}} devices={registeredDevices}/>}{identityDialogKey&&<DeviceIdentityDialog identityKey={identityDialogKey} device={registeredDevices.find(x=>x.identityKey===identityDialogKey)} onClose={()=>setIdentityDialogKey(null)} onChanged={()=>void loadAll()}/>}</div>
+    <div className="toolbar sticky-actionbar"><label><Search size={16}/><input value={registeredDeviceSearch} onChange={e=>setRegisteredDeviceSearch(e.target.value)} placeholder="Registrierte Geräte suchen: Name, Alias, IP, MAC, Hersteller, Quelle …"/></label>{registeredDeviceSearch&&<button type="button" className="secondary" onClick={()=>setRegisteredDeviceSearch('')}>Suche zurücksetzen</button>}<label>Filter<select value={identityFilter} onChange={e=>setIdentityFilter(e.target.value as any)}><option value="all">Alle Geräte</option><option value="multiSource">Nur mit mehreren Quellen</option><option value="hasAliases">Nur mit Aliasen</option><option value="manuallyMerged">Nur manuell zusammengeführt</option><option value="unchecked">Nur ungeprüfte Geräte</option><option value="conflict">Nur mit Identitätskonflikten</option><option value="highConfidence">Nur mit hoher Sicherheit</option></select></label><span className="muted">{filteredRegisteredDevices.length} von {registeredDevices.length} Geräten</span></div>
+    {registeredGroups.length>0&&<p className="muted registered-drag-hint">Tipp: Geräte lassen sich per Ziehen (Drag &amp; Drop) auch direkt in eine andere Kategorie verschieben - das Dropdown „Typ" funktioniert weiterhin genauso.</p>}
+    {registeredGroups.map(group=><details className={`device-category${dragOverCategory===group.category?' device-category-dragover':''}`} key={`registered-${group.category}`} onDragOver={e=>{if(draggedIdentityKey){e.preventDefault();e.dataTransfer.dropEffect='move';setDragOverCategory(group.category);}}} onDragLeave={()=>setDragOverCategory(current=>current===group.category?null:current)} onDrop={e=>{e.preventDefault();setDragOverCategory(null);const key=e.dataTransfer.getData('text/plain')||draggedIdentityKey;const dragged=registeredDevices.find(x=>x.identityKey===key);if(dragged)void applyDeviceTypeChange(dragged,group.category);}}><summary><span className="device-category-label"><span aria-hidden="true">{inventoryIcon(group.category)}</span><b>{group.category}</b><em>({group.rows.length})</em></span></summary><div className="scroll-table"><table className="compact-table"><thead><tr><th></th><th>Name</th><th>Typ</th><th>Adresse</th><th>Seriennummer / MAC</th><th>Quelle</th><th>Treffer</th><th>Identität</th><th>Registriert am</th><th>Aktionen</th></tr></thead><tbody>{group.rows.map(d=>{const detailSections=registeredDetailSections(d);const hasAppGroups=canShowRegisteredApps(d);const hasDetails=hasAppGroups||detailSections.some(section=>section.title!=='Grunddaten')||detailSections[0]?.items.length>4;const expanded=expandedRegisteredDevices.has(d.identityKey);return <React.Fragment key={d.identityKey}><tr className="registered-device-row-draggable" draggable title="Zum Umsortieren in eine andere Kategorie ziehen" onDragStart={e=>{setDraggedIdentityKey(d.identityKey);e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',d.identityKey);}} onDragEnd={()=>{setDraggedIdentityKey(null);setDragOverCategory(null);}}><td>{hasDetails&&<button type="button" className="device-expand-button" aria-expanded={expanded} aria-label={`${d.name||'Gerät'} ${expanded?'einklappen':'aufklappen'}`} onClick={e=>{e.preventDefault();e.stopPropagation();setExpandedRegisteredDevices(current=>{const next=new Set(current);expanded?next.delete(d.identityKey):next.add(d.identityKey);return next;});if(!expanded&&hasAppGroups)void loadRegisteredApps(d.identityKey);}}>{expanded?'▼':'▶'}</button>}</td><td><input className="registered-device-name-input" defaultValue={d.name||''} placeholder="Unbenanntes Gerät" onBlur={e=>void changeRegisteredDeviceName(d,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur()}}/><br/><small>{d.manufacturer||'—'}</small></td><td><select className="registered-device-type-select" value={d.deviceType||''} onChange={e=>changeRegisteredDeviceType(d,e.target.value,e.currentTarget)}><option value="">— Gerätetyp wählen —</option>{registeredCategoryOrder.map(type=><option key={type} value={type}>{type}</option>)}<option value="__NEW_DEVICE_CATEGORY__">➕ Neue Gerätekategorie …</option></select>{d.manualDeviceType&&<><br/><small>manuell festgelegt</small></>}</td><td>{d.address||'—'}</td><td>{d.serialNumber||d.hardwareAddress||'—'}</td><td>{discoverySourceBadges(d.protocol)}</td><td><b>{d.lastScanHits??0}×</b><br/><small>letzte Suche · insgesamt {d.detectionCount??0}×</small></td><td>{(()=>{const identity=identityOverview[d.identityKey];return <>
+                <small>{identity?identity.sourceCount:1} Quelle(n) · {identity?.aliasCount??0} Alias(e) · {identity?.mergeCount??0}× zusammengeführt</small><br/>
+                {identity&&<span className={identity.hasOpenCandidate?'note warn':'muted'}>{identity.confidenceLabel}{identity.hasOpenCandidate?' · Konflikt offen':''}</span>}<br/>
+              </>;})()}</td><td>{d.registeredAt?new Date(d.registeredAt).toLocaleString('de-DE'):'—'}</td><td><RegisteredDeviceActionMenu d={d}
+                onOpenIdentity={()=>setIdentityDialogKey(d.identityKey)}
+                onMoveToInventory={async()=>{try{await moveRegisteredDeviceToInventory(d.identityKey);await loadAll();gamNotify('success',`${d.name||'Gerät'} wurde in den Gerätebestand übernommen.`);}catch(e:any){gamNotify('error',e?.message||'Übernahme fehlgeschlagen.',0);}}}
+                onRevoke={async()=>{if(!confirm(`Registrierung für ${d.name||'dieses Gerät'} wirklich aufheben?`))return;try{await revokeRegisteredDevice(d.identityKey);await loadAll();setDiscoveredDevices(current=>current.map(x=>{const sameIp=d.address&&x.address&&d.address.toLowerCase()===x.address.toLowerCase();const sameSerial=(d.serialNumber||d.hardwareAddress)&&(x.serialNumber||x.hardwareAddress)&&String(d.serialNumber||d.hardwareAddress).toLowerCase()===String(x.serialNumber||x.hardwareAddress).toLowerCase();return sameIp||sameSerial?{...x,alreadyRegistered:false}:x;}));gamNotify('success','Registrierung wurde aufgehoben. Das Gerät wird bei einer neuen Suche wieder als neu geführt.');}catch(e:any){gamNotify('error',e?.message||'Registrierung konnte nicht aufgehoben werden.',0);}}}
+              /></td></tr>{expanded&&<tr className="device-technical-row registered-device-technical-row"><td colSpan={10}><div className="device-technical-panel">{detailSections.map(section=>{const count=deviceSectionCount(section);return <details className="device-detail-section" key={section.title}><summary><span>{section.title}</span>{count!==null&&<em>({count})</em>}</summary><div className="device-detail-section-body"><dl>{section.items.map(([label,value])=><React.Fragment key={`${section.title}-${label}`}><dt>{label}</dt><dd>{renderDeviceDetailValue(label,value)}</dd></React.Fragment>)}</dl></div></details>;})}{hasAppGroups&&<><div className="registered-app-groups-heading"><b>Installierte Apps</b><span>Getrennt nach Benutzer- und System-Apps</span></div>{renderRegisteredAppGroup(d.identityKey,false)}{renderRegisteredAppGroup(d.identityKey,true)}</>}<p className="muted device-inventory-source-note">Die Zusatzinformationen stammen direkt aus den gespeicherten Discovery-Quellen und bleiben auch nach der manuellen Zuordnung zu einer Gerätekategorie verfügbar.</p></div></td></tr>}</React.Fragment>})}</tbody></table></div></details>)}{filteredRegisteredDevices.length===0&&<p className="muted">Keine registrierten Geräte entsprechen der Suche.</p>}
     {registeredDevices.length===0&&<p className="muted">Keine registrierten Geräte warten auf die Übernahme.</p>}
    </details>
-  <div className="row"><h2>Gerätebestand</h2><button type="button" className="danger" disabled={rows.length===0} onClick={async()=>{if(!confirm(`Gesamten Gerätebestand mit ${rows.length} Geräten wirklich leeren? Alle Geräte werden in „Registriert“ zurückgestuft. Dieser Schritt verändert den vollständigen verwalteten Bestand.`))return;if(!confirm('Sicherheitsabfrage: Soll der gesamte Gerätebestand jetzt wirklich geleert und vollständig nach „Registriert“ verschoben werden?'))return;try{const result:any=await emptyEntireInventoryToRegistered();setSelected(null);setInventoryModalOpen(false);await loadAll();gamNotify('success',`${(result.modernMoved??0)+(result.legacyMoved??0)} Geräte wurden aus dem Bestand entfernt und registriert.`);}catch(e:any){gamNotify('error',e?.message||'Der Gerätebestand konnte nicht geleert werden. Es wurden keine Teiländerungen übernommen.',0);}}}>Gesamten Gerätebestand leeren</button></div>
+  <div className="row"><h2>Gerätebestand</h2><button type="button" className="secondary" onClick={async()=>{try{const result=await linkExistingInventoryDevices();gamNotify('success',`Discovery-Verknüpfung aktualisiert: ${result.linked} neu verknüpft, ${result.alreadyLinked} bereits verknüpft, ${result.ambiguous} mehrdeutig übersprungen, ${result.unresolved} weiterhin ungeklärt.`);await loadAll();}catch(e:any){gamNotify('error',e?.message||'Nachverknüpfung fehlgeschlagen.',0);}}} title="Versucht, bereits vorhandene Gerätebestand-Einträge anhand von Seriennummer bzw. IP-Adresse und Name mit einer noch existierenden Discovery-Identität zu verknüpfen.">Mit Discovery verknüpfen</button><button type="button" className="danger" disabled={rows.length===0} onClick={async()=>{if(!confirm(`Gesamten Gerätebestand mit ${rows.length} Geräten wirklich leeren? Alle Geräte werden in „Registriert“ zurückgestuft. Dieser Schritt verändert den vollständigen verwalteten Bestand.`))return;if(!confirm('Sicherheitsabfrage: Soll der gesamte Gerätebestand jetzt wirklich geleert und vollständig nach „Registriert“ verschoben werden?'))return;try{const result:any=await emptyEntireInventoryToRegistered();setSelected(null);setInventoryModalOpen(false);await loadAll();gamNotify('success',`${(result.modernMoved??0)+(result.legacyMoved??0)} Geräte wurden aus dem Bestand entfernt und registriert.`);}catch(e:any){gamNotify('error',e?.message||'Der Gerätebestand konnte nicht geleert werden. Es wurden keine Teiländerungen übernommen.',0);}}}>Gesamten Gerätebestand leeren</button></div>
    <p className="muted"><b>Schritt 40k30:</b> Hier stehen dauerhaft gespeicherte Altgeräte und neu registrierte Geräte gemeinsam nach Gerätetyp. Im manuellen Modus erscheinen noch nicht registrierte Treffer ausschließlich in der oberen Liste; im automatischen Modus werden sie direkt hier einsortiert.</p>
    {stats&&<div className="stats"><span>Bestand (alt): <b>{stats.legacyDeviceCount}</b></span><span>Bestand (neu): <b>{stats.newDeviceCount}</b></span><span>Registriert gesamt: <b>{registeredPersistedCount+registeredDiscoveryFallbackCount}</b></span><span>Discovery-Registrierungen ohne geladenen Stammsatz: <b>{registeredDiscoveryFallbackCount}</b></span><span>Discovery neu: <b>{discoveredInventoryRows.filter(x=>!x.alreadyRegistered).length}</b></span><span>Zuordnungen: <b>{stats.branchAssignmentCount}</b></span><span>Medizin: <b>{stats.medicalDeviceCount}</b></span><span>Elektro: <b>{stats.electricalDeviceCount}</b></span><span>Außer Betrieb: <b>{stats.outOfServiceCount}</b></span></div>}
    <div className="toolbar sticky-actionbar"><button onClick={newDevice}><FilePlus2 size={16}/> Neues Gerät</button><label><Search size={16}/><input placeholder="Gerät suchen: Typ, Seriennummer, Hersteller, Standort" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') loadAll()}}/></label><select value={source} onChange={e=>setSource(e.target.value)}><option value="all">Alle gespeicherten Geräte</option><option value="legacy">Gerätezusatz (alt)</option><option value="new">Moderne Geräte</option></select><select value={inventoryView} onChange={e=>setInventoryView(e.target.value as 'all'|'legacy'|'modern')}><option value="all">Gesamter Gerätebestand</option><option value="legacy">Bestandsgeräte aus GAM 1.0</option><option value="modern">Übernommene Geräte aus GAM 2.0</option></select><label className="toggle-field"><input type="checkbox" checked={activeOnly} onChange={e=>setActiveOnly(e.target.checked)}/> nur aktiv</label><button className="secondary" onClick={loadAll}>Suchen</button></div>
-   {selected&&<div className="jump-actions"><button className="secondary" type="button" onClick={()=>scrollToInventoryForm(true)}>📝 Bearbeiten</button></div>}<div className="inventory-device-tree">{inventoryGroups.map(group=><details className="device-category" key={group.category}><summary><span className="device-category-label"><span aria-hidden="true">{inventoryIcon(group.category)}</span><b>{group.category}</b><em>({group.rows.length})</em></span></summary><div className="scroll-table"><table className="compact-table"><thead><tr><th></th><th>ID</th><th>Quelle</th><th>Name</th><th>Typ</th><th>Serie</th><th>Filiale</th><th>Status</th><th>Aktion</th></tr></thead><tbody>{group.rows.map((d:any)=>{const expanded=expandedInventoryDevices.has(d.key);const technicalSections=[{title:'System & Betriebssystem',items:[['Gerätetyp',d.type],['Hersteller',d.manufacturer],['Betriebssystem',d.device?.operatingSystem]]},{title:'Hardware',items:[['CPU',d.device?.cpu],['Mainboard',d.device?.mainboard],['Arbeitsspeicher',d.device?.memory],['Maximaler RAM',d.device?.maxMemory],['Grafikkarte',d.device?.graphics]]},{title:'Laufwerke & SMART',items:[['Laufwerke',d.device?.drives],['SMART-Status',d.device?.smartStatus],['SSD-/NVMe-Temperatur',d.device?.driveTemperature]]},{title:'Mainboard- und Gerätesensoren',items:[['CPU-Temperatur',d.device?.cpuTemperature],['Mainboard-Temperatur',d.device?.mainboardTemperature],['Chipsatz / VRM',d.device?.chipsetTemperature],['Lüfter',d.device?.fanSpeeds],['Spannungen',d.device?.voltages],['Leistungsaufnahme',d.device?.power]]},{title:'Netzwerk & Identitäten',items:[['IP-Adresse',d.ip],['Seriennummer / MAC',d.serialNumber],['Inventarnummer',d.device?.inventoryNumber],['Quelle',d.kind==='discovered'?d.discovery?.protocol:(d.source==='legacy'?'GAM 1.0':'GAM 2.0')]]},{title:'Installierte Software',items:(selected?.device?.id===d.id&&selected?.software?.length?selected.software.map((x:any)=>[x.name||x.softwareName,[x.version,x.licenseKey].filter(Boolean).join(' · ')]):[]) as any[]}].map(section=>({...section,items:section.items.filter((x:any)=>x[1])})).filter(section=>section.items.length>0);return <React.Fragment key={d.key}><tr className={d.kind==='persisted'&&selected?.device?.id===d.id&&selected?.device?.source===d.source?'active-row':''} onClick={()=>d.kind==='persisted'?loadDetail(d.device,false):undefined} onDoubleClick={()=>d.kind==='persisted'?loadDetail(d.device,true):undefined}><td><button type="button" className="device-expand-button" aria-expanded={expanded} aria-label={`${d.name} ${expanded?'einklappen':'aufklappen'}`} onPointerDown={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()} onDoubleClick={e=>{e.preventDefault();e.stopPropagation();}} onClick={e=>{e.preventDefault();e.stopPropagation();setExpandedInventoryDevices(current=>{const next=new Set(current);expanded?next.delete(d.key):next.add(d.key);return next;});}}>{expanded?'▼':'▶'}</button></td><td>{d.kind==='persisted'?d.id:'—'}</td><td>{d.kind==='discovered'?<b className="device-new-label">(neu)</b>:(d.source==='legacy'?'Bestand alt':'Bestand neu')}</td><td>{d.kind==='persisted'?<input className="inventory-inline-name-input" defaultValue={d.name||''} onClick={e=>e.stopPropagation()} onBlur={e=>void updateInventoryRowField(d,'name',e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur()}}/>:<b>{d.name}{d.kind==='discovered'?' (neu)':''}</b>}<br/><small>{d.manufacturer||d.ip||'—'}</small></td><td>{d.kind==='persisted'?<select className="inventory-inline-type-select" value={d.type||''} onClick={e=>e.stopPropagation()} onChange={e=>void updateInventoryRowField(d,'type',e.target.value)}>{inventoryCategoryOrder.map(type=><option key={type} value={type}>{type}</option>)}</select>:(d.type||'—')}</td><td>{d.serialNumber||'—'}</td><td>{d.branchName||'—'}</td><td>{d.kind==='discovered'?<span className="device-inline-actions"><button type="button" onClick={(e)=>{e.stopPropagation();createInventoryDevice({name:d.name,type:d.type,serialNumber:d.serialNumber,ip:d.ip,manufacturer:d.manufacturer,location:'Automatisch erkannt'}).then(()=>{gamNotify('success',`${d.name} wurde übernommen.`);loadAll();setDiscoveredDevices(current=>current.map(x=>x.id===d.discovery.id?{...x,alreadyRegistered:true}:x));}).catch((e:any)=>gamNotify('error',e?.message||'Übernahme fehlgeschlagen.',0));}}>Übernehmen</button></span>:(d.active?'aktiv':'außer Betrieb')}</td><td>{(d.kind==='discovered'||d.source==='new')&&<button type="button" className="secondary" onClick={(e)=>{e.stopPropagation();deregisterInventoryRow(d);}}>Aus Gerätebestand entfernen</button>}</td></tr>{expanded&&<tr className="device-technical-row"><td colSpan={9}><div className="device-technical-panel">{technicalSections.length>0?technicalSections.map(section=><section key={section.title}><h4>{section.title}</h4><dl>{section.items.map((item:any)=><React.Fragment key={`${section.title}-${item[0]}`}><dt>{item[0]}</dt><dd>{String(item[1])}</dd></React.Fragment>)}</dl></section>):<p className="muted">Für dieses Gerät liegen bisher nur die Grunddaten vor. Weitere Werte werden automatisch eingeblendet, sobald eine Quelle wie Home Assistant, WMI/LibreHardwareMonitor, Linux hwmon, SNMP oder SMART sie liefert.</p>}<p className="muted device-inventory-source-note">40k28 zeigt ausschließlich tatsächlich gelieferte Werte. Nicht verfügbare Sensor- und Hardwarebereiche bleiben verborgen.</p></div></td></tr>}</React.Fragment>})}</tbody></table></div></details>)}{unifiedDeviceRows.length===0&&<p className="muted">Keine gespeicherten oder neu erkannten Geräte vorhanden.</p>}</div>
+   {selected&&<div className="jump-actions"><button className="secondary" type="button" onClick={()=>scrollToInventoryForm(true)}>📝 Bearbeiten</button></div>}<div className="inventory-device-tree">{inventoryGroups.map(group=><details className="device-category" key={group.category}><summary><span className="device-category-label"><span aria-hidden="true">{inventoryIcon(group.category)}</span><b>{group.category}</b><em>({group.rows.length})</em></span></summary><div className="scroll-table"><table className="compact-table"><thead><tr><th></th><th>ID</th><th>Quelle</th><th>Name</th><th>Typ</th><th>Serie</th><th>Filiale</th><th>Status</th><th>Aktion</th></tr></thead><tbody>{group.rows.map((d:any)=>{const expanded=expandedInventoryDevices.has(d.key);const technicalSections=[{title:'System & Betriebssystem',items:[['Gerätetyp',d.type],['Hersteller',d.manufacturer],['Betriebssystem',d.device?.operatingSystem]]},{title:'Hardware',items:[['CPU',d.device?.cpu],['Mainboard',d.device?.mainboard],['Arbeitsspeicher',d.device?.memory],['Maximaler RAM',d.device?.maxMemory],['Grafikkarte',d.device?.graphics]]},{title:'Laufwerke & SMART',items:[['Laufwerke',d.device?.drives],['SMART-Status',d.device?.smartStatus],['SSD-/NVMe-Temperatur',d.device?.driveTemperature]]},{title:'Mainboard- und Gerätesensoren',items:[['CPU-Temperatur',d.device?.cpuTemperature],['Mainboard-Temperatur',d.device?.mainboardTemperature],['Chipsatz / VRM',d.device?.chipsetTemperature],['Lüfter',d.device?.fanSpeeds],['Spannungen',d.device?.voltages],['Leistungsaufnahme',d.device?.power]]},{title:'Netzwerk & Identitäten',items:[['IP-Adresse',d.ip],['Seriennummer / MAC',d.serialNumber],['Inventarnummer',d.device?.inventoryNumber],['Quelle',d.kind==='discovered'?d.discovery?.protocol:(d.source==='legacy'?'GAM 1.0':'GAM 2.0')]]},{title:'Installierte Software',items:(selected?.device?.id===d.id&&selected?.software?.length?selected.software.map((x:any)=>[x.name||x.softwareName,[x.version,x.licenseKey].filter(Boolean).join(' · ')]):[]) as any[]}].map(section=>({...section,items:section.items.filter((x:any)=>x[1])})).filter(section=>section.items.length>0);return <React.Fragment key={d.key}><tr className={d.kind==='persisted'&&selected?.device?.id===d.id&&selected?.device?.source===d.source?'active-row':''} onClick={()=>d.kind==='persisted'?loadDetail(d.device,false):undefined} onDoubleClick={()=>d.kind==='persisted'?loadDetail(d.device,true):undefined}><td><button type="button" className="device-expand-button" aria-expanded={expanded} aria-label={`${d.name} ${expanded?'einklappen':'aufklappen'}`} onPointerDown={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()} onDoubleClick={e=>{e.preventDefault();e.stopPropagation();}} onClick={e=>{e.preventDefault();e.stopPropagation();setExpandedInventoryDevices(current=>{const next=new Set(current);expanded?next.delete(d.key):next.add(d.key);return next;});}}>{expanded?'▼':'▶'}</button></td><td>{d.kind==='persisted'?d.id:'—'}</td><td>{d.kind==='discovered'?<b className="device-new-label">(neu)</b>:(d.source==='legacy'?'Bestand alt':'Bestand neu')}</td><td>{d.kind==='persisted'?<input className="inventory-inline-name-input" defaultValue={d.name||''} onClick={e=>e.stopPropagation()} onBlur={e=>void updateInventoryRowField(d,'name',e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur()}}/>:<b>{d.name}{d.kind==='discovered'?' (neu)':''}</b>}<br/><small>{d.manufacturer||d.ip||'—'}</small></td><td>{d.kind==='persisted'?<select className="inventory-inline-type-select" value={d.type||''} onClick={e=>e.stopPropagation()} onChange={e=>void updateInventoryRowField(d,'type',e.target.value)}>{inventoryCategoryOrder.map(type=><option key={type} value={type}>{type}</option>)}</select>:(d.type||'—')}</td><td>{d.serialNumber||'—'}</td><td>{d.branchName||'—'}</td><td>{d.kind==='discovered'?<span className="device-inline-actions"><button type="button" onClick={(e)=>{e.stopPropagation();createInventoryDevice({name:d.name,type:d.type,serialNumber:d.serialNumber,ip:d.ip,manufacturer:d.manufacturer,location:'Automatisch erkannt'}).then(()=>{gamNotify('success',`${d.name} wurde übernommen.`);loadAll();setDiscoveredDevices(current=>current.map(x=>x.id===d.discovery.id?{...x,alreadyRegistered:true}:x));}).catch((e:any)=>gamNotify('error',e?.message||'Übernahme fehlgeschlagen.',0));}}>Übernehmen</button></span>:(d.active?'aktiv':'außer Betrieb')}</td><td>{(d.kind==='discovered'||d.source==='new')&&<button type="button" className="secondary" onClick={(e)=>{e.stopPropagation();deregisterInventoryRow(d);}}>Aus Gerätebestand entfernen</button>}</td></tr>{expanded&&<tr className="device-technical-row"><td colSpan={9}><div className="device-technical-panel">{technicalSections.length>0?technicalSections.map(section=>{const count=deviceSectionCount(section);return <details className="device-detail-section" key={section.title}><summary><span>{section.title}</span>{count!==null&&<em>({count})</em>}</summary><div className="device-detail-section-body"><dl>{section.items.map((item:any)=><React.Fragment key={`${section.title}-${item[0]}`}><dt>{item[0]}</dt><dd>{renderDeviceDetailValue(item[0],item[1])}</dd></React.Fragment>)}</dl></div></details>; }):<p className="muted">Für dieses Gerät liegen bisher nur die Grunddaten vor. Weitere Werte werden automatisch eingeblendet, sobald eine Quelle wie Home Assistant, WMI/LibreHardwareMonitor, Linux hwmon, SNMP oder SMART sie liefert.</p>}{d.kind==='persisted'&&selected?.device?.id===d.id&&selected?.device?.source===d.source&&<details className="device-detail-section" open><summary><span>Discovery &amp; Plattforminventarisierung</span></summary><div className="device-detail-section-body">{selected.identityKey?<><p className="muted">Verknüpfte Discovery-Identität: <code>{selected.identityKey}</code>{selected.platform&&<> · Plattform: <b>{selected.platform}</b></>} · Nur-Lese-Ansicht - eine Inventarisierung wird im Bereich „Registriert" gestartet.</p><PlatformInventorySection identityKey={selected.identityKey} readOnly/></>:<p className="muted">Dieses Gerät ist noch nicht mit einer Discovery-Identität verknüpft - Plattforminventarisierung ist daher hier noch nicht verfügbar. Über „Mit Discovery verknüpfen" oben kann eine automatische Nachverknüpfung versucht werden, sofern eine eindeutige Übereinstimmung (Seriennummer bzw. IP-Adresse und Name) gefunden wird.</p>}</div></details>}<p className="muted device-inventory-source-note">40k28 zeigt ausschließlich tatsächlich gelieferte Werte. Nicht verfügbare Sensor- und Hardwarebereiche bleiben verborgen.</p></div></td></tr>}</React.Fragment>})}</tbody></table></div></details>)}{unifiedDeviceRows.length===0&&<p className="muted">Keine gespeicherten oder neu erkannten Geräte vorhanden.</p>}</div>
   </section>
   {inventoryModalOpen&&<div className="gam-modal-backdrop" onClick={()=>setInventoryModalOpen(false)} />}
   <section className={inventoryModalOpen?"card inventory-detail-card gam-modal-card":"card inventory-detail-card gam-modal-card gam-modal-hidden"} ref={inventoryFormRef}>
@@ -5559,7 +7094,7 @@ function ScanCenterPanel({context,settings,value,onValueChange,onSubmit,submitLa
 }
 
 function SettingsPage(){
- const [section,setSection]=useState<'general'|'modules'|'devices'|'workflows'>('general');
+ const [section,setSection]=useState<'general'|'database'|'modules'|'devices'|'workflows'>('general');
  const [workflowTab,setWorkflowTab]=useState<'invoiceWorkflow'|'payment'|'compliance'|'marketing'|'export'|'tasks'|'warehouse'|'devices'|'personnel'|'documents'>('invoiceWorkflow');
  const [settings,setSettings]=useState<InvoiceWorkflowSettings|null>(null);
  const [paymentSettings,setPaymentSettings]=useState<PaymentWorkflowSettings|null>(null);
@@ -5568,13 +7103,21 @@ function SettingsPage(){
  const [communicationWorkflowSettings,setCommunicationWorkflowSettings]=useState<CommunicationWorkflowSettings|null>(null);
  const [taskWorkflowSettings,setTaskWorkflowSettings]=useState<TaskWorkflowSettings|null>(null);
  const [moduleSettings,setModuleSettings]=useState<ModuleSettings>({});
- const [busy,setBusy]=useState(false); const [msg,setMsg]=useState(''); const [error,setError]=useState('');
+ const [busy,setBusy]=useState(false); const [msg,setMsg]=useState(''); const [error,setError]=useState(''); const [demoStatus,setDemoStatus]=useState<any>(null); const [demoBusy,setDemoBusy]=useState(false);
  const [notificationSettings,setNotificationSettings]=useState(loadNotificationSettings());
  const defaultDeviceMergeSettings:DeviceIdentityMergeSettings={autoMergeThreshold:95,possibleDuplicateThreshold:60,macWeight:85,hardwareSerialWeight:95,snmpSerialWeight:90,deviceIdWeight:80,hostnameWeight:50,ipWeight:5,manufacturerWeight:10,typeWeight:15,twoSourceBonus:5,threeSourceBonus:10,automaticMergeEnabled:true,hardConflictsBlockMerge:true,ipNeverMergesAlone:true};
  const [deviceMergeSettings,setDeviceMergeSettings]=useState<DeviceIdentityMergeSettings>(defaultDeviceMergeSettings);
  const [deviceMergeBusy,setDeviceMergeBusy]=useState(false);
  const [deviceMergeMessage,setDeviceMergeMessage]=useState('');
  useEffect(()=>{loadInvoiceWorkflowSettings().then(setSettings).catch(e=>setError(e.message??'Einstellungen konnten nicht geladen werden')); loadModuleSettings().then(setModuleSettings).catch(()=>setModuleSettings({})); loadPaymentWorkflowSettings().then(setPaymentSettings).catch(e=>setError(e.message??'Zahlungsworkflow-Einstellungen konnten nicht geladen werden')); loadComplianceWorkflowSettings().then(setComplianceSettings).catch(e=>setError(e.message??'Prüfungsworkflow-Einstellungen konnten nicht geladen werden')); loadMarketingWorkflowSettings().then(setMarketingSettings).catch(e=>setError(e.message??'Marketingworkflow-Einstellungen konnten nicht geladen werden')); loadCommunicationWorkflowSettings().then(setCommunicationWorkflowSettings).catch(e=>setError(e.message??'Kommunikationsworkflow-Einstellungen konnten nicht geladen werden')); loadTaskWorkflowSettings().then(setTaskWorkflowSettings).catch(e=>setError(e.message??'Aufgabenworkflow-Einstellungen konnten nicht geladen werden')); loadDeviceIdentityMergeSettings().then(setDeviceMergeSettings).catch(e=>setError(e.message??'Merge-Einstellungen konnten nicht geladen werden'));},[]);
+
+ async function refreshDemoStatus(){try{setDemoStatus(await loadDemoDatabaseStatus())}catch(e:any){setError(e.message??'Status der Beispieldaten konnte nicht geladen werden')}}
+ async function importExamples(){
+  if(!confirm('Anonymisierte Beispieldaten jetzt importieren?\n\nVorhandene Inhalte der Beispieldatentabellen werden ersetzt. Administrator, Passwort, 2FA und Passkeys bleiben erhalten. Bitte vorher eine Sicherung erstellen.'))return;
+  setDemoBusy(true);setError('');
+  try{const result:any=await importDemoDatabase();gamNotify('success',result?.message||'Beispieldaten wurden importiert.');await refreshDemoStatus();}
+  catch(e:any){const message=e.message??'Beispieldaten konnten nicht importiert werden';setError(message);gamNotify('error',message,0)}finally{setDemoBusy(false)}
+ }
  async function save(){if(!settings)return; setBusy(true);setMsg('');setError('');try{setSettings(await saveInvoiceWorkflowSettings(settings));setMsg('Einstellungen gespeichert.');}catch(e:any){setError(e.message??'Speichern fehlgeschlagen')}finally{setBusy(false)}}
  async function saveCompliance(){if(!complianceSettings)return;setBusy(true);setError('');try{setComplianceSettings(await saveComplianceWorkflowSettings(complianceSettings));gamNotify('success','Prüfungsworkflow-Einstellungen gespeichert.');window.dispatchEvent(new CustomEvent('gam-compliance-settings-changed'));}catch(e:any){setError(e.message??'Speichern fehlgeschlagen');gamNotify('error',e.message??'Speichern fehlgeschlagen',0)}finally{setBusy(false)}}
  async function saveTaskWorkflowConfig(){if(!taskWorkflowSettings)return;setBusy(true);setError('');try{setTaskWorkflowSettings(await saveTaskWorkflowSettings(taskWorkflowSettings));gamNotify('success','Aufgabenworkflow-Einstellungen gespeichert.');}catch(e:any){setError(e.message??'Speichern fehlgeschlagen');gamNotify('error',e.message??'Speichern fehlgeschlagen',0)}finally{setBusy(false)}}
@@ -5600,8 +7143,9 @@ function SettingsPage(){
  ];
  const workflowTabs:[typeof workflowTab,string][]=[['invoiceWorkflow','Rechnungsworkflow'],['payment','Zahlungsworkflow'],['compliance','Prüfungsworkflow'],['marketing','Marketingworkflow'],['export','Exportworkflow'],['tasks','Aufgaben & Kommunikation'],['warehouse','Lager & Materialfluss'],['devices','Geräte'],['personnel','Personal'],['documents','Dokumente']];
  return <section className="card settings-module"><div className="row"><div><h2>Einstellungen</h2><p className="muted">Zentrale GAM-Konfiguration mit getrennten Bereichen für Module und Workflows.</p></div></div>
- <nav className="tabs settings-tabs settings-main-tabs"><button className={section==='general'?'active':''} onClick={()=>setSection('general')}>Allgemein</button><button className={section==='modules'?'active':''} onClick={()=>setSection('modules')}>Module</button><button className={section==='devices'?'active':''} onClick={()=>setSection('devices')}>Geräteverwaltung</button><button className={section==='workflows'?'active':''} onClick={()=>setSection('workflows')}>Workflows</button></nav>
+ <nav className="tabs settings-tabs settings-main-tabs"><button className={section==='general'?'active':''} onClick={()=>setSection('general')}>Allgemein</button><button className={section==='database'?'active':''} onClick={()=>{setSection('database');refreshDemoStatus()}}>Datenbank</button><button className={section==='modules'?'active':''} onClick={()=>setSection('modules')}>Module</button><button className={section==='devices'?'active':''} onClick={()=>setSection('devices')}>Geräteverwaltung</button><button className={section==='workflows'?'active':''} onClick={()=>setSection('workflows')}>Workflows</button></nav>
  {section==='general'&&<section className="settings-pane settings-standard-pane"><h3>Allgemein</h3><p className="muted">Übergreifende Einstellungen für Darstellung und Bedienverhalten von GAM.</p><div className="settings-standard-stack"><div className="settings-group"><div className="settings-group-head"><h5>Meldungen und Anzeigedauer</h5><p>Automatisches Ausblenden und Dauer getrennt nach Meldungsart festlegen.</p></div><div className="settings-notification-grid">{([['success','Grüne Erfolgsmeldungen'],['warning','Gelbe Warnmeldungen'],['error','Rote Fehlermeldungen'],['info','Blaue Informationen']] as const).map(([kind,label])=><div className="settings-notification-card" key={kind}><label className="settings-check settings-notification-check"><input type="checkbox" checked={notificationSettings[kind].autoHide} onChange={e=>setNotificationSettings({...notificationSettings,[kind]:{...notificationSettings[kind],autoHide:e.target.checked}})}/><span><b>{label}</b><small>{notificationSettings[kind].autoHide?'werden automatisch ausgeblendet':'bleiben bis zum manuellen Schließen sichtbar'}</small></span></label><label className="settings-notification-duration"><span>Anzeigedauer</span><div className="settings-input-with-unit"><input type="number" min="1" max="300" disabled={!notificationSettings[kind].autoHide} value={notificationSettings[kind].seconds} onChange={e=>setNotificationSettings({...notificationSettings,[kind]:{...notificationSettings[kind],seconds:Math.max(1,Math.min(300,Number(e.target.value)||1))}})}/><em>Sek.</em></div></label></div>)}</div></div></div><div className="toolbar"><button type="button" onClick={saveNotificationSettings}>Meldungseinstellungen speichern</button></div></section>}
+ {section==='database'&&<section className="settings-pane settings-standard-pane"><h3>Datenbank</h3><p className="muted">Schritt 40k33a11: Eine leere Praxis kann jederzeit mit den gepflegten, anonymisierten GAM-Beispieldaten befüllt werden.</p><div className="settings-standard-stack"><div className="settings-group"><div className="settings-group-head"><h5>Beispieldaten importieren</h5><p>Administrator, Kennwort, 2FA, Passkeys und Benutzerrechte bleiben erhalten. Fachliche Beispieldatentabellen werden reproduzierbar neu befüllt.</p></div>{demoStatus?<div className="note"><b>Datei:</b> {demoStatus.file}<br/><b>Verfügbar:</b> {demoStatus.available?'Ja':'Nein'} · <b>Patienten/Adressen:</b> {demoStatus.patientCount} · <b>Rechnungen:</b> {demoStatus.invoiceCount}</div>:<p className="muted">Status wird beim Öffnen dieses Bereichs geladen.</p>}<div className="note warning"><b>Hinweis:</b> Vor dem Import sollte eine Datenbanksicherung erstellt werden. Vorhandene Inhalte der vorgesehenen Beispieldatentabellen werden ersetzt.</div><div className="toolbar"><button type="button" disabled={demoBusy||demoStatus?.available===false} onClick={importExamples}>{demoBusy?'Beispieldaten werden importiert …':'Beispieldaten importieren'}</button><button type="button" className="secondary" disabled={demoBusy} onClick={refreshDemoStatus}>Status aktualisieren</button></div></div></div></section>}
  {section==='modules'&&<section className="settings-pane settings-standard-pane"><h3>Module</h3><p className="muted">Nicht benötigte Module aus Login-Auswahl, Dashboard, Navigation und Workflow-Übersicht ausblenden. Daten werden nicht gelöscht.</p><div className="settings-standard-stack">{MODULE_SELECTION_GROUPS.map(group=><div className="settings-group" key={group.title}><div className="settings-group-head"><h5>{group.title}</h5><p>{group.description}</p></div><div className="settings-check-grid module-settings-grid">{moduleRows.filter(([key])=>group.pages.includes(key as Page)).map(([key,label,dependency,locked])=><label className={`settings-check module-setting-card ${isWorkflowModulePage(key as Page)?'workflow-module-card':''}`} key={key}><input type="checkbox" checked={moduleSettings[key]!==false} disabled={locked} onChange={e=>setModuleSettings({...moduleSettings,[key]:e.target.checked})}/><span><b>{label}</b><small>{locked?'Geschütztes Kernmodul':dependency?`Abhängigkeit: ${dependency}`:'Kann bei Nichtverwendung deaktiviert werden'}</small></span></label>)}</div></div>)}</div><div className="toolbar"><button type="button" disabled={busy} onClick={saveModules}>Modulauswahl speichern</button></div></section>}
  {section==='devices'&&<section className="settings-pane settings-standard-pane device-management-settings"><h3>Geräteverwaltung</h3><p className="muted">Zentrale Einstellungen für Discovery, Identitätsabgleich und Dublettenerkennung. Die Werte gelten für alle aktuellen und zukünftigen Erkennungsquellen.</p><div className="settings-standard-stack"><div className="settings-group"><div className="settings-group-head"><h5>Confidence-/Merge-Engine</h5><p>Schwellwerte und Gewichtungen an die eigene Geräteumgebung anpassen. Höhere Werte machen automatische Zusammenführungen vorsichtiger.</p></div><div className="merge-settings-grid settings-field-grid"><label><span>Automatisch zusammenführen ab</span><input type="number" min="1" value={deviceMergeSettings.autoMergeThreshold} onChange={e=>updateDeviceMergeNumber('autoMergeThreshold',e.target.value)}/></label><label><span>Mögliche Dublette ab</span><input type="number" min="0" value={deviceMergeSettings.possibleDuplicateThreshold} onChange={e=>updateDeviceMergeNumber('possibleDuplicateThreshold',e.target.value)}/></label><label><span>MAC-Adresse</span><input type="number" min="0" value={deviceMergeSettings.macWeight} onChange={e=>updateDeviceMergeNumber('macWeight',e.target.value)}/></label><label><span>Hardware-Seriennummer</span><input type="number" min="0" value={deviceMergeSettings.hardwareSerialWeight} onChange={e=>updateDeviceMergeNumber('hardwareSerialWeight',e.target.value)}/></label><label><span>SNMP-Seriennummer / Engine-ID</span><input type="number" min="0" value={deviceMergeSettings.snmpSerialWeight} onChange={e=>updateDeviceMergeNumber('snmpSerialWeight',e.target.value)}/></label><label><span>Geräte-ID</span><input type="number" min="0" value={deviceMergeSettings.deviceIdWeight} onChange={e=>updateDeviceMergeNumber('deviceIdWeight',e.target.value)}/></label><label><span>Hostname / Gerätename</span><input type="number" min="0" value={deviceMergeSettings.hostnameWeight} onChange={e=>updateDeviceMergeNumber('hostnameWeight',e.target.value)}/></label><label><span>IP-Adresse</span><input type="number" min="0" value={deviceMergeSettings.ipWeight} onChange={e=>updateDeviceMergeNumber('ipWeight',e.target.value)}/></label><label><span>Hersteller</span><input type="number" min="0" value={deviceMergeSettings.manufacturerWeight} onChange={e=>updateDeviceMergeNumber('manufacturerWeight',e.target.value)}/></label><label><span>Gerätetyp</span><input type="number" min="0" value={deviceMergeSettings.typeWeight} onChange={e=>updateDeviceMergeNumber('typeWeight',e.target.value)}/></label><label><span>Bonus ab zwei Quellen</span><input type="number" min="0" value={deviceMergeSettings.twoSourceBonus} onChange={e=>updateDeviceMergeNumber('twoSourceBonus',e.target.value)}/></label><label><span>Bonus ab drei Quellen</span><input type="number" min="0" value={deviceMergeSettings.threeSourceBonus} onChange={e=>updateDeviceMergeNumber('threeSourceBonus',e.target.value)}/></label></div></div><div className="settings-group"><div className="settings-group-head"><h5>Schutz- und Automatikregeln</h5><p>Automatische Zusammenführung kontrollieren und Fehlzuordnungen durch wechselnde IP-Adressen vermeiden.</p></div><div className="settings-check-grid"><label className="settings-check"><input type="checkbox" checked={deviceMergeSettings.automaticMergeEnabled} onChange={e=>setDeviceMergeSettings({...deviceMergeSettings,automaticMergeEnabled:e.target.checked})}/><span><b>Automatische Zusammenführung aktiv</b><small>Eindeutige Treffer oberhalb des Schwellwerts automatisch konsolidieren.</small></span></label><label className="settings-check"><input type="checkbox" checked={deviceMergeSettings.hardConflictsBlockMerge} onChange={e=>setDeviceMergeSettings({...deviceMergeSettings,hardConflictsBlockMerge:e.target.checked})}/><span><b>Harte Konflikte blockieren Auto-Merge</b><small>Abweichende starke Identitätsmerkmale verhindern die automatische Zusammenführung.</small></span></label><label className="settings-check"><input type="checkbox" checked={deviceMergeSettings.ipNeverMergesAlone} onChange={e=>setDeviceMergeSettings({...deviceMergeSettings,ipNeverMergesAlone:e.target.checked})}/><span><b>IP-Adresse niemals allein verwenden</b><small>Empfohlener Schutz gegen DHCP-bedingte Fehlzuordnungen.</small></span></label></div></div></div><div className="note"><b>Aktuelle Entscheidungsbereiche:</b> unter {deviceMergeSettings.possibleDuplicateThreshold} Punkte = getrenntes Gerät · {deviceMergeSettings.possibleDuplicateThreshold}–{Math.max(deviceMergeSettings.possibleDuplicateThreshold,deviceMergeSettings.autoMergeThreshold-1)} Punkte = mögliche Dublette · ab {deviceMergeSettings.autoMergeThreshold} Punkte = {deviceMergeSettings.automaticMergeEnabled?'automatische Zusammenführung':'nur Prüfhinweis (Auto-Merge deaktiviert)'}</div><div className="toolbar"><button type="button" disabled={deviceMergeBusy} onClick={saveDeviceMergeConfig}>Merge-Einstellungen speichern</button><button type="button" className="secondary" disabled={deviceMergeBusy} onClick={resetDeviceMergeConfig}>Standardwerte wiederherstellen</button></div>{deviceMergeMessage&&<p className="note ok">{deviceMergeMessage}</p>}</section>}
  {section==='workflows'&&<section className="settings-pane settings-workflows">

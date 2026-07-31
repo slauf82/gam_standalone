@@ -508,3 +508,21 @@ Mit 40i erhält GAM eine zentrale Scan-Grundlage für USB-Barcodescanner, Kamera
 ## Schritt 40k – Gerätemanager
 
 Der Gerätemanager ergänzt das Geräteverzeichnis um eine Discovery-Arbeitsansicht. Lokale Netzwerkgeräte werden als Vorschläge erkannt und erst nach Bestätigung in GAM registriert. Bereits registrierte, neu erkannte und ignorierte Geräte werden getrennt dargestellt.
+
+### Schritt 40k33a1 – Linux-JDK-Validierung
+
+Die Linux-Ersteinrichtung erkennt nun auch aktuelle `javac`-Ausgaben wie `javac 21.0.11`
+korrekt. Ein bereits nach `runtime/java` geladenes Temurin-JDK 21 wird beim naechsten Start
+weiterverwendet; bei einer fehlgeschlagenen Pruefung werden die erkannten Versionen ausgegeben.
+
+## Schritt 40k35g
+
+GAM-eigener Android-Verbindungsworkflow mit Pairing, gespeicherter Wiederverbindung, automatischem Connect vor Inventarisierungen und Korrektur falsch als Linux klassifizierter Android-Geräte.
+
+
+## Schritt 40k35h2
+- Der Android-Kopplungsdialog wird beim Öffnen automatisch in den sichtbaren Bereich gescrollt.
+- Das Feld für die IP-Adresse erhält automatisch den Eingabefokus.
+
+### Schritt 40k35j
+Android-Verbindungsstatus verwendet nach einem manuellen Connect sofort den neu eingegebenen ADB-Port; Meldungen eines früheren Ports werden nicht mehr als aktueller Zustand angezeigt.

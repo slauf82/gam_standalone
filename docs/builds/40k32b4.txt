@@ -1,0 +1,7 @@
+40k32b4 – Robuste Windows-Teilabfragen
+
+- Basis-, Detail- und Updateabfragen getrennt
+- individuelle Zeitlimits pro Teilabfrage
+- Teilergebnisse bleiben bei optionalen Timeouts erhalten
+- Updateprüfung blockiert die Windows-Inventarisierung nicht mehr
+- erweiterte Diagnosemeldungen

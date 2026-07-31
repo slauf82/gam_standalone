@@ -34,14 +34,19 @@ public class InventoryController {
   private final DiscoverySessionService discoverySessions;
   private final DeviceIdentityMergeSettingsRepository mergeSettings;
   private final ObjectMapper objectMapper;
+  private final WinRmSettingsRepository winRmSettings;
+  private final LinuxSshSettingsRepository linuxSshSettings;
+  private final WindowsRemoteInventoryService windowsRemote;
 
-  public InventoryController(InventoryRepository repository, DeviceDiscoveryService discoveryService, BuiltinDiscoverySettingsRepository builtinDiscoverySettings, DiscoverySessionService discoverySessions, DeviceIdentityMergeSettingsRepository mergeSettings, ObjectMapper objectMapper) {
+  public InventoryController(InventoryRepository repository, DeviceDiscoveryService discoveryService, BuiltinDiscoverySettingsRepository builtinDiscoverySettings, DiscoverySessionService discoverySessions, DeviceIdentityMergeSettingsRepository mergeSettings, ObjectMapper objectMapper, WinRmSettingsRepository winRmSettings, WindowsRemoteInventoryService windowsRemote, LinuxSshSettingsRepository linuxSshSettings) {
     this.repository = repository;
     this.discoveryService = discoveryService;
     this.builtinDiscoverySettings = builtinDiscoverySettings;
     this.discoverySessions = discoverySessions;
     this.mergeSettings = mergeSettings;
     this.objectMapper = objectMapper;
+    this.winRmSettings = winRmSettings; this.linuxSshSettings = linuxSshSettings;
+    this.windowsRemote = windowsRemote;
   }
 
   @GetMapping("/devices")
@@ -89,6 +94,33 @@ public class InventoryController {
     return builtinDiscoverySettings.save(values, principal == null ? "system" : principal.getName());
   }
 
+
+  @GetMapping("/discovery/winrm")
+  public WinRmSettingsRepository.View winRmSettings() { return winRmSettings.view(); }
+
+  @PutMapping("/discovery/winrm")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public WinRmSettingsRepository.View saveWinRmSettings(@RequestBody WinRmSettingsRepository.Update update, java.security.Principal principal) {
+    return winRmSettings.save(update, principal == null ? "system" : principal.getName());
+  }
+
+  @PostMapping("/discovery/winrm/test")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public WindowsRemoteInventoryService.WinRmTestResult testWinRm(@RequestBody java.util.Map<String,Object> request) {
+    String host = request == null ? "" : String.valueOf(request.getOrDefault("host", "")).trim();
+    if (host.isBlank()) return new WindowsRemoteInventoryService.WinRmTestResult(winRmSettings.load().enabled(), false, "Bitte eine IP-Adresse oder einen Hostnamen angeben.", OffsetDateTime.now().toString());
+    return windowsRemote.testConnection(host);
+  }
+
+
+  @GetMapping("/discovery/ssh")
+  public LinuxSshSettingsRepository.View linuxSshSettings(){ return linuxSshSettings.view(); }
+
+  @PutMapping("/discovery/ssh")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public LinuxSshSettingsRepository.View saveLinuxSshSettings(@RequestBody LinuxSshSettingsRepository.Update update, java.security.Principal principal){
+    return linuxSshSettings.save(update, principal==null?"system":principal.getName());
+  }
 
   @GetMapping("/discovery/merge-settings")
   public DeviceIdentityConfidenceEngine.Settings mergeSettings(){ return mergeSettings.load(); }

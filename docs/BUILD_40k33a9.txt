@@ -1,0 +1,10 @@
+GAM Standalone 2.1.0 – Schritt 40k33a9
+
+Korrektur der Datenbankreparatur aus 40k33a8:
+- keine temporaere Reparaturdatenbank mehr
+- keine globalen CREATE-/DROP-DATABASE-Rechte fuer den Benutzer gam erforderlich
+- fehlende Tabellen werden selektiv direkt in kopfzentruminventardb angelegt
+- nur CREATE-/ALTER-Anweisungen der fehlenden Tabellen werden ausgefuehrt
+- vorhandene Tabellen und Daten werden nicht ueberschrieben
+- Linux- und Windows-Ersteinrichtung entsprechend korrigiert
+- abschliessende Vollstaendigkeits- und Kernschema-Pruefung bleibt aktiv

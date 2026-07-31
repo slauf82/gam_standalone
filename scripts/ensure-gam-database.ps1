@@ -24,6 +24,7 @@ $PortableBin = Join-Path $MariaRoot "bin"
 $PortableData = Join-Path $MariaRoot "data"
 $LogDir = Join-Path $Root "logs"
 $LogFile = Join-Path $LogDir "mariadb-portable.log"
+$SchemaFile = Join-Path $Root "database\gam_v2_1_0_preview2_empty.sql"
 
 function Write-Info($msg) { Write-Host "[GAM-DB] $msg" }
 function Write-Warn($msg) { Write-Host "[GAM-DB][WARNUNG] $msg" -ForegroundColor Yellow }
@@ -58,6 +59,44 @@ function Find-DbClient {
   return $null
 }
 
+
+function Find-DbDump {
+  $candidates = @(
+    (Join-Path $PortableBin "mariadb-dump.exe"),
+    (Join-Path $PortableBin "mysqldump.exe"),
+    "mariadb-dump.exe",
+    "mysqldump.exe"
+  )
+  foreach ($c in $candidates) {
+    try {
+      $cmd = Get-Command $c -ErrorAction SilentlyContinue
+      if ($cmd) { return $cmd.Source }
+    } catch {}
+    if (Test-Path $c) { return $c }
+  }
+  return $null
+}
+
+function Invoke-DbDumpTables {
+  param([string]$DumpClient, [string]$SourceDatabase, [string[]]$Tables)
+  $args = @("-h", "127.0.0.1", "-P", "$Port", "-u", $DbUser, "--default-character-set=utf8mb4", "--no-data", "--skip-add-drop-table", "--skip-comments", "--skip-lock-tables")
+  if ($DbPassword -ne "") { $args += "-p$DbPassword" }
+  $args += $SourceDatabase
+  $args += $Tables
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = $DumpClient
+  foreach ($a in $args) { [void]$psi.ArgumentList.Add($a) }
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.UseShellExecute = $false
+  $p = [System.Diagnostics.Process]::Start($psi)
+  $out = $p.StandardOutput.ReadToEnd()
+  $err = $p.StandardError.ReadToEnd()
+  $p.WaitForExit()
+  if ($p.ExitCode -ne 0) { throw "DB-Dump Fehler ($($p.ExitCode)): $err" }
+  return $out
+}
+
 function Find-DbServerBinary {
   $candidates = @(
     (Join-Path $PortableBin "mariadbd.exe"),
@@ -89,6 +128,36 @@ function Invoke-DbClient {
   $p.WaitForExit()
   if ($p.ExitCode -ne 0) { throw "DB-Client Fehler ($($p.ExitCode)): $err" }
   return $out.Trim()
+}
+
+function Invoke-DbFile {
+  param([string]$Client, [string]$FilePath)
+  if (!(Test-Path $FilePath)) { throw "SQL-Schemadatei fehlt: $FilePath" }
+  $args = @("-h", "127.0.0.1", "-P", "$Port", "-u", $DbUser, "--default-character-set=utf8mb4")
+  if ($DbPassword -ne "") { $args += "-p$DbPassword" }
+  $args += $DatabaseName
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = $Client
+  foreach ($a in $args) { [void]$psi.ArgumentList.Add($a) }
+  $psi.RedirectStandardInput = $true
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.UseShellExecute = $false
+  $p = [System.Diagnostics.Process]::Start($psi)
+  $reader = [System.IO.File]::OpenText($FilePath)
+  try {
+    $buffer = New-Object char[] 65536
+    while (($read = $reader.Read($buffer, 0, $buffer.Length)) -gt 0) {
+      $p.StandardInput.Write($buffer, 0, $read)
+    }
+  } finally {
+    $reader.Dispose()
+    $p.StandardInput.Close()
+  }
+  $out = $p.StandardOutput.ReadToEnd()
+  $err = $p.StandardError.ReadToEnd()
+  $p.WaitForExit()
+  if ($p.ExitCode -ne 0) { throw "Schemaimport fehlgeschlagen ($($p.ExitCode)): $err" }
 }
 
 function Download-PortableMariaDB {
@@ -177,20 +246,79 @@ if (!$serverAvailable) {
 
 $client = Find-DbClient
 if (!$client) {
-  Write-Info "MariaDB/MySQL ist erreichbar. Kein lokaler DB-Client gefunden; die Ziel-Datenbank kann vor dem Backend-Start nicht automatisch angelegt werden."
+  Write-Warn "MariaDB/MySQL ist erreichbar, aber kein lokaler DB-Client (mariadb.exe/mysql.exe) wurde gefunden."
+  Write-Info "Schema-Validierung wird uebersprungen. Das Backend verbindet sich direkt per JDBC (eigener Treiber im Backend enthalten)."
   exit 0
 }
 
 try {
-  Write-Info "Bereite leere Ziel-Datenbank '$DatabaseName' fuer den grafischen Erststart-Assistenten vor..."
-  Invoke-DbClient -Client $client -Sql "CREATE DATABASE IF NOT EXISTS \`$DatabaseName\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" | Out-Null
-  $count = Invoke-DbClient -Client $client -Sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DatabaseName';"
-  if ([int]$count -eq 0) {
-    Write-Info "Ziel-Datenbank ist leer. Die vollstaendige Einrichtung erfolgt im Frontend-Assistenten."
-  } else {
-    Write-Info "Datenbank '$DatabaseName' ist bereits eingerichtet ($count Tabellen). Es wird nichts veraendert."
+  Write-Info "Bereite und validiere Ziel-Datenbank '$DatabaseName'..."
+  Invoke-DbClient -Client $client -Sql "CREATE DATABASE IF NOT EXISTS ``$DatabaseName`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" | Out-Null
+  if (!(Test-Path $SchemaFile)) { throw "SQL-Schemadatei fehlt: $SchemaFile" }
+
+  $schemaText = Get-Content -Raw -Path $SchemaFile
+  $expectedTables = [regex]::Matches($schemaText, '(?im)^CREATE TABLE `([^`]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+  if (!$expectedTables -or $expectedTables.Count -eq 0) { throw "Aus der Schemadatei konnten keine erwarteten Tabellen ermittelt werden." }
+
+  $missing = New-Object System.Collections.Generic.List[string]
+  foreach ($table in $expectedTables) {
+    $safeTable = $table.Replace("'", "''")
+    $exists = Invoke-DbClient -Client $client -Sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DatabaseName' AND table_name='$safeTable';"
+    if ([int]$exists -ne 1) { $missing.Add($table) }
   }
+
+  if ($missing.Count -gt 0) {
+    Write-Warn "Datenbankschema ist unvollstaendig. Fehlende Tabellen: $($missing -join ', ')"
+    # Reparatur direkt in der GAM-Datenbank. Der GAM-Benutzer benoetigt
+    # dadurch keine globalen CREATE-/DROP-DATABASE-Rechte. Es werden nur die
+    # CREATE- und ALTER-Anweisungen der tatsaechlich fehlenden Tabellen ausgefuehrt.
+    $repairSql = New-Object System.Text.StringBuilder
+    [void]$repairSql.AppendLine('SET FOREIGN_KEY_CHECKS=0;')
+    $selectedCount = 0
+    foreach ($table in $missing) {
+      $escaped = [regex]::Escape($table)
+      $createPattern = "(?is)CREATE TABLE(?: IF NOT EXISTS)? ``$escaped``.*?;"
+      $createMatch = [regex]::Match($schemaText, $createPattern)
+      if (!$createMatch.Success) { throw "CREATE-TABLE-Anweisung fuer '$table' wurde im Basisschema nicht gefunden." }
+      $createSql = $createMatch.Value -replace '(?i)^CREATE TABLE `', 'CREATE TABLE IF NOT EXISTS `'
+      [void]$repairSql.AppendLine($createSql)
+      $selectedCount++
+
+      $alterPattern = "(?is)ALTER TABLE ``$escaped``.*?;"
+      foreach ($alterMatch in [regex]::Matches($schemaText, $alterPattern)) {
+        [void]$repairSql.AppendLine($alterMatch.Value)
+        $selectedCount++
+      }
+    }
+    [void]$repairSql.AppendLine('SET FOREIGN_KEY_CHECKS=1;')
+    if ($selectedCount -eq 0) { throw "Aus dem Basisschema konnten keine Reparaturanweisungen erzeugt werden." }
+
+    $repairFile = Join-Path ([System.IO.Path]::GetTempPath()) ("gam-schema-repair-{0}.sql" -f [guid]::NewGuid().ToString('N'))
+    try {
+      [System.IO.File]::WriteAllText($repairFile, $repairSql.ToString(), [System.Text.UTF8Encoding]::new($false))
+      Write-Info "Trage fehlende Tabellen direkt in '$DatabaseName' nach ($selectedCount Schemaanweisungen, keine temporaere Datenbank erforderlich)..."
+      Invoke-DbFile -Client $client -FilePath $repairFile
+    } finally {
+      Remove-Item -Force -ErrorAction SilentlyContinue $repairFile
+    }
+  } else {
+    Write-Info "Alle $($expectedTables.Count) Tabellen aus dem GAM-Basisschema sind vorhanden."
+  }
+
+  Invoke-DbClient -Client $client -UseDatabase -Sql "CREATE TABLE IF NOT EXISTS gam_settings (setting_key VARCHAR(120) NOT NULL, setting_value TEXT NULL, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, updated_by VARCHAR(255) NULL, PRIMARY KEY(setting_key)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;" | Out-Null
+
+  foreach ($table in $expectedTables) {
+    $safeTable = $table.Replace("'", "''")
+    $exists = Invoke-DbClient -Client $client -Sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DatabaseName' AND table_name='$safeTable';"
+    if ([int]$exists -ne 1) { throw "Schema bleibt unvollstaendig; Tabelle '$table' fehlt." }
+  }
+  foreach ($core in @('accounts','news','rechnungsgesellschaft','gam_settings')) {
+    $exists = Invoke-DbClient -Client $client -Sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DatabaseName' AND table_name='$core';"
+    if ([int]$exists -ne 1) { throw "Kern-Tabelle '$core' fehlt nach der Datenbankinitialisierung." }
+  }
+  $count = Invoke-DbClient -Client $client -Sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DatabaseName';"
+  Write-Info "GAM-Datenbankschema erfolgreich validiert ($count Tabellen, alle Kern-Tabellen vorhanden)."
 } catch {
-  Write-Warn "Die leere Ziel-Datenbank konnte nicht vorbereitet werden: $($_.Exception.Message)"
-  Write-Warn "Backend-Start wird versucht. Bitte DB-Zugang in .env pruefen."
+  Write-Err "Die GAM-Datenbank konnte nicht vorbereitet werden: $($_.Exception.Message)"
+  exit 1
 }

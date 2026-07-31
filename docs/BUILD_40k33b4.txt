@@ -1,0 +1,25 @@
+GAM Standalone v2.1.0 Preview 3 – Schritt 40k33b4
+Discovery-Quellenverkettung und kontrollierte Gerätezusammenführung
+
+Schwerpunkte:
+- IP-Merge-Bruecke in der DeviceIdentityConfidenceEngine: identische IP mit
+  genau einer bekannten MAC-Adresse (Gegenstelle ohne MAC, kein Widerspruch)
+  ist jetzt ein starkes automatisches Merge-Signal statt eines ewig schwachen.
+- Eine bislang doppelte, unvollstaendige "bevorzuge spezifische Kategorie"-Logik
+  (DeviceDiscoveryService und DiscoveryRegistrationRepository) wurde durch eine
+  einzige, reihenfolgeunabhaengige, spezifitaetsbasierte Implementierung
+  ersetzt.
+- Manuelle Namen sind jetzt genauso geschuetzt wie manuelle Kategorien
+  (neue Spalte manual_name).
+- Neue Alias-Tabelle: Namen zusammengefuehrter/umbenannter Geraete gehen nicht
+  verloren und werden bei kuenftigen Treffern wiedererkannt.
+- Neue manuelle Geraetezusammenfuehrung: Kandidatensuche (Wiederverwendung der
+  bestehenden Identitaets-Engine), Vorschau, Bestaetigung, Ablehnung,
+  MAC-Konflikt-Schutz, Audit-Protokoll. Neuer Dialog "Geraetezusammenfuehrung
+  pruefen" im Geraetemanager.
+- Discovery-Chaining-Protokollierung (TRIGGER_CHAIN-Diagnosephase) fuer die
+  bereits bestehende, von anderen Quellen ausgeloeste Linux-Nachpruefung.
+
+Ausfuehrliche Dokumentation: docs/40k33b4-discovery-chaining-geraetezusammenfuehrung.md
+
+Basis: 40k33b3

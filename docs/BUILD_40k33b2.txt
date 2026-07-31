@@ -1,0 +1,15 @@
+GAM Standalone v2.1.0 Preview 3 – Schritt 40k33b2
+
+Schwerpunkte:
+- Unnötigen Startfehler behoben: Wenn MariaDB/MySQL bereits unter localhost:3306
+  erreichbar ist, aber kein lokaler DB-Client (mariadb.exe/mysql.exe bzw.
+  mariadb/mysql) installiert ist, brach das Backend den Start bisher mit
+  "[GAM-DB][FEHLER] ... kein lokaler DB-Client wurde gefunden" hart ab.
+- Die client-basierte Schema-Vorprüfung wird nun in diesem Fall übersprungen
+  (Warnung statt Fehler, exit 0 statt exit 1). Das Backend verbindet sich
+  ohnehin über seinen eigenen mitgelieferten JDBC-Treiber und benötigt dafür
+  kein separates mariadb.exe/mysql.exe.
+- Fix in scripts/ensure-gam-database.ps1 (Windows) und
+  scripts/ensure-gam-database.sh (Linux/macOS) für beide Plattformen.
+
+Basis: 40k33b1

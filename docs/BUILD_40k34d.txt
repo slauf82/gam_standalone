@@ -1,0 +1,32 @@
+GAM Standalone v2.1.0 – Schritt 40k34d
+Android Apps, Dienste und Rollen (Laufzeitzustand)
+
+Schwerpunkte:
+- Vorab geprueft: keine neue Klasse war fuer diesen Schritt notwendig.
+  AndroidAdbService (bestehende SHELL_COMMANDS-Liste), AndroidInventoryParser
+  (bestehende parse()-Methode) und AndroidInventorySection (bestehende
+  generische Anzeige) wurden ausschliesslich additiv erweitert.
+- 10 neue ADB-Kommandos (ps -A, dumpsys activity services, pm list users,
+  dumpsys power, cpu online/loadavg, settings get fuer Flugmodus/WLAN/
+  Bluetooth/IME/Accessibility/Notification-Listener/Autofill, cmd role
+  holders fuer Dialer/SMS/Assistent, dumpsys device_policy, dumpsys
+  connectivity) - je EINMAL pro Lauf, keine Auffuehrung pro Prozess/Dienst.
+- Neue Felder: Laufende Prozesse, Dienste (Anzahl/Beispiele), Benutzer,
+  Bildschirm an, Doze Mode, Battery Saver, CPU-Kerne/-Last, Flugmodus,
+  WLAN/Bluetooth/VPN-Hinweis, Standard-IME/Accessibility/Notification-
+  Listener/Autofill, Standard-Telefon/-SMS/-Assistent, Device/Profile Owner.
+- Frontend: bestehende AndroidInventorySection in einklappbare Themen-
+  bereiche gruppiert (Prozesse/Dienste-Apps/Rollen/Netzwerk/Geraetezustand/
+  Benutzer/Weitere Merkmale) - dieselbe Datenquelle, keine neue Abfrage.
+- Ehrlich NICHT umgesetzt: Bildschirm gesperrt (kein zuverlaessiges Feld
+  gefunden), WLAN-SSID (root-frei nicht zuverlaessig), Swap/ZRAM (kein
+  einheitliches Verhalten), CPU-Frequenzen (Performance-Vorgabe), "Apps
+  aktiv" vereinfacht statt vollem Abgleich mit 40k34c-Apptabelle.
+- Keine neuen Integritaetsregeln (folgt 40k34e), keine neuen Reports (folgt
+  40k34f) - wie im Auftrag gefordert nicht Teil dieses Schritts.
+- Kein echter Build/keine echten Geraetetests moeglich - ausdruecklich
+  benannt.
+
+Ausfuehrliche Dokumentation: docs/40k34d-android-laufzeitzustand.md
+
+Basis: 40k34c

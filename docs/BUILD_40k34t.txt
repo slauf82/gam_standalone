@@ -1,0 +1,59 @@
+GAM Standalone v2.1.0 – Schritt 40k34t
+Geraetebestand vollstaendig mit Discovery, Geraeteidentitaet und
+Plattforminventarisierung verbinden
+
+Bestaetigt: die fehlende Verbindung zwischen InventoryDevice und
+DeviceIdentity WAR die Ursache - konkreter als vermutet:
+moveRegisteredToInventory() loeschte die Discovery-Identitaet bei JEDEM
+Verschieben in den Gerätebestand aktiv (deregisterByKey()), OHNE jemals
+eine Verbindung zu dokumentieren.
+
+Gepreuft und verworfen: identityKey per resolveKey() neu berechnen -
+unzuverlaessig, da InventoryDevice keine MAC-Adresse speichert und
+resolveKey() MAC vor Seriennummer/IP/Name priorisiert.
+
+Umgesetzt:
+- Neue, rein additive Tabelle gam_inventory_identity_links +
+  InventoryIdentityLinkRepository - reine Verknuepfung, KEINE zweite
+  Geraeteidentitaet.
+- moveRegisteredToInventory() korrigiert: verknuepft JETZT sofort, BEVOR
+  die Discovery-Identitaet geloescht wird - 100% zuverlaessig fuer alle
+  kuenftigen Verschiebungen.
+- Best-Effort-Nachverknuepfung fuer bereits VOR diesem Schritt verschobene
+  Altgeraete (nur bei aktuell noch existierender, eindeutiger Discovery-
+  Identitaet; Seriennummer, dann IP+Name; Name allein NIE; mehrdeutige
+  Treffer werden NICHT verknuepft, sondern protokolliert).
+- InventoryDeviceDetail additiv um identityKey/platform/platformStatus/
+  discoveryProtocol erweitert - EIN gemeinsames DTO statt Einzelabfragen.
+- Waehrend der Umsetzung ein zusaetzlicher Plattforminventarisierungs-
+  Endpunkt entworfen, dann WIEDER ENTFERNT, da er die explizit verbotene
+  "zweite API" gewesen waere - das Frontend ruft stattdessen direkt den
+  bereits bestehenden /platform-inventory-Endpunkt (40k34p) mit dem
+  aufgeloesten identityKey auf.
+- Nur EIN wirklich neuer Endpunkt (keine bestehende Entsprechung):
+  POST /inventory/devices/link-existing (Nachverknuepfung ausloesen).
+- Frontend: die tatsaechlich verwendete InventoryPage-Zeilen-
+  Detailansicht (technicalSections) um einen neuen, aufgeklappten
+  Abschnitt "Discovery & Plattforminventarisierung" erweitert - rendert
+  bei bestehender Verknuepfung DIESELBE PlatformInventorySection-
+  Komponente wie im Geraeteidentitaets-Dialog (keine zweite UI). Neuer
+  Button "Mit Discovery verknuepfen" ergaenzt.
+- platformOf() in DeviceIdentityService public gemacht, damit
+  InventoryRepository dieselbe (in 40k34s bereits korrigierte)
+  Plattformerkennung wiederverwendet statt sie zu duplizieren.
+
+Keine Aenderung an Merge, Discovery, automatischer Inventarisierung
+(40k34r/s) oder bestehenden InventoryDevice-Feldern.
+
+Ehrlich benannt: Altgeraete ohne aktuell noch existierende Discovery-
+Identitaet koennen nicht automatisch nachverknuepft werden - das ist eine
+Datenluecke aus der Vergangenheit, keine neue Funktionsluecke.
+
+Kein echter Build und kein Test mit den neun tatsaechlichen Android-
+Geraeten moeglich - ausdruecklich benannt. Record-Konstruktor-Check (0
+Abweichungen), Balance-Checks sowie TypeScript-Syntax-Check (0 Diagnosen)
+durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34t-geraetebestand-deviceidentity-integration.md
+
+Basis: 40k34s

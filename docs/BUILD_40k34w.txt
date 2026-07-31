@@ -1,0 +1,45 @@
+GAM Standalone v2.1.0 – Schritt 40k34w
+Provider-Registry als dauerhafte Architektur, echter tsc-Lauf
+
+Baut auf der in 40k34v bereits umgesetzten Provider-Registry-Architektur
+auf (REGISTERED_DEVICE_MENU_PROVIDERS, DeviceMenuItem, DeviceMenuContext,
+clientPlatformOf(), portal-basiertes Dropdown).
+
+Ergaenzt:
+- Stabile actionId (<bereich>.<aktion>-Schema, z.B. platform.reinventory,
+  android.apps, inventory.move) an jedem Menueintrag - unabhaengig vom
+  sichtbaren label, vorbereitet fuer kuenftige Suche/Berechtigungen/
+  Tastenkuerzel/Telemetrie/Favoriten/Workflows/Plugins (noch nicht
+  implementiert, nur das Feld selbst).
+- Deterministische, von der Registrierungsreihenfolge UNABHAENGIGE
+  Sortierung: nicht gelistete Gruppen jetzt alphabetisch statt nach
+  erstem Auftreten; Eintraege innerhalb einer Gruppe jetzt nach label
+  sortiert statt nach Provider-Reihenfolge.
+- actionId wird jetzt auch als React-key verwendet (stabiler als der
+  vorherige lokale id-Wert).
+
+Erstmals in dieser gesamten Serie: ECHTER projektweiter tsc-Lauf (ueber
+eine global installierte TypeScript-Version, mit der tatsaechlichen
+tsconfig.json des Projekts) statt der bisherigen Einzeldatei-
+transpileModule-Pruefung. Ergebnis: 9389 Diagnosen insgesamt, davon ~9350
+reine Folge der fehlenden node_modules (kein npm install moeglich, kein
+Netzwerkzugriff), 1 echter gefundener und behobener Fehler (doppelter
+createPortal-Import), ~38 verbleibende, nachweislich vorbestehende
+Legacy-Fehler ausserhalb des in dieser Serie geschriebenen Codes
+(unveraendert gelassen, ausserhalb des Auftragsumfangs).
+
+Kein echter npm install/vite build moeglich (kein Netzwerkzugriff). Kein
+echter Browsertest moeglich (kein lauffaehiger Dev-Server ohne
+node_modules).
+
+WICHTIGER ZWISCHENFALL: waehrend der Bearbeitung lief der Speicherplatz
+in der Sandbox voll, wodurch die urspruengliche Entpackung des
+hochgeladenen Pakets unbemerkt unvollstaendig blieb (pom.xml und fast
+alle Dokumentationsdateien fehlten, main.tsx selbst blieb aber intakt).
+Nach Freigabe von Speicherplatz wurde das Originalpaket vollstaendig neu
+entpackt und die main.tsx-Aenderung darueber zurueckgespielt - per
+Diff-Kontrolle als vollstaendig bestaetigt.
+
+Ausfuehrliche Dokumentation: docs/40k34w-provider-registry-vervollstaendigung.md
+
+Basis: 40k34v

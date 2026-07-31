@@ -28,6 +28,7 @@ public class DeviceDiscoveryService {
   private static final int HOST_TIMEOUT_MS = 300;
   private final DeviceIdentityConfidenceEngine identityEngine = new DeviceIdentityConfidenceEngine();
   private final DeviceIdentityMergeSettingsRepository mergeSettings;
+  private final DeviceIdentityService deviceIdentityService;
   private final JdbcTemplate jdbc;
   private final FritzBoxDeviceSource fritzBoxDeviceSource;
   private final HomeAssistantDeviceSource homeAssistantDeviceSource;
@@ -35,6 +36,9 @@ public class DeviceDiscoveryService {
   private final BuiltinDiscoverySettingsRepository builtinSettings;
   private final AdditionalDiscoveryService additionalDiscovery;
   private final SnmpDiscoveryService snmpDiscovery;
+  private final WindowsInventoryDiscoveryService windowsInventoryDiscovery;
+  private final LinuxInventoryDiscoveryService linuxInventoryDiscovery;
+  private final LinuxNetworkDiscoveryService linuxNetworkDiscovery;
   private final DiscoveryRegistrationRepository registrations;
   private Map<String,FritzBoxDeviceSource.FritzDevice> fritzByIp = Map.of();
   private Map<String,FritzBoxDeviceSource.FritzDevice> fritzByMac = Map.of();
@@ -43,7 +47,7 @@ public class DeviceDiscoveryService {
   private Map<String,TuyaDeviceSource.TuyaDevice> tuyaByIp = Map.of();
   private Map<String,TuyaDeviceSource.TuyaDevice> tuyaByMac = Map.of();
 
-  public DeviceDiscoveryService(JdbcTemplate jdbc, FritzBoxDeviceSource fritzBoxDeviceSource, HomeAssistantDeviceSource homeAssistantDeviceSource, TuyaDeviceSource tuyaDeviceSource, BuiltinDiscoverySettingsRepository builtinSettings, AdditionalDiscoveryService additionalDiscovery, SnmpDiscoveryService snmpDiscovery, DiscoveryRegistrationRepository registrations, DeviceIdentityMergeSettingsRepository mergeSettings) { this.jdbc = jdbc; this.fritzBoxDeviceSource = fritzBoxDeviceSource; this.homeAssistantDeviceSource = homeAssistantDeviceSource; this.tuyaDeviceSource = tuyaDeviceSource; this.builtinSettings = builtinSettings; this.additionalDiscovery = additionalDiscovery; this.snmpDiscovery = snmpDiscovery; this.registrations = registrations; this.mergeSettings = mergeSettings; }
+  public DeviceDiscoveryService(JdbcTemplate jdbc, FritzBoxDeviceSource fritzBoxDeviceSource, HomeAssistantDeviceSource homeAssistantDeviceSource, TuyaDeviceSource tuyaDeviceSource, BuiltinDiscoverySettingsRepository builtinSettings, AdditionalDiscoveryService additionalDiscovery, SnmpDiscoveryService snmpDiscovery, WindowsInventoryDiscoveryService windowsInventoryDiscovery, LinuxInventoryDiscoveryService linuxInventoryDiscovery, LinuxNetworkDiscoveryService linuxNetworkDiscovery, DiscoveryRegistrationRepository registrations, DeviceIdentityMergeSettingsRepository mergeSettings, DeviceIdentityService deviceIdentityService) { this.jdbc = jdbc; this.fritzBoxDeviceSource = fritzBoxDeviceSource; this.homeAssistantDeviceSource = homeAssistantDeviceSource; this.tuyaDeviceSource = tuyaDeviceSource; this.builtinSettings = builtinSettings; this.additionalDiscovery = additionalDiscovery; this.snmpDiscovery = snmpDiscovery; this.windowsInventoryDiscovery = windowsInventoryDiscovery; this.linuxInventoryDiscovery = linuxInventoryDiscovery; this.linuxNetworkDiscovery = linuxNetworkDiscovery; this.registrations = registrations; this.mergeSettings = mergeSettings; this.deviceIdentityService = deviceIdentityService; }
 
   private static String discoveryCallerSummary() {
     return StackWalker.getInstance().walk(stream -> stream
@@ -57,6 +61,12 @@ public class DeviceDiscoveryService {
     result.put("platform", platform());
     result.put("network", true);
     result.put("powershell", isWindows() && (commandExists("powershell.exe") || commandExists("pwsh.exe")));
+    result.put("windowsInventory", isWindows() && (commandExists("powershell.exe") || commandExists("pwsh.exe")));
+    result.put("windowsInventoryMode", "Lokale PowerShell-CIM-Inventarisierung des GAM-Servers");
+    result.put("linuxInventory", isLinux());
+    result.put("linuxInventoryMode", "Lokale Linux-Inventarisierung sowie Netzwerk-Fingerprinting und optionale SSH-Tiefeninventarisierung");
+    result.put("linuxNetworkInventory", true);
+    result.put("linuxNetworkInventoryMode", "SSH-Banner, typische Linux-Dienste sowie Hostname-/Fingerabdruck-Hinweise anderer Quellen lösen eine gezielte Nachprüfung aus; optional schreibgeschützte SSH-Inventarisierung");
     result.put("arp", commandExists(isWindows() ? "arp.exe" : "arp"));
     result.put("ipNeighbor", isLinux() && commandExists("ip"));
     result.put("activeSubnetScan", true);
@@ -175,17 +185,20 @@ public class DeviceDiscoveryService {
         diagnostic(diagnosticConsumer, sessionId, "MDNS", mdnsStatus, mdnsMessage(mdnsResult), seen.size());
       } else diagnostic(diagnosticConsumer, sessionId, "MDNS", "SKIPPED", "Quelle ist deaktiviert", seen.size());
 
-      progressConsumer.accept(95, "Weitere Discovery-Quellen werden ausgewertet");
-      additionalDiscovery.scan(builtinSettings.load(), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
-
-      progressConsumer.accept(96, "SNMP-Systeminformationen werden abgefragt");
+      progressConsumer.accept(95, "SNMP-Systeminformationen werden abgefragt");
       if (builtinSettings.enabled("SNMP")) {
         diagnostic(diagnosticConsumer, sessionId, "SNMP", "RUNNING", "SNMP-v1-Identitätsabfrage läuft", seen.size());
         List<String> snmpTargets = seen.values().stream().map(DiscoveredDevice::address).filter(Objects::nonNull).distinct().toList();
         SnmpDiscoveryService.Result snmpResult = snmpDiscovery.scan(snmpTargets, snmp -> {
+          // 40k33b9: sysDescr wird jetzt als Detailfeld mitgespeichert (zuvor verworfen) -
+          // dieselbe "· Label: Value"-Konvention wie überall sonst, keine neue Datenstruktur.
+          StringBuilder snmpProtocol = new StringBuilder("SNMP v1");
+          if (snmp.description() != null && !snmp.description().isBlank()) {
+            snmpProtocol.append(" · SNMP-Systembeschreibung: ").append(snmp.description().replaceAll("\\s+", " ").trim());
+          }
           DiscoveredDevice device = new DiscoveredDevice(
             "snmp:" + snmp.address(), snmp.name(), snmp.type(), snmp.address(), null,
-            "SNMP v1", "ERKANNT", snmp.manufacturer(), snmp.objectId(), now,
+            snmpProtocol.toString(), "ERKANNT", snmp.manufacturer(), snmp.objectId(), now,
             isRegistered(snmp.address(), null, snmp.name())
           );
           emitIfNew(seen, device, deviceConsumer);
@@ -193,12 +206,110 @@ public class DeviceDiscoveryService {
         diagnostic(diagnosticConsumer, sessionId, "SNMP", "COMPLETED", snmpResult.message(), seen.size());
       } else diagnostic(diagnosticConsumer, sessionId, "SNMP", "SKIPPED", "Quelle ist deaktiviert", seen.size());
 
+      progressConsumer.accept(95, "Windows-Systeminformationen werden ausgewertet");
+      windowsInventoryDiscovery.scan(builtinSettings.enabled("WINDOWS_INVENTORY"), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
+
+      progressConsumer.accept(95, "Linux-Systeminformationen werden ausgewertet");
+      linuxInventoryDiscovery.scan(builtinSettings.enabled("LINUX_INVENTORY"), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
+
+      progressConsumer.accept(96, "Linux-Systeme im Netzwerk werden inventarisiert");
+      // 40k33b4 Discovery-Chaining: Hinweise (Name/Typ/Protokoll), die bereits von ANDEREN
+      // Quellen (mDNS, SSDP, SNMP, ARP/Neighbor, Windows, FRITZ!Box, Home Assistant, Tuya, ...)
+      // fuer dasselbe Ziel geliefert wurden, werden gezielt an die Linux-Nachprüfung
+      // weitergereicht (siehe LinuxNetworkDiscoveryService, Trigger-Erkennung in inspect()).
+      // 40k33b9: SNMP laeuft jetzt bewusst VOR dieser Stelle (statt danach), damit eine
+      // ggf. bereits vorhandene SNMP-Systembeschreibung (oft "Linux <Kernel-Version> ...")
+      // im selben Suchlauf als echter, nicht geschaetzter Hinweis zur Verfuegung steht.
+      // Schleifen-/Mehrfachausloesungsschutz: jede IP wird pro Suchlauf genau einmal
+      // dedupliziert (siehe byIp-Zusammenfassung in LinuxNetworkDiscoveryService.scan()),
+      // es findet kein rekursives erneutes Ausloesen weiterer Quellen statt - ein
+      // fehlschlagender Trigger fuer ein einzelnes Ziel bricht wegen des bestehenden
+      // future.get(...)-try/catch pro Ziel nicht den restlichen Suchlauf ab.
+      List<LinuxNetworkDiscoveryService.LinuxScanTarget> linuxTargets = seen.values().stream()
+        .filter(d -> d.address() != null)
+        .collect(java.util.stream.Collectors.toMap(DiscoveredDevice::address, d -> d, (a, b) -> a, LinkedHashMap::new))
+        .values().stream()
+        .map(d -> new LinuxNetworkDiscoveryService.LinuxScanTarget(
+          d.address(),
+          nullToEmpty(d.name()),
+          (nullToEmpty(d.type()) + " " + nullToEmpty(d.protocol())).trim(),
+          registrations.hasManualDeviceType(d.address(), d.hardwareAddress(), d.serialNumber(), d.name())))
+        .toList();
+      long plausibleHints = linuxTargets.stream()
+        .filter(t -> containsPlausibleLinuxHint(t.hostnameHint(), t.fingerprintHint())).count();
+      diagnostic(diagnosticConsumer, sessionId, "TRIGGER_CHAIN", "RUNNING",
+        "Discovery-Chaining: " + linuxTargets.size() + " Ziel(e) aus vorherigen Quellen an die Linux-Nachprüfung weitergereicht, davon "
+          + plausibleHints + " mit einem erkennbaren Linux-Hinweis (Hostname/Fingerabdruck)", seen.size());
+      linuxNetworkDiscovery.scan(builtinSettings.enabled("LINUX_NETWORK"), linuxTargets, now,
+        d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
+
+      progressConsumer.accept(96, "Weitere Discovery-Quellen werden ausgewertet");
+      additionalDiscovery.scan(builtinSettings.load(), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
+
       progressConsumer.accept(97, "DNS-Namen werden aufgelöst");
       if (builtinSettings.enabled("DNS_NAMES")) {
         diagnostic(diagnosticConsumer, sessionId, "DNS_NAMES", "RUNNING", "Reverse-DNS-Namensauflösung läuft", seen.size());
         enrichReverseDns(seen, deviceConsumer);
         diagnostic(diagnosticConsumer, sessionId, "DNS_NAMES", "COMPLETED", "Reverse-DNS-Namensauflösung abgeschlossen", seen.size());
       } else diagnostic(diagnosticConsumer, sessionId, "DNS_NAMES", "SKIPPED", "Quelle ist deaktiviert", seen.size());
+
+      progressConsumer.accept(97, "Geräteklassifizierung wird anhand vorhandener Hinweise überprüft");
+      // 40k34h/40k34i: Plattformübergreifende, evidenzbasierte Nachklassifizierung -
+      // reine Auswertung bereits gesammelter Hinweise (Hostname/Protokolltext aus
+      // diesem Suchlauf, plus bereits gespeicherte Kennwerte derselben Identität),
+      // keine neue Discovery, kein zusätzlicher ADB-/SSH-/WMI-Aufruf. Überschreibt
+      // eine bisher generische/fehlerhafte Einstufung (z.B. "Access Point"),
+      // respektiert aber jede manuelle Zuordnung und niemals eine bereits
+      // spezifischere Kategorie (siehe applyEvidenceReclassification()). Liefern
+      // mehrere Plattform-Classifier gleichzeitig ein Ergebnis für dasselbe Gerät
+      // (widersprüchliche Evidence, z.B. SSH UND SMB erreichbar), wird KEINE
+      // automatische Entscheidung getroffen - nur dokumentiert, nicht angewendet.
+      log.debug("[DISCOVERY] Discovery-Sammelphase abgeschlossen, {} Gerät(e) gesehen - Nachklassifizierung und automatische Inventarisierungsprüfung beginnt", seen.size());
+      int reclassified = 0;
+      int conflictsSkipped = 0;
+      for (DiscoveredDevice d : List.copyOf(seen.values())) {
+        if (d.address() == null) continue;
+        Map<String,Object> existing;
+        try {
+          String key = DiscoveryRegistrationRepository.resolveKey(d.address(), d.hardwareAddress(), d.serialNumber(), d.name());
+          existing = registrations.find(key);
+        } catch (Exception e) { existing = null; }
+        if (existing == null) continue;
+        String identityKey = String.valueOf(existing.get("identityKey"));
+        // 40k34r: Direkt nach Discovery automatisch prüfen, ob eine passende
+        // Plattforminventarisierung sinnvoll ist - läuft vollständig asynchron
+        // innerhalb von DeviceIdentityService (eigene Eligibilitätsprüfung:
+        // unterstützte Plattform, keine bereits laufende Inventarisierung,
+        // Cooldown) und blockiert diesen Suchlauf nicht.
+        deviceIdentityService.autoTriggerPlatformInventoryIfEligible(identityKey);
+        String currentCategory = existing.get("deviceType") == null ? "" : String.valueOf(existing.get("deviceType"));
+        String storedProtocol = String.valueOf(existing.getOrDefault("protocol", ""));
+        String adbHost = existing.get("adbHost") == null ? null : String.valueOf(existing.get("adbHost"));
+        String signalText = (nullToEmpty(d.type()) + " " + nullToEmpty(d.protocol()) + " " + nullToEmpty(storedProtocol));
+
+        var androidResult = AndroidDeviceClassifier.classifyWithEvidence(d.name(), signalText, d.manufacturer(), d.hardwareAddress(), adbHost, storedProtocol);
+        var windowsResult = WindowsDeviceClassifier.classifyWithEvidence(currentCategory, storedProtocol, d.name());
+        var linuxResult = LinuxDeviceClassifier.classifyWithEvidence(currentCategory, storedProtocol, d.name());
+        int hits = (androidResult.isPresent() ? 1 : 0) + (windowsResult.isPresent() ? 1 : 0) + (linuxResult.isPresent() ? 1 : 0);
+        if (hits == 0) continue;
+        if (hits > 1) {
+          conflictsSkipped++;
+          log.info("[DISCOVERY] Nachklassifizierung übersprungen (widersprüchliche Plattform-Evidence) für {}: Android={}, Windows={}, Linux={}",
+            identityKey, androidResult.isPresent(), windowsResult.isPresent(), linuxResult.isPresent());
+          continue;
+        }
+        DeviceEvidenceEngine.Classification classification = androidResult.isPresent() ? androidResult.get()
+          : windowsResult.isPresent() ? windowsResult.get() : linuxResult.get();
+        boolean applied = registrations.applyEvidenceReclassification(identityKey, classification.category(),
+          String.join("; ", classification.matched().stream().map(DeviceEvidenceEngine.Evidence::description).toList()));
+        if (applied) {
+          reclassified++;
+          log.info("[DISCOVERY] Nachklassifizierung ({}): {} -> {} (Konfidenz: {}, Hinweise: {})",
+            classification.platform(), identityKey, classification.category(), classification.confidenceLabel(), classification.matched().size());
+        }
+      }
+      if (reclassified > 0 || conflictsSkipped > 0) diagnostic(diagnosticConsumer, sessionId, "EVIDENCE_RECLASSIFICATION", "COMPLETED",
+        reclassified + " Gerät(e) anhand vorhandener Hinweise neu eingestuft, " + conflictsSkipped + " widersprüchliche(r) Fall/Fälle übersprungen", seen.size());
 
       progressConsumer.accept(98, "Gerätenamen und Registrierungsstatus werden konsolidiert");
       diagnostic(diagnosticConsumer, sessionId, "FINALIZE", "RUNNING", "Ergebnisse werden konsolidiert", seen.size());
@@ -410,8 +521,24 @@ public class DeviceDiscoveryService {
           String response = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
           String name = header(response, "SERVER");
           if (name == null || name.isBlank()) name = reverseName(ip);
-          DiscoveredDevice device = new DiscoveredDevice("network:" + ip, name, "UPnP-/Netzwerkgerät", ip, null,
-            "SSDP / UPnP", "ONLINE", null, null, now, isRegistered(ip, null, name));
+          // 40k34a: dieselbe Wiederverwendung wie bei mDNS - der volle SSDP-Antworttext
+          // (u.a. SERVER-/USN-Header) enthält bei Chromecast/Android-TV-Geräten oft bereits
+          // einen erkennbaren Hinweis (z.B. "dial-multiscreen-org", "Android"), wurde bisher
+          // aber nur für den Namen ausgewertet und danach verworfen.
+          var android = AndroidDeviceClassifier.classify(name, response, null);
+          String type = "UPnP-/Netzwerkgerät";
+          String protocol = "SSDP / UPnP";
+          String manufacturer = null;
+          if (android.isPresent()) {
+            var c = android.get();
+            type = c.category();
+            manufacturer = c.manufacturer();
+            protocol = "SSDP / UPnP · Plattform: " + c.platform() + (c.roles() != null ? " · Rollen: " + c.roles() : "")
+              + " · Android-Erkennung: " + String.join(" · ", c.reasons());
+            log.info("[DISCOVERY] Android-Gerät über SSDP erkannt: {} ({}) - {}", name, type, c.reasons());
+          }
+          DiscoveredDevice device = new DiscoveredDevice("network:" + ip, name, type, ip, null,
+            protocol, "ONLINE", manufacturer, null, now, isRegistered(ip, null, name));
           emitIfNew(result, device, consumer);
         } catch (SocketTimeoutException ignored) { }
       }
@@ -581,8 +708,9 @@ public class DeviceDiscoveryService {
   }
 
   private static String preferSpecificType(String a, String b) {
-    if (a == null || a.isBlank() || "Netzwerkgerät".equalsIgnoreCase(a) || "Home Assistant Gerät".equalsIgnoreCase(a)) return firstNonBlank(b, a);
-    return a;
+    // 40k33b3/40k33b4: gemeinsame Implementierung mit DiscoveryRegistrationRepository -
+    // keine parallele Kategorie-Priorisierung mehr.
+    return DiscoveryRegistrationRepository.preferSpecificType(a, b);
   }
 
   private static boolean isGenericName(String value) {
@@ -672,6 +800,18 @@ public class DeviceDiscoveryService {
   }
 
   private static String nullToEmpty(String value) { return value == null ? "" : value; }
+
+  /**
+   * 40k33b4: Grobe Vorabschätzung für die Discovery-Chaining-Diagnosemeldung, WIE VIELE
+   * Ziele überhaupt einen erkennbaren Linux-Hinweis mitbringen. Die tatsächliche,
+   * maßgebliche Entscheidung (inkl. aller Prüfungen) trifft weiterhin ausschließlich
+   * LinuxNetworkDiscoveryService.inspect() - diese Methode dient nur der Log-Übersicht.
+   */
+  private static boolean containsPlausibleLinuxHint(String hostnameHint, String fingerprintHint) {
+    String combined = (nullToEmpty(hostnameHint) + " " + nullToEmpty(fingerprintHint)).toLowerCase(Locale.ROOT);
+    return combined.contains("linux") || combined.contains("ubuntu") || combined.contains("debian")
+      || combined.contains("cockpit") || combined.contains("ssh");
+  }
   private static String platform() { return isWindows() ? "Windows" : isMac() ? "macOS" : isLinux() ? "Linux" : System.getProperty("os.name", "Unbekannt"); }
   private static boolean isWindows() { return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win"); }
   private static boolean isMac() { return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac"); }
@@ -700,15 +840,34 @@ public class DeviceDiscoveryService {
         String ip = host.address();
         if (!validHostIp(ip)) continue;
         String name = cleanHost(host.displayName(), cleanHost(host.hostName(), "mDNS-Gerät " + ip));
+        // 40k34a: der mDNS-Diensttyp/TXT-Eintrag wurde bisher nur für den Identitätsschlüssel
+        // genutzt und für die Kategorie verworfen (jedes mDNS-Gerät wurde als "Netzwerkgerät"
+        // registriert). Jetzt wird zusätzlich geprüft, ob sich daraus bereits ohne ADB eine
+        // konkrete Android-Geräteklasse ableiten lässt - reine Auswertung bereits vorhandener
+        // Daten, keine neue Discovery.
+        String signalText = nullToEmpty(host.serviceType()) + " " + nullToEmpty(host.txt());
+        var android = AndroidDeviceClassifier.classify(name, signalText, null);
+        String type = "Netzwerkgerät";
+        String protocol = "mDNS / Bonjour (integriert)";
+        String manufacturer = null;
+        if (android.isPresent()) {
+          var c = android.get();
+          type = c.category();
+          manufacturer = c.manufacturer();
+          protocol = "mDNS / Bonjour (integriert) · Plattform: " + c.platform()
+            + (c.roles() != null ? " · Erkannte Rollen: " + c.roles() : "")
+            + " · Android-Erkennung: " + String.join("; ", c.reasons());
+          log.info("[DISCOVERY] Android-Gerät über mDNS erkannt: {} ({}) - {}", name, type, c.reasons());
+        }
         DiscoveredDevice device = new DiscoveredDevice(
           "mdns:" + ip + ":" + normalizeIdentity(host.serviceType()),
           name,
-          "Netzwerkgerät",
+          type,
           ip,
           null,
-          "mDNS / Bonjour (integriert)",
+          protocol,
           "ERKANNT",
-          null,
+          manufacturer,
           null,
           now,
           isRegistered(ip, null, name)

@@ -1,0 +1,9 @@
+GAM Standalone v2.1.0 Preview 3 – Schritt 40k33b1
+
+Schwerpunkte:
+- Kategoriesynchronisierung vorhandener manueller und automatischer Gerätekategorien
+- Vermeidung ähnlicher automatischer Parallelkategorien
+- stabilerer nachträglicher Beispieldatenimport
+- ursprünglicher SQL-Fehler bleibt mit Anweisungsnummer sichtbar
+
+Basis: 40k33b

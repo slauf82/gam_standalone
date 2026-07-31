@@ -2,6 +2,7 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   application:
     name: gam-standalone-backend
   mvc:
@@ -27,6 +28,9 @@ management:
     health:
       show-details: always
 logging:
+  charset:
+    console: UTF-8
+    file: UTF-8
   file:
     name: ${GAM_LOG_FILE:logs/gam-backend.log}
   level:
@@ -40,6 +44,13 @@ gam:
     secret: ${GAM_JWT_SECRET:BITTE_IN_PRODUKTION_AENDERN_MINDESTENS_32_ZEICHEN}
   lbd:
     file: ${GAM_LBD_FILE:beispiel.lbd}
+  discovery:
+    linux:
+      # Optional: gemeinsamer, ausschließlich lesender SSH-Zugang für die
+      # vertiefte Inventarisierung erreichbarer Linux-Systeme im Netzwerk.
+      ssh-user: ${GAM_LINUX_SSH_USER:}
+      ssh-key: ${GAM_LINUX_SSH_KEY:}
+      ssh-port: ${GAM_LINUX_SSH_PORT:22}
 
 app:
   security:

@@ -63,6 +63,10 @@
     <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-impl</artifactId><version>${jjwt.version}</version><scope>runtime</scope></dependency>
     <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-jackson</artifactId><version>${jjwt.version}</version><scope>runtime</scope></dependency>
     <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
+    <!-- 40k34q: Remote-Windows-Inventarisierung über WinRM - Standardbibliothek statt Eigenentwicklung.
+         Version 0.12.3 ist eine echte, veröffentlichte Maven-Central-Version (vor Aufnahme geprüft),
+         keine SNAPSHOT-Version. -->
+    <dependency><groupId>io.cloudsoft.windows</groupId><artifactId>winrm4j</artifactId><version>0.12.3</version></dependency>
     <!-- Phase 1C: E-Rechnung/ZUGFeRD/Factur-X Export.
          Mustangproject übernimmt XML-Erzeugung, PDF/A-3 Einbettung und spätere Validierung. -->
     <dependency><groupId>org.mustangproject</groupId><artifactId>library</artifactId><version>${mustangproject.version}</version></dependency>

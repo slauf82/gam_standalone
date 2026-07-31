@@ -2,6 +2,7 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   datasource:
     url: ${GAM_DB_URL:jdbc:mariadb://localhost:3306/kopfzentruminventardb}
     username: ${GAM_DB_USER:root}
@@ -18,6 +19,9 @@ spring:
           starttls:
             enable: ${SPRING_MAIL_STARTTLS_ENABLE:true}
 logging:
+  charset:
+    console: UTF-8
+    file: UTF-8
   level:
     de.kopfzentrum.gam: DEBUG
     com.openhtmltopdf.general: ERROR

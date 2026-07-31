@@ -1,0 +1,17 @@
+# 40k32b8 – Robuster GAMKV-Blockparser
+
+## Änderungen
+
+- Mehrere `GAMKV|SCHLUESSEL|BASE64`-Datensätze werden auch dann erkannt, wenn PowerShell sie in einer einzigen Zeile zusammenführt.
+- Die Auswertung ist nicht mehr von CRLF/LF oder Leerzeichen zwischen den Datensätzen abhängig.
+- Verwertbare GAMKV-Daten bleiben erhalten, selbst wenn PowerShell zusätzlich einen Exitcode ungleich 0 liefert.
+- Ein echter Modulfehler wird weiterhin gemeldet, wenn keinerlei GAMKV-Ergebnis vorhanden ist.
+- Base64-Werte werden weiterhin einzeln dekodiert; ein beschädigter Einzelwert verwirft nicht das gesamte Modul.
+
+## Behobenes Beispiel
+
+```text
+GAMKV|SOFTWARE_COUNT|MjQ0 GAMKV|SOFTWARE|...
+```
+
+wird nun korrekt als zwei getrennte Werte ausgewertet.

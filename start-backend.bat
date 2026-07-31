@@ -1,5 +1,7 @@
 @echo off
+chcp 65001 >nul
 setlocal EnableDelayedExpansion
+set "JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 %JAVA_TOOL_OPTIONS%"
 cd /d "%~dp0"
 if not exist logs mkdir logs
 if exist .env (
@@ -46,8 +48,16 @@ REM Schritt 36h: MariaDB/MySQL sicher erkennen und Demo-Datenbank optional vorbe
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ensure-gam-database.ps1"
 if errorlevel 1 (
   echo.
-  echo [WARNUNG] Datenbank-Setup meldete einen Fehler. Backend-Start wird versucht.
-  echo Bitte logs und .env pruefen, falls der Backend-Start fehlschlaegt.
+  echo [FEHLER] MariaDB und die GAM-Datenbank konnten nicht eingerichtet werden.
+  echo Das Backend wird nicht ohne validierte Datenbank gestartet.
+  pause
+  exit /b 1
+)
+REM Das Setup kann lokale DB-Zugangsdaten in .env aktualisieren.
+if exist .env (
+  for /f "usebackq tokens=1,* delims==" %%A in (".env") do (
+    if not "%%A"=="" if not "%%A:~0,1"=="#" set "%%A=%%B"
+  )
 )
 
 REM Schritt 36b: Piper-Basis automatisch vorbereiten, damit start-backend.bat + start-frontend.bat genuegen.

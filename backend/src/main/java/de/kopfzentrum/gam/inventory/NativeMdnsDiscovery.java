@@ -50,6 +50,7 @@ final class NativeMdnsDiscovery {
     "_airplay._tcp.local",
     "_raop._tcp.local",
     "_googlecast._tcp.local",
+    "_androidtvremote2._tcp.local",
     "_hap._tcp.local",
     "_home-assistant._tcp.local",
     "_mqtt._tcp.local",

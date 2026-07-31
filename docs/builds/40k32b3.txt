@@ -1,0 +1,20 @@
+# 40k32b3 – Robuste PowerShell-Skriptausführung
+
+## Ziel
+
+Die Windows-Inventarisierung muss auch bei eingebetteten Anführungszeichen, Klammern, formatierten Laufwerksangaben und Windows-Update-Filtern ohne PowerShell-Parserfehler starten.
+
+## Änderungen
+
+- Das vollständige Inventarisierungsskript wird nicht mehr als Klartext über `-Command` übergeben.
+- GAM kodiert das Skript nun als UTF-16LE/Base64 und startet PowerShell mit `-EncodedCommand`.
+- Dadurch bleiben alle PowerShell-Zeichenfolgen und Ausdrücke unverändert erhalten, insbesondere:
+  - Datenträgerangaben wie `Modell (500 GB, SSD)`
+  - Laufwerksangaben wie `C: 120/500 GB frei`
+  - Windows-Update-Filter wie `IsInstalled=0 and IsHidden=0`
+- Die vorhandenen Abfragen für Hardware, Speicher, Netzwerk, Software, Sicherheit und Wartung bleiben vollständig erhalten.
+- Fehler einzelner optionaler Windows-Abfragen werden weiterhin abgefangen, ohne die gesamte Inventarisierung abzubrechen.
+
+## Testhinweis
+
+Nach dem Start des Builds eine Gerätesuche mit aktivierter **Windows-Inventarisierung** durchführen. Der bisherige PowerShell-Parserfehler darf nicht mehr auftreten; registrierte Windows-Geräte sollten nach dem Scan die vollständigen Detailbereiche erhalten.

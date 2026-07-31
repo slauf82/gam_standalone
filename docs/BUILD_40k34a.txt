@@ -1,0 +1,31 @@
+GAM Standalone v2.1.0 – Schritt 40k34a
+Android-Geraeteidentitaet und Discovery
+
+Schwerpunkte:
+- Wichtiger Fund (analog zum SNMP-sysDescr-Fund in 40k33b9): der mDNS-
+  Diensttyp/TXT-Eintrag sowie der volle SSDP-Antworttext wurden bisher nur
+  fuer den Identitaetsschluessel genutzt und fuer die Kategorie verworfen -
+  jedes mDNS/SSDP-Geraet wurde als generisches "Netzwerkgeraet" registriert.
+  Jetzt behoben.
+- Neuer, zustandsloser AndroidDeviceClassifier (reine Textauswertung, keine
+  eigene Discovery, kein Netzwerkzugriff) - wird von mDNS, SSDP, Home
+  Assistant und SNMP gemeinsam genutzt (ein Klassifizierer, keine vier
+  separaten Android-Erkennungen).
+- Neuer mDNS-Diensttyp _androidtvremote2._tcp fuer Android TV/Google TV
+  ergaenzt (additiv zur bestehenden Liste).
+- Erkannte Geraeteklassen: Fire TV, Nvidia Shield, Google TV, Android TV,
+  E-Book Reader, Android Display, Tablet, Smartphone, genereller Android-
+  Geraete-Fallback.
+- Plattform-Erkennung (platformOf) um Android erweitert - dieselbe Methode
+  wie fuer Linux/Windows/macOS, keine Sonderlogik.
+- Bestehende Report-/Inventar-Kategorisierung (Frontend) um wenige
+  Schluesselwoerter ergaenzt, damit Android-TV-Geraete korrekt unter
+  "Fernseher & Multimedia" und Smartphones/Tablets unter "Smartphones &
+  Tablets" erscheinen - keine neue Reportkategorie.
+- Keine neue Geraeteverwaltung, keine zweite Geraeteidentitaet, keine
+  Android-spezifische Datenbank, keine neue Merge-/Integritaetslogik.
+- Noch keine ADB-Integration - folgt in 40k34b.
+
+Ausfuehrliche Dokumentation: docs/40k34a-android-discovery.md
+
+Basis: 40k33b10

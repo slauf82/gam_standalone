@@ -1,0 +1,34 @@
+# GAM 2.0 – Schritt 40k32b11
+
+## Vollständige Softwareerfassung bei großen PowerShell-Ausgaben
+
+### Ursache
+
+Die Softwareabfrage ermittelte korrekt 244 Programme. Java wartete jedoch zuerst auf das
+Ende des PowerShell-Prozesses und las dessen Standardausgabe erst danach. Bei großen
+Softwarelisten konnte der Pipe-Puffer von Windows volllaufen. PowerShell blockierte dann
+beim Schreiben, sodass nur der bereits gepufferte Anfang der Liste weiterverarbeitet wurde.
+Auf dem gemeldeten Testsystem entsprach dieser Anfang stets ungefähr 20 Programmen.
+
+Es handelte sich daher nicht um ein verbliebenes `Select-Object -First 20` und auch nicht um
+ein Frontend-Limit.
+
+### Korrektur
+
+- Die PowerShell-Ausgabe wird ab Prozessstart parallel und fortlaufend eingelesen.
+- Große Base64-kodierte `GAMKV`-Werte können den Prozess-Pipe-Puffer nicht mehr blockieren.
+- Erst nach vollständig beendetem Ausgabeleser werden die Daten geparst.
+- Lesefehler und unvollständig beendete Ausgabethreads werden explizit gemeldet.
+- Die bestehende blockunabhängige `GAMKV`-Auswertung bleibt erhalten.
+
+### Testhinweis
+
+Nach Installation des Builds muss ein neuer Windows-Inventarisierungslauf ausgeführt werden,
+damit der bisher gespeicherte gekürzte Softwarewert durch die vollständige Liste ersetzt wird.
+
+### Zusätzliche Vollständigkeitsprüfung
+
+Die Softwareabfrage übermittelt neben der Registry-Gesamtzahl nun auch die Zahl der tatsächlich
+in die Liste übernommenen Namen. Weichen beide Werte voneinander ab, wird die gekürzte Liste
+nicht stillschweigend als vollständig gespeichert. Im erfolgreichen Status steht beispielsweise
+`244 Programme vollständig erfasst`.

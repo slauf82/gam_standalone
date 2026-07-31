@@ -1,0 +1,3 @@
+40k32a – Erweiterte Windows-Systeminventarisierung
+
+Ergänzt Betriebssystem-, BIOS-, Mainboard-, CPU-, RAM-, Datenträger-, Laufwerks- und Netzwerkdaten in der lokalen Windows-Erkennung über PowerShell/CIM.

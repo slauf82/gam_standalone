@@ -1,0 +1,26 @@
+GAM Standalone v2.1.0 – Schritt 40k33b8
+Linux-Inventarisierung vervollständigen
+
+Schwerpunkte:
+- Root-Cause-Fix 1: DeviceIdentityService.IdentityRow hatte kein
+  protocol-Feld - der Dialog "Geraeteidentitaet" konnte die bereits
+  gesammelten Inventarisierungsdaten technisch gar nicht anzeigen. Behoben.
+- Root-Cause-Fix 2: runRemoteCommand() verwarf das komplette SSH-Ergebnis bei
+  einem Exit-Code ungleich 0, obwohl oft nur der LETZTE Teilbefehl in der
+  Kette fehlschlug und vorher bereits erfolgreich Daten gesammelt wurden.
+  Jetzt zaehlt nur ein gleichzeitig LEERES Ergebnis als echter Fehler.
+- Neue, IMMER sichtbare Sektion "Linux-Inventarisierung" im Dialog mit allen
+  angeforderten Feldern (Distribution, Version, Kernel, Architektur,
+  Laufzeit, CPU, RAM, Laufwerke, Dateisysteme, Netzwerk, Gateway, DNS,
+  Paketmanager, Pakete, Dienste, Rollen, SSH-Infos, SSH-Hostkey) und
+  verstaendlichen Statusmeldungen (✔/⚠).
+- Statusanzeige: letzter Versuch, Dauer, Anzahl erfasster Merkmale,
+  Fehlermeldung.
+- Drei neue manuelle Aktionen ohne kompletten Suchlauf: Linux-Inventarisierung
+  starten/erneut durchfuehren, SSH-Verbindung testen, Cache aktualisieren -
+  alle reine Wiederverwendung der bestehenden inspect()/SSH-Logik.
+- Zusaetzliches Debug-Logging (SLF4J) entlang des gesamten Ablaufs.
+
+Ausfuehrliche Dokumentation: docs/40k33b8-linux-inventarisierung-final.md
+
+Basis: 40k33b7

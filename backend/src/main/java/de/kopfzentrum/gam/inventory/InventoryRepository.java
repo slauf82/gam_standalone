@@ -8,15 +8,25 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class InventoryRepository {
   private final JdbcTemplate jdbc;
   private final NamedParameterJdbcTemplate named;
+  private final InventoryIdentityLinkRepository identityLinks;
+  private final DiscoveryRegistrationRepository registrations;
+  private final PlatformInventoryRepository platformInventory;
 
-  public InventoryRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate named) {
+  public InventoryRepository(JdbcTemplate jdbc, NamedParameterJdbcTemplate named,
+                             InventoryIdentityLinkRepository identityLinks,
+                             DiscoveryRegistrationRepository registrations,
+                             PlatformInventoryRepository platformInventory) {
     this.jdbc = jdbc;
     this.named = named;
+    this.identityLinks = identityLinks;
+    this.registrations = registrations;
+    this.platformInventory = platformInventory;
   }
 
   public List<InventoryDevice> search(InventorySearchCriteria criteria) {
@@ -35,7 +45,27 @@ public class InventoryRepository {
     String normalized = source == null ? "legacy" : source.trim().toLowerCase();
     InventoryDevice device = ("new".equals(normalized) || "geraete_neu".equals(normalized) || "geräte_neu".equals(normalized))
       ? findNew(id) : findLegacy(id);
-    return new InventoryDeviceDetail(device, assignmentsForDevice(normalized, id), consumablesForDevice(normalized, id), softwareForDevice(normalized, id));
+    // 40k34t: EIN gemeinsames DTO statt mehrerer Einzelabfragen - identityKey/
+    // Plattform/Status/Protokolltext werden hier direkt mitgeladen, sofern eine
+    // Verknüpfung existiert. Kein Fehler, wenn (noch) keine Verknüpfung besteht -
+    // die zusätzlichen Felder bleiben dann einfach leer.
+    String identityKey = identityLinks.findIdentityKey(normalized, id).orElse(null);
+    String platform = null;
+    List<Map<String,Object>> platformStatus = null;
+    String discoveryProtocol = null;
+    if (identityKey != null) {
+      try {
+        Map<String,Object> identityRow = registrations.find(identityKey);
+        discoveryProtocol = String.valueOf(identityRow.getOrDefault("protocol", ""));
+        platform = DeviceIdentityService.platformOf(String.valueOf(identityRow.get("deviceType")), discoveryProtocol);
+        platformStatus = platformInventory.latestRunsByPlatform(identityKey);
+      } catch (Exception e) {
+        // Verknüpfte Discovery-Identität existiert nicht mehr (z.B. gelöscht) -
+        // identityKey bleibt informativ stehen, die übrigen Felder bleiben leer.
+      }
+    }
+    return new InventoryDeviceDetail(device, assignmentsForDevice(normalized, id), consumablesForDevice(normalized, id),
+      softwareForDevice(normalized, id), identityKey, platform, platformStatus, discoveryProtocol);
   }
 
 

@@ -1,0 +1,14 @@
+# 40k32b1 – Zusatzinformationen für registrierte Geräte
+
+## Ziel
+
+Auch dauerhaft registrierte, noch nicht in den Gerätebestand übernommene Geräte zeigen ihre vorhandenen Discovery- und Windows-Inventarisierungsdaten über einen Aufklapppfeil an.
+
+## Änderungen
+
+- neue Detailspalte mit Aufklapppfeil in den Tabellen der registrierten Geräte
+- Pfeil erscheint nur, wenn zusätzliche Daten vorhanden sind
+- Windows-Informationen werden in System, Hardware, Datenträger/Netzwerk, Software und Sicherheit gegliedert
+- Grunddaten und Informationen anderer Discovery-Quellen bleiben ebenfalls sichtbar
+- manuelle Umklassifizierung, etwa von „Unbekannt“ nach „Computer“, entfernt die Detailansicht nicht
+- vorhandene Aktionen und Inline-Bearbeitung bleiben unverändert

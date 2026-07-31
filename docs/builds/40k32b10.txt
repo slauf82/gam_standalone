@@ -1,0 +1,17 @@
+# GAM 2.0 – Schritt 40k32b10
+
+## Vollständige Softwareinventarisierung
+
+40k32b10 behebt die widersprüchliche Anzeige, bei der zwar die korrekte Gesamtzahl der installierten Programme ermittelt wurde, aber nur die ersten 20 Programmnamen gespeichert und angezeigt wurden.
+
+### Änderungen
+
+- Die Windows-PowerShell-Abfrage überträgt nun sämtliche ermittelten Programme statt nur der ersten 20 Einträge.
+- Die alphabetische Reihenfolge und die Darstellung als Liste untereinander bleiben erhalten.
+- Der Sammelbereich `Software & Windows-Funktionen` erhält keinen missverständlichen Einzelzähler mehr.
+- Die tatsächliche Programmanzahl wird weiterhin direkt bei `Installierte Software` angezeigt.
+- Windows-Funktionen bleiben von der Softwareanzahl getrennt.
+
+### Hinweis zum Test
+
+Bereits gespeicherte Discovery-Daten enthalten weiterhin die zuvor auf 20 Einträge begrenzte Liste. Nach einem erneuten Windows-Suchlauf wird der registrierte Datensatz mit der vollständigen Softwareliste aktualisiert.

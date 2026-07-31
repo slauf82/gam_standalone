@@ -1,6 +1,6 @@
 {
   "name": "gam-standalone-frontend",
-  "version": "2.1.0-preview2",
+  "version": "2.1.0-preview3",
   "private": true,
   "type": "module",
   "scripts": {

@@ -1,0 +1,33 @@
+GAM Standalone v2.1.0 – Schritt 40k34b
+ADB-Unterstuetzung und Android-Inventarisierung ueber WLAN
+
+Schwerpunkte:
+- Neuer AndroidAdbService (mirror von LinuxNetworkDiscoveryService fuer SSH):
+  ADB-Pfaderkennung (konfiguriert/PATH, kein Auto-Download), Status
+  (devices -l, autorisiert/nicht autorisiert/offline), Pairing (Wireless
+  Debugging mit getrennten Pairing-/Verbindungs-Ports), Connect/Disconnect,
+  lesende Shell-Inventarisierung (getprop, uname, meminfo, df, wm size/
+  density, dumpsys battery, uptime, getenforce, ip addr) - alles ueber
+  ProcessBuilder-Argumentlisten, keine Shell-Verkettung, kein Root.
+- Neuer AndroidInventoryParser: reine Textauswertung der Rohausgaben in
+  ueber 30 einzelne Felder (Geraet/Android/Hardware/Speicher/RAM/Display/
+  Akku/Netzwerk/System).
+- Additive Migration: adb_host/adb_port/adb_last_connected_at auf der
+  bestehenden Registrierungstabelle - kein Pairing-Code, kein Token wird
+  gespeichert.
+- Integration ueber die bestehende recordDiscoveryHit()-Schreiblogik in
+  dieselbe Geraeteidentitaet - kein zweites Geraet, keine zweite
+  Merge-/Integritaetslogik. ADB-Seriennummer nutzt die bestehende
+  serialNumber-Spalte, wodurch die bereits vorhandene Konflikterkennung aus
+  40k33b10 automatisch mitgilt.
+- Neue, immer sichtbare Sektion "Android-Inventarisierung" plus
+  Pairing-/Verbindungsdialoge im Frontend.
+- Ausfuehrliche Dokumentation inkl. Sicherheitshinweisen, Feldliste,
+  Statusmeldungen und Testanleitung.
+- Kein echter Build/keine echten Geraetetests in dieser Sandbox moeglich -
+  ausdruecklich benannt, stattdessen Klammernbilanzen, Signaturabgleich und
+  TypeScript-Syntax-Checks durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34b-adb-wlan-inventarisierung.md
+
+Basis: 40k34a

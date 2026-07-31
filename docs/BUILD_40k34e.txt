@@ -1,0 +1,36 @@
+GAM Standalone v2.1.0 – Schritt 40k34e
+Android – Integritaet und Merge
+
+Schwerpunkte:
+- Vorab geprueft: alle geforderten Mechanismen (Severity-Klassifizierung,
+  Feldvergleich, Kandidatenermittlung, Merge-Vorschau/-Bestaetigung,
+  Integritaetspruefung) existieren bereits zentral seit 40k33b10/40k34a-d.
+  Keine neue Klasse noetig - ausschliesslich additive Erweiterungen.
+- DeviceIdentityConfidenceEngine: "adb" als hardwarenahe Seriennummern-Quelle
+  erkannt (ADB-Seriennummer = starke Identitaet); neue, isolierte Pruefung
+  "abweichender Build-Fingerprint trotz gleicher starker Identitaet" (HOCH,
+  eigene Score-Deckelung, bestehende Deckelungsformel unveraendert).
+- conflictSeverity()/criticalConflictMessage(): um Build-Fingerprint, ADB-
+  Plattform-Konflikt, App-Inventarlauf-Anomalien und 1:n-ADB-Bindung
+  erweitert - dieselbe Klassifizierung wie fuer jede andere Plattform.
+- DeviceIdentityService.checkIntegrity(): neue Android-Pruefungen (ADB an
+  Nicht-Android-Plattform gebunden, zwei Identitaeten an derselben ADB-
+  Verbindung, vollstaendiger App-Lauf ohne Pakete trotz vorheriger Bestaende,
+  Erfolgsmeldung ohne Basisdaten) - ausschliesslich anhand bereits
+  gespeicherter Daten, keine ADB-Abfrage pro Regel.
+- compareIdentityFields(): um Android-Version, ADB-Verbindung, letzter ADB-
+  Kontakt erweitert - erscheint automatisch in Merge-Vorschau UND
+  Integritaetspruefung, keine Frontend-Aenderung noetig.
+- AppInventoryRepository.reassignToTarget() (neu) + Anbindung in
+  DeviceMergeService.confirm(): App-Inventarlaeufe und aktuelle
+  Paketdatensaetze werden beim Merge auf das Zielgeraet uebernommen, ohne
+  Duplikate und ohne stillen Datenverlust (neuester Stand je Paket bleibt
+  erhalten). Apps bleiben ausdruecklich kein Identitaetsmerkmal.
+- Keine neuen Reports (folgt 40k34f) - wie im Auftrag gefordert nicht Teil
+  dieses Schritts.
+- Kein echter Build/keine echten Geraete-/Merge-Tests moeglich - ausdruecklich
+  benannt.
+
+Ausfuehrliche Dokumentation: docs/40k34e-android-integritaet-merge.md
+
+Basis: 40k34d

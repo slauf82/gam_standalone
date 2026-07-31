@@ -1,0 +1,34 @@
+GAM Standalone v2.1.0 – Schritt 40k34f
+Android - Reports, Dashboards und Auswertung (ABSCHLUSS DES ANDROID-BLOCKS)
+
+Schwerpunkte:
+- Vorab geprueft: bestehendes reports-Package ist reine Rechnungslogik;
+  die tatsaechliche Geraete-Reportseite ist die bereits bestehende
+  ReportsPage() (client-seitige Aggregation, keine Diagrammbibliothek,
+  bereits mit Suche/Filter/Export). Keine neue Klasse, keine neue Seite
+  fuer 40k34f noetig.
+- Android-Abschnitt direkt in ReportsPage() ergaenzt: Geraeteuebersicht,
+  Inventar-Zusammenfassung (KPI-Kacheln + Hersteller-/Versionsverteilung),
+  Inventarqualitaet, App-Auswertung, Rollen-Auswertung - dieselben
+  report-accordion/report-kpi-grid/quality-pill-Bausteine wie ueberall
+  sonst.
+- Genau EINE neue Backend-Ergaenzung: AppInventoryRepository.globalAppSummary()
+  - eine Sammelabfrage ueber alle Geraete (keine vollstaendige Appliste,
+  keine Abfrage je Geraet).
+  Neuer Endpunkt: GET .../android/apps/global-summary.
+- adbHost/adbPort/adbLastConnectedAt (bereits vom Backend geliefert) im
+  TypeScript-Typ RegisteredDiscoveryDevice ergaenzt (reine Typkorrektur).
+- Kein separates Android-Dashboard, keine Aenderung am allgemeinen
+  Firmen-Dashboard - KPI-Kacheln stattdessen in der bestehenden
+  ReportsPage() ergaenzt (bewusste, dokumentierte Entscheidung).
+- Bewusst NICHT umgesetzt: separater Detailreport (bereits durch den
+  Identitaetsdialog abgedeckt), Integritaets-/Merge-Report (teure O(n^2)-
+  Berechnung, nicht seriös aggregierbar in diesem Zeitrahmen), separater
+  Discovery-Report, Zeitreihen-Darstellung, gezielter Android-Export.
+- Kein echter Build/keine echten Tests moeglich - ausdruecklich benannt.
+
+Damit ist der gesamte Android-Block (40k34a-f) abgeschlossen.
+
+Ausfuehrliche Dokumentation: docs/40k34f-android-reports.md
+
+Basis: 40k34e

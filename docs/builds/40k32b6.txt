@@ -1,0 +1,12 @@
+40k32b6 – CLIXML-Filter, Einheiten und RAM-Erweiterbarkeitsanalyse
+
+- PowerShell-Fortschrittsausgaben deaktiviert
+- CLIXML-Blöcke im Java-Parser gefiltert
+- Vermischte SOFTWARE-/CLIXML-Zeilen bereinigt
+- Einheiten für CPU-Takt, RAM-Takt, Netzwerk und Updates ergänzt
+- maximal unterstützter RAM über SMBIOS ermittelt
+- RAM-Steckplätze gesamt, belegt und frei ergänzt
+- DDR-Typ, ECC und Moduldetails ergänzt
+- erste RAM-Aufrüstungsempfehlung eingebaut
+
+Hinweis: Die maximale RAM-Kapazität basiert auf den SMBIOS-Angaben des Geräts und kann bei fehlerhaften Herstellerdaten abweichen.
