@@ -1,0 +1,41 @@
+GAM Standalone v2.1.0 - Schritt 40k37d12
+
+Ziel
+----
+40k37d12 setzt direkt auf 40k37d11 auf. Die funktionierende MSYS2-/ideviceinstaller-1.1.1-Runtime und der isolierte ideviceinstaller-1.2.0-A/B-Pfad aus d11 bleiben erhalten. Neu ist eine rein lesende Rohdiagnose des installation_proxy-Browse-Verhaltens über ideviceinstaller 1.2.0 --debug.
+
+Neu in 40k37d12
+----------------
+- D11-A/B-Vergleich 1.1.1 gegen 1.2.0 bleibt bestehen.
+- Keine bestehende Apple-/MSYS2-Runtime wird ersetzt oder neu aufgebaut.
+- Zusätzliche installation_proxy-Diagnose mit vollständigem libimobiledevice-Debugtrace.
+- USER_BASELINE_DEBUG: d11-Verhalten mit --debug reproduzieren.
+- USER_ID_ONLY: explizit nur CFBundleIdentifier anfordern.
+- USER_EXPLICIT: CFBundleIdentifier, CFBundleDisplayName, CFBundleShortVersionString, ApplicationType, ApplicationTypeString, Path und Container explizit anfordern.
+- ALL_ID_TYPE und SYSTEM_ID_TYPE testen ApplicationType/ReturnAttributes gezielt mit verkürzten Timeouts.
+- USER_TEXT_EXPLICIT prüft zusätzlich, ob nur der XML-Ausgabepfad betroffen ist.
+- Alle Tests sind reine list/Browse-Abfragen; keine App wird installiert, entfernt oder verändert.
+- Liefert eine d12-Variante echte Apps, werden diese direkt für die normale GAM-Inventarisierung übernommen.
+- USER/SYSTEM-Klassifikation wird weiterhin nicht aus Bundle-ID, Pfad oder Signatur geraten.
+- Neue Hauptdiagnose: logs/apple-mobile-installation-proxy-d12.json.
+- Vollständige Einzeltraces: logs/apple-mobile-installation-proxy-d12/*.stdout.txt und *.stderr.txt.
+- Vergleichssnapshot: logs/apple-mobile-software-d12.json.
+- Legacy-Snapshot: logs/apple-mobile-software-d12-legacy.json.
+- Inventar-Snapshot: logs/apple-mobile-inventory-d12.json.
+- Apple-Debugtrace auf D12 vereinheitlicht.
+
+Hintergrund
+-----------
+Der d11-Test hat ideviceinstaller 1.2.0 erfolgreich verifiziert, aber exakt dasselbe Muster wie 1.1.1 gezeigt: USER/Default leer, ALL/SYSTEM Timeout. Upstream dokumentiert App-Enumeration weiterhin als unterstützte Funktion und bietet --debug sowie explizite ReturnAttributes. D12 untersucht deshalb die tatsächlich gesendeten/empfangenen installation_proxy-Plists und variiert die Browse-Optionen statt erneut nur die Programmversion auszutauschen.
+
+Für die Auswertung bitte bereitstellen
+-------------------------------------
+1. logs/apple-mobile-debug.log
+2. logs/apple-mobile-inventory-d12.json
+3. logs/apple-mobile-software-d12.json
+4. logs/apple-mobile-installation-proxy-d12.json
+5. möglichst den kompletten Ordner logs/apple-mobile-installation-proxy-d12/
+
+Quelle/Toolchain
+----------------
+Die moderne Suite bleibt die in d11 verifizierte L1ghtmann suite-exe-12052025 / Upstream-Stand 2025-12-04 mit ideviceinstaller 1.2.0 und dem bereits geprüften SHA-256.

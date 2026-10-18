@@ -1,0 +1,3 @@
+GAM 2.1.0 – Schritt 40k36q7
+Basis: 40k36q6
+Schwerpunkt: vollständige und gegliederte macOS-Softwareinventarisierung.

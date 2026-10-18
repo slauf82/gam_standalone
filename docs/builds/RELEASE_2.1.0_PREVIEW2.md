@@ -25,8 +25,8 @@ Die Backend-Installation beschränkt sich auf die notwendigen technischen Voraus
 
 ## Erste Schritte
 
-1. `start-backend.bat` unter Windows oder `start-backend.sh` unter Linux/macOS starten.
-2. Danach `start-frontend.bat` beziehungsweise `start-frontend.sh` starten.
+1. `start_backend.bat` unter Windows oder `start_backend.sh` unter Linux/macOS starten.
+2. Danach `start_frontend.bat` beziehungsweise `start_frontend.sh` starten.
 3. Im Browser dem mehrsprachigen Einrichtungsassistenten folgen.
 
 > **Hinweis:** Für notwendige Downloads während der erstmaligen technischen Einrichtung ist Internetzugriff erforderlich. Der anschließende Normalbetrieb von GAM 2.0 ist vollständig offline möglich.

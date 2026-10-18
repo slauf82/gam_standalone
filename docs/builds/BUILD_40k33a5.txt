@@ -1,0 +1,16 @@
+GAM 2.1.0 – Schritt 40k33a5
+
+Robuste Linux-Datenbank-Ersteinrichtung bei Paketmanager-Folgefehlern
+
+Änderungen:
+- Ein Fehlercode von apt, dnf, yum oder pacman beendet die GAM-Ersteinrichtung nicht mehr automatisch.
+- Nach dem Installationsversuch wird stattdessen der reale Systemzustand geprüft:
+  - MariaDB-Server oder -Client vorhanden
+  - Dienst startbar
+  - Datenbankport erreichbar
+- Ist MariaDB trotz eines fremden Paketfehlers funktionsfähig, fährt GAM mit Benutzer-, Datenbank- und Schemaeinrichtung fort.
+- Echte MariaDB-Fehler bleiben weiterhin blockierend und werden klar gemeldet.
+- apt-get update und Paketinstallation erhalten getrennte, verständliche Diagnosen.
+
+Praxisfall:
+Ein defektes NVIDIA-Kernelmodul kann dpkg mit Fehlercode 1 beenden, obwohl MariaDB vollständig installiert wurde. 40k33a5 erkennt diesen Zustand korrekt und setzt den GAM-Erststart ohne unnötigen zweiten Start fort.

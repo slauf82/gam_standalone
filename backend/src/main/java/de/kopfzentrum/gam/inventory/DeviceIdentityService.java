@@ -1,6 +1,7 @@
 package de.kopfzentrum.gam.inventory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,31 +32,80 @@ public class DeviceIdentityService {
   private final DeviceMergeRepository merges;
   private final DeviceMergeService mergeService;
   private final LinuxNetworkDiscoveryService linux;
+  private final LinuxInventoryDiscoveryService linuxLocal;
+  private final BuiltinDiscoverySettingsRepository builtinSettings;
   private final AndroidAdbService adb;
   private final AppInventoryRepository appInventory;
+  private final SoftwareInventoryRepository softwareInventory;
   private final PlatformInventoryRepository platformInventory;
   private final WindowsInventoryDiscoveryService windowsLocal;
   private final WindowsRemoteInventoryService windowsRemote;
   private final MacOsInventoryService macOs;
+  private final AppleMobileDiscoveryService appleMobile;
   private final ObjectMapper objectMapper;
+  // 40k36t76: Standard=1, Administrator=2, SYSTEM=3.
+  private record WindowsRun(long generation,int priority,String mode) {}
+  private final java.util.concurrent.ConcurrentHashMap<String,WindowsRun> activeWindowsRuns=new java.util.concurrent.ConcurrentHashMap<>();
+  private final java.util.concurrent.atomic.AtomicLong windowsRunGeneration=new java.util.concurrent.atomic.AtomicLong();
+  private WindowsRun beginWindowsRun(String key,int priority,String mode){
+    final WindowsRun[] chosen={null};
+    activeWindowsRuns.compute(key,(k,current)->{
+      if(current!=null&&current.priority()>priority){chosen[0]=current;return current;}
+      WindowsRun next=new WindowsRun(windowsRunGeneration.incrementAndGet(),priority,mode);chosen[0]=next;
+      if(current!=null)log.info("[WINDOWS-RUN] {}: {} wird durch {} ersetzt.",key,current.mode(),mode);
+      return next;
+    }); return chosen[0];
+  }
+  private boolean ownsWindowsRun(String key,WindowsRun run){return run!=null&&activeWindowsRuns.get(key)==run;}
+  private void finishWindowsRun(String key,WindowsRun run){if(run!=null)activeWindowsRuns.remove(key,run);}
 
   public DeviceIdentityService(DiscoveryRegistrationRepository registrations, DeviceMergeRepository merges,
                                DeviceMergeService mergeService, LinuxNetworkDiscoveryService linux,
+                               LinuxInventoryDiscoveryService linuxLocal,
+                               BuiltinDiscoverySettingsRepository builtinSettings,
                                AndroidAdbService adb, AppInventoryRepository appInventory,
+                               SoftwareInventoryRepository softwareInventory,
                                PlatformInventoryRepository platformInventory,
                                WindowsInventoryDiscoveryService windowsLocal, WindowsRemoteInventoryService windowsRemote,
-                               MacOsInventoryService macOs, ObjectMapper objectMapper) {
+                               MacOsInventoryService macOs, AppleMobileDiscoveryService appleMobile, ObjectMapper objectMapper) {
     this.registrations = registrations;
     this.merges = merges;
     this.mergeService = mergeService;
     this.linux = linux;
+    this.linuxLocal = linuxLocal;
+    this.builtinSettings = builtinSettings;
     this.adb = adb;
     this.appInventory = appInventory;
+    this.softwareInventory = softwareInventory;
     this.platformInventory = platformInventory;
     this.windowsLocal = windowsLocal;
     this.windowsRemote = windowsRemote;
     this.macOs = macOs;
+    this.appleMobile = appleMobile;
     this.objectMapper = objectMapper;
+  }
+
+  /**
+   * 40k36p6t: Einmalige, idempotente Rückgewinnung bereits früher zusammengeführter
+   * Netzwerkidentitäten aus den vorhandenen Merge-Schnappschüssen. Damit werden auch
+   * Geräte sichtbar, die VOR diesem Build zusammengeführt wurden.
+   */
+  @PostConstruct
+  void restoreMergedNetworkIdentities(){
+    try {
+      for (Map<String,Object> device : registrations.findAll()) {
+        String targetKey=str(device.get("identityKey"));
+        if(targetKey==null) continue;
+        registrations.recordNetworkIdentity(targetKey,str(device.get("address")),str(device.get("hardwareAddress")),targetKey);
+        for(String snapshotJson:merges.sourceSnapshotsForTarget(targetKey)){
+          for(Map<String,Object> source:parseSnapshot(snapshotJson)){
+            registrations.recordNetworkIdentity(targetKey,str(source.get("address")),str(source.get("hardwareAddress")),str(source.get("identityKey")));
+          }
+        }
+      }
+    } catch (Exception e) {
+      log.warn("40k36p6t: Netzwerkidentitäten aus Merge-Schnappschüssen konnten nicht vollständig wiederhergestellt werden: {}", e.getMessage());
+    }
   }
 
   public record ConfidenceAssessment(String label, List<String> reasons) {}
@@ -65,7 +115,8 @@ public class DeviceIdentityService {
     String category, String subcategory, String platform, String address, String hardwareAddress,
     String serialNumber, String manufacturer, String status, Object firstSeenAt, Object lastSeenAt,
     long detectionCount, int lastScanHits, List<String> sources, int sourceCount,
-    List<String> aliases, int aliasCount, int mergeCount, String confidenceLabel,
+    List<String> aliases, int aliasCount, int mergeCount, List<String> networkAddresses,
+    List<String> networkHardwareAddresses, String confidenceLabel,
     List<String> confidenceReasons, boolean hasOpenCandidate, String protocol,
     String adbHost, Integer adbPort, Object adbLastConnectedAt) {}
 
@@ -144,28 +195,250 @@ public class DeviceIdentityService {
     String fingerprintHint = (nullToEmpty(str(row.get("deviceType"))) + " " + nullToEmpty(str(row.get("protocol")))).trim();
     var result = linux.inspectSingle(address, str(row.get("name")), fingerprintHint, manualCategory);
     if (result.isEmpty()) {
-      return new LinuxActionResult(false,
-        "Für dieses Gerät wurden aktuell keine Linux-Hinweise (Hostname/Fingerabdruck) gefunden - die Inventarisierung wurde nicht ausgelöst.",
+      var ssh = linux.testSshConnection(address);
+      return new LinuxActionResult(false, ssh.reachable()
+        ? "SSH ist erreichbar und die Anmeldung funktioniert, aber das Ziel konnte noch nicht als Linux-System bestätigt werden. Linux-Erkennungsdaten prüfen."
+        : "Linux-Inventarisierung nicht möglich: SSH-Verbindung oder Anmeldung ist nicht erfolgreich. " + ssh.message(),
         detail(identityKey));
     }
     var device = result.get();
-    registrations.recordDiscoveryHit(device.address(), device.hardwareAddress(), device.serialNumber(),
+    registrations.recordVerifiedInventoryHit(device.address(), device.hardwareAddress(), device.serialNumber(),
       device.name(), device.type(), device.manufacturer(), device.protocol(), device.status());
-    return new LinuxActionResult(true, "Linux-Inventarisierung wurde durchgeführt.", detail(identityKey));
+    int softwareCount=softwareInventory.replaceLinuxFromDetails(identityKey,linux.consumeLatestSoftwareDetails(address));
+    return new LinuxActionResult(true, "Linux-Inventarisierung wurde durchgeführt; "+softwareCount+" strukturierte Softwareeinträge wurden aktualisiert.", detail(identityKey));
   }
 
-  /** 40k36: macOS gezielt per gemeinsamer SSH-Konfiguration inventarisieren. */
+  /** 40k36n: Linux einmalig mit sudo-Kennwort tiefer inventarisieren. */
+  public LinuxActionResult runLinuxElevatedInventory(String identityKey, String sudoPassword) {
+    if (sudoPassword == null || sudoPassword.isBlank()) throw new IllegalArgumentException("Für den erhöhten Linux-Lauf ist das sudo-Kennwort erforderlich.");
+    Map<String,Object> row = registrations.find(identityKey);
+    String address = str(row.get("address"));
+    if (address == null) throw new IllegalArgumentException("Für dieses Gerät ist keine IP-Adresse bekannt.");
+    boolean manualCategory = truthy(row.get("manualDeviceType"));
+    String fingerprintHint = (nullToEmpty(str(row.get("deviceType"))) + " " + nullToEmpty(str(row.get("protocol")))).trim();
+    var result = linux.inspectSingleWithSudo(address, str(row.get("name")), fingerprintHint, manualCategory, sudoPassword);
+    if (result.isEmpty()) return new LinuxActionResult(false, "Erhöhte Linux-Inventarisierung fehlgeschlagen. sudo-Berechtigung, Kennwort und SSH-Verbindung prüfen.", detail(identityKey));
+    var d = result.get();
+    registrations.recordVerifiedInventoryHit(d.address(), d.hardwareAddress(), d.serialNumber(), d.name(), d.type(), d.manufacturer(), d.protocol(), d.status());
+    int softwareCount=softwareInventory.replaceLinuxFromDetails(identityKey,linux.consumeLatestSoftwareDetails(address));
+    return new LinuxActionResult(true, "Linux wurde einmalig mit erhöhten sudo-Rechten inventarisiert; "+softwareCount+" strukturierte Softwareeinträge wurden aktualisiert. Das Kennwort wurde nicht gespeichert.", detail(identityKey));
+  }
+
+  /** 40k36r: macOS zuerst backend-lokal prüfen; nur fremde Macs benötigen SSH. */
   public LinuxActionResult runMacOsInventory(String identityKey) {
     Map<String,Object> row=registrations.find(identityKey); String address=str(row.get("address"));
-    if(address==null) throw new IllegalArgumentException("Für dieses Gerät ist keine IP-Adresse bekannt.");
-    var result=macOs.inventory(address,str(row.get("name")));
-    if(result.isEmpty()) return new LinuxActionResult(false,"macOS-Inventarisierung nicht möglich. Bitte auf dem Mac 'Entfernte Anmeldung' aktivieren und SSH-Konfiguration prüfen.",detail(identityKey));
-    var d=result.get(); registrations.recordDiscoveryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());
-    return new LinuxActionResult(true,"macOS-Inventarisierung wurde erfolgreich durchgeführt.",detail(identityKey));
+    boolean backendLocal=macOs.isBackendLocalTarget(address,str(row.get("serialNumber")),str(row.get("name")));
+    boolean localEnabled=builtinSettings.enabled("MACOS_LOCAL");
+    boolean sshEnabled=builtinSettings.enabled("MACOS_SSH");
+    if(backendLocal && !localEnabled){
+      if(!sshEnabled) return new LinuxActionResult(false,"macOS lokal und macOS SSH sind deaktiviert; es wird keine Inventarisierung gestartet.",detail(identityKey));
+      log.info("[PLATFORM-INVENTORY] macOS {} ist Backend-lokal, aber MACOS_LOCAL ist deaktiviert; aktiver Remote-Modus MACOS_SSH darf übernehmen.",identityKey);
+      backendLocal=false;
+    }
+    if(!backendLocal && !sshEnabled) return new LinuxActionResult(false,"macOS SSH ist deaktiviert; entfernte macOS-Inventarisierung wird nicht gestartet.",detail(identityKey));
+    if(address==null&&!backendLocal) throw new IllegalArgumentException("Für ein entferntes macOS-Gerät ist keine IP-Adresse bekannt.");
+    if(backendLocal) log.info("[PLATFORM-INVENTORY] macOS {} wird Backend-lokal inventarisiert; MACOS_LOCAL hat Vorrang vor MACOS_SSH.",identityKey);
+    else log.info("[PLATFORM-INVENTORY] macOS {} wird über SSH inventarisiert; MACOS_LOCAL ist nicht anwendbar/aktiv.",identityKey);
+    var result=backendLocal
+      ? macOs.inventoryDetailedLocal(address,str(row.get("name")),null)
+      : macOs.inventoryDetailed(address,str(row.get("name")),null);
+    if(result.isEmpty()) return new LinuxActionResult(false,backendLocal
+      ?"Backend-lokale macOS-Inventarisierung lieferte keine Daten. Lokale Berechtigungen und macOS-Werkzeuge prüfen."
+      :"macOS-Inventarisierung nicht möglich. Bitte auf dem entfernten Mac 'Entfernte Anmeldung' aktivieren und SSH-Konfiguration prüfen.",detail(identityKey));
+    var snapshot=result.get(); var d=snapshot.device();
+    registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());
+    softwareInventory.replaceMacOs(identityKey,snapshot.software());
+    return new LinuxActionResult(true,(backendLocal?"macOS backend-lokal":"macOS über SSH")+" erfolgreich inventarisiert; "+snapshot.software().size()+" Softwareeinträge strukturiert gespeichert; Benutzersoftware: "+snapshot.userSoftwareScanStatus()+".",detail(identityKey));
   }
+  public LinuxActionResult runMacOsElevatedInventory(String identityKey,String sudoPassword) {
+    if(sudoPassword==null||sudoPassword.isBlank()) throw new IllegalArgumentException("Für den erhöhten Lauf ist das macOS-Administratorkennwort erforderlich.");
+    Map<String,Object> row=registrations.find(identityKey); String address=str(row.get("address"));
+    boolean backendLocal=macOs.isBackendLocalTarget(address,str(row.get("serialNumber")),str(row.get("name")));
+    boolean localEnabled=builtinSettings.enabled("MACOS_LOCAL");
+    boolean sshEnabled=builtinSettings.enabled("MACOS_SSH");
+    if(backendLocal && !localEnabled){ if(!sshEnabled) throw new IllegalStateException("macOS lokal und macOS SSH sind deaktiviert."); backendLocal=false; }
+    if(!backendLocal && !sshEnabled) throw new IllegalStateException("macOS SSH ist deaktiviert.");
+    if(address==null&&!backendLocal) throw new IllegalArgumentException("Für ein entferntes macOS-Gerät ist keine IP-Adresse bekannt.");
+    var result=backendLocal
+      ? macOs.inventoryDetailedLocal(address,str(row.get("name")),sudoPassword)
+      : macOs.inventoryDetailed(address,str(row.get("name")),sudoPassword);
+    if(result.isEmpty()) return new LinuxActionResult(false,backendLocal
+      ?"Erhöhte backend-lokale macOS-Inventarisierung fehlgeschlagen. Kennwort und lokale sudo-Berechtigung prüfen."
+      :"Erhöhte macOS-Inventarisierung fehlgeschlagen. Kennwort, sudo-Berechtigung und SSH-Verbindung prüfen.",detail(identityKey));
+    var snapshot=result.get(); var d=snapshot.device();
+    registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());
+    softwareInventory.replaceMacOs(identityKey,snapshot.software());
+    return new LinuxActionResult(true,"macOS wurde mit erhöhten Rechten vollständig inventarisiert; "+snapshot.software().size()+" Softwareeinträge strukturiert gespeichert; Benutzersoftware: "+snapshot.userSoftwareScanStatus()+". Das Kennwort wurde nicht gespeichert.",detail(identityKey));
+  }
+  public java.util.List<java.util.Map<String,Object>> softwareInventory(String identityKey){
+    Map<String,Object> row=registrations.find(identityKey);
+    var current=softwareInventory.current(identityKey);
+    if(current.isEmpty()){
+      String platform=platformOf(str(row.get("deviceType")),str(row.get("protocol")));
+      if("macOS".equals(platform)) softwareInventory.replaceMacOsFromProtocol(identityKey,str(row.get("protocol")));
+      else if("Linux".equals(platform)) softwareInventory.replaceLinuxFromProtocol(identityKey,str(row.get("protocol")));
+      current=softwareInventory.current(identityKey);
+    }
+    return current;
+  }
+
   public MacOsInventoryService.TestResult testMacOsSsh(String identityKey){Map<String,Object> row=registrations.find(identityKey);String address=str(row.get("address"));if(address==null)throw new IllegalArgumentException("Für dieses Gerät ist keine IP-Adresse bekannt.");return macOs.test(address);}
+  public boolean isWindowsBackendLocal(String identityKey){
+    try{
+      Map<String,Object> row=registrations.find(identityKey);
+      return System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("win") && isCurrentWindowsHost(identityKey,row);
+    }catch(Exception e){
+      return false;
+    }
+  }
+
+  public LinuxActionResult runWindowsElevatedInventory(String identityKey,String username,String password) {
+    Map<String,Object> row=registrations.find(identityKey); String address=str(row.get("address"));
+    boolean backendLocal=System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("win") && isCurrentWindowsHost(identityKey,row);
+    if(backendLocal){
+      WindowsRun run=beginWindowsRun(identityKey,2,"Administrator");
+      if(run.priority()>2)return new LinuxActionResult(false,"Ein höherwertiger SYSTEM-Inventarlauf ist bereits aktiv; der Administratorlauf wurde nicht gestartet.",detail(identityKey));
+      log.info("[WINDOWS-ELEVATED] {} fordert native Windows-UAC-Zustimmung an; Backend-lokal-Erkennung bestätigt.",identityKey);
+      boolean[] found={false};boolean[] elevatedConfirmed={false};boolean[] persisted={false};int[] softwareCount={0};
+      try{
+        windowsLocal.scanElevatedUac(true,OffsetDateTime.now().toString(),
+          d->{found[0]=true;elevatedConfirmed[0]=d.protocol()!=null&&d.protocol().contains("Administratorrechte: Ja");
+            if(!ownsWindowsRun(identityKey,run)){log.info("[WINDOWS-RUN] {}: überholtes Administrator-Ergebnis wird verworfen.",identityKey);return;}
+            registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());persisted[0]=true;
+            String resolved=registrations.resolveIdentityKey(d.address(),d.hardwareAddress(),d.serialNumber(),d.name());if(resolved!=null)softwareCount[0]=softwareInventory.replaceWindowsFromDetails(resolved,windowsLocal.consumeLatestSoftwareDetails());},
+          event->{},"uac-"+identityKey,0);
+        if(!found[0])return new LinuxActionResult(false,"Erhöhte lokale Windows-Inventarisierung wurde abgebrochen oder lieferte keine Daten.",detail(identityKey));
+        if(!persisted[0])return new LinuxActionResult(false,"Administratorlauf wurde durch einen höherwertigen/neuen Lauf ersetzt; sein Ergebnis wurde verworfen.",detail(identityKey));
+        if(!elevatedConfirmed[0])return new LinuxActionResult(false,"UAC-Lauf lieferte Inventardaten, aber der erhöhte Token wurde nicht bestätigt (Administratorrechte != Ja).",detail(identityKey));
+        return new LinuxActionResult(true,"Windows wurde nach nativer UAC-Zustimmung mit bestätigten Administratorrechten inventarisiert; "+softwareCount[0]+" strukturierte Softwareeinträge aktualisiert.",detail(identityKey));
+      }finally{finishWindowsRun(identityKey,run);}
+    }
+    if(username==null||username.isBlank()||password==null||password.isBlank()) throw new IllegalArgumentException("Für einen entfernten erhöhten Windows-Lauf sind Benutzername und Kennwort erforderlich.");
+    if(address==null) throw new IllegalArgumentException("Für dieses Gerät ist keine IP-Adresse bekannt.");
+    var result=windowsRemote.inspectSingleWithCredentials(address,str(row.get("name")),username,password);
+    if(result.isEmpty()) return new LinuxActionResult(false,"Erhöhte Windows-Inventarisierung fehlgeschlagen. Administratorkonto, Kennwort, WinRM und Firewall prüfen.",detail(identityKey));
+    var d=result.get(); registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());
+    int softwareCount=softwareInventory.replaceWindowsFromDetails(identityKey,windowsRemote.consumeLatestSoftwareDetails(address));
+    return new LinuxActionResult(true,"Windows wurde einmalig mit den angegebenen erhöhten Anmeldedaten inventarisiert; "+softwareCount+" strukturierte Softwareeinträge wurden aktualisiert. Das Kennwort wurde nicht gespeichert.",detail(identityKey));
+  }
+
+
+  public LinuxActionResult repairWindowsBitLockerProvider(String identityKey) {
+    Map<String,Object> row=registrations.find(identityKey);
+    if(!System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("win") || !isCurrentWindowsHost(identityKey,row))
+      return new LinuxActionResult(false,"BitLocker-Provider-Reparatur ist nur für den backend-lokalen Windows-Rechner verfügbar.",detail(identityKey));
+
+    String windir=System.getenv("WINDIR");
+    if(windir==null||windir.isBlank()) windir="C:\\Windows";
+    java.nio.file.Path mof=java.nio.file.Path.of(windir,"System32","wbem","win32_encryptablevolume.mof");
+    if(!java.nio.file.Files.exists(mof))
+      return new LinuxActionResult(false,"BitLocker-WMI-Provider kann nicht repariert werden: win32_encryptablevolume.mof wurde nicht gefunden.",detail(identityKey));
+
+    try{
+      String mofPath=mof.toAbsolutePath().toString().replace("'","''");
+      String script=
+        "$ErrorActionPreference='Stop';"+
+        "$mof='"+mofPath+"';"+
+        "$x=Start-Process -FilePath 'mofcomp.exe' -ArgumentList @($mof) -Verb RunAs -PassThru -Wait;"+
+        "if($x.ExitCode -ne 0){exit $x.ExitCode}";
+      Process process=new ProcessBuilder("powershell.exe","-NoLogo","-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-Command",script)
+        .redirectErrorStream(true).start();
+
+      if(!process.waitFor(120,java.util.concurrent.TimeUnit.SECONDS)){
+        process.destroyForcibly();
+        return new LinuxActionResult(false,"BitLocker-WMI-Provider-Reparatur hat das Zeitlimit überschritten.",detail(identityKey));
+      }
+      if(process.exitValue()!=0)
+        return new LinuxActionResult(false,"mofcomp konnte den BitLocker-WMI-Provider nicht erfolgreich registrieren.",detail(identityKey));
+
+      String verify=
+        "$ErrorActionPreference='Stop';"+
+        "Get-CimInstance -Namespace 'root\\CIMV2\\Security\\MicrosoftVolumeEncryption' -ClassName Win32_EncryptableVolume -ErrorAction Stop|Select-Object -First 1|Out-Null;";
+      Process check=new ProcessBuilder("powershell.exe","-NoLogo","-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-Command",verify)
+        .redirectErrorStream(true).start();
+
+      if(!check.waitFor(60,java.util.concurrent.TimeUnit.SECONDS)){
+        check.destroyForcibly();
+        return new LinuxActionResult(false,"Provider wurde registriert, die anschließende Namespace-Prüfung lief jedoch in ein Timeout.",detail(identityKey));
+      }
+      if(check.exitValue()!=0)
+        return new LinuxActionResult(false,"mofcomp wurde ausgeführt, der Namespace root\\CIMV2\\Security\\MicrosoftVolumeEncryption ist aber weiterhin nicht lesbar.",detail(identityKey));
+
+      return new LinuxActionResult(true,"BitLocker-WMI-Provider wurde erfolgreich neu registriert. MicrosoftVolumeEncryption ist wieder verfügbar.",detail(identityKey));
+    }catch(Exception e){
+      log.warn("[BITLOCKER-REPAIR] Reparatur fehlgeschlagen: {}",e.getMessage());
+      return new LinuxActionResult(false,"BitLocker-WMI-Provider-Reparatur fehlgeschlagen: "+e.getMessage(),detail(identityKey));
+    }
+  }
+
+  public LinuxActionResult runWindowsSystemInventory(String identityKey) {
+    Map<String,Object> row=registrations.find(identityKey);
+    if(!System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("win") || !isCurrentWindowsHost(identityKey,row))
+      return new LinuxActionResult(false,"SYSTEM-Inventarisierung ist nur für den backend-lokalen Windows-Rechner verfügbar.",detail(identityKey));
+    WindowsRun run=beginWindowsRun(identityKey,3,"SYSTEM");
+    log.info("[WINDOWS-SYSTEM] {} fordert einmalige UAC-Zustimmung für eine temporäre SYSTEM-Aufgabe an.",identityKey);
+    boolean[] found={false};boolean[] systemConfirmed={false};boolean[] persisted={false};int[] softwareCount={0};
+    try{
+      windowsLocal.scanSystemTask(true,OffsetDateTime.now().toString(),
+        d->{found[0]=true;systemConfirmed[0]=d.protocol()!=null&&d.protocol().contains("SYSTEM-Rechte: Ja");
+          if(!ownsWindowsRun(identityKey,run)){log.info("[WINDOWS-RUN] {}: überholtes SYSTEM-Ergebnis wird verworfen.",identityKey);return;}
+          registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());persisted[0]=true;
+          String resolved=registrations.resolveIdentityKey(d.address(),d.hardwareAddress(),d.serialNumber(),d.name());
+          if(resolved!=null)softwareCount[0]=softwareInventory.replaceWindowsFromDetails(resolved,windowsLocal.consumeLatestSoftwareDetails());},
+        event->{},"system-"+identityKey,0);
+      if(!found[0])return new LinuxActionResult(false,"SYSTEM-Inventarisierung wurde abgebrochen oder lieferte keine Daten.",detail(identityKey));
+      if(!persisted[0])return new LinuxActionResult(false,"SYSTEM-Lauf wurde durch einen neueren SYSTEM-Lauf ersetzt; sein Ergebnis wurde verworfen.",detail(identityKey));
+      if(!systemConfirmed[0])return new LinuxActionResult(false,"SYSTEM-Lauf lieferte Inventardaten, aber NT AUTHORITY\\SYSTEM wurde nicht bestätigt.",detail(identityKey));
+      return new LinuxActionResult(true,"Windows wurde über eine temporäre Aufgabe mit bestätigten NT AUTHORITY\\SYSTEM-Rechten inventarisiert; "+softwareCount[0]+" strukturierte Softwareeinträge aktualisiert. Die temporäre Aufgabe wurde anschließend entfernt.",detail(identityKey));
+    }finally{finishWindowsRun(identityKey,run);}
+  }
+
 
   /** 40k33b8: Reiner SSH-Verbindungstest, ohne vollständige Inventarisierung. */
+  /** 40k36p6: Verbindungstest direkt aus den Erkennungsquellen, ohne registrierte Geräteidentität. */
+  public LinuxNetworkDiscoveryService.SshTestResult testLinuxSshHost(String host) {
+    if (host == null || host.isBlank()) throw new IllegalArgumentException("Testhost fehlt.");
+    String target=host.trim();
+    var test=linux.testSshConnection(target);
+    if(!test.reachable()) return test;
+    String suffix=autoInventoryVerifiedSshHost(target, null);
+    return new LinuxNetworkDiscoveryService.SshTestResult(test.sshConfigured(),test.reachable(),test.tcpReachable(),test.handshakeOk(),test.authOk(),test.message()+suffix,test.checkedAt());
+  }
+
+  /** 40k36q4b: Ein erfolgreicher SSH-Zugang ist zugleich eine verwertbare
+   * Betriebssystemquelle. Darwin/Linux werden automatisch unterschieden und
+   * unmittelbar inventarisiert; nur tatsächlich empfangene Inventardaten werden
+   * als bestätigte SSH-Quelle persistiert. */
+  public String autoInventoryVerifiedSshHost(String host, String nameHint){
+    try {
+      var macTest=macOs.test(host);
+      if(macTest.reachable() && macTest.macOs()){
+        var mac=macOs.inventoryDetailed(host,nameHint,null);
+        if(mac.isPresent()){
+          var snapshot=mac.get(); var d=snapshot.device();
+          registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());
+          String macIdentity=registrations.resolveIdentityKey(d.address(),d.hardwareAddress(),d.serialNumber(),d.name());
+          if(macIdentity!=null) softwareInventory.replaceMacOs(macIdentity,snapshot.software());
+          return " Automatische Inventarisierung: macOS erkannt und erfolgreich über SSH inventarisiert; Quelle SSH · macOS gespeichert.";
+        }
+        return " macOS wurde per SSH erkannt, die automatische Inventarisierung lieferte jedoch keine Daten.";
+      }
+      var linuxResult=linux.inspectSingle(host,nameHint==null?"":nameHint,"SSH bestätigt",false);
+      if(linuxResult.isPresent()){
+        var d=linuxResult.get();
+        registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());
+        String linuxIdentity=registrations.resolveIdentityKey(d.address(),d.hardwareAddress(),d.serialNumber(),d.name());
+        int softwareCount=0;
+        if(linuxIdentity!=null) softwareCount=softwareInventory.replaceLinuxFromDetails(linuxIdentity,linux.consumeLatestSoftwareDetails(host));
+        return " Automatische Inventarisierung: Linux erkannt und erfolgreich über SSH inventarisiert; Quelle SSH · Linux gespeichert; "+softwareCount+" Softwareeinträge aktualisiert.";
+      }
+      return " SSH ist erreichbar und authentifiziert, aber das Ziel konnte nicht als Linux oder macOS bestätigt werden.";
+    } catch(Exception e){
+      log.warn("[SSH-AUTO-INVENTORY] {} konnte nach erfolgreichem SSH-Test nicht automatisch inventarisiert werden: {}",host,e.getMessage());
+      return " SSH ist erreichbar; automatische Inventarisierung fehlgeschlagen: "+(e.getMessage()==null?e.getClass().getSimpleName():e.getMessage());
+    }
+  }
+
   public LinuxNetworkDiscoveryService.SshTestResult testLinuxSsh(String identityKey) {
     Map<String,Object> row = registrations.find(identityKey);
     String address = str(row.get("address"));
@@ -182,11 +455,20 @@ public class DeviceIdentityService {
 
   /** 40k34b: globaler ADB-Status (Pfad, Version, verbundene/autorisierte/nicht autorisierte/offline Geräte). */
   public AndroidAdbService.AdbStatus androidAdbStatus() {
-    return adb.status();
+    var raw=adb.status();
+    boolean usb=builtinSettings.enabled("ANDROID_USB"), wlan=builtinSettings.enabled("ANDROID_WLAN");
+    var devices=raw.devices().stream().filter(d->d.network()?wlan:usb).toList();
+    int authorized=(int)devices.stream().filter(d->"device".equals(d.state())).count();
+    int unauthorized=(int)devices.stream().filter(d->"unauthorized".equals(d.state())).count();
+    int offline=(int)devices.stream().filter(d->"offline".equals(d.state())).count();
+    int other=devices.size()-authorized-unauthorized-offline;
+    log.info("[DISCOVERY][40k37e52][ANDROID][ROUTES] USB={}, WLAN={}, visibleDevices={}",usb,wlan,devices.size());
+    return new AndroidAdbService.AdbStatus(raw.available(),raw.path(),raw.version(),raw.serverActive(),devices,authorized,unauthorized,offline,other,raw.checkedAt());
   }
 
   /** 40k34b: modernes Wireless-Debugging-Pairing. Der Code verlässt diese Methode nicht in Logs/Fehlern. */
   public AndroidAdbService.ActionResult pairAndroidDevice(String host, int pairingPort, String pairingCode) {
+    if(!builtinSettings.enabled("ANDROID_WLAN")) return new AndroidAdbService.ActionResult(false,"Android-WLAN ist in den Erkennungswegen deaktiviert.");
     return adb.pair(host, pairingPort, pairingCode);
   }
 
@@ -197,6 +479,7 @@ public class DeviceIdentityService {
    * es entsteht dabei nie ein neues Gerät.
    */
   public AndroidAdbService.ActionResult connectAndroidDevice(String identityKey, String host, int port) {
+    if(!builtinSettings.enabled("ANDROID_WLAN")) return new AndroidAdbService.ActionResult(false,"Android-WLAN ist in den Erkennungswegen deaktiviert.");
     var result = adb.connect(host, port);
     String serial = host + ":" + port;
     if (!result.success()) {
@@ -242,6 +525,8 @@ public class DeviceIdentityService {
     Map<String,Object> row = registrations.find(identityKey);
     String adbHost = str(row.get("adbHost"));
     Object adbPortObj = row.get("adbPort");
+    if(adbHost!=null && adbPortObj!=null && !builtinSettings.enabled("ANDROID_WLAN"))
+      return new LinuxActionResult(false,"Android-WLAN ist in den Erkennungswegen deaktiviert.",detail(identityKey));
     String address = str(row.get("address"));
     if (adbHost == null || adbPortObj == null) {
       return new LinuxActionResult(false, "Für dieses Gerät ist noch keine ADB-Verbindung bekannt. Bitte zuerst koppeln/verbinden.", detail(identityKey));
@@ -278,6 +563,25 @@ public class DeviceIdentityService {
     return new LinuxActionResult(true, "ADB-Inventarisierung wurde durchgeführt (" + fields.size() + " Merkmale erfasst).", detail(identityKey));
   }
 
+  public LinuxActionResult runAndroidElevatedInventory(String identityKey) {
+    Map<String,Object> row = registrations.find(identityKey);
+    String adbHost = str(row.get("adbHost"));
+    Object adbPortObj = row.get("adbPort");
+    if(adbHost!=null && adbPortObj!=null && !builtinSettings.enabled("ANDROID_WLAN"))
+      return new LinuxActionResult(false,"Android-WLAN ist in den Erkennungswegen deaktiviert.",detail(identityKey));
+    if (adbHost == null || adbPortObj == null) return new LinuxActionResult(false, "Für dieses Gerät ist noch keine ADB-Verbindung bekannt.", detail(identityKey));
+    String serial = adbHost + ":" + ((Number) adbPortObj).intValue();
+    var inventory = adb.inventorizeElevated(serial);
+    if (!inventory.success()) return new LinuxActionResult(false, "Vertiefte Android-Inventarisierung lieferte keine Daten.", detail(identityKey));
+    StringBuilder protocol = new StringBuilder("ADB (WLAN)");
+    for (var e : inventory.fields().entrySet()) protocol.append(" · ").append(e.getKey()).append(": ").append(e.getValue());
+    protocol.append(" · Inventarisierungsstatus: erfolgreich · Inventarisierungsdauer: ").append(inventory.durationMs() / 1000.0).append(" s");
+    registrations.recordDiscoveryHit(str(row.get("address")), str(row.get("hardwareAddress")), inventory.fields().get("Seriennummer"),
+      firstNonBlank(inventory.fields().get("Gerätename"), inventory.fields().get("Modell"), str(row.get("name"))),
+      str(row.get("deviceType")), firstNonBlank(inventory.fields().get("Hersteller"), str(row.get("manufacturer"))), protocol.toString(), "ONLINE");
+    return new LinuxActionResult(true, "Android-Berechtigungen wurden geprüft und die vertiefte Inventarisierung durchgeführt.", detail(identityKey));
+  }
+
   public record AppInventoryRunResult(boolean success, String status, String message, int appCount,
                                       int userAppCount, int systemAppCount, String changesSummary) {}
 
@@ -292,6 +596,8 @@ public class DeviceIdentityService {
     Map<String,Object> row = registrations.find(identityKey);
     String adbHost = str(row.get("adbHost"));
     Object adbPortObj = row.get("adbPort");
+    if(adbHost!=null && adbPortObj!=null && !builtinSettings.enabled("ANDROID_WLAN"))
+      return new AppInventoryRunResult(false,"DEAKTIVIERT","Android-WLAN ist in den Erkennungswegen deaktiviert.",0,0,0,null);
     if (adbHost == null || adbPortObj == null) {
       return new AppInventoryRunResult(false, "NICHT_ERREICHBAR", "Für dieses Gerät ist noch keine ADB-Verbindung bekannt.", 0, 0, 0, null);
     }
@@ -403,8 +709,14 @@ public class DeviceIdentityService {
 
   public record PlatformInventoryResult(boolean success, String status, String message, String platform) {}
 
-  /** 40k34m: die fünf im Auftrag genannten Plattformen - Grundlage für Status/"Alle Plattformen". */
-  private static final List<String> SUPPORTED_PLATFORMS = List.of("Windows", "Linux", "Android", "macOS", "iOS");
+  /** 40k37c: iPadOS ist nun eine eigene, lokal inventarisierbare Apple-Mobilplattform. */
+  private static final List<String> SUPPORTED_PLATFORMS = List.of("Windows", "Linux", "Android", "macOS", "iOS", "iPadOS");
+  private final java.util.concurrent.ConcurrentMap<String,Thread> runningPlatformThreads = new java.util.concurrent.ConcurrentHashMap<>();
+  // 40k37e55g-fix2: nur Rueckkanal des bereits verifizierten Apple-Inventars zur
+  // bestehenden Plattformlauf-Historie; keine neue Discovery-/Inventarisierungslogik.
+  private final ThreadLocal<String> appleInventoryCanonicalIdentity = new ThreadLocal<>();
+  private static String platformRunKey(String identityKey,String platform){return identityKey+"||"+platform;}
+
 
   /**
    * 40k34m: Zentraler Einstiegspunkt für eine gezielte Erst- oder Nachinventarisierung
@@ -418,6 +730,11 @@ public class DeviceIdentityService {
    */
   public PlatformInventoryResult runPlatformInventory(String identityKey, String platform, String actor) {
     Map<String,Object> row = registrations.find(identityKey); // wirft, falls Identität nicht existiert
+    // 40k37e56a7fix6: Einzelaufrufe bleiben bewusst plattformoffen. Ein Benutzer darf
+    // jede Plattform manuell gegen jedes bekannte Gerät testen. Die automatische
+    // Auswahl bleibt davon getrennt und nutzt weiterhin nur passende Plattformen.
+    // Ein unpassender manueller Lauf muss ehrlich fehlschlagen bzw. ohne Daten enden
+    // und darf keine fremden Plattformdaten persistieren.
     // 40k34r: verhindert doppelte, gleichzeitig laufende Inventarisierungen derselben
     // Plattform für dasselbe Gerät - gilt sowohl für die manuelle als auch die
     // automatische Auslösung (keine zweite, separate Prüfung nötig).
@@ -425,29 +742,87 @@ public class DeviceIdentityService {
       return new PlatformInventoryResult(false, "LAEUFT", "Für diese Plattform läuft bereits eine Inventarisierung - bitte warten, bis sie abgeschlossen ist.", platform);
     }
     long runId = platformInventory.startRun(identityKey, platform, actor);
+    String activeKey=platformRunKey(identityKey,platform);
+    runningPlatformThreads.put(activeKey,Thread.currentThread());
     try {
+      if(Thread.currentThread().isInterrupted()) throw new InterruptedException("Inventarisierung wurde abgebrochen.");
       PlatformInventoryResult result = switch (platform) {
         case "Android" -> dispatchAndroidPlatformInventory(identityKey);
-        case "Linux" -> dispatchLinuxPlatformInventory(row);
+        case "Linux" -> dispatchLinuxPlatformInventory(identityKey, row);
         case "Windows" -> dispatchWindowsPlatformInventory(identityKey, row);
         case "macOS" -> dispatchMacOsPlatformInventory(identityKey);
-        case "iOS" -> new PlatformInventoryResult(false, "NICHT_UNTERSTUETZT", "iOS-Inventarisierung ist in dieser Version noch nicht implementiert.", platform);
+        case "iOS", "iPadOS" -> dispatchAppleMobilePlatformInventory(identityKey, platform);
         default -> new PlatformInventoryResult(false, "FEHLGESCHLAGEN", "Unbekannte Plattform: " + platform, platform);
       };
+      String currentIdentityKey=("iOS".equals(platform)||"iPadOS".equals(platform))
+        ? appleInventoryCanonicalIdentity.get()
+        : registrations.resolveIdentityKey(str(row.get("address")),str(row.get("hardwareAddress")),str(row.get("serialNumber")),str(row.get("name")));
+      if(currentIdentityKey==null) currentIdentityKey=registrations.resolveIdentityKey(
+        str(row.get("address")),str(row.get("hardwareAddress")),str(row.get("serialNumber")),str(row.get("name")));
+      if(currentIdentityKey!=null&&!currentIdentityKey.equals(identityKey)){
+        platformInventory.moveRunToIdentity(runId,currentIdentityKey);
+        log.info("[PLATFORM-INVENTORY] Lauf {} wurde nach verifizierter Inventarisierung von {} auf kanonische Identität {} umgehängt.",
+          runId,identityKey,currentIdentityKey);
+      }
+      if(platformInventory.isCancelled(runId)||Thread.currentThread().isInterrupted()){
+        Thread.currentThread().interrupt();
+        log.info("[PLATFORM-INVENTORY] {} für {}: Ergebnis verworfen, weil der Lauf zwischenzeitlich abgebrochen wurde.",platform,identityKey);
+        return new PlatformInventoryResult(false,"ABGEBROCHEN","Inventarisierung wurde vom Benutzer abgebrochen.",platform);
+      }
       platformInventory.finishRun(runId, result.status(), result.message());
       log.info("[PLATFORM-INVENTORY] {} für {} durch {}: {} - {}", platform, identityKey, actor, result.status(), result.message());
       return result;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      platformInventory.finishRun(runId, "ABGEBROCHEN", "Inventarisierung wurde vom Benutzer abgebrochen.");
+      log.info("[PLATFORM-INVENTORY] {} für {} wurde abgebrochen.", platform, identityKey);
+      return new PlatformInventoryResult(false, "ABGEBROCHEN", "Inventarisierung wurde vom Benutzer abgebrochen.", platform);
     } catch (Exception e) {
+      if(Thread.currentThread().isInterrupted()){
+        platformInventory.finishRun(runId, "ABGEBROCHEN", "Inventarisierung wurde vom Benutzer abgebrochen.");
+        return new PlatformInventoryResult(false, "ABGEBROCHEN", "Inventarisierung wurde vom Benutzer abgebrochen.", platform);
+      }
       platformInventory.finishRun(runId, "FEHLGESCHLAGEN", e.getMessage());
       log.warn("[PLATFORM-INVENTORY] {} für {} fehlgeschlagen: {}", platform, identityKey, e.getMessage());
       return new PlatformInventoryResult(false, "FEHLGESCHLAGEN", e.getMessage(), platform);
+    } finally {
+      appleInventoryCanonicalIdentity.remove();
+      runningPlatformThreads.remove(activeKey,Thread.currentThread());
     }
+  }
+
+  public Map<String,Object> cancelPlatformInventory(String identityKey,String platform){
+    int marked=platformInventory.cancelRunning(identityKey,platform,"Inventarisierung wurde vom Benutzer abgebrochen.");
+    if(platform==null||platform.isBlank()){
+      runningPlatformThreads.forEach((key,thread)->{if(key.startsWith(identityKey+"||"))thread.interrupt();});
+    } else {
+      Thread thread=runningPlatformThreads.get(platformRunKey(identityKey,platform)); if(thread!=null)thread.interrupt();
+    }
+    return Map.of("cancelled",marked>0,"count",marked,"identityKey",identityKey,"platform",platform==null?"":platform);
+  }
+
+  public Map<String,Object> cancelAllPlatformInventories(){
+    int marked=platformInventory.cancelAllRunning("Inventarisierung wurde vom Benutzer abgebrochen.");
+    runningPlatformThreads.values().forEach(Thread::interrupt);
+    return Map.of("cancelled",marked>0,"count",marked);
   }
 
 
   private PlatformInventoryResult dispatchMacOsPlatformInventory(String identityKey) {
     LinuxActionResult r=runMacOsInventory(identityKey);
     return new PlatformInventoryResult(r.success(),r.success()?"ERFOLGREICH":"FEHLGESCHLAGEN",r.message(),"macOS");
+  }
+
+  /** 40k37e2: iOS/iPadOS-Inventarisierung über Apple-Mobile USB/WLAN; keine lokale OS-Erkennung. */
+  private PlatformInventoryResult dispatchAppleMobilePlatformInventory(String identityKey, String platform) {
+    String source="iPadOS".equals(platform)?"IPADOS_USB_WLAN":"IOS_USB_WLAN";
+    if(!builtinSettings.enabled(source)) return new PlatformInventoryResult(false,"DEAKTIVIERT",platform+"-Erkennung über USB/WLAN ist in den Erkennungsquellen deaktiviert.",platform);
+    AppleMobileDiscoveryService.InventoryResult r=appleMobile.inventory(identityKey);
+    if(r.identityKey()!=null&&!r.identityKey().isBlank()) appleInventoryCanonicalIdentity.set(r.identityKey());
+    int softwareCount=0;
+    if(r.success()) softwareCount=softwareInventory.replaceAppleMobile(identityKey,platform,appleMobile.consumeLatestSoftwareInventory(identityKey));
+    String message=r.message()+(r.success()?" "+softwareCount+" strukturierte Softwareeinträge gespeichert.":"");
+    return new PlatformInventoryResult(r.success(),r.state(),message,platform);
   }
 
   private PlatformInventoryResult dispatchAndroidPlatformInventory(String identityKey) {
@@ -477,15 +852,91 @@ public class DeviceIdentityService {
     return new PlatformInventoryResult(success, status, message, "Android");
   }
 
-  private PlatformInventoryResult dispatchLinuxPlatformInventory(Map<String,Object> row) {
+  private PlatformInventoryResult dispatchLinuxPlatformInventory(String identityKey, Map<String,Object> row) {
     String address = str(row.get("address"));
-    if (address == null) return new PlatformInventoryResult(false, "NICHT_ERREICHBAR", "Für dieses Gerät ist keine IP-Adresse bekannt.", "Linux");
+    String hardwareAddress=str(row.get("hardwareAddress"));
+    String name=str(row.get("name"));
+
+    // 40k36t7: Der lokale GAM-Host hat Vorrang vor SSH. SSH ist ausschließlich
+    // der Transportweg für entfernte Linux-Systeme.
+    boolean localEnabled=builtinSettings.enabled("LINUX_INVENTORY");
+    boolean sshEnabled=builtinSettings.enabled("LINUX_NETWORK");
+
+    if(linuxLocal.isLocalTarget(address,hardwareAddress,name) && localEnabled){
+      log.info("[PLATFORM-INVENTORY] Linux {} wird über Backend-lokal inventarisiert; Quelle LINUX_INVENTORY ist aktiviert.",identityKey);
+      final DiscoveredDevice[] found={null};
+      linuxLocal.scan(true,OffsetDateTime.now().toString(),dev->found[0]=dev,
+        event->{}, "platform-local-"+System.nanoTime(), 0);
+      if(found[0]==null)
+        return new PlatformInventoryResult(false,"ERKENNUNG_FEHLGESCHLAGEN",
+          "Lokale Linux-Inventarisierung wurde gestartet, lieferte aber keine verwertbaren Daten.","Linux");
+
+      DiscoveredDevice dev=found[0];
+      long persistStarted=System.currentTimeMillis();
+      registrations.recordVerifiedInventoryHit(dev.address(),dev.hardwareAddress(),dev.serialNumber(),
+        dev.name(),dev.type(),dev.manufacturer(),dev.protocol(),dev.status());
+      String resolved=registrations.resolveIdentityKey(dev.address(),dev.hardwareAddress(),dev.serialNumber(),dev.name());
+      long identityPersistMs=System.currentTimeMillis()-persistStarted;
+      long softwareStarted=System.currentTimeMillis();
+      int softwareCount=0;
+      String cacheKey=dev.address()!=null?dev.address():dev.name();
+      if(resolved!=null) softwareCount=softwareInventory.replaceLinuxFromDetails(resolved,linuxLocal.consumeLatestSoftwareDetails(cacheKey));
+      long softwarePersistMs=System.currentTimeMillis()-softwareStarted;
+      log.info("[LINUX-LOCAL-TIMING] {} Persistierung: Identität={} ms, Software={} ms ({} Einträge)",
+        cacheKey,identityPersistMs,softwarePersistMs,softwareCount);
+      return new PlatformInventoryResult(true,"ERFOLGREICH",
+        "Linux-Inventarisierung über Backend-lokal erfolgreich; "+softwareCount+
+        " strukturierte Softwareeinträge aktualisiert. Persistierung: Identität "+
+        identityPersistMs+" ms, Software "+softwarePersistMs+" ms.","Linux");
+    }
+
+    // 40k36t8: Ist Backend-lokal deaktiviert, darf der lokale Host absichtlich
+    // in den SSH-Pfad fallen. Ist auch die SSH-/Linux-Netzwerkquelle deaktiviert,
+    // darf überhaupt kein Linux-Transportweg gestartet werden.
+    if(!sshEnabled){
+      String reason=localEnabled
+        ?"SSH/Linux-Netzwerk-Inventarisierung ist deaktiviert."
+        :"Backend-lokal und SSH/Linux-Netzwerk-Inventarisierung sind deaktiviert.";
+      log.info("[PLATFORM-INVENTORY] Linux {} übersprungen: {}",identityKey,reason);
+      return new PlatformInventoryResult(false,"DEAKTIVIERT",reason,"Linux");
+    }
+
+    if (address == null)
+      return new PlatformInventoryResult(false, "NICHT_ERREICHBAR",
+        "Für die Linux-SSH-Inventarisierung ist keine IP-Adresse bekannt.", "Linux");
+
+    // Remote oder bewusst lokal-über-SSH: bestehender SSH-Pfad.
+    if(!linux.hasConfiguredSshAccess(address)){
+      return new PlatformInventoryResult(false,"NICHT_EINGERICHTET",
+        "SSH-Inventarisierung ist aktiviert, aber für dieses Ziel ist noch kein SSH-Zugang konfiguriert.","Linux");
+    }
+    log.info("[PLATFORM-INVENTORY] Linux {} wird über SSH inventarisiert (Backend-lokal aktiviert: {}, SSH-Quelle aktiviert: {}).",
+      identityKey,localEnabled,sshEnabled);
     linux.invalidateCache(address);
-    var discovered = linux.inspectSingle(address, str(row.get("name")), null, false);
-    if (discovered.isEmpty()) return new PlatformInventoryResult(false, "NICHT_ERREICHBAR", "Gerät war über SSH nicht erreichbar oder antwortete nicht als Linux-System.", "Linux");
-    var d = discovered.get();
-    registrations.recordDiscoveryHit(d.address(), d.hardwareAddress(), d.serialNumber(), d.name(), d.type(), d.manufacturer(), d.protocol(), d.status());
-    return new PlatformInventoryResult(true, "ERFOLGREICH", "Linux-Inventarisierung erfolgreich.", "Linux");
+    var discovered = linux.inspectSingle(address, name, null, false);
+    if (discovered.isEmpty()) {
+      var ssh=linux.testSshConnection(address);
+      if (ssh.reachable())
+        return new PlatformInventoryResult(false, "ERKENNUNG_FEHLGESCHLAGEN",
+          "SSH ist erreichbar und authentifiziert, aber das Ziel konnte nicht als Linux-System bestätigt werden.", "Linux");
+      return new PlatformInventoryResult(false, "NICHT_ERREICHBAR",
+        "SSH-Verbindung oder Anmeldung fehlgeschlagen: " + ssh.message(), "Linux");
+    }
+    var dev = discovered.get();
+    long persistStarted=System.currentTimeMillis();
+    registrations.recordVerifiedInventoryHit(dev.address(), dev.hardwareAddress(), dev.serialNumber(),
+      dev.name(), dev.type(), dev.manufacturer(), dev.protocol(), dev.status());
+    String resolved=registrations.resolveIdentityKey(dev.address(),dev.hardwareAddress(),dev.serialNumber(),dev.name());
+    long identityPersistMs=System.currentTimeMillis()-persistStarted;
+    int softwareCount=0;
+    long softwareStarted=System.currentTimeMillis();
+    if(resolved!=null) softwareCount=softwareInventory.replaceLinuxFromDetails(resolved,linux.consumeLatestSoftwareDetails(address));
+    long softwarePersistMs=System.currentTimeMillis()-softwareStarted;
+    log.info("[LINUX-TIMING] {} Persistierung: Identität={} ms, Software={} ms ({} Einträge)",
+      address,identityPersistMs,softwarePersistMs,softwareCount);
+    return new PlatformInventoryResult(true, "ERFOLGREICH",
+      "Linux-Inventarisierung über SSH erfolgreich; "+softwareCount+" strukturierte Softwareeinträge aktualisiert. "+
+      "Persistierung: Identität "+identityPersistMs+" ms, Software "+softwarePersistMs+" ms.", "Linux");
   }
 
   /**
@@ -497,24 +948,150 @@ public class DeviceIdentityService {
    * dieselbe Übernahmelogik (recordDiscoveryHit()) für beide Fälle, keine
    * Windows-Sonderbehandlung im übrigen Dispatcher.
    */
-  private PlatformInventoryResult dispatchWindowsPlatformInventory(String identityKey, Map<String,Object> row) {
-    if (identityKey.startsWith("windows-local:")) {
-      boolean[] found = {false};
-      windowsLocal.scan(true, OffsetDateTime.now().toString(),
-        d -> { found[0] = true; registrations.recordDiscoveryHit(d.address(), d.hardwareAddress(), d.serialNumber(), d.name(), d.type(), d.manufacturer(), d.protocol(), d.status()); },
-        event -> {}, "manual-" + identityKey, 0);
-      return found[0]
-        ? new PlatformInventoryResult(true, "ERFOLGREICH", "Lokale Windows-Inventarisierung erfolgreich.", "Windows")
-        : new PlatformInventoryResult(false, "FEHLGESCHLAGEN", "Lokale Windows-Inventarisierung lieferte kein Ergebnis (läuft GAM auf einem Windows-Host?).", "Windows");
+  /** 40k36t51: Physische lokale Windows-Identitaet unabhaengig von Discovery-Herkunft erkennen. */
+  /** 40k36t56: Physische lokale Windows-Identitaet robust erkennen.
+   * Hostname, lokale IP-Adressen und lokale MAC-Adressen werden gemeinsam geprüft.
+   * Ein Treffer bedeutet: Backend-lokal hat immer Vorrang vor WinRM. */
+  private boolean isCurrentWindowsHost(String identityKey, Map<String,Object> row){
+    if(!System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("win")) return false;
+    if(row==null || row.isEmpty()) return false;
+
+    String rowName=str(row.get("name"));
+    String rowAddress=str(row.get("address"));
+    String rowMac=normalizeWindowsMac(str(row.get("hardwareAddress")));
+    String identityMac=null;
+    if(identityKey!=null && identityKey.regionMatches(true,0,"mac:",0,4))
+      identityMac=normalizeWindowsMac(identityKey.substring(4));
+
+    java.util.Set<String> localNames=new java.util.LinkedHashSet<>();
+    java.util.Set<String> localAddresses=new java.util.LinkedHashSet<>();
+    java.util.Set<String> localMacs=new java.util.LinkedHashSet<>();
+
+    try{
+      java.net.InetAddress localhost=java.net.InetAddress.getLocalHost();
+      if(localhost.getHostName()!=null&&!localhost.getHostName().isBlank())
+        localNames.add(localhost.getHostName().trim().toLowerCase(Locale.ROOT));
+      if(localhost.getCanonicalHostName()!=null&&!localhost.getCanonicalHostName().isBlank())
+        localNames.add(localhost.getCanonicalHostName().trim().toLowerCase(Locale.ROOT));
+    }catch(Exception ignored){}
+
+    String computerName=System.getenv("COMPUTERNAME");
+    if(computerName!=null&&!computerName.isBlank())
+      localNames.add(computerName.trim().toLowerCase(Locale.ROOT));
+
+    try{
+      java.util.Enumeration<java.net.NetworkInterface> interfaces=java.net.NetworkInterface.getNetworkInterfaces();
+      while(interfaces!=null&&interfaces.hasMoreElements()){
+        java.net.NetworkInterface nic=interfaces.nextElement();
+
+        try{
+          byte[] hw=nic.getHardwareAddress();
+          if(hw!=null&&hw.length>0){
+            StringBuilder b=new StringBuilder();
+            for(byte v:hw) b.append(String.format("%02X",v));
+            localMacs.add(b.toString());
+          }
+        }catch(Exception ignored){}
+
+        java.util.Enumeration<java.net.InetAddress> addresses=nic.getInetAddresses();
+        while(addresses!=null&&addresses.hasMoreElements()){
+          java.net.InetAddress address=addresses.nextElement();
+          if(address.isLoopbackAddress()) continue;
+          String value=address.getHostAddress();
+          if(value==null||value.isBlank()) continue;
+          int zone=value.indexOf('%');
+          if(zone>0) value=value.substring(0,zone);
+          localAddresses.add(value.trim().toLowerCase(Locale.ROOT));
+        }
+      }
+    }catch(Exception ignored){}
+
+    if(rowName!=null&&!rowName.isBlank()){
+      String candidate=rowName.trim().toLowerCase(Locale.ROOT);
+      if(localNames.contains(candidate)) return true;
+
+      String candidateShort=windowsShortHost(candidate);
+      for(String localName:localNames)
+        if(candidateShort.equals(windowsShortHost(localName))) return true;
     }
+
+    if(rowAddress!=null&&!rowAddress.isBlank()){
+      String candidate=rowAddress.trim().toLowerCase(Locale.ROOT);
+      int zone=candidate.indexOf('%');
+      if(zone>0) candidate=candidate.substring(0,zone);
+      if(localAddresses.contains(candidate)) return true;
+    }
+
+    if(rowMac!=null&&!rowMac.isBlank()&&localMacs.contains(rowMac)) return true;
+    // 40k36t116: Nach Identitaets-Merges kann hardwareAddress im aktuellen Row fehlen
+    // oder nicht mehr die lokale NIC repraesentieren, waehrend der stabile Identity-Key
+    // bereits als mac:<adresse> vorliegt. Dieser Key ist deshalb gleichwertige lokale
+    // Evidenz und verhindert, dass WinRM den aktivierten Backend-lokal-Pfad verdraengt.
+    if(identityMac!=null&&!identityMac.isBlank()&&localMacs.contains(identityMac)) return true;
+
+    log.debug("[WINDOWS-LOCAL-MATCH] Kein Backend-lokal-Treffer: identity={} name={} address={} rowMac={} identityMac={} localNames={} localAddresses={} localMacs={}",
+      identityKey,rowName,rowAddress,rowMac,identityMac,localNames,localAddresses,localMacs);
+    return false;
+  }
+
+  private static String windowsShortHost(String value){
+    if(value==null) return "";
+    String v=value.trim().toLowerCase(Locale.ROOT);
+    int dot=v.indexOf('.');
+    return dot>0?v.substring(0,dot):v;
+  }
+
+  private static String normalizeWindowsMac(String value){
+    if(value==null) return null;
+    return value.replaceAll("[^0-9A-Fa-f]","").toUpperCase(Locale.ROOT);
+  }
+
+
+  private PlatformInventoryResult dispatchWindowsPlatformInventory(String identityKey, Map<String,Object> row) {
     String address = str(row.get("address"));
+    String protocol = str(row.get("protocol"));
+    boolean localEnabled = builtinSettings.enabled("WINDOWS_INVENTORY");
+    boolean localHost = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+    boolean localEvidence = identityKey.startsWith("windows-local:")
+      || (protocol != null && protocol.contains("Windows-Inventarisierung / modulare PowerShell-Abfragen"))
+      || (localHost && isCurrentWindowsHost(identityKey,row));
+
+    // 40k36t25: Wie bei Linux/macOS darf sich die Fernvariante nicht vor einen
+    // aktivierten lokalen Inventarisierer drängen. Zusammengeführte Identitäten
+    // verlieren ggf. das windows-local:-Präfix; deshalb zählt auch die bereits
+    // gespeicherte lokale Windows-Quelle als lokale Evidenz.
+    if (localEnabled && localHost && localEvidence) {
+      log.info("[PLATFORM-INVENTORY] Windows {} ist der aktuelle Backend-Host: Backend-lokal hat Vorrang; WinRM wird trotz vorhandener Konfiguration nicht verwendet.", identityKey);
+      WindowsRun run=beginWindowsRun(identityKey,1,"Standard");
+      if(run.priority()>1)return new PlatformInventoryResult(false,"HÖHERWERTIGER_LAUF_AKTIV","Ein höherwertiger Windows-Inventarlauf ("+run.mode()+") ist bereits aktiv; der Standardlauf wurde nicht gestartet.","Windows");
+      boolean[] found={false};boolean[] persisted={false};int[] softwareCount={0};
+      try{
+        windowsLocal.scan(true,OffsetDateTime.now().toString(),
+          d->{found[0]=true;if(!ownsWindowsRun(identityKey,run)){log.info("[WINDOWS-RUN] {}: überholtes Standard-Ergebnis wird verworfen.",identityKey);return;}
+            registrations.recordVerifiedInventoryHit(d.address(),d.hardwareAddress(),d.serialNumber(),d.name(),d.type(),d.manufacturer(),d.protocol(),d.status());persisted[0]=true;
+            String resolved=registrations.resolveIdentityKey(d.address(),d.hardwareAddress(),d.serialNumber(),d.name());if(resolved!=null)softwareCount[0]=softwareInventory.replaceWindowsFromDetails(resolved,windowsLocal.consumeLatestSoftwareDetails());},
+          event->{}, "manual-"+identityKey,0);
+        if(found[0]&&!persisted[0])return new PlatformInventoryResult(false,"ÜBERHOLT","Der Standardlauf wurde durch einen höherwertigen/neuen Windows-Inventarlauf ersetzt; sein Ergebnis wurde verworfen.","Windows");
+        return found[0]?new PlatformInventoryResult(true,"ERFOLGREICH","Lokale Windows-Inventarisierung erfolgreich; "+softwareCount[0]+" strukturierte Softwareeinträge aktualisiert.","Windows"):new PlatformInventoryResult(false,"FEHLGESCHLAGEN","Lokale Windows-Inventarisierung lieferte kein Ergebnis (läuft GAM auf einem Windows-Host?).","Windows");
+      }finally{finishWindowsRun(identityKey,run);}
+    }
+
     if (address == null) return new PlatformInventoryResult(false, "NICHT_ERREICHBAR", "Für dieses Gerät ist keine IP-Adresse bekannt.", "Windows");
-    var discovered = windowsRemote.inspectSingle(address, str(row.get("name")));
+    String windowsName=str(row.get("name"));
+    if (!windowsRemote.hasConfiguredAccess(address,windowsName,identityKey)) {
+      return new PlatformInventoryResult(false, "NICHT_EINGERICHTET",
+        "WinRM ist für dieses Windows-Gerät nicht konfiguriert bzw. keinem passenden Geräte-/Hostprofil zugeordnet. Eine Ferninventarisierung wird deshalb nicht gestartet.", "Windows");
+    }
+    var discovered = windowsRemote.inspectSingle(address,windowsName,identityKey);
     if (discovered.isEmpty()) return new PlatformInventoryResult(false, "NICHT_ERREICHBAR",
-      "Windows-Gerät war über WinRM nicht erreichbar oder die Anmeldung schlug fehl (gemeinsamer WinRM-Zugang konfiguriert?).", "Windows");
+      "Windows-Gerät war über den konfigurierten WinRM-Zugang nicht erreichbar oder die Anmeldung schlug fehl.", "Windows");
     var d = discovered.get();
-    registrations.recordDiscoveryHit(d.address(), d.hardwareAddress(), d.serialNumber(), d.name(), d.type(), d.manufacturer(), d.protocol(), d.status());
-    return new PlatformInventoryResult(true, "ERFOLGREICH", "Windows-Ferninventarisierung (WinRM) erfolgreich.", "Windows");
+    registrations.recordVerifiedInventoryHit(d.address(), d.hardwareAddress(), d.serialNumber(), d.name(), d.type(), d.manufacturer(), d.protocol(), d.status());
+    String windowsIdentity=registrations.resolveIdentityKey(d.address(),d.hardwareAddress(),d.serialNumber(),d.name());
+    int windowsSoftwareCount=0;
+    if(windowsIdentity!=null) windowsSoftwareCount=softwareInventory.replaceWindowsFromDetails(windowsIdentity,windowsRemote.consumeLatestSoftwareDetails(address));
+    return new PlatformInventoryResult(true, "ERFOLGREICH",
+      "Windows-Ferninventarisierung (WinRM) erfolgreich; "+windowsSoftwareCount+" strukturierte Softwareeinträge aktualisiert.", "Windows");
   }
 
   /**
@@ -538,17 +1115,104 @@ public class DeviceIdentityService {
     // Tablets", kein ADB verbunden, kein "android" im Protokolltext) war das NIE der Fall.
     String deviceType = str(row.get("deviceType"));
     String protocol = str(row.get("protocol"));
-    String platform = platformOf(deviceType, protocol);
+    String platform = preferredPlatform(row, deviceType, protocol);
+
+    // 40k37e56a7fix4: Eine bereits eindeutig klassifizierte Apple-Mobile-Plattform
+    // ist exklusiv. Eine bekannte IP oder ein zufällig für dieselbe Adresse
+    // konfiguriertes SSH-/WinRM-Profil darf iPhone/iPad nicht zusätzlich durch
+    // Linux, Windows, Android oder macOS routen. Apple-Erkennung und -Inventar
+    // selbst bleiben unverändert; hier wird ausschließlich der gemeinsame
+    // Plattform-Dispatcher begrenzt.
+    if ("iOS".equals(platform) || "iPadOS".equals(platform)) {
+      log.debug("[AUTO-INVENTORY] Apple-Mobile-Plattform {} eindeutig für {} -> exklusives Plattform-Routing", platform, row.get("identityKey"));
+      return List.of(platform);
+    }
     String protocolLower = protocol == null ? "" : protocol.toLowerCase(Locale.ROOT);
-    boolean androidLikely = row.get("adbHost") != null || "Android".equals(platform);
-    boolean linuxLikely = "Linux".equals(platform) || protocolLower.contains("linux bestätigt: ja") || protocolLower.contains("distributions-id:");
-    boolean windowsLikely = "Windows".equals(platform);
-    log.debug("[AUTO-INVENTORY] Plattformermittlung für deviceType='{}': platformOf()='{}' -> Android={}, Linux={}, Windows={}",
-      deviceType, platform, androidLikely, linuxLikely, windowsLikely);
+    String identityKey=str(row.get("identityKey"));
+    String address=str(row.get("address"));
+    String deviceTypeLower=deviceType==null?"":deviceType.toLowerCase(Locale.ROOT);
+
+    // 40k37t11: Android folgt jetzt derselben konservativen Evidenzlogik.
+    // Ein bloßes platformOf=Android bzw. ein allgemeiner Mobilgeräte-Hinweis
+    // darf keine automatische ADB-Vollinventarisierung auslösen.
+    boolean androidStrongEvidence=(identityKey!=null&&(
+        identityKey.startsWith("android-adb:")
+        || identityKey.startsWith("adb:")
+      ))
+      || protocolLower.contains("android bestätigt")
+      || protocolLower.contains("adb-inventar")
+      || protocolLower.contains("adb · android")
+      || protocolLower.contains("ro.build.version.release")
+      || protocolLower.contains("ro.product.model")
+      || protocolLower.contains("getprop")
+      || protocolLower.contains("android sdk")
+      || deviceTypeLower.contains("android");
+    boolean adbConfigured=row.get("adbHost")!=null && !str(row.get("adbHost")).isBlank();
+    boolean weakAndroidOnly="Android".equals(platform)&&!androidStrongEvidence&&!adbConfigured;
+    boolean androidLikely="Android".equals(platform)&&(androidStrongEvidence||adbConfigured);
+
+    // 40k36t9: Linux wie Windows konservativ behandeln. Ein schwacher Linux-Hinweis
+    // (z.B. generische Netzwerkdienste, SNMP-Text, Hostname oder bloßes platformOf=Linux)
+    // darf keine automatische Vollinventarisierung auslösen.
+    boolean linuxLocalEvidence=(identityKey!=null&&identityKey.startsWith("linux-local:"))
+      || protocolLower.contains("linux bestätigt: ja")
+      || protocolLower.contains("distributions-id:")
+      || protocolLower.contains("ssh-inventar")
+      || protocolLower.contains("backend-lokal · linux")
+      || protocolLower.contains("linux backend-lokal")
+      || protocolLower.contains("/etc/os-release")
+      || protocolLower.contains("kernel: linux")
+      || deviceTypeLower.contains("computer / linux")
+      || deviceTypeLower.contains("server / linux-system")
+      || deviceTypeLower.contains("linux-system");
+    boolean sshConfigured=address!=null&&linux.hasConfiguredSshAccess(address);
+    boolean weakLinuxOnly="Linux".equals(platform)&&!linuxLocalEvidence&&!sshConfigured;
+    boolean linuxLikely="Linux".equals(platform)&&(linuxLocalEvidence||sshConfigured);
+    boolean windowsLocalEvidence=(identityKey!=null&&identityKey.startsWith("windows-local:"))
+      || protocolLower.contains("windows-inventarisierung")
+      || protocolLower.contains("windows lokal")
+      || protocolLower.contains("wmi")
+      || protocolLower.contains("powershell")
+      || protocolLower.contains("winrm")
+      || deviceTypeLower.contains("computer / windows")
+      || deviceTypeLower.contains("windows-system");
+    boolean winRmConfigured=address!=null&&windowsRemote.hasConfiguredAccess(address);
+    boolean weakWindowsOnly="Windows".equals(platform)&&!windowsLocalEvidence&&!winRmConfigured;
+    boolean windowsLikely="Windows".equals(platform)&&(windowsLocalEvidence||winRmConfigured);
+
+    // 40k36t10: macOS folgt derselben konservativen Evidenzlogik wie Windows/Linux.
+    boolean macLocalEvidence=(identityKey!=null&&identityKey.startsWith("macos-local:"))
+      || protocolLower.contains("macos bestätigt: ja")
+      || protocolLower.contains("ssh · macos")
+      || protocolLower.contains("macos backend-lokal")
+      || protocolLower.contains("backend-lokal · macos")
+      || protocolLower.contains("darwin")
+      || protocolLower.contains("sw_vers")
+      || protocolLower.contains("produkt: macos")
+      || deviceTypeLower.contains("computer / macos")
+      || deviceTypeLower.contains("notebook / macos")
+      || deviceTypeLower.contains("mini-pc / macos")
+      || deviceTypeLower.contains("workstation / macos");
+    boolean macSshConfigured=address!=null&&macOs.hasConfiguredSshAccess(address);
+    boolean weakMacOnly="macOS".equals(platform)&&!macLocalEvidence&&!macSshConfigured;
+    boolean macLikely="macOS".equals(platform)&&(macLocalEvidence||macSshConfigured);
+
+    // 40k37c: Apple-Mobile nur bei eindeutiger iOS/iPadOS-Klassifikation.
+    // Trust/Pairing und tatsächliche Erreichbarkeit werden im Apple-Dispatcher geprüft.
+    boolean appleMobileLikely="iOS".equals(platform)||"iPadOS".equals(platform);
+
+    log.debug("[AUTO-INVENTORY] Plattformermittlung für deviceType='{}': platformOf()='{}' -> Android={} (starke Evidenz={}, ADB konfiguriert={}, schwacher Android-Hinweis allein={}), Linux={} (starke Evidenz={}, SSH konfiguriert={}, schwacher Linux-Hinweis allein={}), Windows={} (starke Evidenz={}, WinRM konfiguriert={}, schwacher Windows-Hinweis allein={}), macOS={} (starke Evidenz={}, SSH konfiguriert={}, schwacher macOS-Hinweis allein={})",
+      deviceType, platform,
+      androidLikely,androidStrongEvidence,adbConfigured,weakAndroidOnly,
+      linuxLikely,linuxLocalEvidence,sshConfigured,weakLinuxOnly,
+      windowsLikely,windowsLocalEvidence,winRmConfigured,weakWindowsOnly,
+      macLikely,macLocalEvidence,macSshConfigured,weakMacOnly);
     List<String> platforms = new ArrayList<>();
     if (androidLikely) platforms.add("Android");
     if (linuxLikely) platforms.add("Linux");
     if (windowsLikely) platforms.add("Windows");
+    if (macLikely) platforms.add("macOS");
+    if (appleMobileLikely) platforms.add(platform);
     return platforms;
   }
 
@@ -610,6 +1274,8 @@ public class DeviceIdentityService {
   }
 
   /** 40k34m: Statusübersicht je Plattform - "NOCH_NIE", falls für diese Plattform noch kein Lauf existiert. */
+  public Map<String,Object> globalPlatformInventoryStatus(){ return platformInventory.globalStatus(); }
+
   public List<Map<String,Object>> platformInventoryStatus(String identityKey) {
     registrations.find(identityKey); // wirft, falls Identität nicht existiert
     List<Map<String,Object>> existing = platformInventory.latestRunsByPlatform(identityKey);
@@ -805,14 +1471,14 @@ public class DeviceIdentityService {
    * 40k33b7: Führt eine vom Benutzer bestätigte Wiederauftrennung durch. Legt ein
    * NEUES, eigenständiges Gerät über die bereits vorhandene register()-Methode an
    * (dieselbe Identitätsauflösung wie bei jedem regulären Discovery-Treffer) und
-   * entfernt - nur bei einer alias-basierten Auswahl - den betreffenden Alias vom
-   * Ursprungsgerät. Das Ursprungsgerät selbst bleibt unverändert erhalten, damit
-   * keine Informationen verloren gehen; die Zusammenführung wird NICHT rückgängig
-   * gemacht, sondern es entsteht zusätzlich ein neues, separates Gerät.
+   * entfernt bei einer alias-basierten Auswahl den betreffenden Alias und bei einem
+   * Merge-Schnappschuss die zugehörige IP-/MAC-Netzwerkidentität vom Ursprungsgerät.
+   * Damit entstehen wieder zwei sauber getrennte Geräteidentitäten, ohne die übrigen
+   * Informationen des Ursprungsgeräts zu verlieren.
    */
   public Map<String,Object> split(String identityKey, String ref, String actor) {
     registrations.find(identityKey); // wirft, falls Identität nicht existiert
-    String name, deviceType = null, address = null, mac = null, serial = null, manufacturer = null;
+    String name, deviceType = null, address = null, mac = null, serial = null, manufacturer = null, discoveryProtocol = null;
     if (ref == null) throw new IllegalArgumentException("Auswahl fehlt.");
     if (ref.startsWith("ALIAS:")) {
       name = ref.substring("ALIAS:".length());
@@ -827,14 +1493,26 @@ public class DeviceIdentityService {
       Map<String,Object> e = entries.get(entryIndex);
       name = str(e.get("name")); deviceType = str(e.get("deviceType")); address = str(e.get("address"));
       mac = str(e.get("hardwareAddress")); serial = str(e.get("serialNumber")); manufacturer = str(e.get("manufacturer"));
+      // 40k37e54-fix2: Beim Wiederauftrennen eines Merge-Snapshots die echte
+      // Quellenprovenienz des abgespaltenen Datensatzes wiederherstellen. Sonst wurde
+      // der neue Datensatz nur als "Wiederauftrennung (manuell)" registriert und ein
+      // spaeter erneut erkannter FRITZ!Box-/ARP-Treffer lediglich als pending Quelle
+      // behandelt bzw. wirkte im Frontend nicht mehr wie der urspruengliche Treffer.
+      discoveryProtocol = str(e.get("discoveryProtocol"));
+      if (discoveryProtocol == null) discoveryProtocol = str(e.get("protocol"));
     } else {
       throw new IllegalArgumentException("Unbekannte Auswahl.");
     }
     if (name == null || name.isBlank()) throw new IllegalArgumentException("Für die Wiederauftrennung wird mindestens ein Name benötigt.");
 
-    registrations.register(address, mac, serial, name, deviceType, manufacturer, "Wiederauftrennung (manuell)", "UNBEKANNT");
-    String newKey = DiscoveryRegistrationRepository.resolveKey(address, mac, serial, name);
+    String restoredProtocol = discoveryProtocol == null
+      ? "Wiederauftrennung (manuell)"
+      : discoveryProtocol;
+    registrations.register(address, mac, serial, name, deviceType, manufacturer, restoredProtocol, "UNBEKANNT");
+    String newKey = registrations.resolveIdentityKey(address, mac, serial, name);
+    if (newKey == null) newKey = DiscoveryRegistrationRepository.resolveKey(address, mac, serial, name);
     if (ref.startsWith("ALIAS:")) registrations.removeAlias(identityKey, name);
+    if (ref.startsWith("SNAPSHOT:")) registrations.removeNetworkIdentity(identityKey, address, mac);
     merges.logSplit(identityKey, newKey, "Wiederauftrennung: „" + name + "“ als eigenständiges Gerät abgespalten.", actor);
     return registrations.find(newKey);
   }
@@ -852,6 +1530,10 @@ public class DeviceIdentityService {
   private static String displayName(Map<String,Object> row) {
     String name = str(row.get("name"));
     return name != null ? name : str(row.get("identityKey"));
+  }
+
+  public Map<String,Object> removeDiscoverySource(String identityKey, String source) {
+    return registrations.removeDiscoverySource(identityKey, source);
   }
 
   public Map<String,Object> addAlias(String identityKey, String alias) {
@@ -899,11 +1581,12 @@ public class DeviceIdentityService {
     ConfidenceAssessment confidence = assessConfidence(hasMac, hasSerial, hasManufacturer, sources.size(), aliases.size());
 
     return new IdentityRow(identityKey, str(row.get("name")), truthy(row.get("manualName")), deviceType,
-      truthy(row.get("manualDeviceType")), categoryParts[0], categoryParts[1], platformOf(deviceType, protocol),
+      truthy(row.get("manualDeviceType")), categoryParts[0], categoryParts[1], preferredPlatform(row, deviceType, protocol),
       str(row.get("address")), str(row.get("hardwareAddress")), str(row.get("serialNumber")),
       str(row.get("manufacturer")), str(row.get("status")), row.get("firstSeenAt"), row.get("lastSeenAt"),
       number(row.get("detectionCount")), (int) number(row.get("lastScanHits")), sources, sources.size(),
-      aliases, aliases.size(), mergeCount, confidence.label(), confidence.reasons(),
+      aliases, aliases.size(), mergeCount, registrations.networkAddressesFor(identityKey),
+      registrations.networkHardwareAddressesFor(identityKey), confidence.label(), confidence.reasons(),
       withOpenCandidate.contains(identityKey), protocol,
       str(row.get("adbHost")), row.get("adbPort") instanceof Number n ? n.intValue() : null, row.get("adbLastConnectedAt"));
   }
@@ -924,30 +1607,57 @@ public class DeviceIdentityService {
   /** 40k34t: öffentlich gemacht (unverändert in der Logik), damit InventoryRepository
    * dieselbe, bereits korrigierte Plattformerkennung wiederverwenden kann, statt sie
    * ein zweites Mal zu implementieren. */
+  private static String preferredPlatform(Map<String,Object> row, String deviceType, String protocol) {
+    // fix42: Ein verifizierter Transport ist verlaesslicher als eine historisch
+    // falsch gespeicherte Kategorie oder eine manuelle Plattform-Vermutung.
+    String verified = verifiedPlatform(protocol);
+    if (verified != null) return verified;
+    String preferred=str(row.get("preferredPlatform"));
+    if (preferred != null) return preferred;
+    String name=nullToEmpty(str(row.get("name"))).toLowerCase(Locale.ROOT);
+    // Alte Netzwerkkategorien wie 'Tablet / iPadOS' nicht als Apple-Beleg
+    // uebernehmen, wenn schon der Name deutlich auf Android verweist.
+    if ((name.startsWith("android-") || name.contains("galaxy-") || name.contains("samsung")
+        || name.contains("doogee") || name.contains("fossibot"))
+        && !nullToEmpty(protocol).toLowerCase(Locale.ROOT).contains("apple mobile")) return "Android";
+    if (deviceType != null && (deviceType.toLowerCase(Locale.ROOT).contains("ipados")
+        || deviceType.toLowerCase(Locale.ROOT).contains("ios"))
+        && protocol != null && (protocol.toLowerCase(Locale.ROOT).contains("fritz")
+        || protocol.toLowerCase(Locale.ROOT).contains("arp"))) return null;
+    return platformOf(deviceType,protocol);
+  }
+
+  /** Ausschliesslich positive technische Plattformnachweise, keine Hostnamen. */
+  public static String verifiedPlatform(String protocol) {
+    String p = nullToEmpty(protocol).toLowerCase(Locale.ROOT);
+    if (p.contains("adb") || p.contains("android usb") || p.contains("android wlan")) return "Android";
+    if (p.contains("apple mobile") || p.contains("coredevice") || p.contains("libimobiledevice")
+        || p.contains("usbmux") || p.contains("lockdown") || p.contains("userspace_rsd")) {
+      if (p.contains("ipados") || p.contains("ipad")) return "iPadOS";
+      if (p.contains("iphone") || p.contains("ios")) return "iOS";
+      return null; // Apple erkannt, Geraeteklasse noch unbekannt
+    }
+    if (p.contains("winrm") || p.contains("windows wmi") || p.contains("windows lokal")) return "Windows";
+    if (p.contains("macos lokal") || p.contains("macos ssh")) return "macOS";
+    if (p.contains("linux lokal") || p.contains("linux ssh")) return "Linux";
+    return null;
+  }
+
   public static String platformOf(String deviceType, String protocol) {
-    String all = (nullToEmpty(deviceType) + " " + nullToEmpty(protocol)).toLowerCase(Locale.ROOT);
-    if (all.contains("adb")) return "Android";
-    if (all.contains("linux")) return "Linux";
-    if (all.contains("windows") || all.contains("wmi") || all.contains("winrm") || all.contains("powershell")) return "Windows";
-    if (all.contains("home assistant")) return "Home Assistant";
-    if (all.contains("proxmox")) return "Proxmox";
-    if (all.contains("macos") || all.contains("mac os")) return "macOS";
-    // 40k34a: Android-Geräte nutzen dieselbe Plattform-Erkennung wie alle anderen Plattformen -
-    // keine Sonderlogik, nur eine weitere Zeile nach demselben Muster.
-    // 40k34s: KORREKTUR (Diagnose, siehe docs/40k34s-...): diese Zeile prüfte bisher
-    // ausschließlich auf das wörtliche Vorkommen von "android"/"chromecast"/"fire tv"/
-    // "shield" im Gerätetyp/Protokoll. Die evidenzbasierte Nachklassifizierung
-    // (40k34h–n) schreibt für Android-Smartphones/-Tablets aber NICHT das Wort
-    // "android", sondern ausschließlich die generische Zielkategorie
-    // "Smartphones & Tablets" in device_type - unabhängig von Hersteller, Modell
-    // oder Gerätename. Dadurch lieferte platformOf() für ALLE so klassifizierten
-    // Android-Geräte bisher `null` ("Plattform: —" in der Oberfläche, keine
-    // automatische Inventarisierung). Da im Projekt keine iOS-Inventarisierung
-    // existiert, wird "Smartphones & Tablets" hier generisch als Android behandelt -
-    // außer der Text nennt eindeutig iPhone/iPad (dann bewusst kein Android).
-    if (all.contains("iphone") || all.contains("ipad")) return null;
-    if (all.contains("android") || all.contains("chromecast") || all.contains("fire tv") || all.contains("shield")
-      || all.contains("smartphones & tablets") || all.contains("smartphones und tablets")) return "Android";
+    String verified=verifiedPlatform(protocol);
+    if (verified!=null) return verified;
+    String type=nullToEmpty(deviceType).toLowerCase(Locale.ROOT);
+    String source=nullToEmpty(protocol).toLowerCase(Locale.ROOT);
+    // Eine allgemeine Netzwerkquelle belegt keine iPadOS-Plattform.
+    // Gleiches gilt fuer die Kategorie 'Smartphones & Tablets'.
+    if (type.contains("android") || type.contains("chromecast") || type.contains("fire tv") || type.contains("shield")) return "Android";
+    if (type.contains("ipados") || type.contains("ipad")) return "iPadOS";
+    if (type.contains("iphone") || type.contains("ios")) return "iOS";
+    if (type.contains("windows") || type.contains("wmi") || source.contains("winrm")) return "Windows";
+    if (type.contains("macos") || type.contains("mac os")) return "macOS";
+    if (type.contains("linux")) return "Linux";
+    if (type.contains("home assistant")) return "Home Assistant";
+    if (type.contains("proxmox")) return "Proxmox";
     return null;
   }
 

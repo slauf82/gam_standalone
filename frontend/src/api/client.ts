@@ -20,7 +20,11 @@ export type InvoiceDraft = { suggestedNumber: string; invoiceDate: string; compa
 export type InvoiceTextPreview = { language:string; companyId?:number; documentTitle?:string; salutation:string; invoiceText:string; lawHint:string; greetings:string; labels?: Record<string,string>; recipient?: LbdRecipient; treatmentDate?:string; paymentMethod?:string };
 export type LbdRecipient = { found: boolean; file?: string; patientNumber?: string; nameSuffix?: string; lastName?: string; firstName?: string; birthDate?: string; title?: string; insuranceNumber?: string; postalCode?: string; city?: string; country?: string; street?: string; insuranceType?: string; salutationIndex?: number; salutation?: string; rawFields: Record<string,string> };
 
-const API = import.meta.env.VITE_GAM_API ?? "http://localhost:8080/api";
+// 40k36p6x: API-Ziel automatisch aus dem Host der geöffneten GAM-Oberfläche ableiten.
+// Dadurch funktioniert derselbe Frontend-Build sowohl lokal (localhost) als auch
+// von anderen Rechnern im LAN (z. B. http://192.168.2.106:5173).
+const API = import.meta.env.VITE_GAM_API ??
+  `${window.location.protocol}//${window.location.hostname}:8080/api`;
 export function apiBase() { return API; }
 export function token() { return localStorage.getItem("gam_token") ?? ""; }
 export function setToken(value: string) { localStorage.setItem("gam_token", value); }
@@ -84,6 +88,11 @@ export async function passkeyLoginFinish(username:string, challenge:string, cred
 }
 export const me = () => request<AccountDto>("/auth/me");
 export const loadSystemStatus = () => request<SystemStatus>("/system/status");
+
+export type BrowserClientInfo = {
+  clientId:string; platform:string; platformVersion?:string; browser:string; browserVersion?:string; architecture?:string; model?:string; language?:string; timezone?:string; screen?:string; deviceClass?:string; hardwareConcurrency?:number; deviceMemory?:number; touch:boolean; userAgent:string;
+};
+export const registerBrowserClient=(info:BrowserClientInfo)=>request<Record<string,unknown>>("/inventory/discovery/browser-client",{method:"POST",body:JSON.stringify(info)});
 export const loadInvoices = (limit = 100, q = "", companyId?: number) => request<InvoiceSummary[]>(`/invoices?limit=${limit}&q=${encodeURIComponent(q)}${companyId ? `&companyId=${companyId}` : ""}`);
 export const loadInvoice = (number: string, companyId?: number) => request<InvoiceDetail>(`/invoices/${encodeURIComponent(number)}${companyId ? `?companyId=${companyId}` : ""}`);
 export const loadLbdPreview = (file = "") => request<LbdRecipient>(`/invoices/lbd/preview${file ? `?file=${encodeURIComponent(file)}` : ""}`);
@@ -386,6 +395,8 @@ export const initializeFirstRun = (payload:FirstRunSetupRequest) => request<Reco
 export type DemoDatabaseStatus={available:boolean;file:string;accountCount:number;patientCount:number;invoiceCount:number;message:string};
 export const loadDemoDatabaseStatus=()=>request<DemoDatabaseStatus>("/database/demo/status");
 export const importDemoDatabase=()=>request<Record<string,unknown>>("/database/demo/import",{method:"POST"});
+export type DemoImportProgress={running:boolean;percent:number;phase:string;message:string;current:number;total:number;success:boolean;error?:string|null};
+export const loadDemoImportProgress=()=>request<DemoImportProgress>("/database/demo/progress");
 
 // Schritt 40k: Gerätemanager und Discovery-Grundlage
 export type DiscoveredDevice = {
@@ -406,31 +417,81 @@ export const loadDeviceDiscoveryCapabilities = () => request<DeviceDiscoveryCapa
 export type BuiltinDiscoverySources=Record<string,boolean>;
 export const loadBuiltinDiscoverySources=()=>request<BuiltinDiscoverySources>('/inventory/discovery/builtin-sources');
 export const saveBuiltinDiscoverySources=(payload:BuiltinDiscoverySources)=>request<BuiltinDiscoverySources>('/inventory/discovery/builtin-sources',{method:'PUT',body:JSON.stringify(payload)});
+
+// 40k36q3: Mehrfach-Betriebssystemzugänge
+export type OsAccessProfile={id?:number;type:'SSH'|'WINRM'|'ADB'|string;name:string;host:string;enabled:boolean;username:string;authMode:string;passwordConfigured:boolean;keyPath:string;port:number;https:boolean;pairingPort?:number;pairingCodeConfigured:boolean;identityKey?:string;updatedAt?:string;password?:string;clearPassword?:boolean;pairingCode?:string;clearPairingCode?:boolean};
+export type OsAccessProfileTest={success:boolean;message:string;durationMs?:number;handshakeOk?:boolean;authOk?:boolean;tcpReachable?:boolean;wsmanAttempted?:boolean;endpoint?:string;usernameFormat?:string;requestedAuthentication?:string;authenticationUsed?:string;legacyFallbackUsed?:boolean;errorType?:string;errorDetail?:string;clientStack?:string;trustedTarget?:boolean;trustRequired?:boolean};
+export const loadOsAccessProfiles=()=>request<OsAccessProfile[]>('/inventory/discovery/os-access-profiles');
+export const saveOsAccessProfile=(profile:OsAccessProfile)=>request<OsAccessProfile>('/inventory/discovery/os-access-profiles',{method:'PUT',body:JSON.stringify(profile)});
+export const deleteOsAccessProfile=(id:number)=>request<Record<string,unknown>>(`/inventory/discovery/os-access-profiles/${id}`,{method:'DELETE'});
+export const testOsAccessProfile=(id:number)=>request<OsAccessProfileTest>(`/inventory/discovery/os-access-profiles/${id}/test`,{method:'POST'});
+
 export type WinRmDiscoverySettings={enabled:boolean;username:string;passwordConfigured:boolean;port:number;https:boolean};
-export type WinRmDiscoveryTest={configured:boolean;reachable:boolean;message:string;checkedAt:string};
+export type WinRmDiscoveryTest={configured:boolean;reachable:boolean;message:string;checkedAt:string;tcpReachable?:boolean;wsmanAttempted?:boolean;endpoint?:string;usernameFormat?:string;requestedAuthentication?:string;authenticationUsed?:string;legacyFallbackUsed?:boolean;errorType?:string;errorDetail?:string;clientStack?:string;trustedTarget?:boolean;trustRequired?:boolean};
 export const loadWinRmDiscoverySettings=()=>request<WinRmDiscoverySettings>('/inventory/discovery/winrm');
 export const saveWinRmDiscoverySettings=(payload:{enabled:boolean;username:string;password?:string;clearPassword?:boolean;port:number;https:boolean})=>request<WinRmDiscoverySettings>('/inventory/discovery/winrm',{method:'PUT',body:JSON.stringify(payload)});
 export const testWinRmDiscovery=(host:string)=>request<WinRmDiscoveryTest>('/inventory/discovery/winrm/test',{method:'POST',body:JSON.stringify({host})});
+export type WindowsLocalDiscoveryTest={success:boolean;message:string;checkedAt:string;mechanism:string;userContext:string;durationMs:number};
+export const testWindowsLocalDiscovery=()=>request<WindowsLocalDiscoveryTest>('/inventory/discovery/windows-local/test',{method:'POST'});
+export type AppleMobileDevice={udid:string;name?:string;platform:string;productType?:string;productVersion?:string;buildVersion?:string;serialNumber?:string;modelNumber?:string;hardwareModel?:string;cpuArchitecture?:string;wifiAddress?:string;bluetoothAddress?:string;timeZone?:string;paired:boolean;pairingState:string};
+export type AppleMobileStatus={nativeToolsAvailable:boolean;ideviceIdAvailable:boolean;ideviceInfoAvailable:boolean;idevicePairAvailable:boolean;appleDevicesInstalled:boolean;connectedDeviceCount:number;pairedDeviceCount:number;mechanism:string;message:string;checkedAt:string;devices:AppleMobileDevice[]};
+export type AppleMobileTest={success:boolean;state:string;message:string;checkedAt:string;mechanism:string;connectedDeviceCount:number;pairedDeviceCount:number;durationMs:number;devices:AppleMobileDevice[]};
+export const loadAppleMobileStatus=()=>request<AppleMobileStatus>('/inventory/discovery/apple-mobile/status');
+// fix33: legacy helper intentionally routes to pairing endpoint too.
+export const testAppleMobileDiscovery=()=>request<AppleMobileTest>('/inventory/discovery/apple-mobile/test?gamTrace=fix33',{method:'POST'});
+export type AppleAdminTunnelStatus={active:boolean;state:string;message:string;checkedAt:string;udid?:string;host?:string;port:number;pid:number};
+export const loadAppleAdminTunnelStatus=()=>request<AppleAdminTunnelStatus>('/inventory/discovery/apple-mobile/admin-tunnel');
+export const startAppleAdminTunnel=()=>request<AppleAdminTunnelStatus>('/inventory/discovery/apple-mobile/admin-tunnel',{method:'POST'});
+export const stopAppleAdminTunnel=()=>request<AppleAdminTunnelStatus>('/inventory/discovery/apple-mobile/admin-tunnel',{method:'DELETE'});
+export type AppleMobileToolchainInstallResult={success:boolean;state:string;message:string;checkedAt:string;version:string;targetDirectory:string;checksumVerified:boolean;durationMs:number};
+export const installAppleMobileToolchain=()=>request<AppleMobileToolchainInstallResult>('/inventory/discovery/apple-mobile/toolchain/install',{method:'POST'});
+export type AppleDevicesInstallResult={success:boolean;state:string;message:string;checkedAt:string;installed:boolean;wingetAvailable:boolean;storeOpened:boolean;durationMs:number};
+export const installAppleDevices=()=>request<AppleDevicesInstallResult>('/inventory/discovery/apple-mobile/apple-devices/install',{method:'POST'});
+export type AppleOfflineDepotStatus={directory:string;reachable:boolean;packageCount:number;applePackagePresent:boolean;toolchainPresent:boolean;message:string;checkedAt:string};
+export type AppleOfflineDepotResult={success:boolean;state:string;message:string;checkedAt:string;directory:string;packageCount:number;toolchainPresent:boolean;durationMs:number};
+export const loadAppleOfflineDepot=()=>request<AppleOfflineDepotStatus>('/inventory/discovery/apple-mobile/apple-devices/depot');
+export const saveAppleOfflineDepot=(directory:string)=>request<AppleOfflineDepotStatus>('/inventory/discovery/apple-mobile/apple-devices/depot',{method:'PUT',body:JSON.stringify({directory})});
+export const prepareAppleOfflineDepot=()=>request<AppleOfflineDepotResult>('/inventory/discovery/apple-mobile/apple-devices/depot/prepare',{method:'POST'});
+export type AppleDepotUpdateStatus={success:boolean;state:string;message:string;checkedAt:string;updateAvailable:boolean;localMainPackage:string;onlineMainPackage:string;onlinePackages:string[];missingOrChangedPackages:string[]};
+export const checkAppleOfflineDepotUpdates=()=>request<AppleDepotUpdateStatus>('/inventory/discovery/apple-mobile/apple-devices/depot/update-check',{method:'POST'});
+export const updateAppleOfflineDepot=()=>request<AppleOfflineDepotResult>('/inventory/discovery/apple-mobile/apple-devices/depot/update',{method:'POST'});
+export const installAppleFromOfflineDepot=()=>request<AppleOfflineDepotResult>('/inventory/discovery/apple-mobile/apple-devices/depot/install',{method:'POST'});
+export type AppleMobilePairingResult={success:boolean;state:string;message:string;checkedAt:string;udid?:string;paired:boolean;durationMs:number};
+export const pairAppleMobileDevice=(udid?:string)=>request<AppleMobilePairingResult>('/inventory/discovery/apple-mobile/pair?gamTrace=fix33',{method:'POST',body:JSON.stringify({udid:udid||''})});
+export const loadAppleMobileWifiPairingStatus=()=>request<AppleMobilePairingResult>('/inventory/discovery/apple-mobile/pair-wifi/status');
+export const pairAppleMobileWifi=(udid?:string)=>request<AppleMobilePairingResult>('/inventory/discovery/apple-mobile/pair-wifi',{method:'POST',body:JSON.stringify({udid:udid||''})});
+export const pairAppleMobileHostWifiIos27=()=>request<AppleMobilePairingResult>('/inventory/discovery/apple-mobile/pair-host',{method:'POST'});
+export const validateAppleMobilePairing=(udid?:string)=>request<AppleMobilePairingResult>('/inventory/discovery/apple-mobile/pairing/validate',{method:'POST',body:JSON.stringify({udid:udid||''})});
+
+export type WinRmTrustedTarget={host:string;createdAt:string;createdBy:string};
+export const loadWinRmTrustedTargets=()=>request<WinRmTrustedTarget[]>('/inventory/discovery/winrm/trusted-targets');
+export const trustWinRmTarget=(host:string)=>request<{trusted:boolean;host:string}>('/inventory/discovery/winrm/trusted-targets',{method:'POST',body:JSON.stringify({host})});
+export const revokeWinRmTarget=(host:string)=>request<{trusted:boolean;host:string}>(`/inventory/discovery/winrm/trusted-targets?host=${encodeURIComponent(host)}`,{method:'DELETE'});
 export type DeviceIdentityMergeSettings={autoMergeThreshold:number;possibleDuplicateThreshold:number;macWeight:number;hardwareSerialWeight:number;snmpSerialWeight:number;deviceIdWeight:number;hostnameWeight:number;ipWeight:number;manufacturerWeight:number;typeWeight:number;twoSourceBonus:number;threeSourceBonus:number;automaticMergeEnabled:boolean;hardConflictsBlockMerge:boolean;ipNeverMergesAlone:boolean};
 export const loadDeviceIdentityMergeSettings=()=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings');
 export const saveDeviceIdentityMergeSettings=(payload:DeviceIdentityMergeSettings)=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings',{method:'PUT',body:JSON.stringify(payload)});
 export const resetDeviceIdentityMergeSettings=()=>request<DeviceIdentityMergeSettings>('/inventory/discovery/merge-settings/reset',{method:'POST'});
 export const scanForDevices = () => request<DiscoveredDevice[]>('/inventory/discovery/scan', {method:'POST'});
 export const registerDiscoveredDevice = (device:Pick<DiscoveredDevice,'address'|'name'|'hardwareAddress'|'serialNumber'>) => request<Record<string,unknown>>('/inventory/discovery/register',{method:'POST',body:JSON.stringify(device)});
+export const acceptNewDiscoverySource = (device:Pick<DiscoveredDevice,'address'|'name'|'hardwareAddress'|'serialNumber'>) => request<RegisteredDiscoveryDevice>('/inventory/discovery/accept-new-source',{method:'POST',body:JSON.stringify(device)});
 export const deregisterDiscoveredDevice = (device:Pick<DiscoveredDevice,'address'|'name'|'hardwareAddress'|'serialNumber'>) => request<Record<string,unknown>>('/inventory/discovery/deregister',{method:'POST',body:JSON.stringify(device)});
 export const registerAllDiscoveredDevices=(devices:DiscoveredDevice[])=>request<{registered:number;requested:number}>('/inventory/discovery/register-all',{method:'POST',body:JSON.stringify(devices)});
-export type RegisteredDiscoveryDevice={identityKey:string;name?:string;deviceType?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;protocol?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;registeredAt?:string;detectionCount?:number;lastScanHits?:number;manualDeviceType?:boolean;manualName?:boolean;adbHost?:string;adbPort?:number;adbLastConnectedAt?:string};
+export type RegisteredDiscoveryDevice={identityKey:string;name?:string;deviceType?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;protocol?:string;pendingProtocol?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;registeredAt?:string;detectionCount?:number;lastScanHits?:number;manualDeviceType?:boolean;manualName?:boolean;adbHost?:string;adbPort?:number;adbLastConnectedAt?:string};
 export const loadRegisteredDiscoveryDevices=()=>request<RegisteredDiscoveryDevice[]>('/inventory/discovery/registered');
 export const updateRegisteredDeviceType=(identityKey:string,deviceType:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/registered/device-type',{method:'PUT',body:JSON.stringify({identityKey,deviceType})});
+export const updateRegisteredPreferredPlatform=(identityKey:string,platform:SupportedPlatform)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/registered/preferred-platform',{method:'PUT',body:JSON.stringify({identityKey,platform})});
 export const updateRegisteredDeviceName=(identityKey:string,name:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/registered/device-name',{method:'PUT',body:JSON.stringify({identityKey,name})});
 export const moveRegisteredDeviceToInventory=(identityKey:string)=>request<InventoryDeviceDetail>(`/inventory/discovery/registered/${encodeURIComponent(identityKey)}/inventory`,{method:'POST'});
 export const revokeRegisteredDevice=(identityKey:string)=>request<Record<string,unknown>>('/inventory/discovery/registered/revoke',{method:'POST',body:JSON.stringify({identityKey})});
 export const revokeAllRegisteredDevices=()=>request<Record<string,unknown>>('/inventory/discovery/registered',{method:'DELETE'});
+export const revokeRegisteredDevicesBulk=(identityKeys:string[])=>request<Record<string,unknown>>('/inventory/discovery/registered/revoke-bulk',{method:'POST',body:JSON.stringify({identityKeys})});
+export const loadMacOsToolStatus=()=>request<Record<string,any>>('/setup/macos-tools/status');
+export const installMacOsTool=(tool:'homebrew'|'mariadb'|'smartmontools'|'mas')=>request<Record<string,unknown>>('/setup/macos-tools/install',{method:'POST',body:JSON.stringify({tool})});
 
 // 40k33b4: Manuelle Gerätezusammenführung.
 export type DeviceMergeFieldRow={label:string;valueA?:string;valueB?:string;differs:boolean};
 export type DeviceMergeCandidate={keyA:string;nameA?:string;typeA?:string;addressA?:string;macA?:string;keyB:string;nameB?:string;typeB?:string;addressB?:string;macB?:string;score:number;confidencePercent:number;decision:string;warningLevel:'RED'|'YELLOW'|'GREEN'|string;matchedSignals:string[];conflicts:string[];criticalityLevel?:'KRITISCH'|'HOCH'|'PRUEFHINWEIS'|string;criticalMessage?:string;fieldComparison:DeviceMergeFieldRow[];manualConfirmationRequired:boolean};
-export type DeviceMergePreview={targetKey:string;sourceKeys:string[];name?:string;manualName:boolean;deviceType?:string;manualDeviceType:boolean;address?:string;mac?:string;serialNumber?:string;manufacturer?:string;protocol?:string;status?:string;detectionCount:number;lastScanHits:number;macConflicts:string[];macConflictConfirmationRequired:boolean;criticalityLevel?:'KRITISCH'|'HOCH'|'PRUEFHINWEIS'|string;criticalMessage?:string;fieldComparison:DeviceMergeFieldRow[];manualConfirmationRequired:boolean};
+export type DeviceMergePreview={targetKey:string;sourceKeys:string[];name?:string;manualName:boolean;deviceType?:string;manualDeviceType:boolean;address?:string;mac?:string;serialNumber?:string;manufacturer?:string;protocol?:string;pendingProtocol?:string;status?:string;detectionCount:number;lastScanHits:number;macConflicts:string[];macConflictConfirmationRequired:boolean;criticalityLevel?:'KRITISCH'|'HOCH'|'PRUEFHINWEIS'|string;criticalMessage?:string;fieldComparison:DeviceMergeFieldRow[];manualConfirmationRequired:boolean};
 export type DeviceMergeLogEntry={id:number;targetIdentityKey:string;mergedIdentityKeys:string;summary?:string;performedBy?:string;performedAt:string};
 export const loadDeviceMergeCandidates=()=>request<DeviceMergeCandidate[]>('/inventory/discovery/merge/candidates');
 export const previewDeviceMerge=(targetKey:string,sourceKeys:string[],overrides?:Record<string,unknown>)=>request<DeviceMergePreview>('/inventory/discovery/merge/preview',{method:'POST',body:JSON.stringify({targetKey,sourceKeys,overrides:overrides||{}})});
@@ -439,7 +500,7 @@ export const ignoreDeviceMergeCandidate=(keyA:string,keyB:string)=>request<Recor
 export const loadDeviceMergeLog=(limit=50)=>request<DeviceMergeLogEntry[]>(`/inventory/discovery/merge/log?limit=${limit}`);
 
 // 40k33b5: Geräteidentität, Quellenübersicht und Identitätsverwaltung.
-export type DeviceIdentityRow={identityKey:string;name?:string;manualName:boolean;deviceType?:string;manualDeviceType:boolean;category?:string;subcategory?:string;platform?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;detectionCount:number;lastScanHits:number;sources:string[];sourceCount:number;aliases:string[];aliasCount:number;mergeCount:number;confidenceLabel:string;confidenceReasons:string[];hasOpenCandidate:boolean;protocol?:string;adbHost?:string;adbPort?:number;adbLastConnectedAt?:string};
+export type DeviceIdentityRow={identityKey:string;name?:string;manualName:boolean;deviceType?:string;manualDeviceType:boolean;category?:string;subcategory?:string;platform?:string;address?:string;hardwareAddress?:string;serialNumber?:string;manufacturer?:string;status?:string;firstSeenAt?:string;lastSeenAt?:string;detectionCount:number;lastScanHits:number;sources:string[];sourceCount:number;aliases:string[];aliasCount:number;mergeCount:number;networkAddresses:string[];networkHardwareAddresses:string[];confidenceLabel:string;confidenceReasons:string[];hasOpenCandidate:boolean;protocol?:string;adbHost?:string;adbPort?:number;adbLastConnectedAt?:string};
 export type DeviceIdentityHistoryEntry={timestamp:string;kind:'KATEGORIE'|'ALIAS'|'MERGE'|string;description:string};
 export type DeviceIdentityReassessResult={identity:DeviceIdentityRow;openCandidates:DeviceMergeCandidate[]};
 export const loadDeviceIdentityOverview=()=>request<DeviceIdentityRow[]>('/inventory/discovery/identity/overview');
@@ -461,13 +522,23 @@ export const splitDeviceIdentity=(identityKey:string,ref:string)=>request<Regist
 // 40k33b8: Manuelle Linux-Aktionen (gezielt für ein Gerät, ohne kompletten Suchlauf).
 export type LinuxActionResult={success:boolean;message:string;identity:DeviceIdentityRow};
 export const runLinuxInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/linux/inventory',{method:'POST',body:JSON.stringify({identityKey})});
-export type LinuxSshTestResult={sshConfigured:boolean;reachable:boolean;message:string;checkedAt:string};
+export const runLinuxElevatedInventory=(identityKey:string,sudoPassword:string)=>request<LinuxActionResult>('/inventory/discovery/identity/linux/inventory-elevated',{method:'POST',body:JSON.stringify({identityKey,sudoPassword})});
+export type LinuxSshTestResult={sshConfigured:boolean;reachable:boolean;tcpReachable?:boolean;handshakeOk?:boolean;authOk?:boolean;message:string;checkedAt:string};
 export const testLinuxSsh=(identityKey:string)=>request<LinuxSshTestResult>('/inventory/discovery/identity/linux/ssh-test',{method:'POST',body:JSON.stringify({identityKey})});
+export const testDiscoverySourceSsh=(host:string)=>request<LinuxSshTestResult>('/inventory/discovery/identity/sources/ssh-test',{method:'POST',body:JSON.stringify({host})});
 export const refreshLinuxCache=(identityKey:string)=>request<{refreshed:boolean}>('/inventory/discovery/identity/linux/refresh-cache',{method:'POST',body:JSON.stringify({identityKey})});
+
+export type SoftwareInventoryRow={platform:string;scopeType:'SYSTEM'|'USER'|string;scopeName?:string;softwareKey:string;displayName:string;version?:string;bundleOrPackage?:string;installPath?:string;source?:string;firstSeenAt?:string;lastSeenAt?:string};
+export const loadSoftwareInventory=(identityKey:string)=>request<SoftwareInventoryRow[]>(`/inventory/discovery/identity/software?identityKey=${encodeURIComponent(identityKey)}`);
 
 // 40k36: macOS über die gemeinsame SSH-Konfiguration.
 export type MacOsSshTestResult={sshConfigured:boolean;reachable:boolean;macOs:boolean;message:string;checkedAt:string};
 export const runMacOsInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/macos/inventory',{method:'POST',body:JSON.stringify({identityKey})});
+export const runMacOsElevatedInventory=(identityKey:string,sudoPassword:string)=>request<LinuxActionResult>('/inventory/discovery/identity/macos/inventory-elevated',{method:'POST',body:JSON.stringify({identityKey,sudoPassword})});
+export const loadWindowsBackendLocal=(identityKey:string)=>request<{backendLocal:boolean}>(`/inventory/discovery/identity/windows/backend-local?identityKey=${encodeURIComponent(identityKey)}`);
+export const runWindowsElevatedInventory=(identityKey:string,username='',password='')=>request<LinuxActionResult>('/inventory/discovery/identity/windows/inventory-elevated',{method:'POST',body:JSON.stringify({identityKey,username,password})});
+export const runWindowsSystemInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/windows/inventory-system',{method:'POST',body:JSON.stringify({identityKey})});
+export const repairWindowsBitLockerProvider=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/windows/repair-bitlocker-provider',{method:'POST',body:JSON.stringify({identityKey})});
 export const testMacOsSsh=(identityKey:string)=>request<MacOsSshTestResult>('/inventory/discovery/identity/macos/ssh-test',{method:'POST',body:JSON.stringify({identityKey})});
 
 // 40k35i1: Zentrale SSH-Konfiguration für Linux und künftig macOS.
@@ -484,6 +555,7 @@ export const pairAndroidDevice=(host:string,pairingPort:number,pairingCode:strin
 export const connectAndroidDevice=(host:string,port:number,identityKey?:string)=>request<AdbActionResult>('/inventory/discovery/identity/android/connect',{method:'POST',body:JSON.stringify({host,port,identityKey})});
 export const disconnectAndroidDevice=(host:string,port:number)=>request<AdbActionResult>('/inventory/discovery/identity/android/disconnect',{method:'POST',body:JSON.stringify({host,port})});
 export const runAndroidInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/android/inventory',{method:'POST',body:JSON.stringify({identityKey})});
+export const runAndroidElevatedInventory=(identityKey:string)=>request<LinuxActionResult>('/inventory/discovery/identity/android/inventory-elevated',{method:'POST',body:JSON.stringify({identityKey})});
 export const reconnectKnownAndroidDevices=()=>request<{results:string[]}>('/inventory/discovery/identity/android/reconnect-known',{method:'POST'});
 
 // 40k34c: Android-App-/Paketinventar.
@@ -495,17 +567,27 @@ export const loadAndroidAppRuns=(identityKey:string,limit=10)=>request<AppInvent
 export const runAndroidAppInventory=(identityKey:string)=>request<AppInventoryRunResult>('/inventory/discovery/identity/android/apps/inventory',{method:'POST',body:JSON.stringify({identityKey})});
 
 // 40k34m: Plattforminventarisierung - Erst-/Nachinventarisierung je Plattform, unabhängig von Discovery.
-export type SupportedPlatform='Windows'|'Linux'|'Android'|'macOS'|'iOS';
+export type SupportedPlatform='Windows'|'Linux'|'Android'|'macOS'|'iOS'|'iPadOS';
 export type PlatformInventoryResult={success:boolean;status:string;message?:string;platform:string};
 export type PlatformInventoryStatusRow={platform:string;status:string;startedAt?:string;finishedAt?:string;message?:string;durationSeconds?:number;triggeredBy?:string};
 export const runPlatformInventory=(identityKey:string,platform:SupportedPlatform)=>request<PlatformInventoryResult>('/inventory/discovery/identity/platform-inventory',{method:'POST',body:JSON.stringify({identityKey,platform})});
 export const runAllKnownPlatforms=(identityKey:string)=>request<PlatformInventoryResult[]>('/inventory/discovery/identity/platform-inventory/all',{method:'POST',body:JSON.stringify({identityKey})});
 export const loadPlatformInventoryStatus=(identityKey:string)=>request<PlatformInventoryStatusRow[]>(`/inventory/discovery/identity/platform-inventory/status?identityKey=${encodeURIComponent(identityKey)}`);
+export type StartupInventorySettings={enabled:boolean};
+export const loadStartupInventorySettings=()=>request<StartupInventorySettings>('/inventory/startup-inventory-settings');
+export const saveStartupInventorySettings=(enabled:boolean)=>request<StartupInventorySettings>('/inventory/startup-inventory-settings',{method:'PUT',body:JSON.stringify({enabled})});
+
+export type GlobalInventoryStatus={active:boolean;activeCount:number;activeRuns:Array<{identityKey:string;platform:string;startedAt?:string;triggeredBy?:string;deviceName?:string;durationSeconds?:number}>;triggeredBy?:string;origin?:string;startedAt?:string;completedRecent?:number;lastFinishedAt?:string;lastStatus?:string;lastMessage?:string;lastDeviceName?:string};
+export const loadGlobalInventoryStatus=()=>request<GlobalInventoryStatus>('/inventory/discovery/identity/platform-inventory/global-status');
+export const cancelPlatformInventory=(identityKey:string,platform?:string)=>request<{cancelled:boolean;count:number}>('/inventory/discovery/identity/platform-inventory/cancel',{method:'POST',body:JSON.stringify({identityKey,platform:platform||''})});
+export const cancelAllPlatformInventories=()=>request<{cancelled:boolean;count:number}>('/inventory/discovery/identity/platform-inventory/cancel-all',{method:'POST'});
+
 
 // 40k34f: Aggregierte App-Zusammenfassung für den Android-Report (eine Sammelabfrage).
 export type AndroidAppsGlobalSummary={totalApps?:number;deviceCount?:number;userApps?:number;systemApps?:number;disabledApps?:number;updatedSystemApps?:number;installerDistribution:{installer:string;count:number}[]};
 export const loadAndroidAppsGlobalSummary=()=>request<AndroidAppsGlobalSummary>('/inventory/discovery/identity/android/apps/global-summary');
 export const reassessDeviceIdentity=(identityKey:string)=>request<DeviceIdentityReassessResult>('/inventory/discovery/identity/reassess',{method:'POST',body:JSON.stringify({identityKey})});
+export const removeDeviceIdentitySource=(identityKey:string,source:string)=>request<RegisteredDiscoveryDevice>('/inventory/discovery/identity/source/remove',{method:'POST',body:JSON.stringify({identityKey,source})});
 export const addDeviceIdentityAlias=(identityKey:string,alias:string)=>request<{identityKey:string;aliases:string[]}>('/inventory/discovery/identity/alias',{method:'POST',body:JSON.stringify({identityKey,alias})});
 export const renameDeviceIdentityAlias=(identityKey:string,oldAlias:string,newAlias:string)=>request<{identityKey:string;aliases:string[]}>('/inventory/discovery/identity/alias',{method:'PUT',body:JSON.stringify({identityKey,oldAlias,newAlias})});
 export const removeDeviceIdentityAlias=(identityKey:string,alias:string)=>request<{identityKey:string;aliases:string[]}>('/inventory/discovery/identity/alias/remove',{method:'POST',body:JSON.stringify({identityKey,alias})});

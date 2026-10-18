@@ -1,0 +1,11 @@
+GAM Standalone 2.1.0 - Schritt 40k37a7
+
+Ziel:
+- Ein physisches Apple-USB-Geraet nur einmal emittieren.
+- Windows-Basisgeraet und MI_00/MI_01 ueber ContainerId bzw. echte PnP-Parent-Beziehung zusammenfassen.
+- Niemals nur anhand gleicher VID/PID zusammenfassen (mehrere gleiche iPads muessen getrennt bleiben).
+- Apple-Grenze USB\\VID_05AC bleibt zwingend bestehen.
+- ProductType/Modell bleibt belastbare Anreicherung; keine Heuristik aus UDID/PnP-Instanznummern.
+- Bekannte ProductTypes iPad11,6/iPad11,7 werden weiterhin als iPad 8. Generation abgebildet.
+
+Original-Roadmap 40k37a: noch Realhardwaretest erforderlich.

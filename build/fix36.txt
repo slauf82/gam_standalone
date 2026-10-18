@@ -1,0 +1,11 @@
+40k37e56c-fix36 - macOS CoreDevice remote-browse array bridge
+
+- Keeps fix35 PMD3/RemotePairing restoration unchanged.
+- Accepts current pymobiledevice3 `remote browse` JSON-array peers only when
+  authState.rawCase=authenticated and connectionState.rawCase=available.
+- Such a peer only starts the existing USERSPACE_RSD semantic probe; it is not
+  itself emitted as a WLAN device.
+- A WLAN discovery result is still emitted only after the existing USERSPACE_RSD
+  path confirms and selects the device.
+- No changes to USB inventory, app collection, identity/merge, Linux, Windows,
+  Java/Node/MariaDB bootstrap or general startup.

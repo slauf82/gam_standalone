@@ -1,0 +1,9 @@
+40k36t30 – moderner WinRM-Stack als Standard
+
+- MetricsHub winrm-java 2.1.00 als aktiv gepflegter Standardpfad ergänzt.
+- Moderner Pfad nutzt JDK-HTTP/XML und benötigt keinen CXF/JAXB/SAAJ-Stack.
+- winrm4j 0.12.3 / CXF 3.x aus t29 bleibt als klar gekennzeichneter Legacy-Fallback erhalten.
+- Diagnose zeigt nun auch den tatsächlich verwendeten WinRM-Client-Stack.
+- HTTPS: Kerberos/SPNEGO wird im modernen Client priorisiert, NTLM nur Fallback.
+- HTTP/IP: moderner Client kann technisch nur NTLM verwenden; GAM kennzeichnet dies ausdrücklich als Kompatibilitäts-/Legacy-Authentifizierung.
+- Windows-Inventarisierungslogik oberhalb des Transportstacks bleibt unverändert.

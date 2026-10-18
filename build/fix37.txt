@@ -1,0 +1,8 @@
+40k37e56c-fix37
+
+Frontend-only: iOS/iPadOS-Inventarisierungsdetails verwenden dieselbe gemeinsame Gruppierungsdefinition wie der Aufklapp-Pfeil im Gerätemanager.
+
+- Gemeinsame Funktion appleMobileGroupedDetailSections fuer beide Ansichten.
+- Identische Gruppen, Reihenfolge und Feldzuordnung.
+- Untergruppen in den Inventarisierungsdetails als dieselben <details>-Pfeilgruppen, standardmaessig eingeklappt.
+- Keine Aenderung an Apple Discovery, Pairing, PMD3, USERSPACE_RSD, USB/WLAN-Inventarisierung, Identitaet/Merge oder Backend.

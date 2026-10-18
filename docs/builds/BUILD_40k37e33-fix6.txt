@@ -1,0 +1,29 @@
+GAM Standalone 2.1.0 - Schritt 40k37e33-fix7
+
+Ziel
+- Direkte Pruefung der in pymobiledevice3 11.12.5 tatsaechlich vorhandenen CLI-Wege fuer die iPad-WLAN-IP.
+- Keine FRITZ!Box-, ARP-/Neighbor- oder andere Fremdquelle fuer die Apple-IP.
+
+Neu
+1. `pymobiledevice3 --no-color lockdown -h`
+   - prueft, ob `get-ip` in der installierten 11.12.5 wirklich existiert.
+2. Nur wenn vorhanden:
+   - `lockdown get-ip -h`
+   - `lockdown get-ip`
+3. `pymobiledevice3 --no-color usbmux -h`
+   - prueft, ob `list` wirklich existiert.
+4. Nur wenn vorhanden:
+   - `usbmux list -h`
+   - `usbmux list`
+5. Private IPv4 aus `lockdown get-ip` wird direkt als Apple-WLAN-IP bestaetigt.
+6. Bei `usbmux list` wird eine IP nur uebernommen, wenn dieselbe Ausgabe auch die exakte Apple-UDID enthaelt.
+7. Bestehender USERSPACE_RSD-, RemotePairing-, Duplicate-Guard- und Inventarisierungspfad bleibt erhalten.
+
+Wichtige Testmarker
+[40k37e33-fix7][APPLE_MOBILE][WLAN][PMD3_LOCKDOWN_HELP]
+[40k37e33-fix7][APPLE_MOBILE][WLAN][PMD3_LOCKDOWN_GET_IP_HELP]
+[40k37e33-fix7][APPLE_MOBILE][WLAN][PMD3_LOCKDOWN_GET_IP]
+[40k37e33-fix7][APPLE_MOBILE][WLAN][PMD3_USBMUX_HELP]
+[40k37e33-fix7][APPLE_MOBILE][WLAN][PMD3_USBMUX_LIST_HELP]
+[40k37e33-fix7][APPLE_MOBILE][WLAN][PMD3_USBMUX_LIST]
+[40k37e33-fix7][APPLE_MOBILE][WLAN][IP_CONFIRMED]

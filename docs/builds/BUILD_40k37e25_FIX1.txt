@@ -1,0 +1,9 @@
+40k37e25-fix1 – CoreDevice single-path / RSD gate fix
+
+- unterdrueckt einen zweiten CoreDevice-Durchlauf fuer 5 Minuten nach dem ersten Start
+- paralleler AtomicBoolean-Guard bleibt bestehen
+- remote browse ist nicht mehr Gate fuer RSD nach erfolgreichem USB-RemotePairing
+- rsd-info wird mit der stabilen UDID direkt versucht
+- bei erfolgreichem RSD-Zugriff wird CoreDevice als Transport gewaehlt
+- danach werden alternative/alte Apple-Forschungspfade fuer diese UDID uebersprungen
+- Ziel: genau ein kontrollierter Apple-Pfad pro Suchlauf; Erfolg -> alle Folgeabfragen ueber CoreDevice

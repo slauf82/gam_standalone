@@ -1,0 +1,68 @@
+GAM Standalone v2.1.0 – Schritt 40k37d14
+
+Basis
+- Direkt auf 40k37d13 aufgebaut.
+- Bestehende Apple-Mobile-, Pairing-, ideviceinfo-, idevicediagnostics-, MSYS2-1.1.1-, moderne 1.2.0- und d13-CLI-Matrix bleiben erhalten.
+- Die funktionierenden Runtimes werden nicht ersetzt.
+
+Ziel von d14
+- d13 hat gezeigt, dass ideviceinstaller 1.2.0 bei USER-Anfragen korrekt antwortet, aber ein leeres Array liefert; ALL/SYSTEM hängen weiterhin.
+- d14 umgeht ideviceinstaller.exe zusätzlich vollständig und spricht die libimobiledevice-/libplist-DLLs der bereits verifizierten modernen Windows-Suite direkt an.
+- Der Zugriff ist ausschließlich lesend.
+- Direkte Treffer werden sofort für die normale GAM-Softwareinventarisierung verwendet.
+
+Native Implementierung
+- Java Native Access (JNA) 5.19.1 als Backend-Abhängigkeit.
+- Verwendung der vorhandenen DLLs aus tools/libimobiledevice/ideviceinstaller-modern-d11.
+- Direkte libimobiledevice-Aufrufe:
+  * idevice_new_with_options (USBMUX + Netzwerk, USB bleibt bevorzugt)
+  * instproxy_client_start_service
+  * instproxy_browse
+  * instproxy_lookup
+  * instproxy_client_free / idevice_free
+- Direkte libplist-Erzeugung der ClientOptions und XML-Serialisierung der unveränderten Result-Plist.
+- Windows-DLL-Suchpfad wird für die Suite temporär über SetDllDirectoryW ergänzt, damit abhängige DLLs aus demselben bin-Verzeichnis geladen werden können.
+
+Direkte read-only d14-Proben
+1. BROWSE_USER_EXPLICIT
+   - ApplicationType=User
+   - ReturnAttributes: CFBundleIdentifier, CFBundleDisplayName, CFBundleShortVersionString,
+     CFBundleVersion, ApplicationType, ApplicationTypeString, Path, Container
+2. BROWSE_USER_NO_ATTRIBUTES
+   - ApplicationType=User, keine ReturnAttributes
+3. LOOKUP_ALL
+   - instproxy_lookup mit appids=NULL; laut Upstream bedeutet NULL: alle Apps nachschlagen
+4. BROWSE_NULL_OPTIONS
+   - instproxy_browse ohne ClientOptions; bewusst zuletzt ausgeführt
+
+Timeout-/Robustheitsverhalten
+- Jede native Probe läuft in einer eigenen nativen Session und einem Daemon-Worker.
+- USER/LOOKUP: 12 s; NULL-options Browse: 10 s.
+- Eine hängende native Diagnose soll den Backend-Request nicht dauerhaft blockieren.
+- Potenziell riskantere NULL-options-Abfrage wird zuletzt ausgeführt.
+
+Klassifikationsregel
+- Keine USER/SYSTEM-Ableitung aus Bundle-ID, Pfad, Signatur oder Namen.
+- Apple ApplicationType/ApplicationTypeString wird verwendet, wenn vorhanden.
+- Bei explizitem USER-Scope wird nur der vom Aufruf vorgegebene USER-Scope verwendet.
+- Bei LOOKUP/NULL-options ohne ApplicationType bleibt der Typ UNKNOWN, solange Apple keinen Typ liefert.
+- Distributionsquelle wird nicht geraten.
+
+Diagnoseausgaben
+- logs/apple-mobile-debug.log
+- logs/apple-mobile-inventory-d14.json
+- logs/apple-mobile-software-d14.json
+- logs/apple-mobile-software-d14-legacy.json
+- logs/apple-mobile-installation-proxy-cli-d14.json
+- logs/apple-mobile-installation-proxy-cli-d14/*.stdout.txt
+- logs/apple-mobile-installation-proxy-cli-d14/*.stderr.txt
+- logs/apple-mobile-installation-proxy-native-d14.json
+- logs/apple-mobile-installation-proxy-native-d14/*.plist.xml
+- logs/apple-mobile-installation-proxy-native-d14/*.error.txt
+
+Validierung in der Build-Umgebung
+- backend/pom.xml ist wohlgeformtes XML.
+- Java-Parserlauf zeigt keine Syntax-/Parserfehler im geänderten AppleMobileDiscoveryService.
+- Verbleibende javac-Meldungen betreffen fehlende externe Projektabhängigkeiten in der isolierten Build-Umgebung.
+- Vollständiger Maven-Build konnte nicht ausgeführt werden, weil Maven nicht vorinstalliert ist und der Wrapper wegen fehlender DNS-Auflösung repo.maven.apache.org nicht erreichen kann.
+- Es wurden keine schreibenden installation_proxy-Funktionen (Install/Uninstall/Upgrade/Archive/Restore) eingebaut.

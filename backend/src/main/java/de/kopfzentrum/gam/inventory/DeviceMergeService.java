@@ -22,6 +22,16 @@ import java.util.*;
 @Service
 public class DeviceMergeService {
   private static final Logger log = LoggerFactory.getLogger(DeviceMergeService.class);
+  // 40k37e55e: ausfuehrliche Kandidatenbewertung getrennt vom normalen Backend-Log.
+  private static final Logger mergeDebug = LoggerFactory.getLogger("GAM_MERGE_DIAGNOSTICS");
+  private static final Map<String,Long> MERGE_LOG_DEDUP = new java.util.concurrent.ConcurrentHashMap<>();
+  private static final long MERGE_LOG_DEDUP_MS = 30_000L;
+  private static boolean shouldLogMergeDiagnostic(String signature) {
+    long now=System.currentTimeMillis();
+    Long previous=MERGE_LOG_DEDUP.put(signature,now);
+    if(MERGE_LOG_DEDUP.size()>4096) MERGE_LOG_DEDUP.entrySet().removeIf(e -> now-e.getValue()>MERGE_LOG_DEDUP_MS);
+    return previous==null || now-previous>MERGE_LOG_DEDUP_MS;
+  }
   /** Für sehr große Bestände wird die paarweise Prüfung begrenzt (siehe docs/ - bekannte Einschränkung). */
   private static final int MAX_CANDIDATE_ROWS = 500;
 
@@ -29,16 +39,18 @@ public class DeviceMergeService {
   private final DeviceMergeRepository merges;
   private final DeviceIdentityMergeSettingsRepository mergeSettings;
   private final AppInventoryRepository appInventory;
+  private final PlatformInventoryRepository platformInventory;
   private final ObjectMapper objectMapper;
   private final DeviceIdentityConfidenceEngine identityEngine = new DeviceIdentityConfidenceEngine();
 
   public DeviceMergeService(DiscoveryRegistrationRepository registrations, DeviceMergeRepository merges,
                             DeviceIdentityMergeSettingsRepository mergeSettings, AppInventoryRepository appInventory,
-                            ObjectMapper objectMapper) {
+                            PlatformInventoryRepository platformInventory, ObjectMapper objectMapper) {
     this.registrations = registrations;
     this.merges = merges;
     this.mergeSettings = mergeSettings;
     this.appInventory = appInventory;
+    this.platformInventory = platformInventory;
     this.objectMapper = objectMapper;
   }
 
@@ -62,15 +74,24 @@ public class DeviceMergeService {
     boolean truncated = rows.size() > MAX_CANDIDATE_ROWS;
     List<Map<String,Object>> scoped = truncated ? rows.subList(0, MAX_CANDIDATE_ROWS) : rows;
     var settings = mergeSettings.load();
+    Set<String> inventoried = platformInventory.successfullyInventoriedIdentityKeys();
 
     List<Candidate> result = new ArrayList<>();
     for (int i = 0; i < scoped.size(); i++) {
       for (int j = i + 1; j < scoped.size(); j++) {
         Map<String,Object> a = scoped.get(i), b = scoped.get(j);
         String keyA = String.valueOf(a.get("identityKey")), keyB = String.valueOf(b.get("identityKey"));
+        // fix43: Nur ZWEI erfolgreich inventarisierte Geraete duerfen in
+        // automatische Merge-Vorschlaege gelangen; reine Router-/ARP-Treffer nie.
+        if (!inventoried.contains(keyA) || !inventoried.contains(keyB)) continue;
         DiscoveredDevice da = toDiscoveredDevice(a), db = toDiscoveredDevice(b);
+        if (incompatibleRegisteredPlatforms(a,b)) continue;
+        // Namen, Kategorie, IP und gemeinsame Quellen sind KEIN Identitaetsbeweis.
+        if (!hasMatchingStrongIdentity(a,b)) continue;
         var assessment = identityEngine.assess(da, db, settings);
         if (assessment.decision() == DeviceIdentityConfidenceEngine.Decision.DISTINCT) continue;
+        // Harte Widersprueche duerfen nicht als angeblich plausible Kandidaten erscheinen.
+        if (assessment.conflicts().stream().anyMatch(DeviceMergeService::isHardIdentityConflict)) continue;
         String signature = DeviceMergeRepository.signatureOf(assessment.matchedSignals());
         if (merges.isIgnored(keyA, keyB, signature)) continue;
         // 40k33b10: Schutzstufe und tabellarische Gegenüberstellung - reine Einordnung/Aufbereitung
@@ -81,7 +102,8 @@ public class DeviceMergeService {
         List<DiscoveryRegistrationRepository.FieldComparisonRow> comparison =
           DiscoveryRegistrationRepository.requiresManualConfirmation(criticality) ? DiscoveryRegistrationRepository.compareIdentityFields(a, b) : List.of();
         if (criticality != null) {
-          log.debug("Merge-Kandidat {} <-> {}: Schutzstufe {} ausgelöst durch {} (Score {}, Konfidenz {}%)",
+          String diagSignature="candidate|"+keyA+"|"+keyB+"|"+criticality+"|"+conflicts+"|"+assessment.score()+"|"+assessment.confidencePercent();
+          if(shouldLogMergeDiagnostic(diagSignature)) mergeDebug.debug("Merge-Kandidat {} <-> {}: Schutzstufe {} ausgelöst durch {} (Score {}, Konfidenz {}%)",
             keyA, keyB, criticality, conflicts, assessment.score(), assessment.confidencePercent());
         }
         result.add(new Candidate(keyA, str(a.get("name")), str(a.get("deviceType")), str(a.get("address")), str(a.get("hardwareAddress")),
@@ -96,8 +118,50 @@ public class DeviceMergeService {
   }
 
 
+  /** fix43: Nur belastbare, exakt uebereinstimmende Identitaetsmerkmale.
+   * MAC alleine gilt hier nur bei zwei inventarisierten Datensaetzen.
+   * UUIDs koennen unterschiedliche Netzwerkadapter desselben Hosts verbinden.
+   */
+  static boolean hasMatchingStrongIdentity(Map<String,Object> a, Map<String,Object> b) {
+    if(a==null || b==null) return false;
+    String aSerial=strongValue(a.get("serialNumber")), bSerial=strongValue(b.get("serialNumber"));
+    if(equalPresent(aSerial,bSerial)) return true;
+    String aMac=macValue(a.get("hardwareAddress")), bMac=macValue(b.get("hardwareAddress"));
+    if(equalPresent(aMac,bMac)) return true;
+    Map<String,String> ad=DiscoveryRegistrationRepository.detailValues(str(a.get("protocol")));
+    Map<String,String> bd=DiscoveryRegistrationRepository.detailValues(str(b.get("protocol")));
+    for(String key:List.of("Hardware-UUID","System-UUID","Provisioning-UDID","SSH-Hostkey","Build-Fingerprint")) {
+      if(equalPresent(strongValue(ad.get(key)),strongValue(bd.get(key)))) return true;
+    }
+    return false;
+  }
+  private static String strongValue(Object o) {
+    if(o==null) return "";
+    String value=String.valueOf(o).trim().toLowerCase(Locale.ROOT);
+    if(value.isBlank() || Set.of("unknown","unbekannt","none","null","n/a","-","00000000-0000-0000-0000-000000000000").contains(value)) return "";
+    return value;
+  }
+  private static String macValue(Object o) {
+    String v=strongValue(o).replace(":","").replace("-","").replace(".","");
+    if(!v.matches("[0-9a-f]{12}") || v.equals("000000000000") || v.equals("ffffffffffff")) return "";
+    return v;
+  }
+  private static boolean equalPresent(String a,String b) {return !a.isEmpty() && a.equals(b);}
+  private static boolean isHardIdentityConflict(String conflict) {
+    String c=conflict.toLowerCase(Locale.ROOT);
+    return c.contains("abweichende seriennummer") || c.contains("build-fingerprint") || c.contains("ssh-hostkey");
+  }
+
   public MergePreviewResult preview(String targetKey, List<String> sourceKeys, Map<String,Object> overrides) {
-    var plan = registrations.planMerge(targetKey, sourceKeys, overrides);
+    // 40k36q18: Eine VORSCHAU muss auch bei unterschiedlichen MAC-Adressen möglich sein.
+    // Die tatsächliche Schreiboperation bleibt weiterhin gesperrt, bis der Benutzer
+    // den Konflikt ausdrücklich bestätigt. planMerge braucht für die reine Vorschau
+    // daher intern die MAC-Freigabe, ohne diese als Benutzerbestätigung zu werten.
+    Map<String,Object> previewOverrides=new LinkedHashMap<>();
+    if(overrides!=null) previewOverrides.putAll(overrides);
+    previewOverrides.put("confirmMacConflict",true);
+    rejectCrossPlatformMerge(targetKey, sourceKeys);
+    var plan = registrations.planMerge(targetKey, sourceKeys, previewOverrides);
     boolean confirmed = overrides != null && Boolean.TRUE.equals(overrides.get("confirmMacConflict"));
 
     // 40k33b10: dieselbe Konflikterkennung wie bei der Kandidatenermittlung, hier zusätzlich
@@ -113,7 +177,10 @@ public class DeviceMergeService {
     }
     String criticality = DiscoveryRegistrationRepository.highestConflictSeverity(allConflicts);
     String criticalMessage = DiscoveryRegistrationRepository.requiresManualConfirmation(criticality) ? DiscoveryRegistrationRepository.criticalConflictMessage(allConflicts) : null;
-    if (criticality != null) log.debug("Merge-Vorschau {} <- {}: Schutzstufe {} ausgelöst durch {}", targetKey, sourceKeys, criticality, allConflicts);
+    if (criticality != null) {
+      String diagSignature="preview|"+targetKey+"|"+sourceKeys+"|"+criticality+"|"+allConflicts;
+      if(shouldLogMergeDiagnostic(diagSignature)) mergeDebug.debug("Merge-Vorschau {} <- {}: Schutzstufe {} ausgelöst durch {}", targetKey, sourceKeys, criticality, allConflicts);
+    }
 
     return new MergePreviewResult(plan.targetKey(), plan.sourceKeys(), plan.name(), plan.manualName(),
       plan.deviceType(), plan.manualDeviceType(), plan.address(), plan.mac(), plan.serialNumber(),
@@ -123,14 +190,25 @@ public class DeviceMergeService {
   }
 
   public Map<String,Object> confirm(String targetKey, List<String> sourceKeys, Map<String,Object> overrides, String actor) {
-    var plan = registrations.planMerge(targetKey, sourceKeys, overrides);
-    // planMerge() wirft bereits bei ungeloestem MAC-Konflikt; hier nur noch die eigentliche Schreibung.
-    boolean acknowledgedCritical = overrides != null && (Boolean.TRUE.equals(overrides.get("confirmMacConflict"))
-      || Boolean.TRUE.equals(overrides.get("confirmCriticalConflict")));
-    log.debug("Zusammenführung von {} in {} wird bestätigt (kritischer Konflikt bewusst bestätigt: {})",
-      sourceKeys, targetKey, acknowledgedCritical);
+    Map<String,Object> confirmedOverrides=new LinkedHashMap<>();
+    if(overrides!=null) confirmedOverrides.putAll(overrides);
+    boolean acknowledgedCritical = Boolean.TRUE.equals(confirmedOverrides.get("confirmMacConflict"))
+      || Boolean.TRUE.equals(confirmedOverrides.get("confirmCriticalConflict"));
+    // 40k36q18: Eine ausdrückliche Bestätigung des kritischen/HOCH-Konflikts gilt
+    // bei einem Multi-Interface-Merge zugleich als bewusste Bestätigung der
+    // unterschiedlichen MAC-Adressen. Ohne diese Bestätigung bleibt planMerge gesperrt.
+    if(Boolean.TRUE.equals(confirmedOverrides.get("confirmCriticalConflict")))
+      confirmedOverrides.put("confirmMacConflict",true);
+    rejectCrossPlatformMerge(targetKey, sourceKeys);
+    var plan = registrations.planMerge(targetKey, sourceKeys, confirmedOverrides);
+    // 40k37e56c-fix16: confirm(...) wird ausschließlich nach der ausdrücklichen
+    // Benutzerbestätigung ausgeführt. Der bisher geloggte Override-Wert konnte false sein,
+    // obwohl der Benutzer den angebotenen Merge bewusst bestätigt hatte. Das war nur eine
+    // falsche Logausgabe; Merge-/Konfliktlogik und confirmedOverrides bleiben unverändert.
+    log.debug("Zusammenführung von {} in {} wird bestätigt (kritischer Konflikt bewusst bestätigt: true)",
+      sourceKeys, targetKey);
     String snapshotJson = snapshotOf(plan.sourceRows());
-    Map<String,Object> merged = registrations.mergeDevices(targetKey, sourceKeys, overrides, actor);
+    Map<String,Object> merged = registrations.mergeDevices(targetKey, sourceKeys, confirmedOverrides, actor);
     // 40k34e: App-Inventarläufe und aktuelle Paketdatensätze (40k34c) sind kein
     // Identitätsmerkmal, sollen aber beim Merge nicht verloren gehen - Übernahme in
     // dieselbe, bereits bestehende Merge-Bestätigung, kein separater Android-Merge-Pfad.
@@ -160,6 +238,35 @@ public class DeviceMergeService {
     }
     try { return objectMapper.writeValueAsString(snapshot); }
     catch (Exception e) { return null; }
+  }
+
+  private void rejectCrossPlatformMerge(String targetKey, List<String> sourceKeys) {
+    Map<String,Object> target=registrations.find(targetKey);
+    if (sourceKeys==null) return;
+    for (String sourceKey:sourceKeys) {
+      if (incompatibleRegisteredPlatforms(target,registrations.find(sourceKey)))
+        throw new IllegalArgumentException("Zusammenführung abgelehnt: Android und iOS/iPadOS sind unterschiedliche Plattformen.");
+    }
+  }
+
+  private static boolean incompatibleRegisteredPlatforms(Map<String,Object> a,Map<String,Object> b) {
+    if (DeviceIdentityConfidenceEngine.incompatibleMobilePlatforms(toDiscoveredDevice(a),toDiscoveredDevice(b))) return true;
+    String x=preferredMobileFamily(a),y=preferredMobileFamily(b);
+    String inferredA=inferredMobileFamily(a),inferredB=inferredMobileFamily(b);
+    // Eindeutige Plattformeinstellung darf einen neutralen Netzwerktreffer nicht sperren.
+    if (!x.isEmpty() && !inferredB.isEmpty() && !x.equals(inferredB)) return true;
+    if (!y.isEmpty() && !inferredA.isEmpty() && !y.equals(inferredA)) return true;
+    return !x.isEmpty() && !y.isEmpty() && !x.equals(y);
+  }
+  private static String preferredMobileFamily(Map<String,Object> row) {
+    String p=str(row.get("preferredPlatform"));
+    if(p==null) return "";
+    if(p.equalsIgnoreCase("Android")) return "android";
+    if(p.equalsIgnoreCase("iOS") || p.equalsIgnoreCase("iPadOS")) return "apple-mobile";
+    return "";
+  }
+  private static String inferredMobileFamily(Map<String,Object> row) {
+    return DeviceIdentityConfidenceEngine.mobileFamily(toDiscoveredDevice(row));
   }
 
   public void ignore(String keyA, String keyB, String actor) {

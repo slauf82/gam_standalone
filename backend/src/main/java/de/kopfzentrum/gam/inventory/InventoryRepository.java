@@ -57,7 +57,8 @@ public class InventoryRepository {
       try {
         Map<String,Object> identityRow = registrations.find(identityKey);
         discoveryProtocol = String.valueOf(identityRow.getOrDefault("protocol", ""));
-        platform = DeviceIdentityService.platformOf(String.valueOf(identityRow.get("deviceType")), discoveryProtocol);
+        String preferred = identityRow.get("preferredPlatform") == null ? null : String.valueOf(identityRow.get("preferredPlatform")).trim();
+        platform = preferred != null && !preferred.isBlank() ? preferred : DeviceIdentityService.platformOf(String.valueOf(identityRow.get("deviceType")), discoveryProtocol);
         platformStatus = platformInventory.latestRunsByPlatform(identityKey);
       } catch (Exception e) {
         // Verknüpfte Discovery-Identität existiert nicht mehr (z.B. gelöscht) -

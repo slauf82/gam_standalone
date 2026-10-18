@@ -1541,3 +1541,521 @@ body.gam-modal-open {
 .gam-attention-target {
   scroll-margin-top: 88px;
 }
+
+/* 40k36p6s: mehrere bekannte IP-/MAC-Identitäten direkt im Gerätemanager sichtbar. */
+.device-network-identities{display:flex;flex-direction:column;gap:3px;min-width:128px}
+.device-network-identities>span{display:block;white-space:nowrap}
+.device-network-identities>span+span{padding-top:2px;border-top:1px solid rgba(127,127,127,.18)}
+.device-network-serial{font-weight:600}
+
+/* 40k36p6u: Gerätesuche seitenweit sichtbar – nur der Suchkopf, nicht „Registriert“. */
+.device-global-searchbar{
+  position:fixed;
+  top:var(--gam-sticky-toolbar-top,62px);
+  left:50%;
+  transform:translateX(-50%);
+  z-index:70;
+  width:min(1120px,calc(100vw - 42px));
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:10px 14px;
+  border:1px solid var(--border,#d7dde5);
+  border-radius:12px;
+  background:var(--card-bg,#fff);
+  box-shadow:0 8px 24px rgba(20,38,80,.18);
+}
+.device-global-searchbar-label{display:flex;align-items:center;gap:10px;min-width:0}
+.device-global-searchbar-label>span{display:grid;gap:1px;min-width:0}
+.device-global-searchbar-label small{color:var(--muted,#667085);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.device-global-searchbar-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.device-global-searchbar-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;white-space:nowrap}
+.device-manager-card{padding-top:74px}
+@media(max-width:760px){
+  .device-global-searchbar{top:var(--gam-sticky-toolbar-top,62px);width:calc(100vw - 20px);align-items:stretch;flex-direction:column;gap:8px;padding:9px 10px}
+  .device-global-searchbar-actions{display:grid;grid-template-columns:1fr 1fr}
+  .device-global-searchbar-actions button{width:100%}
+  .device-manager-card{padding-top:128px}
+}
+
+/* 40k36p6v: kompakter, seitenweit fixer Suchkopf mit Live-Ergebnis und einem Umschaltknopf. */
+.device-global-searchbar-live{
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  gap:6px;
+  min-width:0;
+  flex:1 1 auto;
+}
+.device-global-searchbar-live>span{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:64px;
+  padding:4px 8px;
+  border-left:1px solid var(--border,#d7dde5);
+}
+.device-global-searchbar-live b{font-size:1rem;line-height:1.1}
+.device-global-searchbar-live small{font-size:.72rem;color:var(--muted,#667085);white-space:nowrap}
+.device-global-searchbar-progress{min-width:72px!important}
+.device-global-searchbar.has-error{border-color:#b42318;box-shadow:0 8px 24px rgba(180,35,24,.18)}
+.device-global-searchbar-actions{min-width:118px}
+.device-global-searchbar-actions button{width:100%}
+@media(max-width:900px){
+  .device-global-searchbar{width:calc(100vw - 20px);gap:8px}
+  .device-global-searchbar-live{order:3;width:100%;overflow-x:auto;justify-content:flex-start;padding-top:4px;border-top:1px solid var(--border,#d7dde5)}
+  .device-global-searchbar-live>span{min-width:70px;border-left:0;border-right:1px solid var(--border,#d7dde5)}
+  .device-manager-card{padding-top:128px}
+}
+@media(max-width:760px){
+  .device-global-searchbar{flex-direction:row;flex-wrap:wrap;align-items:center}
+  .device-global-searchbar-label{flex:1 1 auto}
+  .device-global-searchbar-actions{display:block;min-width:112px}
+  .device-global-searchbar-live{order:3}
+  .device-manager-card{padding-top:146px}
+}
+
+/* 40k36q3: Mehrfach-Betriebssystemzugänge */
+.os-access-profile-group{margin:0 0 14px;padding:0;border:1px solid var(--border,#d7dce3);border-radius:12px;background:var(--card-bg,#fff);overflow:hidden}
+.os-access-profile-group>summary{padding:14px 16px}
+.os-access-profile-group-body{padding:0 16px 16px}
+.os-access-profile-group-body>.row{align-items:flex-start;gap:16px;margin-bottom:12px}
+.os-access-profile-group-body>.row>.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.os-access-profile-list{display:grid;gap:14px}
+.os-access-profile-card{padding:14px;border:1px solid var(--border,#d7dce3);border-radius:10px;background:rgba(127,127,127,.035)}
+.os-access-profile-card .toolbar{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.os-access-profile-card .fritz-test-result{margin-top:12px}
+@media (max-width:900px){.os-access-profile-group-body>.row{display:block}.os-access-profile-group-body>.row>.toolbar{margin-top:10px;justify-content:flex-start}}
+
+/* 40k36q10: global sichtbarer Plattform-Inventarisierungsstatus */
+.global-inventory-status{position:sticky;top:0;z-index:80;margin:8px 0 12px;padding:9px 12px;border:1px solid var(--border,#d7dce3);border-radius:10px;display:flex;align-items:center;gap:10px;background:var(--card-bg,#fff);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.global-inventory-status.running{border-left:4px solid #d49a00}
+.global-inventory-status.finished{border-left:4px solid #2f8f4e}
+.global-inventory-status-main{appearance:none;border:0;background:transparent;color:inherit;padding:0;display:flex;align-items:center;gap:14px;flex:1;text-align:left;cursor:pointer}
+.global-inventory-status-main span:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.global-inventory-status-main small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70vw}
+.global-inventory-progress{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.global-inventory-open{white-space:nowrap}
+.global-inventory-status-details{position:absolute;left:12px;right:12px;top:calc(100% + 4px);padding:10px 12px;border:1px solid var(--border,#d7dce3);border-radius:8px;background:var(--card-bg,#fff);box-shadow:0 6px 18px rgba(0,0,0,.14);display:grid;gap:5px}
+@media(max-width:760px){.global-inventory-status{flex-wrap:wrap}.global-inventory-open{width:100%}.global-inventory-status-main small{max-width:72vw}}
+
+/* 40k36q14: kompakter, handlungsorientierter Merge-Status in Gerätezeilen */
+.device-merge-review-badge{
+  appearance:none;border:1px solid #b7791f;border-radius:999px;
+  padding:3px 9px;font:inherit;font-size:.78rem;font-weight:700;
+  line-height:1.25;background:rgba(183,121,31,.12);color:inherit;
+  cursor:pointer;white-space:nowrap;margin-top:3px;
+}
+.device-merge-review-badge:hover,.device-merge-review-badge:focus-visible{
+  background:rgba(183,121,31,.22);outline:2px solid rgba(183,121,31,.35);outline-offset:1px;
+}
+
+/* 40k36q16: aktueller Workflow-/Umsetzungsstand im Dashboard */
+.workflow-card-detail{display:block;margin-top:4px;font-size:.78rem;opacity:.82}
+.workflow-implementation{display:inline-block;margin-top:7px;padding:2px 7px;border-radius:999px;font-size:.72rem;font-weight:700}
+.workflow-implementation-produktiv{background:rgba(46,125,50,.14)}
+.workflow-implementation-integriert{background:rgba(25,118,210,.14)}
+.workflow-implementation-erweitert{background:rgba(123,31,162,.14)}
+.workflow-implementation-teilweise{background:rgba(245,124,0,.16)}
+.workflow-card-active{box-shadow:inset 0 0 0 2px rgba(25,118,210,.22)}
+.workflow-dashboard-footnote{margin-top:10px}
+
+/* 40k36q17: direkte Zusammenführung aus der Vertrauensbewertung */
+.identity-merge-action{margin:10px 0 16px;padding:12px;border:1px solid rgba(183,121,31,.45);border-radius:10px;background:rgba(183,121,31,.08)}
+.identity-merge-action>div>p{margin:.35rem 0}
+.identity-merge-action .merge-critical-banner{margin-top:10px}
+
+/* 40k36q19: Softwarehierarchie in Inventarisierungsansichten */
+.software-tree-root>.device-detail-section-body>.software-tree-child{margin-left:14px}
+.software-tree-child>.device-detail-section-body>.software-tree-grandchild{margin-left:14px}
+.software-tree-grandchild>.device-detail-section-body>.software-tree-user{margin-left:14px}
+.software-tree-root>.device-detail-section-body{padding-left:4px}
+
+/* 40k36q20: Inventarisierungs-Stopp sichtbar links neben Meldungen */
+.gam-top-inventory-cancel{
+  height:38px;
+  padding:8px 14px;
+  border:1px solid #991b1b;
+  border-radius:999px;
+  background:#b91c1c;
+  color:#fff;
+  box-shadow:0 10px 30px rgba(185,28,28,.28);
+  font-weight:800;
+  white-space:nowrap;
+}
+.gam-top-inventory-cancel:hover:not(:disabled){background:#991b1b}
+.gam-top-inventory-cancel:disabled{opacity:.7;cursor:wait}
+@media(max-width:720px){
+  .gam-top-inventory-cancel{order:-1}
+}
+
+/* 40k36q29: echter Fortschritt beim Beispieldatenimport */
+.demo-import-progress{margin:12px 0;padding:12px;border:1px solid rgba(25,118,210,.25);border-radius:10px}.demo-progress-head{display:flex;justify-content:space-between;gap:16px;margin-bottom:8px}.demo-import-progress progress{width:100%;height:16px}.demo-import-progress p{margin:8px 0 2px}.demo-import-progress small{opacity:.75}.demo-import-progress.error{border-color:rgba(185,28,28,.45)}
+
+/* 40k36s1: Merge-Bestätigung bleibt als zusammengehörige Checkbox-Zeile lesbar. */
+.merge-confirm-row{display:flex;align-items:flex-start;justify-content:flex-start;gap:.65rem;width:100%;max-width:100%;margin:.65rem 0;text-align:left;white-space:normal}
+.merge-confirm-row input[type="checkbox"]{flex:0 0 auto;margin:.2rem 0 0 0}
+.merge-confirm-row span{display:block;flex:1 1 auto;min-width:0;overflow-wrap:anywhere;line-height:1.4}
+
+/* 40k36s2 */
+.first-run-tools,.mac-tool-grid{display:grid;gap:.75rem}.mac-tool-card{display:flex;justify-content:space-between;align-items:center;gap:1rem;border:1px solid var(--border);border-radius:10px;padding:.75rem}.mac-tool-card>div{display:grid;gap:.2rem}.registered-category-actions{display:flex;justify-content:flex-end;padding:.4rem .65rem}
+
+/* 40k36s3 */
+.software-source-browser{display:grid;gap:.6rem}.software-global-search{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-bottom:.25rem}.software-global-search label{display:flex;align-items:center;gap:.45rem;flex:1 1 420px;min-width:260px}.software-global-search input{width:100%;min-width:0}.software-source-group{margin:.15rem 0}.software-source-group>summary{cursor:pointer}
+
+/* 40k36t5: Quellen-Unterkategorien unter "Software" sichtbar hierarchisch einrücken.
+   Die registrierte Softwareansicht hängt die Quellen direkt in den Browser-Container,
+   daher greift die ältere child>grandchild-Regel dort nicht. */
+.registered-software-section .software-source-browser>.software-source-group{
+  margin-left:18px;
+  width:calc(100% - 18px);
+}
+.registered-software-section .software-source-group>summary{
+  padding-left:2px;
+}
+\n\n/* 40k36t13: Softwarequellen sofort transparent und große Detailbereiche lokal scrollbar.\n   Die Haupttabelle bleibt dadurch auch bei vollständig aufgeklappten Inventarisierungsdaten sichtbar. */\n.software-source-summary{\n  display:flex;flex-wrap:wrap;gap:.4rem .7rem;align-items:center;\n  margin:.1rem 0 .65rem;padding:.5rem .65rem;border:1px solid rgba(127,127,127,.18);\n  border-radius:.7rem;background:rgba(127,127,127,.05);font-size:.86rem;\n}\n.software-source-summary span{white-space:nowrap}\n.registered-device-technical-row .device-technical-panel{\n  max-height:min(72vh,780px);overflow:auto;overscroll-behavior:contain;\n  padding-right:.35rem;scrollbar-gutter:stable;\n}\n.registered-device-technical-row>td{position:relative}\n
+/* 40k36t20: Paketquellen als klar getrennte Icon-Badges. */
+.software-source-summary{
+  gap:.45rem;
+}
+.software-source-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:.38rem;
+  padding:.3rem .55rem;
+  border:1px solid rgba(127,127,127,.25);
+  border-radius:999px;
+  background:rgba(127,127,127,.08);
+  line-height:1;
+  white-space:nowrap;
+}
+.software-source-badge svg{flex:0 0 auto;opacity:.82}
+.software-source-badge b{font-size:.82rem}
+.software-source-badge em{
+  min-width:1.5rem;
+  padding:.16rem .38rem;
+  border-radius:999px;
+  background:rgba(127,127,127,.14);
+  font-style:normal;
+  font-size:.74rem;
+  font-weight:700;
+  text-align:center;
+}
+
+/* 40k36t25: kompakte, lesbare Quellenübersicht statt Rohdatenwand. */
+.source-overview{display:grid;gap:.75rem;margin:.35rem 0 1rem}
+.source-overview-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.55rem}
+.source-overview-stats>div{display:flex;flex-direction:column;gap:.12rem;padding:.62rem .72rem;border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:.65rem;background:color-mix(in srgb,currentColor 4%,transparent)}
+.source-overview-stats b{font-size:.95rem}.source-overview-stats span{font-size:.72rem;opacity:.68}
+.source-overview h4{margin:.25rem 0 -.25rem;font-size:.86rem;opacity:.78;text-transform:uppercase;letter-spacing:.035em}
+.source-overview-list{display:grid;gap:.42rem}
+.source-overview-card{border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:.65rem;overflow:hidden;background:color-mix(in srgb,currentColor 3%,transparent)}
+.source-overview-card>summary{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.65rem;padding:.58rem .72rem;cursor:pointer;list-style:none}
+.source-overview-card>summary::-webkit-details-marker{display:none}.source-overview-card>summary>span:nth-child(2){display:flex;flex-direction:column;min-width:0}.source-overview-card small{opacity:.65;margin-top:.08rem;white-space:normal}
+.source-overview-icon{font-size:1.1rem}.source-overview-details-label{font-size:.75rem;opacity:.68}.source-overview-card[open] .source-overview-details-label{font-weight:700}
+.source-overview-card-body{padding:.15rem .72rem .7rem;border-top:1px solid color-mix(in srgb,currentColor 10%,transparent)}
+.source-area-badges{display:flex;flex-wrap:wrap;gap:.32rem;margin:.55rem 0}.source-area-badges span{padding:.18rem .46rem;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 20%,transparent);font-size:.73rem;font-weight:650;background:color-mix(in srgb,currentColor 7%,transparent)}
+
+/* 40k36t26: Quellenübersicht = exakt dieselben echten Quellen wie die Gerätezeilen-Badges. */
+.source-overview-card-static{display:flex;align-items:center;gap:.7rem;padding:.75rem .9rem}
+.source-overview-card-static>span:nth-child(2){display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.source-overview-card-static small{opacity:.72}
+.source-overview-note{margin:.1rem 0 .65rem}
+
+/* 40k36t27: Merge-Vorschau lesbar und stabil umbrechen. */
+.merge-preview-card{display:grid;gap:.8rem;max-width:100%;overflow:hidden;font-weight:500}
+.merge-preview-card>*{min-width:0}
+.merge-preview-title{font-size:1.02rem}
+.merge-preview-devices{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:.7rem;align-items:center;padding:.7rem;border:1px solid currentColor;border-radius:.55rem;background:rgba(255,255,255,.42)}
+.merge-preview-devices>span:not(.merge-preview-arrow){display:grid;gap:.15rem;min-width:0}
+.merge-preview-devices small{font-weight:500;opacity:.78}
+.merge-preview-devices b{overflow-wrap:anywhere;word-break:normal}
+.merge-preview-arrow{font-size:1.2rem;font-weight:800;text-align:center}
+.merge-preview-message{line-height:1.45;overflow-wrap:break-word;word-break:normal}
+.merge-preview-network-note{display:grid;gap:.2rem;padding:.7rem .8rem;border-radius:.55rem;background:rgba(255,255,255,.46);line-height:1.4}
+.merge-confirm-row{display:grid!important;grid-template-columns:1.25rem minmax(0,1fr)!important;align-items:start!important;gap:.7rem!important;width:100%!important;max-width:100%!important;margin:.15rem 0!important;padding:.8rem!important;box-sizing:border-box;border:1px solid rgba(127,127,127,.28);border-radius:.55rem;background:rgba(255,255,255,.5);text-align:left;white-space:normal!important}
+.merge-confirm-row input[type="checkbox"]{width:1rem!important;height:1rem!important;min-width:1rem!important;max-width:1rem!important;margin:.15rem 0 0!important;padding:0!important;justify-self:start;flex:none!important}
+.merge-confirm-row span{display:block!important;min-width:0!important;width:auto!important;max-width:100%!important;overflow-wrap:break-word!important;word-break:normal!important;white-space:normal!important;line-height:1.45!important}
+.merge-preview-actions{display:flex;justify-content:flex-end;align-items:center;gap:.7rem;flex-wrap:wrap;padding-top:.15rem}
+.merge-preview-actions button{width:auto;max-width:100%}
+@media(max-width:680px){.merge-preview-devices{grid-template-columns:1fr}.merge-preview-arrow{transform:rotate(90deg)}.merge-preview-actions{justify-content:stretch}.merge-preview-actions button{flex:1 1 180px;justify-content:center}}
+
+/* 40k36t27: Präzises Ziel für WinRM/Linux-SSH/macOS-SSH-Konfigurationssprünge. */
+.gam-config-scroll-target{scroll-margin-top:calc(var(--gam-sticky-toolbar-top,62px) + 78px)}
+
+/* 40k36t28: WinRM-Authentifizierungsdiagnose - Negotiate/SPNEGO primär, NTLM nur sichtbar als Legacy-Fallback. */
+.winrm-auth-diagnostics{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px 12px;margin-top:10px;padding:10px;border:1px solid var(--border,#3a3f46);border-radius:8px;background:rgba(127,127,127,.05)}
+.winrm-auth-diagnostics>div{display:flex;flex-direction:column;min-width:0;gap:2px}
+.winrm-auth-diagnostics>div.wide{grid-column:1/-1}
+.winrm-auth-diagnostics small{opacity:.72}
+.winrm-auth-diagnostics b,.winrm-auth-diagnostics code{overflow-wrap:anywhere;word-break:normal}
+.winrm-auth-diagnostics code{white-space:pre-wrap;font-size:.82rem}
+.fritz-test-result.warning{border-color:#c58a19;background:rgba(197,138,25,.08)}
+
+.winrm-trust-config{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;padding:.75rem;border:1px solid var(--border-color,#666);border-radius:.55rem}
+.winrm-trust-config small{min-width:7rem}
+.winrm-trust-config .toolbar{margin-left:auto}
+
+/* 40k37c15: geführte Apple-Geräteunterstützung */
+.apple-mobile-guide{margin:12px 0;padding:12px;border:1px solid var(--border-color,#3b4452);border-radius:10px}
+.apple-mobile-guide>ol{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.apple-mobile-guide>ol>li{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--border-color,#3b4452);border-radius:8px}
+.apple-mobile-guide>ol>li>span{min-width:24px;font-weight:700}
+.apple-mobile-guide>ol>li>div{display:flex;flex:1;min-width:180px;flex-direction:column;gap:2px}
+.apple-mobile-guide>ol>li small{opacity:.78}
+.apple-mobile-guide>ol>li.done{opacity:.92}
+.apple-mobile-guide>ol>li button{margin-left:auto}
+@media (max-width:900px){.apple-mobile-guide>ol>li{align-items:flex-start;flex-wrap:wrap}.apple-mobile-guide>ol>li button{margin-left:34px}}
+
+/* 40k37c15: Offline-Softwaredepot für Apple Mobile */
+.apple-offline-depot{margin:.8rem 0 1rem;padding:.9rem;border:1px solid var(--border,#3a4652);border-radius:.7rem;display:grid;gap:.55rem}
+.apple-offline-depot>small{opacity:.8;line-height:1.35}
+.apple-offline-depot-path{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap}
+.apple-offline-depot-path input{min-width:min(100%,34rem);flex:1}
+.apple-offline-depot-status{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.9rem}
+.apple-offline-depot-status .ready{font-weight:700}.apple-offline-depot-status .pending{opacity:.75}
+
+/* 40k37e56a2 – Gerätemanager: Konfiguration und Ergebnisfläche trennen */
+.gam-modal-backdrop{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.58);display:flex;align-items:flex-start;justify-content:center;padding:4vh 2vw;overflow:auto}
+.gam-modal-card{width:min(1180px,96vw);max-height:92vh;overflow:auto;background:var(--panel,#171b22);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:18px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+.gam-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;position:sticky;top:-18px;z-index:3;background:inherit;padding:18px 0 12px}
+.gam-modal-head h2{margin:0 0 4px}.device-source-settings-dialog>.note{margin-top:12px}
+.device-area-choice-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:14px 0}
+.device-area-choice{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;cursor:pointer}
+.device-area-choice input{width:18px;height:18px}.device-workflow-heading-actions{display:flex;align-items:center;gap:10px}
+.device-inventory-main-section>summary{margin-bottom:12px}.device-inventory-main-section>div#managed-devices{margin-top:8px}
+.device-source-result-filter{display:flex;align-items:center;gap:8px}.device-source-result-filter select{min-width:210px}
+
+/* 40k37e56a3 – Quelleneinstellungen: kontrastreiche Theme-Darstellung */
+.device-source-settings-dialog{
+  background:#171b22;
+  color:#f8fafc;
+}
+.device-source-settings-dialog h1,
+.device-source-settings-dialog h2,
+.device-source-settings-dialog h3,
+.device-source-settings-dialog h4,
+.device-source-settings-dialog b,
+.device-source-settings-dialog label,
+.device-source-settings-dialog summary,
+.device-source-settings-dialog span{
+  color:inherit;
+}
+.device-source-settings-dialog .muted,
+.device-source-settings-dialog small{
+  color:#cbd5e1;
+}
+.device-source-settings-dialog input,
+.device-source-settings-dialog select,
+.device-source-settings-dialog textarea{
+  background:#0f141b;
+  color:#f8fafc;
+  border-color:#475569;
+}
+.device-source-settings-dialog .secondary{
+  background:#334155;
+  color:#f8fafc;
+}
+.device-source-settings-dialog .device-area-choice,
+.device-source-settings-dialog .builtin-source-row,
+.device-source-settings-dialog .platform-source-card,
+.device-source-settings-dialog details{
+  border-color:rgba(255,255,255,.16);
+}
+/* Der Erklärungskasten bleibt bewusst hervorgehoben, aber mit eindeutigem Kontrast. */
+.device-source-settings-dialog>.note{
+  background:#f8fafc;
+  color:#172033;
+  border-left-color:#94a3b8;
+}
+.device-source-settings-dialog>.note b{color:#172033}
+
+@media (prefers-color-scheme: light){
+  .device-source-settings-dialog{
+    background:#ffffff;
+    color:#172033;
+    border-color:#d7dce3;
+  }
+  .device-source-settings-dialog .muted,
+  .device-source-settings-dialog small{
+    color:#5f6b7a;
+  }
+  .device-source-settings-dialog input,
+  .device-source-settings-dialog select,
+  .device-source-settings-dialog textarea{
+    background:#ffffff;
+    color:#172033;
+    border-color:#d5dae3;
+  }
+  .device-source-settings-dialog .secondary{
+    background:#e6ecf6;
+    color:#172033;
+  }
+  .device-source-settings-dialog .device-area-choice,
+  .device-source-settings-dialog .builtin-source-row,
+  .device-source-settings-dialog .platform-source-card,
+  .device-source-settings-dialog details{
+    border-color:#d7dce3;
+  }
+  .device-source-settings-dialog>.note{
+    background:#f8fafc;
+    color:#172033;
+  }
+}
+
+/* 40k37e56a4 – GAM-weite Kontrastregel fuer Dialoge und zentrale Gerätemanager-Einstellungen */
+.gam-modal-card{
+  background:#171b22;
+  color:#f8fafc;
+}
+.gam-modal-card h1,.gam-modal-card h2,.gam-modal-card h3,.gam-modal-card h4,.gam-modal-card h5,
+.gam-modal-card b,.gam-modal-card label,.gam-modal-card summary,.gam-modal-card span{color:inherit}
+.gam-modal-card .muted,.gam-modal-card small{color:#cbd5e1}
+.gam-modal-card input,.gam-modal-card select,.gam-modal-card textarea{
+  background:#0f141b;color:#f8fafc;border-color:#475569;
+}
+.gam-modal-card .secondary{background:#334155;color:#f8fafc}
+.device-manager-settings-section{margin:12px 0;border:1px solid rgba(255,255,255,.16);border-radius:11px;overflow:hidden}
+.device-manager-settings-section>summary{display:flex;align-items:center;gap:7px;padding:13px 14px;cursor:pointer}
+.device-manager-settings-section>summary small{margin-left:4px}
+.device-manager-settings-section[open]>summary .discovery-chevron{transform:rotate(90deg)}
+.device-manager-settings-section-body{display:grid;gap:12px;padding:4px 14px 16px}
+.device-manager-settings-section-body>.device-discovery-source-settings{margin-left:0;margin-right:0}
+@media (prefers-color-scheme: light){
+  .gam-modal-card{background:#fff;color:#172033;border-color:#d7dce3}
+  .gam-modal-card .muted,.gam-modal-card small{color:#5f6b7a}
+  .gam-modal-card input,.gam-modal-card select,.gam-modal-card textarea{background:#fff;color:#172033;border-color:#d5dae3}
+  .gam-modal-card .secondary{background:#e6ecf6;color:#172033}
+  .device-manager-settings-section{border-color:#d7dce3}
+}
+
+/* 40k37e56a5 – globale GAM-Designwahl; Standard ist hell. */
+:root.gam-theme-light{color-scheme:light;color:#172033;background:#f4f7fb}
+:root.gam-theme-light body{background:#f4f7fb;color:#172033}
+:root.gam-theme-light .gam-modal-card,
+:root.gam-theme-light .device-source-settings-dialog{background:#fff;color:#172033;border-color:#d7dce3}
+:root.gam-theme-light .gam-modal-card .muted,
+:root.gam-theme-light .gam-modal-card small,
+:root.gam-theme-light .device-source-settings-dialog .muted,
+:root.gam-theme-light .device-source-settings-dialog small{color:#5f6b7a}
+:root.gam-theme-light .gam-modal-card input,
+:root.gam-theme-light .gam-modal-card select,
+:root.gam-theme-light .gam-modal-card textarea,
+:root.gam-theme-light .device-source-settings-dialog input,
+:root.gam-theme-light .device-source-settings-dialog select,
+:root.gam-theme-light .device-source-settings-dialog textarea{background:#fff;color:#172033;border-color:#d5dae3}
+:root.gam-theme-light .gam-modal-card .secondary,
+:root.gam-theme-light .device-source-settings-dialog .secondary{background:#e6ecf6;color:#172033}
+:root.gam-theme-light .device-manager-settings-section{border-color:#d7dce3}
+
+:root.gam-theme-dark{color-scheme:dark;color:#f8fafc;background:#0f141b}
+:root.gam-theme-dark body{background:#0f141b;color:#f8fafc}
+:root.gam-theme-dark main,
+:root.gam-theme-dark .app-shell,
+:root.gam-theme-dark .content,
+:root.gam-theme-dark .page-content{color:#f8fafc}
+:root.gam-theme-dark .card,
+:root.gam-theme-dark .settings-pane,
+:root.gam-theme-dark .settings-group,
+:root.gam-theme-dark .detail,
+:root.gam-theme-dark .statusbar{background:#171b22;color:#f8fafc;border-color:#334155;box-shadow:none}
+:root.gam-theme-dark .muted,
+:root.gam-theme-dark small,
+:root.gam-theme-dark .card .stats span{color:#cbd5e1}
+:root.gam-theme-dark input,
+:root.gam-theme-dark select,
+:root.gam-theme-dark textarea{background:#0f141b;color:#f8fafc;border-color:#475569}
+:root.gam-theme-dark .secondary,
+:root.gam-theme-dark .tabs button{background:#334155;color:#f8fafc}
+:root.gam-theme-dark .tabs button.active{background:#e2e8f0;color:#172033}
+:root.gam-theme-dark .list button,
+:root.gam-theme-dark .stats span,
+:root.gam-theme-dark .settings-check,
+:root.gam-theme-dark .module-setting-card{background:#1e293b;color:#f8fafc;border-color:#475569}
+:root.gam-theme-dark table th,
+:root.gam-theme-dark table td{border-color:#334155}
+:root.gam-theme-dark code{background:#334155;color:#f8fafc}
+:root.gam-theme-dark .note{background:#1e293b;color:#f8fafc;border-left-color:#64748b}
+:root.gam-theme-dark .note.ok{background:#123524;color:#dcfce7;border-left-color:#22c55e}
+:root.gam-theme-dark .note.warn,
+:root.gam-theme-dark .note.warning{background:#3b2b12;color:#fef3c7;border-left-color:#f59e0b}
+:root.gam-theme-dark .gam-modal-card,
+:root.gam-theme-dark .device-source-settings-dialog{background:#171b22;color:#f8fafc;border-color:#475569}
+:root.gam-theme-dark .gam-modal-card .muted,
+:root.gam-theme-dark .gam-modal-card small,
+:root.gam-theme-dark .device-source-settings-dialog .muted,
+:root.gam-theme-dark .device-source-settings-dialog small{color:#cbd5e1}
+:root.gam-theme-dark .gam-modal-card input,
+:root.gam-theme-dark .gam-modal-card select,
+:root.gam-theme-dark .gam-modal-card textarea{background:#0f141b;color:#f8fafc;border-color:#475569}
+:root.gam-theme-dark .gam-modal-card .secondary{background:#334155;color:#f8fafc}
+:root.gam-theme-dark .device-manager-settings-section{border-color:rgba(255,255,255,.16)}
+/* Hervorgehobene Informationsbox bleibt absichtlich hell und kontrastreich. */
+:root.gam-theme-dark .device-source-settings-dialog>.note{background:#f8fafc;color:#172033;border-left-color:#94a3b8}
+:root.gam-theme-dark .device-source-settings-dialog>.note b{color:#172033}
+.gam-theme-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:12px}
+.gam-theme-choice{cursor:pointer;border:1px solid #d7dce3;border-radius:12px;padding:14px}
+.gam-theme-choice.selected{outline:2px solid #1f5eff;outline-offset:1px}
+.gam-theme-choice input{width:auto}
+@media(max-width:700px){.gam-theme-choice-grid{grid-template-columns:1fr}}
+
+/* 40k37e56a6 – dynamischer Quellenfilter */
+.device-source-filter-list{display:grid;gap:.45rem}
+.device-source-filter-all{padding-bottom:.55rem;margin-bottom:.2rem;border-bottom:1px solid var(--border,#d8dee8)}
+.device-source-filter-list .device-area-choice{display:flex;align-items:center;gap:.55rem}
+.device-source-filter-list input[type="checkbox"]{flex:0 0 auto}
+
+/* GAM 2.1.0 fix48 – registrierte Geräte: Hauptzeilen strikt von Detailbreiten trennen.
+   Keine Änderung von Inventarisierungsdaten oder der Expand-/Collapse-Logik. */
+.registered-device-table-scroll{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow-x:auto;
+}
+.registered-device-table{
+  width:100%;
+  max-width:100%;
+  table-layout:fixed;
+}
+.registered-device-table > thead > tr > th,
+.registered-device-table > tbody > tr.registered-device-row-draggable > td{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.registered-device-table > thead > tr > th:first-child,
+.registered-device-table > tbody > tr.registered-device-row-draggable > td:first-child{
+  width:44px;
+  box-sizing:border-box;
+  text-align:center;
+}
+.registered-device-table > tbody > tr.registered-device-row-draggable > td input,
+.registered-device-table > tbody > tr.registered-device-row-draggable > td select{
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.registered-device-table .registered-device-technical-row > td{
+  width:auto;
+  max-width:0; /* colSpan-Inhalte dürfen die zehn Hauptspalten nicht aufweiten */
+  padding:10px;
+  overflow:hidden;
+}
+.registered-device-table .registered-device-technical-row .device-technical-panel{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  overflow:auto;
+}
+.registered-device-table .registered-device-technical-row .device-detail-section,
+.registered-device-table .registered-device-technical-row .device-detail-section-body,
+.registered-device-table .registered-device-technical-row dl,
+.registered-device-table .registered-device-technical-row dd{
+  max-width:100%;
+  min-width:0;
+  overflow-wrap:anywhere;
+}

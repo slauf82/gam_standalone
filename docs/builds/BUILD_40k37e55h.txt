@@ -1,0 +1,9 @@
+GAM 2.0 – 40k37e55h – Linux Apple-WLAN Einstieg wie Windows
+
+- Basis: 40k37e55g-fix2.
+- Keine Aenderung an der funktionierenden Apple-USB-/Lockdown-Inventarisierung.
+- Der bestehende, unter Windows bewaehrte CoreDevice/RemotePairing/Userspace-RSD-WLAN-Pfad wird unter Linux nicht mehr vorzeitig durch einen Windows-only-Guard verlassen.
+- Nur der unterste Executable-Adapter ist plattformspezifisch: Windows nutzt weiterhin runtime/bin/pymobiledevice3.exe; Linux nutzt runtime/bin/pymobiledevice3 oder eine bereits vorhandene pymobiledevice3-CLI aus PATH.
+- Keine automatische Installation, keine FRITZ!/ARP-/USB-Anreicherung und keine neue Discovery-Quelle.
+- USB und WLAN bleiben getrennte Apple-Treffer und koennen spaeter vom Benutzer zusammengefuehrt werden.
+- Bei fehlendem pymobiledevice3 wird dies explizit als PMD3_RUNTIME_MISSING protokolliert.

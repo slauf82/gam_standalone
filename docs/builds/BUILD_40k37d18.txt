@@ -1,0 +1,28 @@
+GAM Standalone v2.1.0 - Schritt 40k37d18
+
+Ziel
+- Performance-Optimierung des Apple-iOS/iPadOS-Inventarpfads auf Basis von 40k37d17.
+- Keine Datenverluste bei den funktionierenden Kernabfragen.
+
+Aenderungen
+- Vier in d17 nachweislich leere 2-Sekunden-Timeout-Domains aus dem normalen Lockdown-Pfad entfernt:
+  com.apple.disk_usage
+  com.apple.disk_usage.factory
+  com.apple.mobile.iTunes
+  com.apple.international
+- Erfolgreiche optionale Domains bleiben aktiv:
+  com.apple.mobile.iTunes.accessories
+  com.apple.mobile.iTunes.store
+  com.apple.mobile.data_sync
+  com.apple.mobile.tethered_sync
+  com.apple.mobile.lockdown_cache
+- IORegistry/AppleSmartBattery aus dem normalen Health-Pfad entfernt.
+  Diagnostics/GasGauge bleibt erhalten und liefert die fuer GAM benoetigten Batteriedaten.
+- Zusaetzliche Lockdown-Subphasen im Performance-Profiling, um den in d17 noch nicht aufgeschluesselten Rest der Laufzeit zu lokalisieren.
+- Performance-Dateien: logs/apple-mobile-performance-d18.json und .txt
+- Direkter read-only installation_proxy-Hauptpfad aus d16/d17 unveraendert beibehalten.
+- USER/SYSTEM bleibt ausschliesslich Apple ApplicationType-basiert; keine Heuristiken.
+
+Erwartung
+- Rund 10 Sekunden weniger Leerlauf gegenueber d17 auf dem getesteten iPad.
+- Noch genauere Aufschluesselung der verbleibenden Lockdown-Zeit fuer einen moeglichen d19-Schritt.

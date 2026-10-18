@@ -1,0 +1,10 @@
+GAM 2.0 – Schritt 40k36c
+
+macOS-System- und Softwareinventarisierung über SSH:
+- lokale Benutzerkonten mit UID, GID, Realname, Home, Shell und Administratorstatus
+- Anwendungen aus /Applications, /System/Applications und dem Benutzerordner
+- App-Name, Version, Bundle-ID und Installationspfad
+- geladene launchd-Dienste, System-/Benutzer-LaunchAgents und LaunchDaemons
+- Login-Elemente, soweit ohne zusätzliche Rechte auslesbar
+- Homebrew, MacPorts, Xcode Command Line Tools und verfügbare Softwareupdates
+- fehlende Rechte oder nicht vorhandene Werkzeuge brechen die Gesamtinventarisierung nicht ab

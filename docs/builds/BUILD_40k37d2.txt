@@ -1,0 +1,14 @@
+GAM Standalone 2.1.0 – Schritt 40k37d2
+
+Basis: 40k37d1
+
+Schwerpunkt:
+- Normale iOS/iPadOS-App-Inventarisierung ohne Jailbreak über ideviceinstaller / Apple installation_proxy ergänzt.
+- Benutzer-Apps und System-Apps werden getrennt gelesen und als strukturierte Softwareeinträge in gam_discovery_software_inventory gespeichert.
+- Erfasst werden Name, Version, Bundle-ID, optional Installationspfad und Quelle, soweit Apple sie liefert.
+- Der bestehende Lockdown-Inventarlauf aus d1 bleibt erhalten; App-Inventarisierung ist rein lesend.
+- App-Zähler (Benutzer/System/Gesamt) werden in den Apple-Discovery-Details ergänzt.
+- Fehlt ideviceinstaller in einer bereits installierten älteren Toolchain, bleibt die Geräteinventarisierung funktionsfähig und der Debugtrace meldet den fehlenden App-Inventarisierer klar. Eine erneute GAM-Toolchain-Bereitstellung aus dem gepinnten jrjr-Release übernimmt die vollständige Distribution.
+- Debugtrace-Header auf 40k37d2 aktualisiert.
+- BUILD-Historie gemäß neuer Projektstruktur nach docs/builds/ verschoben; das Archiv-Root bleibt frei von BUILD-Dateien.
+- WLAN/Netzwerk bleibt bewusst außerhalb von 40k37d und folgt erst in 40k37e.

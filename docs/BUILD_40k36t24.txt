@@ -1,0 +1,9 @@
+40k36t25 – iOS/iPadOS Erkennungsquellen als Netzwerkquellen
+
+- Auf Basis von 40k36t23.
+- Erkennungsquelle „iOS lokal“ in „iOS Netzwerk“ umbenannt.
+- Erkennungsquelle „iPadOS lokal“ in „iPadOS Netzwerk“ umbenannt.
+- iOS-Beschreibung von lokaler Erkennung auf Netzwerkerkennung angepasst.
+- iPadOS-Beschreibung von lokaler Erkennung auf Netzwerkerkennung angepasst.
+- Interne Source-IDs IOS_LOCAL/IPADOS_LOCAL bleiben aus Kompatibilitätsgründen unverändert.
+- Alle t23-Fixes inklusive vollständig repariertem Demo-Dump und Streaming-Importer bleiben unverändert erhalten.

@@ -1,0 +1,14 @@
+GAM Standalone v2.1.0 – Schritt 40k37e56c-fix24
+macOS Intel/Tahoe: MariaDB 10.11 via Homebrew Sonoma x86_64 Bottle
+
+Basis: fix23-mariadb-binary-only
+
+Aenderungen ausschliesslich im macOS-Datenbank-Unterbau:
+- Intel x86_64 + Tahoe ohne Homebrew: GAM richtet einen gepinnten Homebrew-Bootstrap im Intel-Standardprefix /usr/local ein.
+- MariaDB bleibt echte MariaDB 10.11; kein MySQL-Fallback und keine Schema-Kompatibilisierung.
+- Installation erfolgt mit Homebrew --force-bottle, damit kein Source-Build gestartet wird.
+- Fuer Intel wird der vorhandene Sonoma-x86_64-Bottle-Pfad genutzt, der laut Homebrew auch fuer neuere Intel-macOS-Versionen vorgesehen ist.
+- ARM/Tahoe-Bottles werden auf Intel ausdruecklich nicht verwendet.
+- Homebrew Auto-Update ist waehrend des GAM-Bootstraps deaktiviert.
+- Startpfad auf die versionierte Formel mariadb@10.11 angepasst.
+- Bestehender Oberbau, Datenbankschema, Backend, Frontend und Apple-Inventarisierung unveraendert.

@@ -4,7 +4,7 @@ Version: **GAM 2.0 v1.7.2**
 
 ## Ziel
 
-`start-backend.bat` soll einen neuen Test-PC möglichst selbständig vorbereiten, ohne vorhandene Systeme zu gefährden.
+`start_backend.bat` soll einen neuen Test-PC möglichst selbständig vorbereiten, ohne vorhandene Systeme zu gefährden.
 
 ## Enthalten
 
@@ -13,8 +13,8 @@ Version: **GAM 2.0 v1.7.2**
 - keine vorhandene Datenbank wird überschrieben
 - optionales portables MariaDB-Setup unter `tools/mariadb`
 - Import der anonymisierten Demo-Datenbank nur, wenn die Ziel-Datenbank fehlt oder leer ist
-- Integration in `start-backend.bat`
-- `start-frontend.bat` bleibt frei von Datenbanklogik
+- Integration in `start_backend.bat`
+- `start_frontend.bat` bleibt frei von Datenbanklogik
 
 ## Sicherheitsregeln
 
@@ -46,17 +46,17 @@ GAM_DEMO_SQL=sql\beispiel_v1_7_0_anonymisiert.sql
 GAM_MARIADB_ZIP_URL=
 ```
 
-Wenn `GAM_DB_AUTO_SETUP` leer bleibt, fragt `start-backend.bat` beim ersten fehlenden DB-Server nach.
+Wenn `GAM_DB_AUTO_SETUP` leer bleibt, fragt `start_backend.bat` beim ersten fehlenden DB-Server nach.
 
 ## Testplan
 
 1. PC ohne MariaDB starten
-2. `start-backend.bat` ausführen
+2. `start_backend.bat` ausführen
 3. portable MariaDB-Einrichtung bestätigen
 4. prüfen, ob `tools/mariadb` angelegt wurde
 5. prüfen, ob `kopfzentruminventardb` importiert wurde
 6. Backend startet
-7. `start-frontend.bat` starten
+7. `start_frontend.bat` starten
 8. Login mit Demo-Benutzer testen
 9. vorhandene befüllte DB testen: kein Überschreiben
 

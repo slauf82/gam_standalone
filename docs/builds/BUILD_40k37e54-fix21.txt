@@ -1,0 +1,8 @@
+40k37e54-fix21 – aktiven Admin-RSD verbindlich fuer Inventarisierung verwenden
+
+- Aktiver Admin-RSD hat nun vor Cache/Userspace/RemotePairing absolute Prioritaet.
+- Die Inventarisierung verwendet exakt den bereits verifizierten Admin-RSD-Endpunkt.
+- Basis, Apps, Batterie und System/Storage muessen alle erfolgreich sein.
+- Bei explizitem Admin-RSD ist ein stiller Userspace-Fallback weiterhin gesperrt.
+- Erfolgsmarker: COREDEVICE_TRANSPORT_SELECTED transport=ADMIN_RSD.
+- Tunnelaufbau/Lifecycle aus fix20 unveraendert.

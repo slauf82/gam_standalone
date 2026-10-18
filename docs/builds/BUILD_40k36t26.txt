@@ -1,0 +1,7 @@
+40k36t26 – Quellenübersicht 1:1 wie Gerätezeilen-Badges
+
+- Quellenübersicht verwendet dieselbe zentrale Badge-Ermittlung wie die Gerätezeile.
+- Keine Auswertung von identity.sources mehr; dadurch können Inventarwerte nicht als Quellen erscheinen.
+- Angezeigt werden exakt dieselben echten Quellen, nicht mehr und nicht weniger.
+- Statistik zeigt die Anzahl der tatsächlich sichtbaren Quellen-Badges.
+- Alle Fixes aus 40k36t25 bleiben erhalten.

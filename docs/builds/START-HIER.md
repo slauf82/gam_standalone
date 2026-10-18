@@ -33,13 +33,13 @@ GAM_LBD_FILE=./config/deine-datei.lbd
 Windows:
 
 ```text
-start-backend.bat
+start_backend.bat
 ```
 
 Linux/macOS:
 
 ```bash
-./start-backend.sh
+./start_backend.sh
 ```
 
 Direkt:
@@ -54,13 +54,13 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 Windows:
 
 ```text
-start-frontend.bat
+start_frontend.bat
 ```
 
 Linux/macOS:
 
 ```bash
-./start-frontend.sh
+./start_frontend.sh
 ```
 
 ## 5. Schnelltest

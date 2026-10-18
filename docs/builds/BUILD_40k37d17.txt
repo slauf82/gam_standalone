@@ -1,0 +1,29 @@
+GAM Standalone v2.1.0 – Schritt 40k37d17
+
+Apple Performance Profiler
+==========================
+
+40k37d17 baut direkt auf dem funktionierenden 40k37d16-Stand auf.
+Die Apple-/iOS-/iPadOS-Inventarisierungslogik bleibt fachlich unverändert;
+d17 ergänzt ausschließlich detailliertes Laufzeit-Profiling.
+
+Neu:
+- apple-mobile-performance-d17.json
+- apple-mobile-performance-d17.txt
+- Zeitmessung der Hauptphasen:
+  * registrierte Identität laden
+  * Apple-Gerät erkennen / Basisdaten
+  * Lockdown-Basisinventar / Domains
+  * Diagnose / Health / IORegistry
+  * Software / installation_proxy
+  * Inventardaten in GAM speichern
+  * Ergebnisaufbereitung
+- Zeitmessung jedes über runToolTraced ausgeführten Apple-Kommandos
+  inklusive Erfolg, Exitcode und Timeoutstatus.
+
+Wichtig:
+- Der produktive native installation_proxy-Hauptpfad aus d16 bleibt erhalten.
+- USER/SYSTEM wird weiterhin ausschließlich aus Apples ApplicationType übernommen.
+- Keine App-Installation/-Deinstallation in diesem Schritt.
+- Keine Parallelisierung und keine aggressiveren Timeouts: d17 misst zunächst nur.
+- Bestehende portable Laufzeiten und Caches bleiben unangetastet.

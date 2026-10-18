@@ -1,0 +1,8 @@
+40k36t21 – Streaming-Beispieldatenimport
+
+- Beispieldaten-SQL wird nicht mehr vollständig per Files.readString + splitSql vorverarbeitet.
+- Der große Demo-Dump wird gepuffert und Statement für Statement gestreamt.
+- Importstart wird sofort als Setup 6a protokolliert.
+- Fortschritt alle 10 SQL-Anweisungen, langsame Statements ab 2 Sekunden separat.
+- Zwischen-Commit alle 25 SQL-Anweisungen; finaler Commit/Rollback bleibt erhalten.
+- Keine Änderung an Linux-Inventarisierung, Discovery oder t20-Frontend-Fixes.

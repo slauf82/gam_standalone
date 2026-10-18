@@ -1,0 +1,5 @@
+GAM 2.1.0 – Schritt 40k36q9a
+Fix für 40k36q9:
+- fehlendes Klassenfeld SoftwareInventoryRepository softwareInventory ergänzt
+- Constructor-Injection ergänzt
+- Zuweisung this.softwareInventory ergänzt

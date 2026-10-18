@@ -1,0 +1,31 @@
+GAM Standalone v2.1.0 – Schritt 40k37d6
+==========================================
+
+Ziel
+----
+- Vollstaendige isolierte Windows-UCRT64-Laufzeit fuer ideviceinstaller statt Vermischung mit der bestehenden c48/jrjr-Toolchain.
+- Rekursive Aufloesung der MSYS2-UCRT64-Runtime-Abhaengigkeiten aus der offiziellen Repository-Datenbank.
+- SHA-256-Pruefung jedes geladenen Runtime-Pakets; ideviceinstaller 1.1.1-2 bleibt zusaetzlich hart gepinnt.
+- Eine liegengebliebene, nicht startfaehige d5-ideviceinstaller.exe wird erkannt und automatisch repariert.
+- Normale Apple-Inventarisierung beschleunigt: bestaetigte Lockdown-Domains schnell, historische/optionale Domains nur noch mit kurzem Capability-Timeout.
+- IORegistry-Sackgassen nur noch mit kurzem Timeout; Diagnostics All/WiFi/GasGauge/NAND bleiben voll erhalten.
+- Erweiterter Rohsnapshot: logs/apple-mobile-inventory-d6.json.
+- Bestaetigte GasGauge-Werte (DesignCapacity, CycleCount, FullChargeCapacity, Status) bleiben in den normalen Geraetedetails sichtbar; keine erfundenen SMART-/NAND-Werte.
+- Software-Inventarisierung weiterhin ueber installation_proxy mit Software -> Quelle -> Softwareliste.
+
+MSYS2-Strategie
+---------------
+Startpaket: mingw-w64-ucrt-x86_64-ideviceinstaller 1.1.1-2
+Gepinnter SHA-256: 9316914c76a8cdfb33ac8d1e8bf63dfbe5db9a1badbe035459abc6365e4bb509
+Repository: https://mirror.msys2.org/mingw/ucrt64/
+Die Laufzeit wird ausschliesslich unter <GAM>/tools/libimobiledevice/ideviceinstaller abgelegt.
+Die bestehende libimobiledevice-Basistoolchain wird nicht ueberschrieben.
+
+Testdateien fuer 40k37d6
+------------------------
+Pflicht:
+- logs/apple-mobile-debug.log
+- logs/apple-mobile-inventory-d6.json
+Optional bei UI-/Persistenzfragen:
+- Screenshot/Text der Apple-Geraetedetails und Softwareansicht
+Backend-Log nur bei einem Fehler, der im Apple-Debuglog nicht erklaert wird.

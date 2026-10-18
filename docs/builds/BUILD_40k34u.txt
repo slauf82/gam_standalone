@@ -1,0 +1,33 @@
+GAM Standalone v2.1.0 – Schritt 40k34u
+Registriert wird die zentrale technische Arbeitsoberflaeche
+
+Bestandsaufnahme ergab: "Registriert" (DeviceIdentityDialog) ist bereits
+seit mehreren vorherigen Schritten (40k34b-s) die technische
+Arbeitsoberflaeche - Identitaet, Quellenuebersicht, Vertrauensbewertung,
+Plattforminventarisierung, Linux-/Android-Inventarisierung, erweiterte
+Linux-Analyse, Aliasverwaltung, Identitaetsverlauf, Merge/Zusammenfuehrung
+waren bereits vollstaendig vorhanden - keine neuen Abschnitte noetig.
+
+Einzige tatsaechlich noetige Korrektur: In 40k34t wurde versehentlich die
+VOLLE, interaktive PlatformInventorySection (inkl. Aktions-Buttons) auch
+im Geraetebestand eingebettet - das widersprach dem in 40k34u explizit
+geforderten Prinzip "Registriert bleibt die einzige Stelle, an der
+technische Analysen gestartet werden."
+
+Umgesetzt: PlatformInventorySection um eine optionale readOnly-Eigenschaft
+erweitert (DIESELBE Komponente, keine zweite UI) - "Registriert" bleibt
+ohne readOnly (voll interaktiv), "Geraetebestand" nutzt jetzt readOnly
+(nur Anzeige: Plattform/Status/letzter Lauf/Meldung, keine Buttons) mit
+klarem Verweis auf "Registriert" fuer Aktionen.
+
+Keine neue API, kein neuer Dispatcher, keine zweite Statusverwaltung,
+keine zweite Historie, keine zweite Geraeteidentitaet - alles unveraendert
+seit 40k34p-t.
+
+Kein echter Build moeglich - ausdruecklich benannt. TypeScript-Syntax-Check
+(0 Diagnosen) durchgefuehrt, beide Aufrufstellen von
+PlatformInventorySection manuell verifiziert.
+
+Ausfuehrliche Dokumentation: docs/40k34u-registriert-zentrale-technische-arbeitsoberflaeche.md
+
+Basis: 40k34t

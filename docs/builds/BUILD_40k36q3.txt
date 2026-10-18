@@ -1,0 +1,4 @@
+40k36q4b – Mehrfach-Betriebssystemzugänge
+Basis: 40k36q2
+Frontend-TS/TSX-Parserprüfung: 0 Syntaxdiagnosen.
+Maven-Compile in der Arbeitsumgebung nicht ausführbar, da repo.maven.apache.org nicht auflösbar war.

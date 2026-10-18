@@ -1,0 +1,14 @@
+GAM Standalone v2.1.0 – Schritt 40k37e16
+
+Apple iOS/iPadOS CoreDevice / RemotePairing Runtime-Test
+
+- Basis: 40k37e14.
+- GAM-eigene isolierte Windows-Runtime unter tools/apple-coredevice/runtime.
+- System-Python und globales pip werden nicht verwendet oder verändert.
+- Bootstrap ueber gepinntes uv 0.12.13; Python 3.13 wird in den GAM-Toolbereich verwaltet.
+- pymobiledevice3 ist auf 11.12.5 gepinnt.
+- Erster Lauf benoetigt Internetzugriff zum Abruf der gepinnten Runtime/Pakete; danach Cache/Werkzeuge lokal.
+- SHA256 des uv-Archivs wird gegen die offizielle Release-Pruefsumme verifiziert.
+- E15 fuehrt nur `remote browse --no-color` aus: read-only Discovery, kein Pairing, kein Tunnel, keine Geraeteaenderung.
+- Bestehende e8-e14 Diagnosen bleiben erhalten.
+- Bekannter doppelter Apple-Aufruf bleibt absichtlich unveraendert, bis WLAN-Transport stabil funktioniert.

@@ -1,0 +1,16 @@
+GAM Standalone v2.1.0 – Schritt 40k37e11
+
+Ziel: Apple USB/WLAN-Aufrufpfad eindeutig sichtbar machen und WLAN vom USB-Zweig entkoppeln.
+
+Änderungen:
+- Explizite Backend-Logs für APPLE_MOBILE scan/status.
+- Explizite Stufen USB START/RESULT/FEHLER und WLAN START/RESULT/FEHLER.
+- readNativeNetworkDevices() meldet Eintritt, idevice_id -n Ergebnis und Abschluss direkt im Backend-Log.
+- USB- und WLAN-Abfrage sind gegeneinander fehlertolerant; ein technischer Fehler im USB-Zweig überspringt WLAN nicht.
+- Bestehende e5 safe-cli-only WLAN-Diagnose bleibt erhalten; kein neuer nativer Schreibzugriff.
+- Bestehende Identitäts-/Merge-, d20-d22- und Cache-Schutzlogik bleibt erhalten.
+- Keine USER/SYSTEM-Inferenz.
+
+Erwartete Diagnose im Backend-Log:
+[APPLE_MOBILE][USB] START -> RESULT/FEHLER
+[APPLE_MOBILE][WLAN] START -> readNativeNetworkDevices() ENTER -> idevice_id -n -> RESULT/FEHLER

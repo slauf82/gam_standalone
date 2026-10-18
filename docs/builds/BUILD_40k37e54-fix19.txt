@@ -1,0 +1,29 @@
+GAM 2.0 – 40k37e54-fix19
+
+Ziel
+- Windows Admin-RSD fuer iOS/iPadOS >= 17.4 ueber den real verifizierten Lockdown/CoreDevice-Pfad.
+
+Aenderung gegenueber fix18
+- Modernen Admin-Tunnel von
+    lockdown start-tunnel --mobdev2 --udid <UDID> --script-mode
+  auf
+    lockdown start-tunnel --udid <UDID> --script-mode
+  korrigiert.
+- --mobdev2 wird im modernen Admin-Tunnelpfad nicht mehr erzwungen.
+- UDID-Selektion bleibt erhalten.
+- Die fix18-mobdev2-Diagnoseprobes wurden aus dem UAC-Wrapper entfernt.
+- RemotePairing-/altIRK-Daten werden nicht veraendert.
+- pymobiledevice3 bleibt auf 11.16.3.
+- UAC, persistenter Lifecycle, Endpoint-Erkennung, remote rsd-info-Verifikation, ACTIVE-Status, Stop-Logik und explizites Admin-no-fallback bleiben erhalten.
+- Der alte Pfad fuer iOS 17.0-17.3.1 bleibt unveraendert.
+
+Reale Grundlage
+- Auf demselben Windows-Host/iPad schlug --mobdev2 mit "Device is not connected" fehl.
+- `lockdown start-tunnel --script-mode` erzeugte erfolgreich einen Tunnel.
+- `lockdown start-tunnel --udid <UDID> --script-mode` erzeugte ebenfalls erfolgreich einen Tunnel.
+
+Validierung dieses ZIPs
+- pom.xml XML-Parsing: OK
+- ZIP CRC: OK
+- .sh executable bits werden erhalten/geprueft
+- Maven wurde in dieser Build-Umgebung nicht ausgefuehrt; Windows-Build/Test erfolgt beim Anwender.

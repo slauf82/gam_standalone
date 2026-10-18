@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <property name="LOG_FILE" value="${GAM_LOG_FILE:-logs/gam-backend.log}"/>
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="de.kopfzentrum.gam.inventory.DiscoveryLogRoutingFilter"><discoveryFile>false</discoveryFile></filter>
+    <encoder><pattern>${CONSOLE_LOG_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+  </appender>
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_FILE}</file>
+    <filter class="de.kopfzentrum.gam.inventory.DiscoveryLogRoutingFilter"><discoveryFile>false</discoveryFile></filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern><maxFileSize>20MB</maxFileSize><maxHistory>14</maxHistory>
+    </rollingPolicy>
+    <encoder><pattern>${FILE_LOG_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+  </appender>
+  <appender name="DISCOVERY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/discovery-debug.log</file>
+    <filter class="de.kopfzentrum.gam.inventory.DiscoveryLogRoutingFilter"><discoveryFile>true</discoveryFile></filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>logs/discovery-debug.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern><maxFileSize>20MB</maxFileSize><maxHistory>14</maxHistory>
+    </rollingPolicy>
+    <encoder><pattern>${FILE_LOG_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+  </appender>
+  <appender name="MERGE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/merge-debug.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>logs/merge-debug.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern><maxFileSize>10MB</maxFileSize><maxHistory>14</maxHistory>
+    </rollingPolicy>
+    <encoder><pattern>${FILE_LOG_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+  </appender>
+  <logger name="GAM_DISCOVERY_DIAGNOSTICS" level="DEBUG" additivity="false"><appender-ref ref="DISCOVERY_FILE"/></logger>
+  <logger name="GAM_MERGE_DIAGNOSTICS" level="DEBUG" additivity="false"><appender-ref ref="MERGE_FILE"/></logger>
+  <logger name="de.kopfzentrum.gam" level="DEBUG"/>
+  <logger name="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" level="ERROR"/>
+  <logger name="com.openhtmltopdf.general" level="ERROR"/>
+  <root level="INFO"><appender-ref ref="CONSOLE"/><appender-ref ref="FILE"/><appender-ref ref="DISCOVERY_FILE"/></root>
+</configuration>

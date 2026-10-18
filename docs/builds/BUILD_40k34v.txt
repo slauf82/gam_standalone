@@ -1,0 +1,52 @@
+GAM Standalone v2.1.0 – Schritt 40k34v
+Kompaktes, erweiterbares Aktionsmenue im Bereich "Registriert"
+
+Analyse bestaetigt: "Registriert" wird innerhalb von InventoryPage
+gerendert (DeviceManagerPanel's eigene Liste ist hier per hideDeviceList
+ausgeblendet). Die Aktionen-Spalte enthielt bisher NUR zwei Buttons (In
+Gerätebestand übernehmen, Registrierung aufheben) - "Identität" lag in
+einer separaten Spalte. 40k34u hatte PlatformInventorySection nur im
+DeviceIdentityDialog ergaenzt, nicht in dieser Spalte selbst - das war die
+Ursache.
+
+Umgesetzt: Provider-Registry-Architektur (REGISTERED_DEVICE_MENU_PROVIDERS)
+statt Einzelbuttons - jede fachliche Gruppe (Allgemein, Plattform-
+inventarisierung, Android, Windows, Linux, Gerätebestand) ist ein
+unabhaengiger Provider; kuenftige Module (Hardware, Software, Sicherheit,
+Netzwerk, Virtualisierung, Smart Home, Reports) ergaenzen einfach einen
+weiteren Eintrag, ohne die Menu-Komponente selbst zu aendern.
+
+Alle bisherigen Aktionen (Identitaet -> Details oeffnen, In Gerätebestand
+uebernehmen, Registrierung aufheben) vollstaendig uebernommen - keine
+Funktion verloren. Dynamisch je Plattform (clientPlatformOf(), rein
+clientseitige Anzeige-Naeherung, keine zweite Entscheidungslogik - die
+eigentliche Plattformwahl bleibt serverseitig). Nur echte, mit Daten
+hinterlegte Detaileintraege ergaenzt (ADB-Verbindung, Installierte Apps,
+WinRM-/Systemdetails, SSH-/Systemdetails) - Akku/Dienste/Ereignisprotokoll/
+systemd/Pakete/ONVIF/SNMP-Lesen bewusst NICHT erfunden, da keine echten
+Daten/Funktionen dafuer existieren (vollstaendiges Weglassen statt
+deaktivierter Platzhalter).
+
+Icons: echte lucide-react-Icons fuer die Kernaktionen (Info, RefreshCw,
+ListTodo, History, ArrowRightCircle, XCircle, TerminalSquare,
+MoreVertical) - keine neue UI-Bibliothek. Struktur (stabile id, label,
+group) ist bereits fuer eine spaetere Menue-Suche vorbereitet, aber nicht
+implementiert. Alle Aktionen wirken ausschliesslich ueber d.identityKey -
+nie ueber Zeilenindex oder Anzeigename.
+
+Darstellung: React-Portal (createPortal in document.body) verhindert das
+Abschneiden durch den ueberlaufenden Tabellencontainer; Position wird aus
+der tatsaechlichen Button-Position berechnet (oben/unten je nach Platz,
+rechtsbuendig mit Fensterrand-Begrenzung); schliesst bei Aussenklick,
+Escape, Scroll/Resize, nach Auswahl.
+
+Keine neue API, kein neuer Dispatcher, keine zweite Statusverwaltung,
+keine zweite Historie, keine zweite Geraeteidentitaet.
+
+Kein echter Build und kein Browsertest moeglich - ausdruecklich benannt.
+TypeScript-Syntax-Check (0 Diagnosen) durchgefuehrt, Aufrufort per
+Zeilennummern-Analyse in der tatsaechlich verwendeten Tabelle bestaetigt.
+
+Ausfuehrliche Dokumentation: docs/40k34v-registriert-aktionsmenue.md
+
+Basis: 40k34u

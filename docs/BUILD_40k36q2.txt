@@ -1,0 +1,6 @@
+40k36q2 – SSH-Direktverbindung ohne blockierenden TCP-Vortest
+
+- Apache MINA SSHD führt den maßgeblichen SSH-Verbindungsversuch direkt aus.
+- Separater Java-Socket-Test blockiert die SSH-Prüfung nicht mehr.
+- TCP-Diagnose läuft nur ergänzend bei fehlgeschlagenem Handshake mit bis zu 10 Sekunden Timeout.
+- Erfolgreicher SSH-Handshake gilt automatisch als bestätigte TCP-Erreichbarkeit.

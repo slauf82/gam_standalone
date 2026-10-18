@@ -1,0 +1,45 @@
+GAM Standalone v2.1.0 – Schritt 40k34r
+Automatische Plattforminventarisierung und vollstaendiger Inventarisierungsworkflow
+
+Analyse ergab: Discovery (DeviceDiscoveryService) und Plattform-Dispatcher
+(DeviceIdentityService, 40k34p) waren zwei vollstaendig unverbundene
+Komponenten - Discovery rief den Dispatcher an keiner Stelle auf. Die
+Plattforminventarisierung existierte bereits vollstaendig, war aber nur
+manuell erreichbar.
+
+Umgesetzt:
+- DeviceDiscoveryService erhaelt eine neue Abhaengigkeit auf
+  DeviceIdentityService (kein Zirkelbezug - nur Javadoc-Erwaehnung
+  umgekehrt) und ruft in der bereits bestehenden Nachklassifizierungs-
+  Schleife (40k34h) neu autoTriggerPlatformInventoryIfEligible() auf.
+- DeviceIdentityService: neue Methode extrahiert die bereits bestehende
+  Plattform-Ermittlung aus runAllKnownPlatforms() (40k34p) in eine
+  gemeinsame Hilfsmethode applicablePlatforms() (keine Duplikation), prueft
+  "laeuft bereits?" und "Cooldown aktiv?" (neu, PlatformInventoryRepository),
+  startet bei Eignung asynchron ueber virtuelle Threads - Discovery wartet
+  nie auf das Ergebnis.
+- PlatformInventoryRepository: zwei neue additive Abfragen (isRunning(),
+  recentlyRun()) auf derselben, bereits bestehenden Tabelle - keine neue
+  Statusverwaltung.
+- runPlatformInventory() selbst bekommt einen Schutz vor Doppellaeufen -
+  gilt fuer manuelle UND automatische Ausloesung einheitlich. Cooldown
+  (30 Minuten) gilt dagegen NUR fuer die automatische Ausloesung - manuell
+  bleibt jederzeit ohne Wartezeit moeglich.
+- Frontend: bestehender Button umbenannt in "Neu inventarisieren" (kein
+  zweiter Button noetig - identische Funktion wie gefordert). Neues, sich
+  selbst begrenzendes Nachfragen (nur solange etwas "laeuft"), damit die
+  asynchrone Hintergrund-Inventarisierung nach Abschluss sichtbar wird.
+- Keine neue API, keine neuen Endpunkte - alles laeuft ueber die bereits
+  bestehende runPlatformInventory()-Methode aus 40k34p.
+- Gerberaetedetails geprueft: Android-/Linux-/Windows-Detailfelder werden
+  bereits ueber die bestehenden, generischen Protokoll-Anzeigen sichtbar -
+  keine neue Anzeige-Komponente noetig.
+
+Ehrlich benannte Einschraenkungen: kein echter Build/Hardwaretest moeglich;
+Verhalten bei vielen gleichzeitigen automatischen Laeufen nicht unter Last
+getestet; keine globale Drosselung ueber den Cooldown je Geraet/Plattform
+hinaus.
+
+Ausfuehrliche Dokumentation: docs/40k34r-automatische-plattforminventarisierung.md
+
+Basis: 40k34q

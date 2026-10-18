@@ -1,0 +1,16 @@
+GAM Standalone 2.1.0 – Schritt 40k37d1
+
+Basis: 40k37c48 (praktisch validierter Abschluss von 40k37c)
+
+Schwerpunkt:
+- Start von 40k37d: normale iOS/iPadOS-Inventarisierung systematisch erweitern, ohne Jailbreak und ohne Netzwerkpfad vorwegzunehmen.
+- Neuer rein lesender Lockdown-Inventar-Probelauf über ideviceinfo.
+- Erfasst die komplette tatsächlich vom Gerät gelieferte Standard-Key/Value-Menge.
+- Prüft zusätzlich eine konservative Liste bekannter ideviceinfo-Domains; nicht verfügbare Domains gelten nicht als Fehler.
+- Neue Diagnose-API POST /inventory/discovery/apple-mobile/inventory-probe mit optionaler UDID; verändert weder Pairing noch Inventardatenbank.
+- Der normale Apple-Inventarisierungslauf führt den d1-Probelauf mit aus und protokolliert, wie viele Standardfelder und Zusatzdomains das reale Gerät tatsächlich liefert.
+- logs/apple-mobile-debug.log protokolliert jede d1-Abfrage und eine Zusammenfassung; Header auf 40k37d1 aktualisiert.
+- c48 Apple-Runtime-Auto-Initialisierung, Trust/Pairing, Offline-Depot und alle bisherigen Fallbacks bleiben unverändert erhalten.
+- Noch keine App-/Softwareinventarisierung in d1; diese folgt auf Basis der echten d1-Ergebnisse in einem nächsten d-Schritt.
+- Noch kein WLAN/Netzwerkpfad; dieser bleibt 40k37e.
+- Noch kein Jailbreakpfad; dieser bleibt 40k37f.

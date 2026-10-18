@@ -1,0 +1,18 @@
+GAM Standalone 2.1.0 – Schritt 40k36b
+
+macOS-Speicher-, APFS- und Verschlüsselungsinventarisierung
+
+Neu:
+- Physische macOS-Datenträger und Anzahl
+- APFS-Container und APFS-Volumes
+- Vollständige Volume-Liste mit Gerätekennung, Name, Dateisystem, Mountpoint,
+  Kapazität, belegtem/freiem Speicher und Containerzuordnung
+- APFS-Rollen (u. a. System, Data, Preboot, Recovery, VM), soweit diskutil sie liefert
+- Verschlüsselungsstatus je Volume
+- FileVault-Status des Startvolumes und FileVault-Angabe je Volume
+- Erkennung gesperrter, entsperrter, eingehängter und nicht eingehängter Volumes
+- Sealed-Status, soweit verfügbar
+- Gesperrte verschlüsselte Volumes bleiben als Inventareintrag sichtbar; nicht
+  auslesbare Nutzungswerte werden nicht als Fehler interpretiert
+
+Die Inventarisierung ist schreibgeschützt und nutzt diskutil sowie fdesetup über SSH.

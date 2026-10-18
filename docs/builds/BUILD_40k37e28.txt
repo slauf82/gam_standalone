@@ -1,0 +1,25 @@
+40k37e28 - CoreDevice erweiterte WLAN-Inventarisierung
+
+Basis: 40k37e27.
+
+Ziele:
+- Nach erfolgreicher USERSPACE_RSD-Auswahl weitere read-only Inventardaten abrufen.
+- App-Liste ueber `apps list --userspace`, sofern die lokale pymobiledevice3-Hilfe diesen Schalter bestaetigt.
+- Batterie ueber `diagnostics battery --userspace`, sofern lokal unterstuetzt.
+- Zusaetzliche System-/Speicherinformationen ueber `diagnostics info --userspace`, sofern lokal unterstuetzt.
+- Keine geratenen CLI-Optionen: jeder neue Unterbefehl wird zuerst mit -h introspektiert.
+- Keine heuristische USER/SYSTEM-Appklassifikation.
+- Nach erfolgreicher USERSPACE_RSD-Auswahl alte e8-e13 WLAN-Forschungsdiagnostik abbrechen.
+
+Snapshots unter logs/:
+- apple-mobile-coredevice-e28-apps.json
+- apple-mobile-coredevice-e28-battery.json
+- apple-mobile-coredevice-e28-system.json
+
+Wichtige Marker:
+COREDEVICE_APPS_HELP / COREDEVICE_APPS_INVENTORY / COREDEVICE_APPS_SNAPSHOT
+COREDEVICE_BATTERY_HELP / COREDEVICE_BATTERY_INVENTORY / COREDEVICE_BATTERY_SNAPSHOT
+COREDEVICE_SYSTEM_HELP / COREDEVICE_SYSTEM_INVENTORY / COREDEVICE_SYSTEM_SNAPSHOT
+COREDEVICE_EXTENDED_INVENTORY
+COREDEVICE_TRANSPORT_SELECTED ... transport=USERSPACE_RSD ... extendedInventoryOk=...
+COREDEVICE_SELECTED_FINAL ... STOP_LEGACY_WLAN_RESEARCH

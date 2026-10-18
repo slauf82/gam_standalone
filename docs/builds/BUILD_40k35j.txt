@@ -1,0 +1,27 @@
+GAM 2.0 – Schritt 40k35j
+=========================
+
+Ziel
+----
+Korrektur des Android-Verbindungsstatus nach einem manuellen Verbindungsaufbau
+mit geändertem Wireless-Debugging-Port.
+
+Änderungen
+----------
+- Der aktuell bestätigte ADB-Endpunkt wird im Android-Verbindungsbereich lokal geführt.
+- Nach erfolgreichem „Gerät verbinden“ oder dem Verbinden im Pairing-Dialog wird
+  sofort der neu eingegebene Host/Port übernommen.
+- Die anschließende ADB-Statusprüfung wird ausdrücklich gegen diesen neuen Endpunkt
+  ausgeführt und nicht gegen das vor dem Dialog geladene Geräteobjekt.
+- Alte Aktionsmeldungen werden beim Öffnen eines neuen Pairing-/Verbindungsdialogs
+  verworfen.
+- Der übergeordnete Gerätestand wird nach erfolgreicher Verbindung sofort aktualisiert.
+- Historische Fehler eines früheren Ports können den aktuellen Verbindungserfolg
+  nicht mehr als gegenwärtigen Fehler darstellen.
+
+Erwartetes Verhalten
+--------------------
+Nach dem Verbinden mit einem neuen Port zeigt GAM ausschließlich den aktuellen
+Endpunkt und dessen Ergebnis, z. B. „Android-Gerät 192.168.2.164:45678 ist verbunden
+und autorisiert.“ Ein Fehler zum vorherigen Port wird nicht mehr als aktueller Status
+angezeigt.

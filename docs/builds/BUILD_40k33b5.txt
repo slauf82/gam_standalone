@@ -1,0 +1,23 @@
+GAM Standalone v2.1.0 Preview 3 – Schritt 40k33b5
+Geräteidentität, Quellenübersicht und Identitätsverwaltung
+
+Schwerpunkte:
+- Neuer Dialog "Geräteidentität": Identität (Hauptname, Aliase, Hersteller,
+  Modell, Seriennummer, MAC/IP, Plattform, Kategorie/Unterkategorie,
+  Registrierungsstatus), Quellenübersicht, Vertrauensbewertung mit
+  Begruendung, Identitaetsverlauf, Aliasverwaltung (hinzufuegen/umbenennen/
+  entfernen/als Hauptname uebernehmen), "Identitaet erneut pruefen".
+- Neue Spalte "Identitaet" in der Geraeteliste: Quellen-/Alias-/Merge-Anzahl,
+  Vertrauensstufe, Hinweis auf offene Zusammenfuehrungskandidaten.
+- Suche durchsucht jetzt auch Aliasnamen.
+- Sechs neue Filter: mehrere Quellen, mit Aliasen, manuell zusammengefuehrt,
+  ungeprueft, Identitaetskonflikt, hohe Sicherheit.
+- Backend: DeviceIdentityService/-Controller (neu), erweitert bestehende
+  DiscoveryRegistrationRepository (Alias-Verwaltung, Kategorie-Historie,
+  Quellen-Extraktion) und DeviceMergeRepository (Merge-Anzahl je Geraet,
+  Merge-Log gefiltert nach Geraet) - keine zweite Identitaetsverwaltung,
+  keine neue Discovery-Logik, keine neuen Datenbanktabellen.
+
+Ausfuehrliche Dokumentation: docs/40k33b5-geraeteidentitaet-quellenverwaltung.md
+
+Basis: 40k33b4

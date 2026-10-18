@@ -1,0 +1,5 @@
+GAM 2.1.0 – Schritt 40k36q5
+Einheitliche Betriebssystemzugänge
+Basis: 40k36q4b
+WinRM / SSH / ADB: einheitliche Listenstruktur ohne doppelte Single-/Multi-UI
+Konfigurationssprünge an neue Listenstruktur angepasst.

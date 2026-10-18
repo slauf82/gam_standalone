@@ -1,0 +1,11 @@
+GAM Standalone v2.1.0 – Schritt 40k37e11
+
+Apple WLAN / Bonjour DNS-SD Diagnose
+- Basis: 40k37e8.
+- Behält NetTCPIP-CIM-/IPv6-Härtung vollständig bei.
+- Fragt den realen Apple-Dienst _apple-mobdev2._tcp.local über Bonjour dns-sd.exe ab.
+- DNS-SD Browse (-B) plus gezielte Auflösung (-L) des aus BonjourFullServiceName bekannten Service-Instance-Namens.
+- Protokolliert DNSSD, DNSSD_BROWSE und DNSSD_RESOLVE.
+- dns-sd ausschließlich out-of-process und read-only; keine Apple-/Windows-Konfiguration wird verändert.
+- Kein Rückfall auf den gefährlichen e4-JNA-Schreibpfad.
+- Ziel: feststellen, ob Bonjour den iPad-Dienst tatsächlich im LAN sieht und auf welchen Host/Port er aufgelöst wird.

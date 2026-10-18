@@ -1,0 +1,21 @@
+40k37e29 – CoreDevice WLAN-Discovery + Batterie-Single
+
+Basis: 40k37e28.
+
+Ziele:
+- Ein erfolgreich selektierter CoreDevice/USERSPACE_RSD-Zugang wird als regulärer Apple-WLAN-Discovery-Treffer ausgegeben, auch wenn `idevice_id -n` auf modernem iPadOS leer bleibt.
+- Die stabile Apple-UDID aus RemotePairing/KVS wird für den WLAN-Treffer verwendet. Damit kann die bestehende GAM-Identitäts-/Merge-Pipeline USB und WLAN anhand derselben UDID zusammenführen.
+- Keine IP-/MAC-Heuristik für den Apple-USB/WLAN-Merge.
+- Batteriepfad gemäß e28-Help korrigiert: `diagnostics battery single`; --userspace wird nur verwendet, wenn die lokale Hilfe ihn für genau diesen Unterbefehl bestätigt.
+
+Neue/entscheidende Marker:
+- COREDEVICE_NETWORK_DEVICE ... action=EMIT_WLAN_DISCOVERY_RESULT
+- WLAN RESULT: devices=1 (bei erfolgreichem CoreDevice-WLAN-Pfad)
+- COREDEVICE_BATTERY_SINGLE_HELP
+- COREDEVICE_BATTERY_INVENTORY
+- COREDEVICE_BATTERY_SNAPSHOT
+
+Erwartung:
+- iPadOS – WLAN wird als echte Erkennungsquelle sichtbar.
+- USB- und WLAN-Treffer tragen dieselbe UniqueDeviceID und können zu einem iPad zusammengeführt werden.
+- Developer Mode bleibt für diesen Standardpfad nicht erforderlich.

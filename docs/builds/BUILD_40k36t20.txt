@@ -1,0 +1,6 @@
+40k36t20 – Frontend-Refresh und Softwarequellen-Badges
+
+- Nach erfolgreicher manueller Plattforminventarisierung wird das globale Inventarisierungs-Fertig-Ereignis ausgelöst; registrierte Gerätedaten, Kategorie und Details werden dadurch sofort neu geladen, ohne F5.
+- Strukturierte Softwarezeilen werden im Frontend robust auf camelCase/snake_case sowie unterschiedliche JDBC-Alias-Schreibweisen normalisiert; leere Tabellenfelder durch Aliasabweichungen werden vermieden.
+- Softwarequellen werden als getrennte, pillenförmige Badges mit passenden lokalen Lucide-Icons und Zähler dargestellt (z. B. pacman 1434, Flatpak 6).
+- Linux-Erfassungslogik aus 40k36t19 bleibt unverändert.

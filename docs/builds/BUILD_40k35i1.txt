@@ -1,0 +1,3 @@
+40k35i1 – Frontend-Startfix
+
+Behebt die weiße Seite aus 40k35i. Die in main.tsx verwendeten API-Exporte LinuxSshSettings, loadLinuxSshSettings und saveLinuxSshSettings fehlten in frontend/src/api/client.ts. Dadurch konnte Vite das Hauptmodul nicht laden.

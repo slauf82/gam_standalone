@@ -1,0 +1,13 @@
+GAM Standalone v2.1.0 - Schritt 40k37e34
+
+Basis: 40k37e33-fix8-listdata-compilefix
+
+Ziele:
+- Apple-WLAN/CoreDevice USERSPACE_RSD systematisch besser kennenlernen.
+- Read-only Capability-Diagnose fuer Basis, Apps, Batterie und System/Speicher.
+- Exakte Unterbefehls-Hilfe muss --userspace bestaetigen; sonst UNSUPPORTED statt geratenem Aufruf.
+- Erfolgreiche Rohantworten unter logs/apple-mobile-coredevice-e26-*.json sichern.
+- Developer Mode bleibt fuer diese Standarddiagnose nicht erforderlich.
+- UI trennt echte Discovery-Quellen von erkannten Geraeteschnittstellen.
+- Zusatztext eines USB-Funds (z.B. CoreDevice/USERSPACE_RSD-WLAN im Trust-Feld) erzeugt kein falsches WLAN-Quellenbadge mehr.
+- USB/WLAN/Bluetooth koennen als erkannte Schnittstellen erscheinen, ohne die Provenienz der Discovery-Quelle zu veraendern.

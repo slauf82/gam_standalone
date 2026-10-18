@@ -1,0 +1,16 @@
+40k37e54-fix18 – Admin/UAC mobdev2 context diagnostics
+
+Basis: 40k37e54-fix17.
+
+Aenderungen:
+- Keine Aenderung an Pairing, HostID/authTag oder Tunneltransport.
+- pymobiledevice3 bleibt 11.16.3.
+- Vor dem eigentlichen erhoehten start-tunnel protokolliert der UAC-Wrapper den Windows-Benutzerkontext (USERNAME/USERPROFILE/HOME).
+- Pairing-Stores werden nur als Existenz/Dateianzahl/Zielrecord-vorhanden protokolliert; keine Pairing-Inhalte, Zertifikate oder Secrets.
+- Read-only UAC-Probes vor dem Tunnelstart:
+  * usbmux list --network --simple
+  * lockdown info --mobdev2 --udid <UDID>
+  * lockdown info --mobdev2
+- Probe-Ausgaben werden auf 500 Zeichen begrenzt und die UDID maskiert.
+- Probe-Fehler sind diagnostisch und verhindern den eigentlichen Tunnelstart nicht.
+- Expliziter Admin-RSD-Pfad und no-fallback-Verhalten bleiben unveraendert.

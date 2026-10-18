@@ -1,0 +1,14 @@
+GAM Standalone v2.1.0 – Schritt 40k37e23
+
+Ziel: erster kontrollierter RemotePairing-Versuch fuer iOS/iPadOS 26.x ueber WLAN/CoreDevice.
+
+Aenderungen gegenueber 40k37e22:
+- Korrigiert den CLI-Unterbefehl von `remote pairing -h` auf `remote pair -h`.
+- Neuer Marker `COREDEVICE_PAIR_HELP` zeigt die exakten Optionen der installierten pymobiledevice3 11.12.5-Runtime.
+- Bei leerem, aber erfolgreichem `remote browse` startet GAM einmal kontrolliert `pymobiledevice3 --no-color remote pair`.
+- Pairing-Versuch ist auf 45 Sekunden begrenzt und kann den Suchlauf nicht dauerhaft blockieren.
+- Bei sofortigem Pairing-Erfolg folgt im selben Lauf `remote browse` erneut (`COREDEVICE_REMOTE_BROWSE_AFTER_PAIR`).
+- `remote start-tunnel -h` bleibt als read-only Pfaddiagnose erhalten.
+- Kein iPadOS-27/pair-host-Pfad; Referenz bleibt iPadOS 26.6.
+- USB-Bootstrap `lockdown remotepairing --pair` wird in e23 noch nicht automatisch ausgefuehrt; er bleibt Fallback fuer einen spaeteren Schritt.
+- Isolierte GAM-eigene uv/Python/pymobiledevice3-Runtime, Java-Direktrunner, Timeouts und Parallel-Guard bleiben unveraendert.

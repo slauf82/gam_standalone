@@ -1,0 +1,6 @@
+40k37e56c-fix21
+Scope: macOS portable database bootstrap administration only.
+- GAM-local MySQL client takes precedence over MacPorts/Homebrew clients when portable runtime exists.
+- Portable runtime administration uses its own Unix socket, root, and --skip-password after --initialize-insecure.
+- Existing Homebrew/MacPorts paths remain unchanged.
+- No Java/backend/frontend/Apple/inventory/merge source changes.

@@ -1,0 +1,14 @@
+GAM 2.0 - 40k37e56c fix29
+
+Scope: Apple-Mobile macOS pairing routing only.
+- /inventory/discovery/apple-mobile/test now calls a dedicated pairing-only service method.
+- Dedicated runtime marker: FIX29 ACTIVE PAIRING ENDPOINT.
+- Pairing-only flow continues to call existing pair(): USB Lockdown -> RemotePairing.
+- No changes to inventory collectors, app logic, identity/merge, USERSPACE_RSD implementation, Linux, database, Java/Node bootstrap.
+
+Important when installing over fix27/fix28:
+The running backend JVM must be stopped and restarted after copying the files. Java source changes cannot replace classes in an already running Spring Boot process.
+
+Validation in build environment:
+- source routing inspected
+- Maven compile attempted but unavailable because Maven bootstrap cannot resolve repo.maven.apache.org

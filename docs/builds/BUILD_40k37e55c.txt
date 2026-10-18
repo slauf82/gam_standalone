@@ -1,0 +1,10 @@
+40k37e55c – Linux Apple USB/WLAN discovery bridge
+
+Basis: 40k37e55b.
+
+- Linux Apple-USB-Hardwareerkennung (lsusb 05ac) wird als Apple-Mobile-Bootstrap-Hinweis genutzt.
+- Physisch erkanntes Apple-USB-Gerät zählt als verbunden, auch solange usbmuxd/Lockdown noch keine UDID liefert.
+- Trust/Pairing kann bei genau einem physisch sichtbaren Linux-Apple-USB-Gerät ohne UDID gebootstrapped werden; danach wird idevice_id erneut geprüft.
+- USB und WLAN bleiben hart getrennte, unabhängig schaltbare Quellen. USB-Aus deaktiviert auch den Linux-lsusb-Apple-Pfad; WLAN bleibt davon unberührt.
+- Keine Übernahme von FRITZ!Box/ARP/anderen Netzwerkquellen in Apple.
+- Sobald usbmuxd eine UDID liefert, übernimmt unverändert die bestehende native Apple-USB-Inventarisierung; WLAN läuft parallel über den bestehenden Netzwerk/CoreDevice-Pfad.

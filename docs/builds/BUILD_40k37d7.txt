@@ -1,0 +1,33 @@
+GAM Standalone v2.1.0 – Schritt 40k37d7
+==========================================
+
+Ziel
+----
+- MSYS2-UCRT64-Resolver um virtuelle Paketabhaengigkeiten/PROVIDES erweitern.
+- Konkret kann damit z. B. mingw-w64-ucrt-x86_64-cc-libs ueber den von der Repository-Datenbank ausgewiesenen Provider aufgeloest werden, ohne den Provider hart zu raten.
+- Bei mehreren Providern bricht GAM bewusst deterministisch ab statt still einen beliebigen Provider zu waehlen.
+- Vollstaendige Runtime-Closure weiterhin aus der offiziellen MSYS2-UCRT64-Repository-Datenbank; jedes konkrete Paket wird gegen dessen SHA-256 verifiziert.
+- ideviceinstaller 1.1.1-2 bleibt zusaetzlich hart gepinnt.
+- Smoke-Test protokolliert jetzt auch den Prozess-Exitcode (dezimal + hex), damit Windows-Loaderfehler ohne stderr erkennbar werden.
+- Fehlgeschlagene optionale IORegistry-Probes werden pro Prozess/UDID gemerkt und bei weiteren Inventarlaeufen nicht erneut bis zum Timeout abgefragt.
+- Diagnostics All/WiFi/GasGauge/NAND bleiben unveraendert voll aktiv.
+- Erweiterter Rohsnapshot: logs/apple-mobile-inventory-d7.json.
+- Software-Inventarisierung bleibt: Software -> Quelle -> Softwareliste; keine Herkunft wird aus Bundle-ID/Pfad geraten.
+
+MSYS2-Strategie
+---------------
+Startpaket: mingw-w64-ucrt-x86_64-ideviceinstaller 1.1.1-2
+Gepinnter SHA-256: 9316914c76a8cdfb33ac8d1e8bf63dfbe5db9a1badbe035459abc6365e4bb509
+Repository: https://mirror.msys2.org/mingw/ucrt64/
+Virtuelle Abhaengigkeiten werden ausschliesslich anhand des PROVIDES-Feldes der Repository-Datenbank aufgeloest.
+Die Laufzeit wird ausschliesslich unter <GAM>/tools/libimobiledevice/ideviceinstaller abgelegt.
+Die bestehende libimobiledevice-Basistoolchain wird nicht ueberschrieben.
+
+Testdateien fuer 40k37d7
+------------------------
+Pflicht:
+- logs/apple-mobile-debug.log
+- logs/apple-mobile-inventory-d7.json
+Optional bei UI-/Persistenzfragen:
+- Screenshot/Text der Apple-Geraetedetails und Softwareansicht
+Backend-Log nur bei einem Fehler, der im Apple-Debuglog nicht erklaert wird.

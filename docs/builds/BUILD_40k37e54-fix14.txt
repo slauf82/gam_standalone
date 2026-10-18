@@ -1,0 +1,21 @@
+GAM 2.0 – 40k37e54-fix14 – pymobiledevice3 mobdev2/private-WiFi fix
+
+Basis: 40k37e54-fix13
+
+Aenderungen:
+- isolierte GAM Apple-Runtime von pymobiledevice3 11.12.5 auf 11.16.2 angehoben.
+- Grund: Upstream 11.16.1 behebt explizit `--mobdev2 --udid` bei privaten/randomisierten WLAN-MAC-Adressen (`Device is not connected`); 11.16.2 ergaenzt Pair-Record-Ermittlung unter Windows/macOS.
+- Das Test-iPad zeigt genau diese Konstellation: Apple WiFiAddress und im LAN sichtbare private WLAN-MAC unterscheiden sich.
+- Admin-Button stellt vor dem Preflight sicher, dass der Marker pymobiledevice3-11.16.2.ready vorhanden ist; falls nicht, wird nur die isolierte GAM-Runtime aktualisiert.
+- bootstrap-windows.ps1 nutzt fuer die neue CLI `pymobiledevice3 version` statt des nicht unterstuetzten `--version`.
+- fix13-Versionsweiche bleibt erhalten: >=17.4 lockdown/CoreDeviceProxy; 17.0-17.3.x klassischer RemotePairing-Tunnel.
+- Kein Userspace-Fallback fuer einen explizit aktiven Admin-RSD-Test.
+
+Erwartete Testmarker:
+RUNTIME_UPDATE_REQUIRED (nur beim ersten Lauf nach Upgrade)
+RUNTIME_UPDATE_RESULT ... ok=true
+PRECHECK -> REMOTEPAIRING_READY
+TRANSPORT_VERSION_SELECT ... route=LOCKDOWN_COREDEVICEPROXY_WIFI
+START_REQUEST -> UAC_LAUNCH_RETURNED -> ENDPOINT_RECEIVED -> VERIFY ok=true -> ACTIVE
+
+Wenn ACTIVE erreicht wird: Admin-Tunnel NICHT beenden, danach normale GAM-Inventarisierung starten und pruefen, dass ADMIN_RSD verwendet wird.

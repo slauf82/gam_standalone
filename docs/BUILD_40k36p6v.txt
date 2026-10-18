@@ -1,0 +1,4 @@
+Build: 40k36p6w
+Basis: 40k36p6u
+Änderung: Sticky-Suchkopf mit Live-Ergebniszählern und einem Umschaltknopf Suchen/Abbrechen.
+Hinweis: Der Frontend-Build konnte in der Arbeitsumgebung nicht neu ausgeführt werden, weil das interne npm-Repository vite-8.0.16 nicht bereitstellt. Der Quellstand ist vollständig enthalten.

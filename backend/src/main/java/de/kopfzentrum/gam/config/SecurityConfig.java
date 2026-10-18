@@ -37,6 +37,7 @@ public class SecurityConfig {
           "/api/system/startup-check",
           "/api/setup/status",
           "/api/setup/initialize",
+          "/api/setup/macos-tools/**",
           "/api/communication/login-news",
           "/api/public/module-settings",
           "/api/ui-translations",
@@ -48,6 +49,7 @@ public class SecurityConfig {
           "/api/invoice-portal/**",
           "/actuator/health", "/api/tts/status"
         ).permitAll()
+        .requestMatchers("/api/inventory/automation/**").permitAll()
         .requestMatchers("/api/auth/me", "/api/auth/menu").authenticated()
 
         // Administration: bewusst hart begrenzt. Benutzer/Rollen duerfen nur Admins sehen/aendern.

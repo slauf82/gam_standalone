@@ -1,0 +1,7 @@
+40k37e33-fix1 – Compile-Fix nach e32-Cleanup
+
+- Behebt verbliebene Referenz auf die mit e32 entfernte Methode bonjourInstanceE10(String).
+- Stellt die historische Bonjour-Hilfsmethode NICHT wieder her.
+- supportsRP wird direkt aus dem bereits vorhandenen fullServiceName ausgewertet.
+- e32-Cleanup und e33-Geraetedetail-Mapping bleiben unveraendert erhalten.
+- Quelltext nach weiteren Referenzen auf bonjourInstanceE10 durchsucht: keine verbleibenden Aufrufe.

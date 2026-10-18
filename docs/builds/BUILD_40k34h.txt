@@ -1,0 +1,33 @@
+GAM Standalone v2.1.0 – Schritt 40k34h
+Android Evidence-Modell und Nachklassifizierung
+
+Schwerpunkte:
+- Neues, generisches, plattformunabhaengiges Evidence-Modell
+  (DeviceEvidenceEngine): Tier-Enum (SEHR_HOCH/HOCH/MITTEL/NIEDRIG),
+  Evidence-Record, classify() mit Schwellenwertlogik. Kennt nichts
+  Android-Spezifisches - spaeter fuer iPhone/Windows/Linux/macOS/NAS/
+  Drucker/Router/IoT wiederverwendbar, ohne diese Klasse zu aendern.
+- AndroidDeviceClassifier (bestehend) um classifyWithEvidence() erweitert -
+  erster Anwendungsfall des Evidence-Modells. Nutzt intern DIESELBE
+  Kategorie-Logik wie die bestehende classify()-Methode (per Refactoring
+  in eine gemeinsame private Hilfsmethode extrahiert) - keine Duplikate.
+- Kleine, ausdruecklich unvollstaendige und nicht verifizierte MAC-OUI-
+  Beispielliste (Samsung/Google/Xiaomi/OnePlus/Motorola/Huawei) als
+  zusaetzliches HOCH-Evidence.
+- DiscoveryRegistrationRepository.applyEvidenceReclassification() (neu):
+  automatische Umkategorisierung, respektiert manuelle Zuordnungen,
+  setzt selbst keine Sperre, nutzt die bestehende
+  Aenderungshistorie-Tabelle (keine neue Migration).
+- Neuer Schritt in DeviceDiscoveryService.scanStreaming() (nach Reverse-DNS,
+  vor Konsolidierung): wertet bereits gesammelte Hinweise aus bereits
+  registrierten Geraeten aus, keine neue Discovery, kein zusaetzlicher
+  ADB-Aufruf.
+- Keine Frontend-Aenderungen noetig: neue Kategorie und Aenderungshistorie
+  laufen ueber bereits generisch angezeigte Felder/Tabellen.
+- Kein echter Build moeglich - ausdruecklich benannt. Automatisierter
+  Record-Konstruktor-Argumentzahl-Check (Lehre aus 40k34g) durchgefuehrt:
+  keine echten Abweichungen in den neuen/geaenderten Dateien.
+
+Ausfuehrliche Dokumentation: docs/40k34h-android-evidence-nachklassifizierung.md
+
+Basis: 40k34g

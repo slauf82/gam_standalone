@@ -1,0 +1,21 @@
+40k36t16 – Repository-Vorstart-Schema-Selbstheilung
+
+Basis: 40k36t15
+
+Ziel
+- Teilmigrierte Datenbanken aus einem abgebrochenen Erststart dürfen den Spring-ApplicationContext nicht mehr vor dem FirstRunSetupController blockieren.
+
+Änderungen
+- LinuxSshSettingsRepository vervollständigt gam_linux_ssh_settings vor dem ersten INSERT additiv um die vom Java-Code benötigten Spalten.
+- Legacy-Spalte private_key_path wird bei Bedarf nach key_path übernommen.
+- WinRmSettingsRepository vervollständigt gam_winrm_settings vor der ersten Verwendung additiv.
+- OsAccessProfileRepository vervollständigt gam_os_access_profile vor der ersten Verwendung additiv.
+- Die 40k36t15-Härtungen für Runtime-Schema, PRIMARY-KEY-Idempotenz, Metadata-Locks und Setup-Diagnose bleiben erhalten.
+
+Nicht verändert
+- Linux-Inventarisierung Backend-lokal/SSH
+- 40k36t13 Softwarequellen-/Detailtabellen-UI
+- übrige Geräteerkennungslogik
+
+Regressionstest
+- Eine von 40k36t13/14/15 teilweise angelegte gam_linux_ssh_settings ohne key_path muss beim Backend-Start selbst repariert werden, bevor LinuxSshSettingsRepository seinen Default-Datensatz einfügt.

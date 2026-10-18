@@ -1,0 +1,21 @@
+40k37e30 – bestaetigten CoreDevice-WLAN-Treffer produktiv an Discovery uebergeben
+
+Basis: 40k37e29.
+
+Aenderungen:
+- Behebt den e29-Formfehler beim RemotePairing-Basis-Cache: COREDEVICE_REMOTEPAIRING_BASIS_E27 enthaelt bereits direkt deviceKVSData/NULL. Die WLAN-Erzeugung darf deshalb nicht erneut peerDeviceInfo.deviceKVSData.NULL darunter suchen.
+- Nach erfolgreichem USERSPACE_RSD wird aus der bestaetigten UDID + RemotePairing-Basis ein regulaeres Apple NETWORK-DiscoveredDevice erzeugt.
+- Falls UniqueDeviceID im KVS vorhanden ist, muss sie mit der selektierten UDID uebereinstimmen; keine IP-/MAC-Heuristik.
+- Bestaetigter WLAN-Treffer wird als COREDEVICE_CONFIRMED_WIFI_E30 gecacht.
+- Folge-/Parallelaufrufe geben diesen bestaetigten Treffer sofort wieder aus und starten nicht erneut die historischen WLAN-/Bootstrap-Diagnosepfade.
+- USB und WLAN behalten dieselbe Apple-UDID als stabile Merge-Identitaet.
+- Bestehende e29 Apps-/Batterie-/System-Inventarisierung bleibt unveraendert erhalten.
+
+Erwartete Marker:
+COREDEVICE_CONFIRMED_WIFI_CACHED
+COREDEVICE_NETWORK_DEVICE ... action=EMIT_WLAN_DISCOVERY_RESULT
+WLAN RESULT: devices=1
+Bei Folgeaufruf:
+COREDEVICE_CONFIRMED_REUSE ... action=EMIT_WLAN_DISCOVERY_RESULT
+
+Developer Mode bleibt AUS; keine Developer-Dienste erforderlich.

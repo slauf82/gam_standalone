@@ -1,0 +1,11 @@
+40k37e33 - iPadOS WLAN Geraetedetails / Quellenmapping
+
+Ziel:
+- echte CoreDevice-WLAN-IP in die GAM-Netzwerkidentitaet uebernehmen
+- USB-/PnP-Transportkennungen nicht mehr als IP-Adresse speichern/anzeigen
+- WLAN als echte Discoveryquelle anzeigen
+- Bluetooth-MAC-Inventarfeld nicht als Bluetooth-Discoveryquelle missverstehen
+- Apple-Mobilplattform (iPadOS/iOS) vor Windows-PnP-Hostplattform priorisieren
+- bei exakt gleicher stabiler Seriennummer/UDID eine neue Discoveryquelle entsprechend dem eindeutigen Auto-Merge direkt akzeptieren
+
+Keine Aenderung an RemotePairing, USERSPACE_RSD, Apps/Batterie/System-Inventarisierung oder Merge-Schwellen.

@@ -1,0 +1,11 @@
+GAM Standalone v2.1.0 - Schritt 40k37e11
+Apple WLAN / Windows-NetTCPIP-CIM-Haertung
+
+- baut auf 40k37e7 auf
+- prueft MSFT_NetIPAddress gezielt
+- erkennt fehlende NetTCPIP-CIM-Registrierung und nennt NetTCPIP.mof/mofcomp als gezielte Reparatur
+- keine automatische MOF-Schreibreparatur ohne Admin-/Benutzerfreigabe
+- IPv6-Adapterdiagnose ueber Get-NetIPAddress und Java NetworkInterface
+- Java-Fallback bleibt CIM-unabhaengig
+- Apple wireless_lockdown bleibt read-only; e4-Crashpfad bleibt entfernt
+- USB/WLAN bleiben getrennte Discovery-Treffer; allgemeine Merge-Logik bleibt erhalten

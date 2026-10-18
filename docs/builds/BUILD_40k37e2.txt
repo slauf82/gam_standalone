@@ -1,0 +1,23 @@
+GAM Standalone v2.1.0 – Schritt 40k37e2
+================================================
+
+Ziel: iOS/iPadOS ab dem e-Pfad strukturell wie Android behandeln:
+keine lokale Erkennungsart mehr, sondern USB/WLAN.
+
+Änderungen:
+- Erkennungsquellen heißen jetzt:
+  * Android USB/WLAN
+  * iOS USB/WLAN
+  * iPadOS USB/WLAN
+- Interne Apple-Quellschlüssel:
+  IOS_LOCAL -> IOS_USB_WLAN
+  IPADOS_LOCAL -> IPADOS_USB_WLAN
+- Bestehende Aktivierungswerte der alten Apple-Schalter werden beim Start auf die neuen
+  Schlüssel migriert, damit ein bewusst deaktivierter Zugang nicht unbemerkt aktiviert wird.
+- Discovery und Plattforminventarisierung verwenden die neuen USB/WLAN-Schlüssel.
+- UI-Beschreibung erklärt iOS/iPadOS als externe Mobilgeräte analog zu Android.
+- Die technisch bereits in e1 eingeführte Netzwerk-Discovery bleibt erhalten:
+  idevice_id -n -l / ideviceinfo -n.
+- USB und WLAN werden weiterhin über die stabile Apple-Identität dedupliziert.
+- Der Shift+Mausrad-Hinweis aus e1 bleibt bei Registrierten Geräten und Gerätebestand.
+- d20-d22 Härtungen bleiben erhalten.

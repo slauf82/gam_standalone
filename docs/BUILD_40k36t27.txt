@@ -1,0 +1,8 @@
+40k36t27 – Merge-Dialog + zuverlässige Konfigurationssprünge
+
+- Zusammenführungsvorschau als stabiler, lesbarer Dialogblock aufgebaut.
+- Checkbox/Text erhalten feste Grid-Spalten; kein buchstabenweiser Umbruch mehr.
+- Buttons stehen in eigener Footer-Zeile mit Abstand.
+- Linux SSH, macOS/Apple SSH und WinRM öffnen alle übergeordneten Bereiche.
+- Scrollziel ist der eigentliche Konfigurationskörper, nicht nur die <details>-Überschrift.
+- Sticky-Header/Toolbar-Offset wird berechnet und nach Layout-Nachlauf nochmals korrigiert.

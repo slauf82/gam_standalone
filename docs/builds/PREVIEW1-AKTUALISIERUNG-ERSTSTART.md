@@ -13,8 +13,8 @@ Die lokale Java-Installation verändert keine systemweite Java-Konfiguration und
 
 ## Erste Schritte
 
-1. Starten Sie `start-backend.bat` unter Windows oder `start-backend.sh` unter Linux/macOS.
+1. Starten Sie `start_backend.bat` unter Windows oder `start_backend.sh` unter Linux/macOS.
 2. Folgen Sie dem Erststart-Assistenten.
-3. Sobald das Backend erfolgreich läuft, starten Sie `start-frontend.bat` beziehungsweise `start-frontend.sh`.
+3. Sobald das Backend erfolgreich läuft, starten Sie `start_frontend.bat` beziehungsweise `start_frontend.sh`.
 
 > **Hinweis:** Für notwendige Downloads während der erstmaligen Einrichtung ist Internetzugriff erforderlich. Der anschließende Normalbetrieb von GAM 2.0 ist offline möglich.

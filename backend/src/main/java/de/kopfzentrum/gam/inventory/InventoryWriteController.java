@@ -78,6 +78,12 @@ public class InventoryWriteController {
     return java.util.Map.of("registered",changed);
   }
 
+  @PostMapping("/discovery/accept-new-source")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public java.util.Map<String,Object> acceptNewDiscoverySource(@RequestBody java.util.Map<String,String> request){
+    return registrations.acceptPendingDiscoverySource(request.get("address"),request.get("hardwareAddress"),request.get("serialNumber"),request.get("name"));
+  }
+
   @PostMapping("/discovery/register-all")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
   @Transactional
@@ -97,6 +103,15 @@ public class InventoryWriteController {
     String deviceType=clean(request.get("deviceType"));
     if(identityKey==null) throw new IllegalArgumentException("Identitätsschlüssel fehlt.");
     return registrations.updateDeviceType(identityKey, deviceType, principal==null?null:principal.getName());
+  }
+
+  @PutMapping("/discovery/registered/preferred-platform")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public java.util.Map<String,Object> updatePreferredPlatform(@RequestBody java.util.Map<String,String> request) {
+    String identityKey=clean(request.get("identityKey"));
+    String platform=clean(request.get("platform"));
+    if(identityKey==null) throw new IllegalArgumentException("Identitätsschlüssel fehlt.");
+    return registrations.updatePreferredPlatform(identityKey, platform);
   }
 
   @PutMapping("/discovery/registered/device-name")
@@ -180,6 +195,17 @@ public class InventoryWriteController {
   public java.util.Map<String,Object> revokeAllRegistrations() {
     int removed = registrations.deregisterAll();
     return java.util.Map.of("registrationsRevoked", removed);
+  }
+
+  @PostMapping("/discovery/registered/revoke-bulk")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  @Transactional
+  public java.util.Map<String,Object> revokeRegistrationsBulk(@RequestBody java.util.Map<String,Object> request) {
+    Object raw=request.get("identityKeys");
+    if(!(raw instanceof java.util.List<?> keys)) throw new IllegalArgumentException("identityKeys fehlen.");
+    int removed=0;
+    for(Object value:keys){String key=clean(value==null?null:String.valueOf(value));if(key!=null)removed+=registrations.deregisterByKey(key);}
+    return java.util.Map.of("registrationsRevoked",removed,"requested",keys.size());
   }
 
   @PostMapping("/devices/empty-to-registered")

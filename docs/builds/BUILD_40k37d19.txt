@@ -1,0 +1,57 @@
+GAM Standalone v2.1.0 - Schritt 40k37d19
+================================================
+
+Ziel
+----
+Den in 40k37d18 gemessenen 16-Sekunden-Block bei "Lockdown/Sub: verbundene UDIDs"
+gezielt beseitigen, ohne Erkennungs-, Pairing- oder Inventardaten zu verlieren.
+
+Befund aus 40k37d18
+--------------------
+- Gesamtlauf: ca. 20,1 s
+- Lockdown/Sub: verbundene UDIDs: ca. 16,2 s
+- der eigentliche idevice_id-Aufruf: nur ca. 66 ms
+- Ursache im Code: connectedUdidsWithRetry() rief fuer die Debug-Ausgabe auch nach
+  erfolgreicher Lockdown-UDID noch synchron readWindowsUsbDevices() auf.
+- diese Windows-PnP-Detailabfrage kann auf dem realen Windows-Testhost rund 16 s kosten.
+
+Aenderung in 40k37d19
+---------------------
+1. Wenn idevice_id mindestens eine UDID liefert, wird die teure Windows-PnP-
+   Detailabfrage in connectedUdidsWithRetry() nicht mehr zusaetzlich ausgefuehrt.
+2. Windows-PnP bleibt vollstaendig als Fallback erhalten und wird weiterhin gelesen,
+   wenn idevice_id keine UDID liefert.
+3. Der PnP-Fallback wird bei Aktivierung als eigene Performance-Phase protokolliert:
+   "Lockdown/Sub: Windows-PnP-Fallback attempt=N".
+4. Debug-Ausgabe kennzeichnet den schnellen Erfolgsweg mit
+   windowsPnP=skipped(lockdown-ids-present).
+5. App-Inventarisierung / installation_proxy, GasGauge, Lockdown-Domains und die
+   erfolgreichen Diagnosepfade bleiben funktional unveraendert.
+6. USER/SYSTEM-Zuordnung bleibt strikt Apple-basiert; keine Heuristiken wurden ergaenzt.
+
+Performance-Ausgaben
+--------------------
+- logs/apple-mobile-performance-d19.json
+- logs/apple-mobile-performance-d19.txt
+- logs/apple-mobile-debug.log (Header 40k37d19)
+
+Weitere d19-Ausgaben
+--------------------
+- apple-mobile-installation-proxy-native-d19.json / .zip
+- apple-mobile-software-d19.json
+- apple-mobile-inventory-d19.json
+
+Testziel
+--------
+Auf dem bereits gepairten realen iPad sollte der erfolgreiche Standardlauf den
+bisherigen ~16-s-PnP-Diagnoseoverhead nicht mehr enthalten. Der reale Messwert wird
+bewusst nicht vorweggenommen; 40k37d19 schreibt die neue Laufzeit erneut in das
+Performance-Profil.
+
+Sicherheits-/Verhaltensgarantie
+-------------------------------
+- rein lesende iOS/iPadOS-Inventarisierung
+- kein Jailbreak erforderlich
+- PnP-Fallback bei fehlender Lockdown-UDID bleibt erhalten
+- bestehende Toolchains/Caches werden nicht ersetzt
+- installation_proxy-Hauptpfad bleibt unveraendert

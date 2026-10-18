@@ -355,3 +355,198 @@
 .connection-management-card{display:grid;gap:.35rem;border-left:4px solid var(--border-color,#9aa4b2)}
 .connection-management-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .connection-management-detail{margin-top:.15rem}
+
+/* 40k36p1: Verbindung/Erkennung aus der Inventarisierung auslagern. */
+.platform-source-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;padding:14px}.platform-source-card{border:1px solid var(--border,#d6dce5);border-radius:12px;padding:14px;background:var(--surface,#fff);display:flex;flex-direction:column;gap:10px}.platform-source-card-head{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}.platform-source-card-head span:nth-child(2){display:flex;flex-direction:column;gap:2px}.platform-source-card-head small{color:var(--muted,#667085)}.platform-source-icon{font-size:1.5rem}.platform-source-status{font-size:.78rem;font-weight:700;border-radius:999px;padding:3px 8px;background:#eef1f5;color:#667085}.platform-source-status.enabled{background:#dff6e8;color:#176b3a}.platform-source-card p{margin:0;line-height:1.45;min-height:3.8em}.platform-source-card .source-toggle{align-self:flex-start}.platform-source-note{padding:0 14px 14px;margin:0}
+
+/* 40k36p2 – einheitliche Erkennungsquellen 2.0 */
+.platform-source-card-v2{min-height:390px}.platform-source-card-v2.expanded{grid-column:span 2}.platform-source-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.platform-source-facts>span{border:1px solid var(--border,#d6dce5);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:2px}.platform-source-facts small{color:var(--muted,#667085)}.platform-source-depth{display:flex;flex-direction:column;gap:5px}.platform-source-depth span{font-size:.83rem;font-weight:700}.platform-source-depth select{width:100%}.platform-source-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:auto}.platform-source-actions button{width:100%;min-height:38px}.platform-source-diagnostics{border-top:1px solid var(--border,#d6dce5);padding-top:10px}.platform-source-diagnostics p{min-height:0;margin:.45rem 0}.platform-source-diagnostics dl{display:grid;gap:4px;margin:.6rem 0 0}.platform-source-diagnostics dl div{display:grid;grid-template-columns:120px 1fr;gap:8px}.platform-source-diagnostics dt{font-weight:700}.platform-source-diagnostics dd{margin:0}@media(max-width:900px){.platform-source-card-v2.expanded{grid-column:span 1}.platform-source-actions{grid-template-columns:1fr}.platform-source-card-v2{min-height:0}}
+
+/* 40k36p3 – Apple Mobile vorbereiten */
+.apple-mobile-preparation{display:grid;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border,#d6dce5)}
+.apple-browser-result{display:flex;flex-direction:column;gap:2px;border:1px solid var(--border,#d6dce5);border-radius:8px;padding:9px;background:var(--surface-soft,#f7f9fc)}
+.apple-browser-result small,.apple-browser-result span{color:var(--muted,#667085)}
+.apple-mobile-preparation label{display:flex;flex-direction:column;gap:5px}
+.apple-pairing-check{display:grid!important;grid-template-columns:auto 1fr;align-items:start;gap:8px}
+.apple-pairing-check input{margin-top:3px}.apple-pairing-check span{display:flex;flex-direction:column;gap:2px}.apple-pairing-check small{color:var(--muted,#667085)}
+
+/* 40k36p4 – durchgängiger Geräteworkflow */
+.device-workflow-overview{scroll-margin-top:16px}
+.device-workflow-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.device-workflow-heading h2{margin-bottom:4px}
+.device-workflow-version{font-size:.78rem;font-weight:700;border:1px solid var(--border,#d7dce3);border-radius:999px;padding:5px 9px;white-space:nowrap}
+.device-workflow-steps{display:grid;grid-template-columns:minmax(130px,1fr) auto minmax(130px,1fr) auto minmax(130px,1fr) auto minmax(130px,1fr) auto minmax(130px,1fr);align-items:stretch;gap:8px;margin-top:16px}
+.device-workflow-steps button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:9px;row-gap:2px;text-align:left;align-items:center;padding:12px;min-height:72px}
+.device-workflow-steps button span{grid-row:1/3;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid currentColor;font-weight:800}
+.device-workflow-steps button b{align-self:end}
+.device-workflow-steps button small{align-self:start;opacity:.78}
+.device-workflow-steps i{display:grid;place-items:center;font-style:normal;font-size:1.15rem;opacity:.65}
+#discovery-sources,#device-search,#registered-devices,#managed-devices{scroll-margin-top:18px}
+/* 40k37e56a7 – Geräteworkflow horizontal, responsiv und bei Bedarf mehrzeilig/versetzt.
+   Die DOM-Reihenfolge und damit der fachliche Ablauf bleiben unverändert. */
+.device-workflow-steps{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:stretch;
+  gap:10px 8px;
+}
+.device-workflow-steps button{
+  flex:1 1 180px;
+  min-width:160px;
+  max-width:260px;
+}
+.device-workflow-steps i{
+  flex:0 0 22px;
+  min-width:22px;
+}
+.device-workflow-steps i::before{content:"→"}
+.device-workflow-steps i{font-size:0}
+.device-workflow-steps i::before{font-size:1.15rem}
+@media (min-width:760px) and (max-width:1180px){
+  .device-workflow-steps button:nth-of-type(4){margin-left:34px}
+}
+@media (max-width:620px){
+  .device-workflow-steps{display:grid;grid-template-columns:1fr;gap:8px}
+  .device-workflow-steps button{width:100%;max-width:none;min-width:0;margin-left:0!important}
+  .device-workflow-steps i{width:100%;height:16px;min-width:0}
+  .device-workflow-steps i::before{content:"↓"}
+}
+
+/* 40k36p6c – einheitliche Bereitschaft und Diagnose der Erkennungsquellen */
+.platform-source-status.not-configured{background:rgba(220,38,38,.12);color:#b91c1c;border-color:rgba(220,38,38,.35)}
+.platform-source-status.configured{background:rgba(245,158,11,.14);color:#b45309;border-color:rgba(245,158,11,.4)}
+.platform-source-status.ready{background:rgba(22,163,74,.14);color:#15803d;border-color:rgba(22,163,74,.4)}
+.platform-source-status.error{background:rgba(220,38,38,.16);color:#b91c1c;border-color:rgba(220,38,38,.45)}
+.platform-source-card.source-ready{box-shadow:inset 0 3px 0 rgba(22,163,74,.65)}
+.platform-source-card.source-error{box-shadow:inset 0 3px 0 rgba(220,38,38,.65)}
+.platform-source-card.source-configured{box-shadow:inset 0 3px 0 rgba(245,158,11,.65)}
+.platform-source-diagnostics dl{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+
+/* 40k36p6c: Erkennungsquellen luftiger und klarer lesbar */
+.device-discovery-sources-overview>.device-discovery-source-types{display:flex;flex-direction:column;gap:20px;padding:18px}
+.platform-discovery-sources>summary{padding:16px 18px;gap:8px;align-items:center}
+.platform-discovery-sources>summary small{display:block;margin-left:8px;line-height:1.45}
+.platform-source-grid{grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:22px;padding:22px}
+.platform-source-card{padding:18px;gap:16px;min-width:0}
+.platform-source-card-head{grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
+.platform-source-card-head span:nth-child(2){gap:5px;line-height:1.35}
+.platform-source-card-head span:nth-child(2)>b{font-size:1.05rem}
+.platform-source-card-head small{line-height:1.4}
+.platform-source-card p{line-height:1.6;min-height:0}
+.platform-source-facts{gap:12px}
+.platform-source-facts>span{padding:11px 12px;gap:5px;min-height:64px}
+.platform-source-depth{gap:8px;padding-top:2px}
+.platform-source-depth select{min-height:42px}
+.platform-source-actions{gap:10px;margin-top:4px}
+.platform-source-actions button{min-height:42px;padding:8px 12px}
+.platform-source-diagnostics{padding-top:14px;margin-top:2px}
+.platform-source-note{padding:0 22px 22px;line-height:1.55}
+@media(max-width:1100px){.platform-source-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.device-discovery-sources-overview>.device-discovery-source-types{padding:10px;gap:14px}.platform-source-grid{padding:12px;gap:14px}.platform-source-card{padding:14px}.platform-source-card-head{grid-template-columns:auto 1fr}.platform-source-status{grid-column:2;justify-self:start}.platform-source-facts{grid-template-columns:1fr}}
+
+/* 40k36p6f – 27 Quellen, ruhige Informationskarten und bedarfsgerechte Aktionen */
+.platform-source-grid{grid-template-columns:repeat(auto-fit,minmax(410px,1fr));gap:24px;padding:24px}
+.platform-source-card{padding:20px;gap:18px;min-height:0}
+.platform-source-card-head{grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start;padding-bottom:2px}
+.platform-source-icon{font-size:1.65rem;line-height:1.2}
+.platform-source-card-head span:nth-child(2)>b{font-size:1.12rem;line-height:1.3}
+.platform-source-card-head span:nth-child(2)>small{margin-top:4px;font-size:.9rem;line-height:1.45}
+.platform-source-card>p{padding:2px 0 14px;border-bottom:1px solid var(--border,#d6dce5);line-height:1.65}
+.platform-source-facts{display:flex;flex-direction:column;gap:0;border-bottom:1px solid var(--border,#d6dce5);padding-bottom:14px}
+.platform-source-facts>div,.platform-source-facts>.platform-source-depth{display:grid;grid-template-columns:minmax(135px,auto) minmax(0,1fr);align-items:center;gap:18px;padding:7px 0;border:0;min-height:0}
+.platform-source-facts>div>span,.platform-source-depth>span{font-size:.88rem;font-weight:700;color:var(--muted,#667085)}
+.platform-source-facts>div>b{font-size:.93rem;justify-self:start}
+.platform-source-facts .platform-source-status{display:inline-flex;align-items:center;border:1px solid transparent;padding:4px 9px}
+.platform-source-depth{margin:0}
+.platform-source-depth select{width:min(100%,240px);min-height:38px;justify-self:start}
+.platform-source-actions{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-top:0}
+.platform-source-actions button{min-height:42px}
+.previous-discovery-sources>.previous-discovery-source-body{display:flex;flex-direction:column;gap:14px;padding:14px}
+.previous-discovery-sources>summary{padding:15px 17px}
+@media(max-width:1100px){.platform-source-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.platform-source-grid{padding:12px}.platform-source-card{padding:15px}.platform-source-facts>div,.platform-source-facts>.platform-source-depth{grid-template-columns:1fr;gap:5px}.platform-source-depth select{width:100%}.platform-source-actions{grid-template-columns:1fr}}
+
+/* 40k36p6f – feinere Typografie der Plattformquellen */
+.platform-source-heading{display:flex!important;flex-direction:row!important;align-items:baseline;flex-wrap:wrap;column-gap:.5rem;row-gap:.2rem;line-height:1.4}
+.platform-source-heading>small{display:inline-flex;align-items:baseline;gap:.5rem;margin-top:0!important;font-size:.92rem!important;line-height:1.4!important}
+.platform-source-heading>small>span{color:var(--muted,#667085);font-weight:700}
+.platform-source-facts>div,.platform-source-facts>.platform-source-depth{column-gap:24px!important;padding:9px 0!important}
+.platform-source-facts>div>span,.platform-source-depth>span{padding-right:6px}
+@media(max-width:600px){.platform-source-heading{flex-direction:column!important;align-items:flex-start;gap:.25rem}.platform-source-heading>small>span{display:none}.platform-source-facts>div,.platform-source-facts>.platform-source-depth{row-gap:7px!important}}
+
+/* 40k36p6i: Betriebssystemzugänge als zusammenhängender Konfigurationsblock */
+.operating-system-access-body { display: grid; gap: 16px; padding-top: 12px; }
+.operating-system-access-body > .device-discovery-source-settings { margin: 0; }
+
+/* 40k36p6i: konkrete Verbindungen als eigener, klar getrennter Bereich */
+.device-connections-body{display:grid;gap:16px;padding-top:12px}
+.device-connections-body>.device-discovery-source-settings{margin:0}
+#device-connections{scroll-margin-top:92px}
+
+/* 40k36t76 */
+.inventory-horizontal-scroll{position:relative;overflow-x:auto;scrollbar-gutter:stable;}
+.horizontal-scroll-hint{position:sticky;left:0;width:max-content;margin:.2rem .35rem .35rem;padding:.18rem .45rem;border:1px solid var(--border-color,#9aa4b2);border-radius:.35rem;font-size:.78rem;opacity:.78;background:var(--card-background-color,Canvas);z-index:2;pointer-events:none;}
+
+/* 40k37c46 – Lockdown-Trust klar von Windows-Foto-/PTP-Freigabe unterscheiden */
+.apple-trust-guidance{grid-column:1/-1;display:grid;gap:5px;margin-top:8px;padding:10px 12px;border:1px solid var(--border,#d6dce5);border-radius:8px;background:var(--surface-soft,#f7f9fc)}
+.apple-trust-guidance b{font-weight:800}.apple-trust-guidance span,.apple-trust-guidance small{line-height:1.4}.apple-trust-guidance small{color:var(--muted,#667085)}
+
+
+/* 40k37e52 – getrennte, persistente USB-/WLAN-Inventarwege fuer Android und Apple Mobile */
+.mobile-transport-switches{display:flex;position:relative;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 4px;padding:10px 12px;border:1px solid var(--border-color,#3b4656);border-radius:10px}
+.mobile-transport-switches>span{display:flex;flex-direction:column;gap:2px;min-width:220px;flex:1}
+.mobile-transport-switches>span small{opacity:.72}
+.mobile-transport-switches .source-toggle{min-width:112px}
+
+
+/* 40k37e56a7fix1 – tatsächliches Workflow-Stylesheet: Desktop horizontal,
+   responsiv umbrechend; vertikal nur auf schmalen Ansichten. */
+.device-workflow-steps{
+  display:flex !important;
+  flex-flow:row wrap !important;
+  align-items:stretch !important;
+  gap:10px 8px !important;
+  width:100%;
+}
+.device-workflow-steps>button{
+  flex:1 1 190px !important;
+  min-width:170px !important;
+  max-width:none !important;
+  width:auto !important;
+  margin-left:0 !important;
+}
+.device-workflow-steps>i{
+  flex:0 0 24px !important;
+  width:24px !important;
+  min-width:24px !important;
+  height:auto !important;
+  font-size:1.15rem !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.device-workflow-steps>i::before{content:none !important}
+@media (min-width:761px) and (max-width:1250px){
+  .device-workflow-steps>button{flex-basis:210px !important}
+}
+@media (max-width:760px){
+  .device-workflow-steps{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+  .device-workflow-steps>button{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+  .device-workflow-steps>i{
+    width:100% !important;
+    min-width:0 !important;
+    height:16px !important;
+    font-size:0 !important;
+  }
+  .device-workflow-steps>i::before{
+    content:"↓" !important;
+    font-size:1.15rem !important;
+  }
+}

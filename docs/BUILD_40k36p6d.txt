@@ -1,0 +1,4 @@
+Build: 40k36p6e
+Basis: 40k36p6c
+Schwerpunkt: vollständige 27 Erkennungsquellen, ruhige Kartenstruktur, Konfigurieren nur bei tatsächlichem Konfigurationsbedarf
+Syntaxprüfung: TypeScript/TSX ohne neue Parserfehler; bestehende projektweite Typdiagnosen und fehlende lokale Pakete bleiben davon unberührt.

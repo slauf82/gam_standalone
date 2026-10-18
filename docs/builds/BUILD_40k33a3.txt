@@ -1,0 +1,10 @@
+GAM 2.1.0 – Schritt 40k33a3
+Windows-Startskripte auf denselben robusten Stand wie Linux gebracht.
+
+Aenderungen:
+- mvnw.cmd erstellt .mvn vor dem Maven-Download automatisch.
+- Downloadziel wird vor einem erneuten Versuch bereinigt.
+- Download, Archivexistenz, Entpacken und mvn.cmd werden einzeln validiert.
+- Aussagekraeftige Fehlermeldungen fuer Verzeichnis-, Download- und Entpackfehler.
+- Bereits vorhandenes systemweites Maven wird weiterhin bevorzugt.
+- Die bereits robuste Windows-JDK-21-Pruefung in scripts/ensure-java.ps1 bleibt erhalten.

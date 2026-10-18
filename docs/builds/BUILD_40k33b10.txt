@@ -1,0 +1,27 @@
+GAM Standalone v2.1.0 – Schritt 40k33b10
+Merge-Diagnose – Schutzregeln deutlich hervorheben
+
+Schwerpunkte:
+- Neue, gemeinsam genutzte Schweregrad-Einordnung (KRITISCH/HOCH/PRUEFHINWEIS)
+  fuer bereits vorhandene Konflikttexte - keine neue Konflikterkennung, nur
+  Einordnung. Dieselbe Logik wird von Merge-Kandidatenliste, Merge-Vorschau
+  UND der Integritaetspruefung (40k33b7) verwendet - garantierte Konsistenz.
+- Kritische Schutzregeln sind jetzt in der Kandidatenliste SOFORT sichtbar
+  (Sammelbanner + hervorgehobene Zeile + sofortige Detailtabelle), nicht erst
+  nach mehreren Klicks.
+- Prozentanzeige wirkt bei aktiver kritischer Schutzregel nie mehr positiv -
+  immer mit "❗ Kritische Schutzregel aktiv" ergaenzt.
+- Neuer, klar umrandeter roter Warnbereich in der Vorschau mit der im Auftrag
+  vorgegebenen Formulierung fuer gleichzeitig unterschiedliche IP-Adressen.
+- Zusammenfuehren-Button bei kritischer Schutzregel deaktiviert, bis eine
+  ausdrueckliche "Konflikt bewusst geprueft"-Bestaetigung erfolgt ist;
+  danach Beschriftung "❗ Trotzdem zusammenfuehren". Normaler Ablauf ohne
+  Schutzregel unveraendert.
+- Barrierearme Darstellung: Symbol + Wort + Text + Rahmen, nicht nur Farbe.
+- Zusaetzliches Debug-Logging (Schutzstufe, beteiligte Merkmale, ob bewusst
+  bestaetigt).
+- Score-Berechnung selbst unveraendert.
+
+Ausfuehrliche Dokumentation: docs/40k33b10-merge-schutzregeln.md
+
+Basis: 40k33b9

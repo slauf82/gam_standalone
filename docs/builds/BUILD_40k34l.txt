@@ -1,0 +1,45 @@
+GAM Standalone v2.1.0 – Schritt 40k34l
+Konsolidierung der Geraete-Kategorisierung ("Gefundene Geraete")
+
+Ausgeloest durch: vom Benutzer hochgeladenen Snapshot der laufenden
+Anwendung (GAM2_0.zip) - Untersuchung ergab eine VIERTE, bisher unbeachtete
+Klassifizierungsfunktion (enrichDevice() in DeviceManagerPanel, Ansicht
+"Gefundene Geraete"), unabhaengig von classifyInventoryDevice()
+(InventoryPage) gepflegt - keine der 40k34h-k1-Android-Verbesserungen war
+dort je angekommen.
+
+Konkret im Snapshot nachgewiesene Fehleinordnungen (alle per Node.js-Test
+verifiziert):
+- Sebastian-Doogee-S96-Pro: Unbekannte Geraete statt Smartphones & Tablets
+  ("Doogee" fehlte komplett)
+- Egon-/Conni-Galaxy-A56-5G: Wechselrichter & Energiesysteme statt
+  Smartphones & Tablets (Energiesysteme-Regel mit "huawei" lief VOR der
+  Smartphone-Regel; bei faelschlich erkanntem Hersteller "Huawei" gewann
+  die falsche, generischere Regel)
+- tplink-accesspointrobbi: Unbekannte Geraete statt Access Points
+  (Regel verlangte zwingend Leerzeichen "access point", Hostname schreibt
+  "accesspoint" ohne Trennzeichen)
+- F107-Pro: bleibt bewusst "Unbekannte Geraete" (kein Hersteller im
+  Hostnamen - bekannte, bereits in 40k34j dokumentierte Grenze)
+
+Fix: zwei neue, MODUL-WEITE geteilte Hilfsfunktionen
+(smartphoneOrTabletCategory, isAccessPointHay) statt weiterer
+Duplizierung - werden von enrichDevice() UND classifyInventoryDevice()
+(zwei separaten Komponenten) gemeinsam genutzt. Smartphone-/Tablet-Pruefung
+in beiden Funktionen vor die generischen, herstellernamen-basierten
+Kategorien verschoben (behebt die Huawei-Kollision). Nebenbefund: behebt
+zusaetzlich einen "iPhone" vs. "Telefonie"-Kollisionsfehler.
+
+Bewusst NICHT konsolidiert: die drei separaten categoryOrder-Arrays
+(DeviceManagerPanel/InventoryPage/ReportsPage) - waere eine groessere,
+nicht zwingend noetige Umstrukturierung gewesen. ReportsPage.selectionGroups
+geprueft, benoetigt keine Aenderung (gruppiert direkt nach gespeichertem
+d.type, keine eigene Erkennung).
+
+Kein Backend geaendert. Kein echter Build moeglich - ausdruecklich benannt.
+TypeScript-Syntax-Check (0 Diagnosen) sowie empirischer Node.js-Test aller
+vier realen Referenzfaelle durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34l-gefundene-geraete-konsolidierung.md
+
+Basis: 40k34k1

@@ -1,0 +1,9 @@
+40k36t22 – Demo-Dump-Reparatur und Statement-Sicherheitsgrenze
+
+- Auf Basis von 40k36t21.
+- Der tatsächlich vom First-Run verwendete Demo-Dump wurde an der beschädigten Aufgaben-Zeile 958 repariert.
+- Zehn weitere eindeutig beschädigte anonymisierte Einzelzeilen mit vorzeitigem SQL-Semikolon wurden aus den Demo-Dumps entfernt.
+- Der verwendete 46/47-MB-Dump wurde danach vollständig mit der Streaming-Parserlogik geprüft: 543 Statements, keine offene Quote, kein unvollständiger Restblock.
+- Größtes reguläres Statement nach Bereinigung ca. 190 KiB.
+- Streaming-Importer bricht künftig bei mehr als 8 MiB pro Einzelstatement sofort mit verständlicher Dump-Beschädigungsdiagnose ab.
+- Alle t21-Streaming-, t20-Frontend-, t19-Linux- und vorherigen Schema-Härtungen bleiben erhalten.

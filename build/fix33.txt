@@ -1,0 +1,8 @@
+40k37e56c-fix33 – RemotePairing execution-chain bridge
+
+- Historical POST /discovery/apple-mobile/test is forcibly redirected into pairing-only flow.
+- testConnection() is also intercepted into the same pairing-only bridge.
+- Existing Lockdown -> RemotePairing implementation is reused unchanged.
+- Frontend legacy test helper carries fix33 trace marker.
+- Backend startup now verifies the actual compiled class files using explicit filenames (fix32 tracer grep bug corrected).
+- No changes to inventory collector, app collection, identity/merge, USERSPACE_RSD discovery, Linux underlay, Java/Node/MariaDB.

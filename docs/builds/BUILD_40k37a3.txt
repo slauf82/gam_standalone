@@ -1,0 +1,20 @@
+GAM Standalone v2.1.0 – Schritt 40k37a3
+Apple iPad-Modellidentifikation innerhalb Roadmap-Schritt 40k37a
+
+Basis: 40k37a2
+Roadmap-Ziel 40k37a: noch NICHT als erreicht markiert; echter iPad-Test erforderlich.
+
+Aenderungen:
+- Native Apple ProductType-Auswertung liefert jetzt einen fachlichen Modellnamen.
+- iPad11,6 => iPad 8. Generation (Wi-Fi)
+- iPad11,7 => iPad 8. Generation (Wi-Fi + Cellular)
+- Modellname wird als primaerer Discovery-Name verwendet; ProductType bleibt in Details erhalten.
+- libimobiledevice-Werkzeuge werden unter Windows nicht mehr nur ueber PATH gesucht,
+  sondern auch in GAM-lokalen tools/libimobiledevice-Verzeichnissen, MSYS2 und Scoop.
+- PnP-Fallback bleibt erhalten: physische USB-Sichtbarkeit ist weiterhin unabhaengig
+  von Trust/Pairing und tiefer Inventarisierung.
+
+Wichtig:
+Die Generation wird NICHT aus VID/PID geraten. USB VID_05AC/PID_12AB reicht nicht zur
+sicheren Generationserkennung. Erst ProductType aus der Apple/Lockdown-Schicht erlaubt
+die eindeutige Zuordnung. Das vermeidet falsche Modellangaben.

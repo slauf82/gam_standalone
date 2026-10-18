@@ -42,6 +42,14 @@ public class DeviceIdentityController {
     return service.reassess(requireKey(request));
   }
 
+  @PostMapping("/source/remove")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public Map<String,Object> removeDiscoverySource(@RequestBody Map<String,String> request) {
+    String source=request.get("source");
+    if(source==null||source.isBlank()) throw new IllegalArgumentException("Discovery-Quelle fehlt.");
+    return service.removeDiscoverySource(requireKey(request),source);
+  }
+
   @PostMapping("/alias")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
   public Map<String,Object> addAlias(@RequestBody Map<String,String> request) {
@@ -98,13 +106,59 @@ public class DeviceIdentityController {
     return service.runLinuxInventory(requireKey(request));
   }
 
+  @PostMapping("/linux/inventory-elevated")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public DeviceIdentityService.LinuxActionResult runLinuxElevatedInventory(@RequestBody Map<String,String> request) {
+    return service.runLinuxElevatedInventory(requireKey(request), request.get("sudoPassword"));
+  }
+
+  @GetMapping("/software")
+  public java.util.List<java.util.Map<String,Object>> softwareInventory(@RequestParam String identityKey) {
+    return service.softwareInventory(identityKey);
+  }
+
   @PostMapping("/macos/inventory")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
   public DeviceIdentityService.LinuxActionResult runMacOsInventory(@RequestBody Map<String,String> request) { return service.runMacOsInventory(requireKey(request)); }
 
+  @PostMapping("/macos/inventory-elevated")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public DeviceIdentityService.LinuxActionResult runMacOsElevatedInventory(@RequestBody Map<String,String> request) {
+    return service.runMacOsElevatedInventory(requireKey(request),request.get("sudoPassword"));
+  }
+
+  @GetMapping("/windows/backend-local")
+  public Map<String,Object> windowsBackendLocal(@RequestParam String identityKey) {
+    return Map.of("backendLocal", service.isWindowsBackendLocal(identityKey));
+  }
+
+  @PostMapping("/windows/inventory-elevated")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public DeviceIdentityService.LinuxActionResult runWindowsElevatedInventory(@RequestBody Map<String,String> request) {
+    return service.runWindowsElevatedInventory(requireKey(request),request.get("username"),request.get("password"));
+  }
+
+  @PostMapping("/windows/repair-bitlocker-provider")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public DeviceIdentityService.LinuxActionResult repairWindowsBitLockerProvider(@RequestBody Map<String,String> request) {
+    return service.repairWindowsBitLockerProvider(requireKey(request));
+  }
+
+  @PostMapping("/windows/inventory-system")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public DeviceIdentityService.LinuxActionResult runWindowsSystemInventory(@RequestBody Map<String,String> request) {
+    return service.runWindowsSystemInventory(requireKey(request));
+  }
+
   @PostMapping("/macos/ssh-test")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
   public MacOsInventoryService.TestResult testMacOsSsh(@RequestBody Map<String,String> request) { return service.testMacOsSsh(requireKey(request)); }
+
+  @PostMapping("/sources/ssh-test")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public LinuxNetworkDiscoveryService.SshTestResult testSourceSsh(@RequestBody Map<String,String> request) {
+    return service.testLinuxSshHost(request.get("host"));
+  }
 
   @PostMapping("/linux/ssh-test")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
@@ -156,6 +210,12 @@ public class DeviceIdentityController {
     return service.runAndroidInventory(requireKey(request));
   }
 
+  @PostMapping("/android/inventory-elevated")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public DeviceIdentityService.LinuxActionResult runAndroidElevatedInventory(@RequestBody Map<String,String> request) {
+    return service.runAndroidElevatedInventory(requireKey(request));
+  }
+
   @PostMapping("/android/reconnect-known")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
   public Map<String,Object> reconnectKnownAndroidDevices() {
@@ -192,6 +252,23 @@ public class DeviceIdentityController {
     String platform = request.get("platform");
     if (platform == null || platform.isBlank()) throw new IllegalArgumentException("Plattform fehlt.");
     return service.runPlatformInventory(requireKey(request), platform, principal == null ? null : principal.getName());
+  }
+
+  @PostMapping("/platform-inventory/cancel")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public Map<String,Object> cancelPlatformInventory(@RequestBody Map<String,String> request) {
+    return service.cancelPlatformInventory(requireKey(request), request.get("platform"));
+  }
+
+  @PostMapping("/platform-inventory/cancel-all")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public Map<String,Object> cancelAllPlatformInventories() {
+    return service.cancelAllPlatformInventories();
+  }
+
+  @GetMapping("/platform-inventory/global-status")
+  public Map<String,Object> globalPlatformInventoryStatus() {
+    return service.globalPlatformInventoryStatus();
   }
 
   @PostMapping("/platform-inventory/all")

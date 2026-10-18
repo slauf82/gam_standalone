@@ -1,0 +1,9 @@
+GAM Standalone 2.1.0 – Schritt 40k36p3
+
+Apple Mobile vorbereitet:
+- iOS lokal als eigene Erkennungsquelle
+- iPadOS lokal als eigene Erkennungsquelle
+- Browsererkennung für iOS/iPadOS/macOS-Umgebungen
+- persistente Gerätezuordnung als Vorbereitung
+- persistente Pairing-Vormerkung ohne vorgetäuschte native Kopplung
+- Anschlussstelle für den nativen Apple-Mobile-Adapter in 40k37

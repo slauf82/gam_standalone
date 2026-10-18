@@ -1,0 +1,7 @@
+40k36t117 – OS access profile persistence hardening
+
+- WinRM, SSH and ADB multi-profile credentials continue to use the shared MariaDB table gam_os_access_profile.
+- Startup now logs persisted row counts for WINRM/SSH/ADB via [OS-ACCESS-PERSIST].
+- Saving/deleting profiles logs the durable DB mutation explicitly.
+- Frontend no longer silently gives up after a single failed initial load. It retries the DB-backed endpoint several times and leaves existing state untouched if all retries fail.
+- No second in-memory/file persistence layer was introduced; the database remains the source of truth.

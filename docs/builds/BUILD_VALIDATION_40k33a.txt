@@ -1,0 +1,11 @@
+40k33a Validierung
+===================
+
+- LinuxInventoryDiscoveryService mit Java-Stubs erfolgreich kompiliert.
+- Collector in der Linux-Arbeitsumgebung real ausgeführt.
+- Erfolgreich erkannt wurden u. a. Debian GNU/Linux 13, Kernel, Architektur,
+  CPU, RAM, Datenträger, Dateisystem, Netzwerk, DNS, Paketbestand und Updates.
+- Vollständiger Maven-Build war in der isolierten Build-Umgebung nicht möglich,
+  weil Maven nicht vorinstalliert war und der externe Download gesperrt ist.
+- Frontend-Build war dort ebenfalls nicht möglich, weil node_modules nicht im
+  Ausgangsarchiv enthalten ist. Die Änderungen sind auf Quelltextebene enthalten.

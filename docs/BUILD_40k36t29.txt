@@ -1,0 +1,11 @@
+40k36t29 – Java-21-SAAJ-Kompatibilität für WinRM
+
+Basis: 40k36t28.
+
+Änderungen:
+- javax.xml.soap-api 1.4.0 explizit ergänzt.
+- com.sun.xml.messaging.saaj:saaj-impl 1.5.3 als Runtime-Implementierung ergänzt.
+- Behebt unter Java 21 den WinRM/CXF-Fehler "SAAJMetaFactoryImpl not found".
+- Negotiate/SPNEGO bleibt primärer WinRM-Authentifizierungsweg.
+- NTLM bleibt ausschließlich als sichtbar gekennzeichneter Legacy-Fallback aus t28 erhalten.
+- Keine Änderung an Windows-Inventarisierungslogik oder Frontend-Verhalten.

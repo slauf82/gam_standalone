@@ -7,7 +7,7 @@ echo GAM 2.0 - PDF/UA + ZUGFeRD Checkhinweise
 echo ============================================================
 echo.
 echo 1. Backend starten:
-echo    start-backend.bat
+echo    start_backend.bat
 echo.
 echo 2. Rechnung als PDF erzeugen, z.B.:
 echo    http://localhost:8080/api/invoices/3670/pdf?lang=de^&companyId=1

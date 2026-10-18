@@ -1,0 +1,8 @@
+GAM Standalone 2.1.0 – Schritt 40k36q1
+
+SSH-Verbindungstest mit gestufter Diagnose:
+TCP (3 s) -> SSH-Handshake (10 s) -> Authentifizierung (15 s) -> Testbefehl (10 s).
+
+Hinweis zur Build-Prüfung:
+Ein vollständiger Maven-/Frontend-Build konnte in der Arbeitsumgebung nicht ausgeführt werden,
+da Maven bzw. die benötigten Paketquellen dort nicht verfügbar waren.

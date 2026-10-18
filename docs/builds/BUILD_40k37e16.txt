@@ -1,0 +1,12 @@
+GAM Standalone v2.1.0 - Schritt 40k37e16
+
+Basis: 40k37e15.
+
+Aenderungen:
+- CoreDevice-Bootstrapfehler aus e15 behoben: SHA256-Antwort wird sowohl als String als auch als Byte[] korrekt verarbeitet.
+- Bekannte parallele Apple-Discovery bleibt im Quellcode erhalten.
+- Zweite parallele CoreDevice-Runtime-Variante wird temporaer deaktiviert, solange ein Bootstrap/Remote-Browse bereits laeuft.
+- Diagnose: PARALLEL_VARIANT_TEMPORARILY_DISABLED.
+- GAM-eigene isolierte CoreDevice-Runtime bleibt unter tools/apple-coredevice.
+- Kein globales Python/pip/PATH, keine Apple-Sicherheitsumgehung.
+- Nach erfolgreichem Bootstrap weiterhin read-only pymobiledevice3 remote browse.

@@ -1,0 +1,9 @@
+40k37a9 – Apple USB collect/group/emit fix
+
+- Fixes MI_xx interface detection for Windows Apple USB PnP instance IDs.
+- Fixes Apple VID/PID key extraction without ambiguous regex handling of the Windows backslash.
+- Keeps strict Apple VID_05AC boundary.
+- Collects all Apple nodes first and emits one DiscoveredDevice per physical group.
+- Adds a final pre-emission collapse: if exactly one non-MI base node exists for a VID/PID in the current scan, MI_xx-only groups for that VID/PID are attached to it and never emitted separately.
+- Does not use VID/PID alone when more than one physical base node of the same type is present.
+- Model generation remains inventory/enrichment territory; no heuristic generation inference.

@@ -1,0 +1,17 @@
+GAM Standalone v2.1.0 – Schritt 40k37a8
+
+Apple USB 3->1 Identity-Fallback (Windows)
+
+- Behaelt die harte Apple-Grenze USB\\VID_05AC bei.
+- ContainerId und echte Parent-Beziehung bleiben primaere Gruppierung.
+- Neuer sicherer Fallback fuer den beobachteten Windows-Apple-Treiberpfad:
+  * Apple-Knoten werden nach VID_05AC/PID_xxxx betrachtet.
+  * Nur wenn fuer diese VID/PID exakt EIN physischer Nicht-MI-Basisknoten existiert,
+    werden MI_xx-Interfaces (z.B. iPad/PTP und Apple USB Multiplexor) an diesen
+    Basisknoten angehaengt und nicht als eigene physische Geraete emittiert.
+  * Bei mehreren Basisknoten gleicher VID/PID (z.B. zwei gleiche iPads) wird NICHT
+    anhand VID/PID zusammengefuehrt.
+- Der physische Basisknoten bleibt Identity Anchor; Interface-IDs bleiben in den
+  Discovery-Zusatzinformationen erhalten.
+- Keine heuristische Ableitung der iPad-Generation aus PnP-/UDID-Ziffern.
+- Modellgeneration bleibt Aufgabe belastbarer Apple-Produktdaten/Inventarisierung.

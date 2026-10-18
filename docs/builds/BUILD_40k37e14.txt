@@ -1,0 +1,11 @@
+GAM Standalone v2.1.0 – Schritt 40k37e14
+
+Apple WLAN / CoreDevice-RemotePairing-Pfaddiagnose
+
+- Basis: 40k37e13.
+- Behaelt Bonjour-Aufloesung, dynamischen Apple-Service-Port und alle bisherigen read-only Diagnosen bei.
+- Neue COREDEVICE_PATH-Diagnose: ProductVersion/ProductType/BuildVersion, supportsRP-Version,
+  klassischer idevice_id -n Sichtbarkeit und Klassifikation des wahrscheinlichen Transportpfads.
+- Neue COREDEVICE_TOOLS-Diagnose: erkennt nur lesend, ob Python/pymobiledevice3 bereits vorhanden ist.
+- Keine Installation, kein Pairing, kein Tunnel, keine Apple-/Windows-Konfigurationsaenderung.
+- Doppelter Apple-Discovery-Aufruf bleibt absichtlich unangetastet, bis WLAN stabil funktioniert.

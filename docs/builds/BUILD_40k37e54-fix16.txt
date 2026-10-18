@@ -1,0 +1,27 @@
+40k37e54-fix16 – altIRK Pairing Clean Migration
+
+Basis: 40k37e54-fix15.
+
+Aenderungen:
+- Fix15-Backup wird aus ~/.pymobiledevice3 in GAM/logs/apple-pairing-backups quarantiniert.
+- Aktiver veralteter remote_<UDID>.plist wird ausserhalb des Pairing-Verzeichnisses gesichert und vor dem Re-Pair wirklich entfernt.
+- Promptloses USB-Re-Pair via `lockdown remotepairing --pair` bleibt bestehen.
+- Neuer Pairing-Record muss altIRK enthalten; Erkennung funktioniert fuer XML und binaere Plists ueber Byte-Probe.
+- Danach muss der bestehende Userspace-RSD-Preflight erneut erfolgreich sein.
+- Bei Fehler wird der neu erzeugte Record entfernt und der vorherige Record zurueckkopiert.
+- Erst danach startet unveraendert der versionsabhaengige Admin-Tunnel; kein Userspace-Fallback im expliziten Admin-Pfad.
+
+Erwartete Marker:
+STALE_BACKUP_QUARANTINED (nur wenn fix15-Backup vorhanden)
+PAIR_RECORD_BACKUP
+STALE_PAIR_RECORD_REMOVED
+PAIR_RECORD_REFRESH_START
+PAIR_RECORD_REFRESH_RESULT ... altIRK=true
+REMOTEPAIRING_READY
+PAIR_RECORD_MIGRATED
+TRANSPORT_VERSION_SELECT
+START_REQUEST
+UAC_LAUNCH_RETURNED
+ENDPOINT_RECEIVED
+VERIFY ... ok=true
+ACTIVE

@@ -1,0 +1,14 @@
+GAM Standalone v2.1.0 – Schritt 40k37e56c-fix25
+macOS Intel/Tahoe: Homebrew-Prefixrechte fuer Sonoma-x86_64-MariaDB-Bottle
+
+Basis: fix24-homebrew-sonoma-bottle
+
+Aenderungen ausschliesslich im macOS-Datenbank-Unterbau:
+- Repariert/initialisiert die fuer den manuellen Intel-Homebrew-Bootstrap benoetigten /usr/local-Pfade.
+- /usr/local/var/homebrew/locks wird explizit angelegt und dem aktuellen GAM-Benutzer zugeordnet.
+- Bereitet zusaetzlich die Homebrew-Standardpfade Cellar, opt, etc, lib, share, include, Caskroom und Frameworks vor.
+- Erkennt einen von einem vorherigen GAM-Test bereits vorhandenen, teilweise eingerichteten Homebrew-Bootstrap und repariert dessen Prefix vor der Nutzung.
+- Kein rekursives chown von /usr/local; nur Homebrew-relevante Pfade werden angepasst.
+- Homebrew/MariaDB laufen nach der einmaligen Prefix-Vorbereitung ohne sudo als aktueller Benutzer.
+- Weiterhin MariaDB 10.11, Sonoma-x86_64-Bottle, --force-bottle, kein ARM-Bottle, kein MySQL-Fallback und kein Source-Build.
+- Oberbau, Datenbankschema, Backend, Frontend und Apple-Inventarisierung unveraendert.

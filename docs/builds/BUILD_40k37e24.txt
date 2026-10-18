@@ -1,0 +1,35 @@
+GAM Standalone v2.1.0 - Schritt 40k37e25
+
+Basis: 40k37e23
+
+Ziel:
+- e23 hat bestaetigt, dass `pymobiledevice3 remote pair` auf dem normalen iPadOS-26.6-Testgeraet
+  bereits beim internen Bonjour-Browse endet: "No devices were found during bonjour browse".
+- e24 wechselt deshalb auf den dokumentierten einmaligen USB-Lockdown-Bootstrap fuer RemotePairing.
+
+Aenderungen:
+1. CoreDevice-Runtime und pymobiledevice3 11.12.5 bleiben GAM-eigen und isoliert.
+2. Bei leerem `remote browse` wird zuerst read-only geprueft:
+   `pymobiledevice3 --no-color lockdown remotepairing -h`
+3. Nur wenn ein USB-UDID vorliegt und die Hilfe erfolgreich ist, startet GAM kontrolliert:
+   `pymobiledevice3 --no-color lockdown remotepairing --pair`
+4. Apple-Trust/Sicherheitsfreigaben werden nicht umgangen. Der Bootstrap setzt eine bereits
+   vorhandene/zugelassene USB-Lockdown-Verbindung voraus.
+5. Danach folgt im selben Suchlauf erneut:
+   `pymobiledevice3 --no-color remote browse`
+   und GAM protokolliert explizit `wifiVisible=true|false`.
+6. Exitcode 0 allein wird nicht mehr als semantischer Pairing-Erfolg gewertet, wenn die CLI
+   ERROR/Traceback/No-device meldet.
+7. Ein produktiver WLAN-Tunnel wird in e24 noch nicht blind gestartet. Erst wenn remote browse
+   eine konkrete WLAN-Identitaet liefert, kann der naechste Schritt den Tunnel gezielt starten.
+8. Der Atomic Guard gegen parallele CoreDevice-Bootstraps bleibt unveraendert.
+
+Neue wichtige Logmarker:
+- COREDEVICE_LOCKDOWN_REMOTEPAIRING_HELP
+- COREDEVICE_LOCKDOWN_REMOTEPAIRING_PAIR
+- COREDEVICE_REMOTE_BROWSE_AFTER_USB_PAIR
+- COREDEVICE_TUNNEL_HELP
+
+Erfolgskriterium fuer e24:
+- RemotePairing-Bootstrap wird ueber die bereits vertrauenswuerdige USB-Verbindung ausgefuehrt.
+- Anschliessendes remote browse zeigt das iPad im wifi-Array bzw. wifiVisible=true.

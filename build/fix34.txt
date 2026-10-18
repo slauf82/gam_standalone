@@ -1,0 +1,7 @@
+40k37e56c-fix34 - macOS persistent PMD3 resolver
+
+- Keeps fix33 pairing execution bridge.
+- Current GAM macos-venv is preferred.
+- If an overlay/update is running from a new GAM version directory, the resolver reuses an existing GAM-owned macos-venv from a sibling GAM standalone directory.
+- No changes to inventory, apps, identity/merge, USERSPACE_RSD discovery, Linux, Java, Node or MariaDB.
+- Expected pairing chain: Lockdown OK -> FIX34 PMD3 resolver -> USB_REMOTE_PAIR_START -> USB_REMOTE_PAIR_OK -> APPLE_PAIR_COMPLETE.

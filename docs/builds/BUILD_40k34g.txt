@@ -1,0 +1,31 @@
+GAM Standalone v2.1.0 – Schritt 40k34g
+Android - Nachbesserungen, Polishing und Release-Vorbereitung
+
+Schwerpunkte:
+- Konkreter Bugfix: der von ChatGPT gefundene Widerspruch war real - HOCH-
+  Konflikte (z.B. abweichender Build-Fingerprint) blockierten zwar bereits
+  korrekt den automatischen Merge, aber NICHT den manuellen Merge (keine
+  Bestaetigungssperre im Dialog).
+- Behoben ueber eine zentrale Eigenschaft statt Frontend-Severity-Abfrage:
+  DiscoveryRegistrationRepository.requiresManualConfirmation() (neu) -
+  einzige Stelle, die "KRITISCH" und "HOCH" als bestaetigungspflichtig
+  einordnet. Candidate/MergePreviewResult/IntegrityResult um
+  manualConfirmationRequired erweitert; Frontend prueft nur noch dieses
+  eine Flag fuer die Gating-Entscheidung.
+- KRITISCH und HOCH bleiben optisch unterschiedlich (rot vs. orange,
+  neue CSS-Klasse merge-high-banner) - nur die Bestaetigungspflicht wurde
+  vereinheitlicht, nicht die Darstellung.
+- criticalConflictMessage() erklaert jetzt auch HOCH-Konflikte (Build-
+  Fingerprint, MAC-Adresse, ADB-Plattform, App-Inventar-Anomalien).
+- Kleine UI-Korrektur: lange Android-Paketnamen brechen jetzt um (scoped
+  CSS-Klasse, keine globale Tabellenaenderung).
+- Logging/Codequalitaet geprueft: keine Debug-Reste, keine ungenutzten
+  Imports gefunden.
+- Checkliste fuer reale Geraetetests ergaenzt (keine Tests durchgefuehrt,
+  ausdruecklich als offen dokumentiert).
+- Keine neuen Features, keine neue Architektur, keine neuen Datenmodelle -
+  ausschliesslich die gezielte Korrektur plus kleine Polishing-Punkte.
+
+Ausfuehrliche Dokumentation: docs/40k34g-android-polishing.md
+
+Basis: 40k34f

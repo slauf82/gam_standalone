@@ -1,0 +1,17 @@
+GAM Standalone v2.1.0 – Schritt 40k37e4
+
+Apple iOS/iPadOS USB/WLAN – automatische WLAN-Aktivierung und Diagnose
+
+- Apple-Mobile-Phase ist explizit in der globalen Gerätesuche protokolliert.
+- IOS_USB_WLAN/IPADOS_USB_WLAN Aktivzustände werden beim Phasenstart ausgegeben.
+- USB- und WLAN-Discovery bleiben getrennte Treffer; die allgemeine GAM-Identitäts-/Merge-Pipeline entscheidet über Zusammenführung.
+- WLAN-Pfad protokolliert idevice_id -n, erkannte Netzwerk-UDIDs und ideviceinfo -n je Gerät.
+- Wenn WLAN leer ist, USB/Trust aber vorhanden ist, prüft GAM com.apple.mobile.wireless_lockdown und versucht EnableWifiConnections=true über eine gepairte Lockdown-Sitzung zu setzen.
+- Ohne gültiges Trust/Pairing erfolgt keine Umgehung; der Lockdown-Handshake muss erfolgreich sein.
+- Nach Aktivierungsversuch wird idevice_id -n automatisch erneut ausgeführt.
+- Bestehende d20-d22 Fehler-/Cache-/Diagnosehärtung und d21 Identitätsschutz bleiben erhalten.
+- Keine USER/SYSTEM- oder Quellen-Inferenz aus indirekten Merkmalen.
+- Shift-Hinweis neutral in Registrierte Geräte und Gerätebestand: „Shift-Taste + Mausrad“.
+- Bestehende Apple-Runtimes und Caches bleiben erhalten.
+
+Wichtig e4: -n und -l werden nicht mehr kombiniert. Laut aktueller idevice_id-Semantik ist -n der Netzwerkfilter und -l der USB-Listenfilter; WLAN nutzt daher ausschließlich idevice_id -n.

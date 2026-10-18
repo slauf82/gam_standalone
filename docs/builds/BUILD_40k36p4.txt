@@ -1,0 +1,3 @@
+GAM 2.0 – Schritt 40k36p4
+Workflow 2.0: Erkennungsquellen → Geräte suchen → Inventarisieren → Gerät verwalten → Reports.
+Basis: 40k36p3.

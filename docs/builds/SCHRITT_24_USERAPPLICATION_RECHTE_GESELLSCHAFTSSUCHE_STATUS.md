@@ -28,8 +28,8 @@
 
 ### Startskripte
 
-- `start-backend.bat` führt vor dem Start automatisch `mvnw.cmd clean package` aus.
-- `start-backend.sh` führt vor dem Start automatisch `./mvnw clean package` aus.
+- `start_backend.bat` führt vor dem Start automatisch `mvnw.cmd clean package` aus.
+- `start_backend.sh` führt vor dem Start automatisch `./mvnw clean package` aus.
 - Backend wird nur gestartet, wenn der Build erfolgreich war.
 - `SPRING_PROFILES_ACTIVE=local` wird gesetzt.
 - `logs`-Ordner wird automatisch erzeugt.
@@ -50,13 +50,13 @@
 Nach dem Entpacken/Drüberkopieren:
 
 ```bat
-start-backend.bat
+start_backend.bat
 ```
 
 oder unter Linux/macOS:
 
 ```bash
-./start-backend.sh
+./start_backend.sh
 ```
 
 Danach Frontend:

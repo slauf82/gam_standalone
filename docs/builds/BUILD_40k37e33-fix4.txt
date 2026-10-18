@@ -1,0 +1,15 @@
+40k37e33-fix4 – Apple/CoreDevice Netzwerkfeld-Diagnose
+
+Basis: 40k37e33-fix3.
+
+Ziel:
+- weiterhin ausschließlich Apple/CoreDevice/USERSPACE_RSD als Quelle der iPad-WLAN-IP
+- keine FRITZ!Box-, ARP-, Neighbor- oder sonstige Fremdquelle
+- alle bereits gefilterten Netzwerk-/Adressfelder aus peer_info und Endpoint-Metadaten einzeln protokollieren
+- lange JSON-Diagnose bleibt erhalten, kann aber nicht mehr die entscheidenden Einzelwerte verdecken
+- interne RSD-Adresse wird weiterhin NICHT automatisch als LAN/WLAN-IP übernommen
+
+Neuer Marker:
+[DISCOVERY][40k37e33-fix4][APPLE_MOBILE][WLAN][COREDEVICE_NET_FIELD]
+
+Interessante Pfade enthalten insbesondere Address, IP, Host, Interface, Network, WiFi, Ethernet, Bonjour oder Service.

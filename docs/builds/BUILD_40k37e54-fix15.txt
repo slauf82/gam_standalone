@@ -1,0 +1,14 @@
+40k37e54-fix15 - RemotePairing altIRK migration
+
+- Based on 40k37e54-fix14.
+- Keeps pymobiledevice3 11.16.2 runtime and version-dependent Admin tunnel routing.
+- Before Admin tunnel startup, checks ~/.pymobiledevice3/remote_<UDID>.plist for altIRK.
+- If missing: backs up old record, removes only that Apple/pymobiledevice3 record, runs `lockdown remotepairing --pair` over the already trusted USB connection, verifies a new altIRK record, then re-runs the Userspace-RSD preflight.
+- On pair failure, missing altIRK, Userspace-RSD regression, or exception: restores the previous record.
+- No FRITZ!/ARP/network-source enrichment is used.
+- Explicit Admin-RSD inventory remains pinned; no silent Userspace fallback.
+
+Expected first migration markers:
+PAIR_RECORD_BACKUP -> PAIR_RECORD_REFRESH_START -> PAIR_RECORD_REFRESH_RESULT altIRK=true -> REMOTEPAIRING_READY -> PAIR_RECORD_MIGRATED -> TRANSPORT_VERSION_SELECT -> START_REQUEST -> ENDPOINT_RECEIVED -> VERIFY ok=true -> ACTIVE
+
+On later starts the migration should reduce to PAIR_RECORD_CURRENT altIRK=true.

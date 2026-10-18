@@ -1,0 +1,4 @@
+Build: 40k36p6l
+Basis: 40k36p6k
+Schwerpunkt: WinRM Java-21/JAXB-Kompatibilität
+Hinweis: Maven-Build in der Arbeitsumgebung nicht ausführbar, weil Maven Central dort nicht erreichbar war.

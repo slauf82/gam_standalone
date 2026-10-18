@@ -1,0 +1,4 @@
+Build: 40k36p6x
+Basis: 40k36p6w
+Änderung: LAN-fähige automatische API-Basis für Frontend-Login und alle API-Aufrufe.
+Hinweis: Frontend-Dist wurde in dieser Umgebung nicht neu gebaut; npm dev/build auf dem Zielsystem verwendet die korrigierte Source-Datei.

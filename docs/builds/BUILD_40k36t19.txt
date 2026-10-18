@@ -1,0 +1,6 @@
+40k36t19 – Linux-Inventarisierung Null-/Fehlerhärtung
+
+- LinuxInventoryDiscoveryService.run(...) liefert nie mehr null, sondern bei fehlender Ausgabe einen leeren String.
+- commandExists(...) ist zusätzlich null-sicher.
+- Ein Fehler der lokalen Linux-Inventarisierung beendet nicht mehr die bereits laufende Netzwerk-Discovery; der Fehler wird als Diagnose protokolliert und der Scan fortgesetzt.
+- Basis: 40k36t18; dessen Schema-/Setup-/Demo-Import-Härtungen bleiben erhalten.

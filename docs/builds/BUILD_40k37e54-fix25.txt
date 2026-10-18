@@ -1,0 +1,13 @@
+40k37e54-fix25 - Admin-Tunnel UI Stop-Flackern beseitigt
+
+Basis: 40k37e54-fix24
+
+Aenderung:
+- Keine funktionale Aenderung an Admin-Tunnel, Supervisor, Stop oder Apple-Inventarisierung.
+- Frontend blockiert Status-Polls waehrend Start/Stop ueber eine synchrone Busy-Ref.
+- Bereits laufende Status-Polls werden ueber eine Epoch invalidiert und duerfen keinen veralteten ACTIVE-Zustand mehr in die UI schreiben.
+- Nach Abschluss der Aktion wird der Backendstatus einmal frisch synchronisiert.
+
+Sollverhalten beim Stop:
+rot "Admin-Tunnel beenden" -> normal "Admin-Tunnel ..." -> normal "Admin-Tunnel starten"
+Kein erneutes rotes "Admin-Tunnel beenden" zwischen Busy und finalem Start-Zustand.

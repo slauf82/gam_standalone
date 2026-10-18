@@ -1,0 +1,10 @@
+40k37e33-fix7
+================
+Compile-Fix fuer 40k37e33-fix6.
+
+Behoben:
+- sechs fehlerhaft erzeugte Java-Stringverkettungen im direkten pymobiledevice3-IP-Probe.
+- Backslash + physischer Zeilenumbruch wurde zu gueltigen Java-Strings mit \n korrigiert.
+- Funktionsname und Diagnose-Labels auf fix7 aktualisiert.
+
+Funktionalitaet gegenueber fix6 unveraendert.

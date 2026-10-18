@@ -1,0 +1,3 @@
+GAM 2.1.0 – Schritt 40k36q9
+Basis: 40k36q8
+Schwerpunkte: synchronisierter macOS-SSH-Status, strukturierte Softwarepersistenz, Softwareupdates unter Software.

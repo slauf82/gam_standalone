@@ -1,0 +1,5 @@
+40k37e25-fix3
+
+Compile-Fix fuer fix2: tryCoreDeviceRsdViaWifiTunnelE25 ist nun eine Instanzmethode, weil appleTrace eine Instanzmethode ist.
+Die beiden beanstandeten appleTrace-Aufrufe bei den ehemaligen Zeilen 4765/4776 bleiben dadurch unveraendert nutzbar.
+Funktional bleibt fix2 erhalten: WLAN start-tunnel --script-mode -> RSD HOST/PORT -> remote rsd-info --rsd HOST PORT.

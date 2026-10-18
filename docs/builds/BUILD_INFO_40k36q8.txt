@@ -1,0 +1,3 @@
+GAM 2.1.0 – Schritt 40k36q8
+Basis: 40k36q7
+Automatische, browserlose Gerätescans und vollständige Inventarisierungen für Windows Aufgabenplanung, cron/systemd und launchd.

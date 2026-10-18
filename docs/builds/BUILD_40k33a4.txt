@@ -1,0 +1,21 @@
+GAM 2.1.0 – Schritt 40k33a4
+
+Fix: plattformübergreifende Datenbank-Ersteinrichtung vor dem Backend-Start
+
+Linux:
+- neue scripts/ensure-gam-database.sh
+- erkennt bzw. installiert MariaDB auf Debian/Ubuntu, Fedora/RHEL und Arch
+- startet und aktiviert den Datenbankdienst
+- richtet einen lokalen GAM-Datenbankbenutzer ein, ohne das Root-Socket-Login zu verändern
+- schreibt lokale Zugangsdaten in .env und lädt sie vor dem Backend-Start neu
+- importiert bei leerer Datenbank automatisch database/gam_v2_1_0_preview2_empty.sql
+- überschreibt niemals eine bereits eingerichtete Datenbank
+- Backend startet nur nach erfolgreicher Datenbankvalidierung
+
+Windows:
+- vorhandene portable MariaDB-Ersteinrichtung erweitert
+- importiert bei leerer Datenbank automatisch die leere GAM-Datenbankstruktur
+- fehlender DB-Client, Verbindungsfehler oder Importfehler stoppen den Backend-Start sauber
+- .env wird nach der Datenbankeinrichtung erneut geladen
+
+Damit startet Spring Boot auf einer frischen Installation nicht mehr vor MariaDB.

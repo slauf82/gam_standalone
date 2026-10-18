@@ -1,0 +1,13 @@
+GAM Standalone 2.1.0 – Schritt 40k37e11
+
+Basis: 40k37e9
+
+Apple WLAN / Bonjour Diagnosehaertung:
+- behaelt idevice_id -n und dns-sd.exe Browse/Resolve als read-only Diagnose
+- fuehrt zusaetzlich eine direkte JVM-mDNS-Abfrage fuer _apple-mobdev2._tcp.local aus
+- fragt pro aktivem, multicastfaehigem Netzwerkinterface getrennt IPv4 (224.0.0.251) und IPv6 (ff02::fb) ab
+- setzt bei der DNS-Frage das QU-Bit, damit Antworten auf den ephemeren Diagnose-Port zurueckkommen koennen
+- protokolliert Interfaceindex, Interface, lokale Adresse, Ziel, Antwortanzahl und begrenzte DNS-Rohdaten
+- keine Aenderung am iPad, Pairing oder Windows-Netzwerk
+- wireless_lockdown bleibt read-only; der native e4-Schreibpfad bleibt entfernt
+- NetTCPIP-CIM-/IPv6-Haertung aus e8 und DNS-SD-Diagnose aus e9 bleiben erhalten

@@ -1,0 +1,46 @@
+GAM Standalone v2.1.0 – Schritt 40k37d20
+=========================================
+
+Ziel
+----
+Härtung des produktiven iOS/iPadOS-Inventarpfads auf Basis von 40k37d19.
+Die in d19 erreichte schnelle Normalzeit bleibt unangetastet; zusätzliche
+Fallbacks werden nur bei realen Fehlern aktiviert.
+
+Änderungen
+----------
+1. Lockdown-Basisinventar ist jetzt der harte Mindestanker.
+   - Gerät nach Erkennung abgezogen / Trust verloren / ideviceinfo ohne Daten:
+     Inventarisierung endet sauber vor optionalen Folgeabfragen.
+   - Keine leeren Teilbestände werden als erfolgreiche Vollinventarisierung gespeichert.
+
+2. Health/Diagnose und Software sind voneinander unabhängige Zusatzbereiche.
+   - Fehler in einem Zusatzbereich zerstören nicht das bereits erfolgreiche Kerninventar.
+   - Erfolgreiches Kerninventar + fehlerhafter Zusatzbereich => TEILERFOLG.
+   - Fehlerzustände werden in Ergebnis, Protokoll und Performanceprofil sichtbar.
+
+3. Softwarebestand gegen transiente Leer-/Fehlerläufe gehärtet.
+   - latestSoftwareInventory wird nur mit einem erfolgreichen, nicht-leeren App-Ergebnis aktualisiert.
+   - Bei transientem Fehler bleibt der vorher gültige App-Bestand im Prozess erhalten.
+
+4. Persistenzfehler werden explizit als SPEICHERFEHLER gemeldet.
+   - Gelesene Daten werden nicht fälschlich als erfolgreich gespeichert ausgegeben.
+
+5. Registrierungseintrag kann defensiv leer sein.
+   - null aus dem Repository führt nicht mehr zu einem NullPointerException-Pfad.
+
+6. Performance-/Diagnosedateien auf d20 umgestellt:
+   - logs/apple-mobile-performance-d20.json
+   - logs/apple-mobile-performance-d20.txt
+   - logs/apple-mobile-inventory-d20.json
+   - logs/apple-mobile-software-d20.json
+   - logs/apple-mobile-installation-proxy-native-d20.json/.zip
+
+Unverändert
+-----------
+- Direkter read-only installation_proxy-Hauptpfad.
+- USER/SYSTEM ausschließlich aus Apple ApplicationType, keine Heuristik.
+- d19-Performancefix: keine unnötige Windows-PnP-Abfrage nach erfolgreicher UDID-Erkennung.
+- Windows-PnP bleibt Fallback, wenn idevice_id keine UDID liefert.
+- GasGauge/Diagnosepfad bleibt erhalten.
+- Kein Jailbreak erforderlich.

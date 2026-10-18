@@ -1,0 +1,15 @@
+GAM 2.0 Standalone – Schritt 40k37a6
+
+Ziel: iPad-Basiserkennung stabilisieren und Apple-PnP strikt von fremden Windows-Geräten trennen.
+
+Änderungen:
+- Windows Apple-Mobile Seed ausschließlich USB\\VID_05AC (Apple USB Vendor ID).
+- Zweite Java-Sicherheitsgrenze verwirft alles außer USB\\VID_05AC, unabhängig von PowerShell.
+- ACPI-/SWD-/WAN-/Mainboard-Geräte können dadurch nicht mehr als iOS/iPadOS registriert werden.
+- ContainerId bleibt primäre Gruppierung für Basisgerät + MI_00 + MI_01.
+- Physischer USB-Basisknoten ohne MI_xx wird bei gleicher Gruppe als Identity Anchor bevorzugt.
+- MI_00/iPad bleibt vor PTP/Multiplexor bevorzugt, falls kein Basisknoten nutzbar ist.
+- ProductType/Modellgeneration bleibt reine Anreicherung; ohne belastbaren ProductType bleibt mindestens iPad.
+- Keine PID-basierte Generationserfindung.
+
+Original-Roadmap 40k37a bleibt bis zum erfolgreichen Realhardwaretest offen.

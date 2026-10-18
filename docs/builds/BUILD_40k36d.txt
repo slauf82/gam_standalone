@@ -1,0 +1,20 @@
+GAM 2.0 – Schritt 40k36d
+
+macOS-Netzwerkinventarisierung über SSH
+
+Neu:
+- vollständige Liste sichtbarer Netzwerkinterfaces
+- Status, MAC-Adresse, IPv4, IPv6, MTU und Medium pro Interface
+- Standardgateway und verwendetes Standardinterface
+- DNS-Server und DNS-Suchdomänen
+- Computername, lokaler Bonjour-Hostname und konfigurierter Hostname
+- Proxy-Konfiguration für HTTP, HTTPS und SOCKS
+- WLAN-Interface, Ein/Aus-Status, verbundenes Netzwerk, MAC-Adresse, Standards, Kanal und Sicherheit
+- Bluetooth-Status, Chipsatz, Adresse, Core-Spezifikation und verbundene Geräte
+- Bonjour/mDNS-Status und .local-Hostname
+- lauschende TCP-Ports, konfigurierte VPN-Dienste und Anzahl der ARP-Nachbarn
+
+Hinweise:
+- Die Erfassung ist schreibgeschützt.
+- Nicht verfügbare oder durch macOS-Datenschutz eingeschränkte Informationen brechen die übrige Inventarisierung nicht ab.
+- Die gemeinsame SSH-Konfiguration für Linux und macOS bleibt unverändert.

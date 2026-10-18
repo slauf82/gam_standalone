@@ -1,0 +1,10 @@
+40k36p1 – Erkennungsquellen auslagern
+
+- Betriebssystem- und Mobilgerätequellen als eigener zentraler Bereich
+- Windows lokal und Windows WinRM getrennt dargestellt
+- Linux lokal und Linux SSH getrennt dargestellt
+- macOS lokal und macOS SSH vorbereitet und getrennt dargestellt
+- Android USB/WLAN als ADB-Erkennungsquelle dargestellt
+- allgemeine Netzwerkquellen von Plattformverbindungen getrennt
+- WinRM-Konfiguration eindeutig als Erkennungsquelle bezeichnet
+- Inventarisierungsbereiche sprachlich auf Inventarisierung fokussiert

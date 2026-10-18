@@ -4,8 +4,8 @@
 
 Schritt 36b stabilisiert den erfolgreichen Schritt 36a:
 
-- `start-backend.bat` soll PiperTTS automatisch vorbereiten, falls Piper oder die Standardstimmen fehlen.
-- Der normale Start soll weiterhin nur aus `start-backend.bat` und `start-frontend.bat` bestehen.
+- `start_backend.bat` soll PiperTTS automatisch vorbereiten, falls Piper oder die Standardstimmen fehlen.
+- Der normale Start soll weiterhin nur aus `start_backend.bat` und `start_frontend.bat` bestehen.
 - Produktbeschreibungen werden live in die gewählte Rechnungs-/PDF-Sprache übersetzt.
 - Produktbeschreibungsübersetzungen werden **nicht** in die Datenbank geschrieben.
 
@@ -13,7 +13,7 @@ Schritt 36b stabilisiert den erfolgreichen Schritt 36a:
 
 ### Backend-Start
 
-`start-backend.bat` prüft jetzt vor dem Backend-Build:
+`start_backend.bat` prüft jetzt vor dem Backend-Build:
 
 - `tts/piper/piper.exe`
 - `tts/piper/voices/de_DE-thorsten-medium.onnx`
@@ -49,9 +49,9 @@ Wichtig:
 ## Testplan
 
 1. Frische Installation ohne `tts/piper` starten.
-2. `start-backend.bat` ausführen.
+2. `start_backend.bat` ausführen.
 3. Prüfen, ob Piper automatisch installiert wird.
-4. `start-frontend.bat` ausführen.
+4. `start_frontend.bat` ausführen.
 5. Rechnungsprogramm öffnen.
 6. PDF-/Rechnungssprache auf Italienisch oder Polnisch stellen.
 7. Produktbeschreibung in Editor/Vorschau prüfen.

@@ -1,0 +1,49 @@
+GAM Standalone v2.1.0 – Schritt 40k34q
+Windows-Ferninventarisierung über WinRM
+
+WICHTIG: Der urspruengliche Auftragstext ging faelschlich davon aus, dass
+bereits eine Remote-Windows-Inventarisierung existiert. Gruendliche Analyse
+des GESAMTEN Backends bestaetigte: es gab nur einen als "geplant, noch
+nicht implementiert" gekennzeichneten Platzhalter (PLAN_WINRM/PLAN_WMI).
+WindowsInventoryDiscoveryService inventarisiert nachweislich nur den
+lokalen GAM-Host. Dieser Befund wurde dem Benutzer mitgeteilt; die
+vorliegende, ergaenzte Auftragsfassung bestaetigt ihn und beauftragt die
+echte Neuentwicklung einer Windows-Ferninventarisierung.
+
+Umgesetzt:
+- Neue Klasse WindowsRemoteInventoryService - WinRM (Windows Remote
+  Management, Microsofts Standardprotokoll) ueber die etablierte,
+  quelloffene Bibliothek winrm4j (io.cloudsoft.windows:winrm4j 0.12.3,
+  echte veroeffentlichte Version). Maven-Koordinaten und API per Websuche
+  verifiziert, nicht nur aus dem Training uebernommen.
+- EIN PowerShell-Sammelskript (Get-CimInstance) pro Lauf liefert den
+  gesamten geforderten Umfang (Computername, OS/Edition/Version/Build/
+  Architektur, Hersteller/Modell, BIOS, CPU, RAM, Laufwerke, Netzwerkkarten,
+  installierte Software, angemeldete Benutzer) - ein Remote-Aufruf statt
+  vieler Einzelabfragen.
+- Architektur bewusst analog zu LinuxNetworkDiscoveryService: gemeinsamer,
+  ueber setting()-Konvention (Property/Env-Variable) konfigurierter Zugang,
+  Rueckgabeform Optional<DiscoveredDevice> identisch zu inspectSingle() bei
+  Linux - ermoeglicht dieselbe recordDiscoveryHit()-Uebernahmelogik.
+- Dispatcher-Integration: DeviceIdentityService.dispatchWindowsPlatform
+  Inventory() unterscheidet ueber das bestehende "windows-local:"-Praefix
+  zwischen lokal (ruft die UNVERAENDERTE bestehende
+  WindowsInventoryDiscoveryService.scan() erneut auf) und entfernt (neue
+  WinRM-Inventarisierung) - keine zweite Dispatcher-Logik, keine neuen
+  Endpunkte (dieselben aus 40k34p).
+- Statusverwaltung/Historie: dieselbe, bereits bestehende
+  PlatformInventoryRepository aus 40k34p - keine zweite Statusverwaltung.
+- Kein Frontend-Code geaendert - die bestehende PlatformInventorySection
+  behandelt Windows bereits generisch.
+
+Ehrlich benannte Einschraenkungen: kein echter Build und kein Test gegen
+ein echtes Windows-System moeglich (kein Windows-Host, kein WinRM-Server
+in dieser Sandbox erreichbar); winrm4j-Abhaengigkeitskonflikte mit
+bestehenden Bibliotheken (z.B. Apache HttpClient) koennen nicht
+ausgeschlossen werden; nur NTLM-Authentifizierung (kein Kerberos); nur
+Software-Anzahl+Beispiele statt Vollliste; HTTPS-Zertifikatspruefung
+bewusst deaktiviert (uebliche interne selbstsignierte Zertifikate).
+
+Ausfuehrliche Dokumentation: docs/40k34q-windows-plattformintegration.md
+
+Basis: 40k34p

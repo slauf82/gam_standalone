@@ -7,10 +7,10 @@ Aus der bisherigen Alpha-Gesamtstruktur wird eine Version, die lokal kontrollier
 ## Neu in dieser Version
 
 - Startskripte für Backend und Frontend:
-  - `start-backend.bat`
-  - `start-backend.sh`
-  - `start-frontend.bat`
-  - `start-frontend.sh`
+  - `start_backend.bat`
+  - `start_backend.sh`
+  - `start_frontend.bat`
+  - `start_frontend.sh`
 - `.env.example` auf Projektebene
 - lokales Spring-Profil `application-local.yml`
 - Logdatei unter `./logs/gam-backend.log`

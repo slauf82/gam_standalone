@@ -1,0 +1,26 @@
+GAM Standalone v2.1.0 - Schritt 40k37d9
+
+Apple Mobile / iOS normal (USB) - ideviceinstaller CLI-Kompatibilitaetsadapter + erster echter App-Scan
+
+Aenderungen:
+- ideviceinstaller-CLI wird ueber --help erkannt, statt anhand einer angenommenen Versionssyntax aufgerufen.
+- Unterstuetzung fuer Legacy-CLI 1.1.x: -l -o list_user/list_system -o xml.
+- Unterstuetzung fuer moderne CLI: list --user/--system --xml.
+- Bei eindeutigem Syntaxfehler automatischer einmaliger Fallback auf die jeweils andere CLI-Generation.
+- erfolgreiche Fallback-Erkennung wird fuer den laufenden Prozess gemerkt.
+- App-XML bleibt rein lesend und wird weiterhin mit dem abgesicherten Apple-Plist-Parser verarbeitet.
+- beobachtete XML-Attributnamen werden als D9 SOFTWARE ATTRIBUTE KEYS protokolliert, damit reale, von Apple exponierte Metadaten fuer Quelle/Größe spaeter ohne Raten ausgewertet werden koennen.
+- Apple-Debugpraefixe des aktuellen Pfades auf D9 vereinheitlicht.
+- Snapshot: logs/apple-mobile-inventory-d9.json.
+- vorhandene d8-MSYS2-Runtime, Mirror-Failover, SHA-256-Pruefung und Paketcache bleiben unveraendert erhalten.
+
+Erwarteter d9-Test:
+- D9 IDEVICEINSTALLER CLI sollte auf dem aktuell verwendeten MSYS2-Paket LEGACY_1_1 erkennen.
+- USER-Aufruf: -u <UDID> -l -o list_user -o xml.
+- SYSTEM-Aufruf: -u <UDID> -l -o list_system -o xml.
+- danach sollten D9 SOFTWARE USER/SYSTEM und D9 SOFTWARE SUMMARY erstmals echte App-Zahlen zeigen.
+
+Fuer die Auswertung benoetigt:
+1. logs/apple-mobile-debug.log
+2. logs/apple-mobile-inventory-d9.json
+Optional: Screenshot/Text der Software-Ansicht, falls die Apps im Backend erkannt werden, aber in der UI nicht korrekt gruppiert erscheinen.

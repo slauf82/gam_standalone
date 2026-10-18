@@ -1,0 +1,11 @@
+GAM 2.1.0 Preview 3 – Schritt 40k35
+
+- Benutzerzentrierter Workflow „Gerät finden → verbinden → inventarisieren → verwalten“
+- Android-, Windows- und Linux-Aktionen nach Benutzeraufgaben benannt
+- Technische Protokolle ADB, SSH und WinRM bleiben Implementierungsdetails
+- Discovery-Liveverarbeitung unabhängig von requestAnimationFrame
+- Gerätesuche läuft serverseitig bei Browsertab-Wechsel weiter
+- Aufgelaufene Ereignisse werden aus der bestehenden Discovery-Session nachgezogen
+
+Build-Hinweis:
+Ein vollständiger Frontend-Build war in der isolierten Umgebung nicht möglich, weil node_modules nicht im Archiv enthalten waren und die benötigten Pakete offline nicht im npm-Cache lagen.

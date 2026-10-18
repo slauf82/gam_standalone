@@ -1,0 +1,12 @@
+GAM Standalone v2.1.0 – Schritt 40k37e19
+
+CoreDevice Native-Process Timeout + Bootstrap-Schrittdiagnose
+
+- Basis: 40k37e17.
+- Native uv/pymobiledevice3-Prozesse werden ohne Start-Process -Wait gestartet und aktiv ueberwacht.
+- START/PID/END/EXIT/TIMEOUT/Dauer fuer jeden nativen Schritt.
+- Harte Teil-Timeouts: uv/version 15 s, uv tool install 90 s, pymobiledevice3/version 15 s, remote browse 20 s.
+- Bei Timeout wird der komplette Prozessbaum beendet; Exitcode 124 kennzeichnet Timeout.
+- Java-Aussentimeout auf 125 s reduziert; finally gibt den CoreDevice-Guard weiterhin garantiert frei.
+- Isolierte GAM-Runtime, gepinnte Versionen und bisherige Apple-Diagnosen bleiben erhalten.
+- Keine Pairing-/Tunnel-/Geraetemutation durch diesen Diagnoseschritt.

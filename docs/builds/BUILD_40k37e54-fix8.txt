@@ -1,0 +1,10 @@
+40k37e54-fix8 – Apple Admin-Tunnel separat per Windows-UAC
+
+- GAM selbst bleibt im normalen Benutzerkontext.
+- Ein dynamischer Button im Apple-WLAN-Bereich zeigt „Admin-Tunnel starten“ bzw. bei aktivem Tunnel rot „Admin-Tunnel beenden“.
+- Start hebt ausschließlich einen PowerShell-Wrapper/Tunnelprozess per UAC an.
+- GAM liest den vom privilegierten pymobiledevice3-Prozess gelieferten RSD-Endpunkt, verifiziert ihn mit rsd-info und merkt PID/UDID/Endpoint.
+- Bei aktivem explizitem Admin-Tunnel bevorzugt die Apple-WLAN-Inventarisierung exakt diesen RSD-Endpunkt vor Userspace-RSD.
+- Admin-RSD schreibt eigene Apps/Battery/System-Snapshots, damit der Datenumfang gegen Userspace-RSD und USB verglichen werden kann.
+- Stop beendet nur den zugehörigen Tunnelprozess und setzt den Zustand zurück.
+- Keine Änderung an Discovery-Quellen, Merge, Provenienz oder Apple-Identitätsregeln.

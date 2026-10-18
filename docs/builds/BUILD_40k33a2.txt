@@ -1,0 +1,12 @@
+GAM 2.1.0 – Schritt 40k33a2
+
+Linux-Neueinrichtung: Maven-Download korrigiert
+
+Behoben:
+- Das Verzeichnis .mvn wird vor dem Download automatisch angelegt.
+- Unvollstaendige alte Maven-ZIP-Dateien werden vor einem erneuten Download entfernt.
+- curl meldet HTTP-Fehler nun als Fehler (-fL).
+- Download, unzip und das entpackte Maven-Binary werden validiert.
+- Nach erfolgreicher Einrichtung wird das Download-Archiv entfernt.
+
+Ausgangspunkt: 40k33a1

@@ -1,0 +1,36 @@
+GAM Standalone v2.1.0 – Schritt 40k34c
+Android-App- und Paket-Inventarisierung
+
+Schwerpunkte:
+- Erweitert den BESTEHENDEN AndroidAdbService (kein zweiter ADB-Service) um
+  Paketlisten (pm list packages -3/-s/-d/-e), EINEN Sammelaufruf "dumpsys
+  package" fuer alle Pakete statt eines Prozesses je App, sowie Launcher-/
+  Browser-Standardrollenerkennung ueber "cmd package resolve-activity".
+  Insgesamt 6 Prozessaufrufe je Lauf, unabhaengig von der Paketanzahl.
+- Neuer AndroidAppInventoryParser: gezieltes Parsen der dumpsys-Sammelausgabe
+  je Paketblock, keine vollstaendige Rohausgabe wird gespeichert.
+- Neues, generisch benanntes Datenmodell (Geraet -> Inventarlauf ->
+  App-Datensaetze): gam_discovery_installed_apps (aktueller Stand) und
+  gam_discovery_app_inventory_runs (Lauf-Historie/Status) - additive
+  Migration, kein bestehendes Schema veraendert. Bestehendes DeviceSoftware
+  (workplace-gebunden) wurde geprueft, passt aber strukturell nicht.
+- Vollstaendigkeitsstatus je Lauf (VOLLSTAENDIG/TEILWEISE/...) - nur ein
+  vollstaendiger Lauf markiert nicht mehr gesehene Apps als entfernt.
+- Aenderungserkennung (neu/entfernt/aktualisiert) je Lauf.
+- App-Label bewusst als "nicht verfuegbar" gekennzeichnet statt erfunden
+  (keine APK-Analyse, kein APK-Download, wie im Auftrag verlangt).
+- Rollen bewusst auf Launcher/Standardbrowser beschraenkt (klare technische
+  Intent-Aufloesung) - weitergehende Rollen ehrlich als zurueckgestellt
+  dokumentiert statt spekulativ geraten.
+- Neue, eigenstaendige "Installierte Apps"-Sektion im Frontend (Filter,
+  Suche, Sortierung, Detailzeile), erweitert die bestehende Android-
+  Inventarisierung, ersetzt sie nicht.
+- Apps erscheinen NIE als eigenstaendige Geraete und werden NICHT als
+  Merge-Signal genutzt - die Schutzregeln aus 40k33b10 bleiben unveraendert.
+- Kein echter Build/keine echten Geraetetests moeglich - ausdruecklich
+  benannt; stattdessen Klammernbilanzen, Signaturabgleich, TypeScript-
+  Syntax-Checks durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34c-android-app-inventarisierung.md
+
+Basis: 40k34b

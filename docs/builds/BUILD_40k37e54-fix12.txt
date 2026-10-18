@@ -1,0 +1,22 @@
+GAM 2.0 – 40k37e54-fix12
+
+Ziel
+- Windows Admin-RSD auf Basis der tatsaechlich installierten pymobiledevice3-CLI.
+- Inventarisierung bleibt vom Tunnelstart getrennt.
+
+Aenderungen
+- fix11 Read-only RemotePairing-Preflight bleibt erhalten.
+- Privilegierter Tunnel wieder ueber `remote start-tunnel` statt `lockdown start-tunnel --mobdev2`.
+- Exakter Aufruf: `remote start-tunnel --connection-type wifi --udid <UDID> --protocol tcp --script-mode`.
+- Nur der Tunnelprozess wird per Windows-UAC erhoeht; GAM bleibt nicht erhoeht.
+- RSD-Endpunkt wird weiterhin mit `remote rsd-info --rsd HOST PORT` verifiziert.
+- Erst nach erfolgreicher Verifikation wird ADMIN_RSD ACTIVE.
+- Explizit aktiver Admin-RSD bleibt fuer die anschliessende normale Inventarisierung verbindlich; kein stiller Userspace-Fallback.
+- Atomic Start-Guard verhindert ueberlappende/doppelte UAC-Startanforderungen.
+- Persistente Lifecycle-Diagnose aus fix10/fix11 bleibt erhalten.
+
+Erwartete Marker
+PRECHECK -> REMOTEPAIRING_READY -> START_REQUEST -> UAC_LAUNCH_RETURNED -> PMD3_STARTED -> ENDPOINT_RECEIVED -> VERIFY(ok=true) -> ACTIVE
+
+Hinweis
+Die eigentliche Inventarisierung wird nach ACTIVE weiterhin separat ueber den normalen GAM-Inventarisierungsweg gestartet.

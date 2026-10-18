@@ -1,0 +1,9 @@
+40k37e56c-fix23
+Scope: macOS database underlay only.
+- GAM remains on MariaDB 10.11; MySQL fallback disabled.
+- Existing Homebrew/MariaDB path unchanged.
+- Without Homebrew: MacPorts 2.12.6 + binary-only (-b) MariaDB 10.11/server install.
+- No source compilation; aborts instead of requiring full Xcode when a binary archive is unavailable.
+- x86_64 and arm64 use the same MacPorts binary-only path.
+- No GAM schema compatibility changes.
+- No Java/backend/frontend/Apple/inventory/merge source changes.

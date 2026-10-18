@@ -1,0 +1,14 @@
+40k37e56c-fix35 - macOS PMD3 restore before RemotePairing
+
+Ziel:
+- Den bereits bewaehrten GAM-eigenen macOS-pymobiledevice3-Unterbau wiederherstellen,
+  falls der aktuelle Versions-/Overlay-Root die macos-venv nicht mehr enthaelt.
+- Danach den seit fix33 korrekt erreichten Pairing-Pfad unveraendert bis RemotePairing fortsetzen.
+
+Aenderung:
+- completeUsbAndRemotePairingE56cFix8() ruft bei fehlendem PMD3 auf macOS den bereits
+  vorhandenen macOsToolchainE56()-Bootstrap auf.
+- Anschliessend wird PMD3 erneut ueber den gemeinsamen Resolver aufgeloest.
+- Neue Marker: MACOS_PMD3_RESTORE_START, MACOS_PMD3_RESTORE_RESULT,
+  USB_REMOTE_PAIR_RUNTIME (fix35).
+- USERSPACE_RSD, USB-Inventarisierung, Apps, Identitaet/Merge, Linux und Windows unveraendert.

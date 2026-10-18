@@ -1,0 +1,17 @@
+40k37e33-fix3 – Apple/CoreDevice WLAN-IP-Diagnose
+
+Ziel:
+- WLAN-IP ausschliesslich aus dem funktionierenden Apple-/iPad-/CoreDevice-Pfad ermitteln.
+- Keine FRITZ!Box-, ARP-/Neighbor- oder andere Fremdquelle als Ersatz verwenden.
+
+Aenderung:
+- Nach bewiesenem USERSPACE_RSD-Zugriff startet GAM einen read-only Diagnosehelfer aus der
+  isolierten GAM-pymobiledevice3-Runtime.
+- Der Helfer oeffnet UserspaceRsdTunnel fuer exakt die bekannte UDID und gibt nur
+  Endpoint-/peer_info-Metadaten mit Netzwerkbezug aus.
+- Pairing-Secrets/Zertifikate werden nicht ausgegeben.
+- Noch keine heuristische IP-Uebernahme: erst wenn der Test den Apple-Ursprung eines Feldes
+  eindeutig zeigt, wird dieses Feld im Folgefix produktiv gemappt.
+
+Erwarteter Marker:
+[DISCOVERY][40k37e33-fix3][APPLE_MOBILE][WLAN][COREDEVICE_IP_DIAG]

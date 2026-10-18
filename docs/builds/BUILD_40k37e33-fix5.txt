@@ -1,0 +1,18 @@
+GAM Standalone 2.1.0 - Schritt 40k37e33-fix5
+
+Ziel
+- Physische WLAN-IP des iPads direkt aus dem Apple/CoreDevice-Verbindungsweg ermitteln.
+- Keine FRITZ!Box-, ARP-/Neighbor- oder sonstige Fremdquelle verwenden.
+
+Aenderungen
+- Isolierter CoreDevice-Diagnoseprozess beobachtet socket.connect/connect_ex beim Aufbau des USERSPACE_RSD-Tunnels.
+- COREDEVICE_PHYSICAL_PEER protokolliert die von pymobiledevice3 selbst verwendeten Gegenstellen.
+- Nur RFC1918-IPv4-Gegenstellen (10/8, 172.16/12, 192.168/16) koennen als Apple-WLAN-IP bestaetigt werden.
+- localhost und virtuelle RSD-fdxx:: Endpunkte werden niemals als WLAN-IP uebernommen.
+- Bei bestaetigter physischer Apple-Gegenstelle wird COREDEVICE_CONFIRMED_WIFI_IP gesetzt; die bestehende WLAN-Discovery emittiert diese IP danach normal in GAM.
+- fix4 Netzwerkfeld-Diagnose bleibt erhalten.
+
+Erwartete Marker
+[40k37e33-fix5][APPLE_MOBILE][WLAN][COREDEVICE_PHYSICAL_PEER]
+[40k37e33-fix5][APPLE_MOBILE][WLAN][IP_CONFIRMED] ... origin=APPLE_COREDEVICE_PHYSICAL_SOCKET
+[40k37e33-fix5][APPLE_MOBILE][EMIT_SOURCE] source=WLAN ... address=192.168.x.x

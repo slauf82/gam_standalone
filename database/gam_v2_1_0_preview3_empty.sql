@@ -2318,7 +2318,12 @@ CREATE TABLE IF NOT EXISTS `gam_discovery_registered_devices` (
   `last_seen_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `detection_count` bigint(20) NOT NULL DEFAULT 0,
   `last_scan_hits` int(11) NOT NULL DEFAULT 0,
-  `manual_device_type` tinyint(1) NOT NULL DEFAULT 0
+  `manual_device_type` tinyint(1) NOT NULL DEFAULT 0,
+  `pending_discovery_protocol` longtext DEFAULT NULL,
+  `manual_name` tinyint(1) NOT NULL DEFAULT 0,
+  `adb_host` varchar(255) DEFAULT NULL,
+  `adb_port` int(11) DEFAULT NULL,
+  `adb_last_connected_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 CREATE TABLE IF NOT EXISTS `gam_fritzbox_sources` (

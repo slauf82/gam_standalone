@@ -1,0 +1,20 @@
+GAM Standalone v2.1.0 – Schritt 40k37e25
+
+Ziel
+- Nach der in e24 erfolgreichen WLAN-Erkennung erstmals echte CoreDevice/RSD-Daten ueber WLAN lesen.
+
+Aenderungen
+- e24 RemotePairing-Bootstrap bleibt erhalten.
+- Bei sichtbarem WiFi-Geraet ruft GAM `pymobiledevice3 remote rsd-info --udid <UDID>` auf.
+- pymobiledevice3 baut dabei auf Windows den Userspace-CoreDevice-Tunnel auf und liest reale RSD-Informationen.
+- Der Datenzugriff wird sowohl bei bereits vorhandenem Pairing als auch direkt nach dem e24-USB-Bootstrap getestet.
+- 60-s-Timeout verhindert blockierende Discovery-Laeufe.
+- Keine Trust-Umgehung; RemotePairing bleibt Voraussetzung.
+
+Neue Marker
+- COREDEVICE_RSD_INFO_HELP
+- COREDEVICE_RSD_INFO
+- COREDEVICE_RSD_INFO_DIRECT
+
+Erfolgskriterium
+- processOk=true, semanticOk=true und echte RSD-/Peer-/Service-Daten.

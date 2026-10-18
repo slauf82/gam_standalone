@@ -1,0 +1,13 @@
+GAM Standalone v2.1.0 – Schritt 40k37e31
+
+Ziel:
+- bestaetigten CoreDevice/USERSPACE_RSD-WLAN-Treffer als eigene Discovery-Quelle in den Multiquellen-Geraetemanager geben
+- USB und WLAN erhalten unterschiedliche Discovery-IDs
+- keine Apple-Sonderregel fuer automatisches Zusammenfuehren; bestehender allgemeiner Benutzer-/Merge-Workflow bleibt unveraendert
+
+Aenderung:
+- USB: apple-mobile-usb:<UDID>
+- WLAN: apple-mobile-wlan:<UDID>
+- WLAN-Protokoll: Apple Mobile / CoreDevice / USERSPACE_RSD / WLAN
+- neuer Logmarker APPLE_MOBILE/EMIT_SOURCE zeigt die an den Discovery-Datenstrom uebergebene Quelle
+- e30 CoreDevice-Cache, Apps, Batterie und Systeminventarisierung bleiben erhalten

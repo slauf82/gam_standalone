@@ -1,0 +1,11 @@
+GAM Standalone 2.1.0 – Schritt 40k37e11
+
+Apple WLAN / passiver mDNS-Mitschnitt
+- baut direkt auf 40k37e10 auf
+- aktive idevice_id-, Bonjour/DNS-SD- und rohe mDNS-Diagnose bleibt erhalten
+- zusaetzlicher rein lesender passiver UDP/5353-Mitschnitt pro aktivem multicast-faehigem Interface
+- IPv4 224.0.0.251:5353; IPv6 ff02::fb:5353 mit explizitem Interface-Scope
+- protokolliert Quelle, Port, Paketgroesse, DNS-Zusammenfassung und Apple-_apple-mobdev2-Treffer
+- passiver Pfad sendet keine Pakete und veraendert keine Apple-/Windows-Konfiguration
+
+Ziel: feststellen, ob iPad-mDNS am Windows-PC ankommt oder schon zwischen WLAN/LAN verloren geht.

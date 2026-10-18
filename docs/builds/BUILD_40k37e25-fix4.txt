@@ -1,0 +1,19 @@
+40k37e25-fix4 – CoreDevice Userspace-RSD unter Windows
+
+Ausgangslage:
+- fix3 kompiliert und erreicht remote start-tunnel -t wifi.
+- Auf dem Windows-Testsystem meldet pymobiledevice3 dabei trotz als Administrator laufendem GAM: "This command requires admin privileges".
+
+Aenderung:
+- Bevorzugter RSD-Pfad ist jetzt der von pymobiledevice3 11.12.5 fuer Windows/iOS 17.4+ vorgesehene Userspace-Tunnel.
+- Kein TUN/TAP-Kerneladapter und kein separater privilegierter Tunnelprozess fuer den Primaerpfad.
+- Read-only Realzugriff: `apps install-record com.apple.Preferences --userspace`.
+- Erfolg dieses Befehls beweist echten CoreDevice/RSD-Datenzugriff und selektiert USERSPACE_RSD fuer die bekannte Apple-UDID.
+- Der bisherige privilegierte `remote start-tunnel -t wifi` bleibt nur als Fallback/Diagnose bestehen.
+- RemotePairing/USB-Bootstrap, Duplicate-Suppression und bestehende Apple-Diagnostik bleiben unveraendert.
+
+Neue Marker:
+- COREDEVICE_USERSPACE_HELP
+- COREDEVICE_USERSPACE_RSD_PROBE
+- COREDEVICE_USERSPACE_RSD_ERROR
+- COREDEVICE_TRANSPORT_SELECTED transport=USERSPACE_RSD

@@ -1,0 +1,17 @@
+GAM 2.0 – 40k37e54-fix17
+
+Ziel:
+- Windows Admin-RSD fuer iOS/iPadOS 17.4+ ueber Lockdown/mobdev2.
+- Keine altIRK-/RemotePairing-Migration im Adminpfad.
+- pymobiledevice3 11.16.3 in der isolierten GAM-Runtime.
+
+Aenderungen:
+- Pin 11.16.2 -> 11.16.3 (Bootstrap und Runtime-Selbstinstallation).
+- Adminstart veraendert RemotePairing-Records nicht mehr.
+- Bestehender read-only Userspace-RSD-Preflight bleibt als Sicherheitscheck.
+- Moderner Tunnelbefehl bleibt: lockdown start-tunnel --mobdev2 --udid <UDID> --script-mode.
+- Expliziter Admin-RSD bleibt gepinnt; kein stiller Userspace-Fallback bei Admin-Inventarisierung.
+- Duplicate-start guard, UAC-Lifecycle, Endpoint-Verifikation und Stop-Logik bleiben erhalten.
+
+Hinweis:
+- Der historische fix16-Migrationshelfer bleibt im Quelltext unaufgerufen, damit kein Pairing-Zustand mehr veraendert wird.

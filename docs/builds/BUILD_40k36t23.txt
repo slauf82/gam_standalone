@@ -1,0 +1,14 @@
+40k36t23 – vollständige Demo-Dump-Strukturprüfung und Reparatur
+
+- Auf Basis von 40k36t22.
+- Beschädigten Aufgaben-Bereich um ID 1854/1855 vollständig korrigiert; fehlenden anonymisierten Demo-Datensatz 1855 sauber ergänzt.
+- Zusätzlich unabhängige Beschädigung im Einweisungsblock bei ID 161 repariert.
+- Die drei anonymisierten Demo-Dump-Varianten wurden konsistent korrigiert.
+- Der tatsächlich vom First-Run verwendete 46/47-MB-Dump wurde danach vollständig strukturell geprüft:
+  * 541 vollständige SQL-Statements
+  * keine offene einfache oder doppelte Quote
+  * keine unbekannten/orphaned Statement-Fragmente
+  * 477 INSERT-Statements vollständig erkannt
+  * bei jedem INSERT stimmt die Wertezahl jedes Tupels mit der Spaltenzahl überein
+  * größtes Statement ca. 190 KiB und damit deutlich unter der 8-MiB-Sicherheitsgrenze
+- Streaming-Importer und alle Härtungen aus t22/t21 bleiben unverändert erhalten.

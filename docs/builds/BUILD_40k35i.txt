@@ -1,0 +1,8 @@
+40k35i – Linux-SSH-Verbindungsworkflow
+
+- zentrale DB-Konfiguration für SSH
+- Schlüssel- oder Passwortauthentifizierung
+- Verbindungstest mit verständlicher Diagnose
+- Konfigurationsdialog mit zentraler Aufmerksamkeit-/Scroll-Navigation
+- dieselben Einstellungen für Test, Inventarisierung und spätere macOS-Anbindung
+- Umgebungsvariablen bleiben als Fallback erhalten

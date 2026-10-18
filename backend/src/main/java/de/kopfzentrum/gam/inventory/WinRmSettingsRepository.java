@@ -23,6 +23,14 @@ public class WinRmSettingsRepository {
 
   @PostConstruct void init() {
     jdbc.execute("CREATE TABLE IF NOT EXISTS gam_winrm_settings (id INT NOT NULL, enabled BOOLEAN NOT NULL DEFAULT FALSE, username VARCHAR(255) NOT NULL DEFAULT '', password TEXT NULL, port INT NOT NULL DEFAULT 5985, use_https BOOLEAN NOT NULL DEFAULT FALSE, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, updated_by VARCHAR(255) NULL, PRIMARY KEY(id))");
+    // 40k36t16: bestehende/teilmigrierte Tabellen vor der ersten Verwendung vervollständigen.
+    jdbc.execute("ALTER TABLE gam_winrm_settings ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT FALSE");
+    jdbc.execute("ALTER TABLE gam_winrm_settings ADD COLUMN IF NOT EXISTS username VARCHAR(255) NOT NULL DEFAULT ''");
+    jdbc.execute("ALTER TABLE gam_winrm_settings ADD COLUMN IF NOT EXISTS password TEXT NULL");
+    jdbc.execute("ALTER TABLE gam_winrm_settings ADD COLUMN IF NOT EXISTS port INT NOT NULL DEFAULT 5985");
+    jdbc.execute("ALTER TABLE gam_winrm_settings ADD COLUMN IF NOT EXISTS use_https BOOLEAN NOT NULL DEFAULT FALSE");
+    jdbc.execute("ALTER TABLE gam_winrm_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+    jdbc.execute("ALTER TABLE gam_winrm_settings ADD COLUMN IF NOT EXISTS updated_by VARCHAR(255) NULL");
     jdbc.update("INSERT IGNORE INTO gam_winrm_settings(id,enabled,username,password,port,use_https,updated_by) VALUES(1,FALSE,'','',5985,FALSE,'system')");
   }
 

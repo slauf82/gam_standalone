@@ -1,0 +1,38 @@
+GAM Standalone v2.1.0 – Schritt 40k37e33
+
+Apple-CoreDevice-Konsolidierung / Cleanup nach erfolgreicher e31-WLAN-Integration.
+
+Ziel
+- Keine neue Apple-Funktionalitaet.
+- Bewiesenen USB/WLAN-CoreDevice-Pfad beibehalten und historischen Forschungs-/Diagnosecode entfernen.
+- Sinnvolle Fallbacks, Recovery, strikte Identitaetspruefung und den normalen GAM-Merge erhalten.
+
+Bereinigt
+- historische gezielte mDNS-/TCP-/CIM-/Bonjour-Forschungsdiagnosen aus dem Apple-WLAN-Pfad entfernt
+- redundante CLI-Help-Probes fuer die fest gepinnte pymobiledevice3-11.12.5-Runtime entfernt
+- bekannte --userspace-Kommandos fuer Apps/Batterie/System werden direkt ausgefuehrt
+- alte e29-Dateinamen der CoreDevice-Snapshots auf neutrale produktive Namen umgestellt
+- veraltete Live-Log-Versionsmarker auf 40k37e33 vereinheitlicht
+
+Bewusst beibehalten
+- klassische idevice_id -n Netzwerkerkennung als kompatibler Fallback
+- USB RemotePairing-Bootstrap
+- USERSPACE_RSD als bevorzugter moderner WLAN-Transport
+- start-tunnel/RSD als nachgelagerter Fallback, falls USERSPACE_RSD fehlschlaegt
+- Duplicate-/Parallel-Guards
+- strikte UDID-/Identitaetspruefung
+- getrennte USB-/WLAN-Quellobjekte und normaler GAM Discovery-Merge
+- Basis-, App-, Batterie- und Systeminventarisierung
+
+Erwartete Kernmarker
+- [APPLE_MOBILE][USB] RESULT: devices=1
+- [APPLE_MOBILE][WLAN][COREDEVICE_TRANSPORT_SELECTED] ... transport=USERSPACE_RSD
+- [APPLE_MOBILE][WLAN][COREDEVICE_EXTENDED_INVENTORY] ...
+- [APPLE_MOBILE][WLAN] RESULT: devices=1
+- [APPLE_MOBILE][EMIT_SOURCE] source=USB ...
+- [APPLE_MOBILE][EMIT_SOURCE] source=WLAN ...
+- [DISCOVERY-MERGE] apple-mobile-wlan:... -> apple-mobile-usb:...
+
+Build-Hinweis
+- Maven ist in der Erstellungsumgebung nicht lokal verfuegbar; der Wrapper kann ohne Netzwerk Maven nicht nachladen.
+- javac-Parserlauf erreicht erwartungsgemaess nur fehlende externe Abhaengigkeiten (SLF4J/Spring/Jackson), keine Syntaxfehler vor diesen Meldungen.

@@ -1,0 +1,14 @@
+GAM Standalone v2.1.0 – Schritt 40k37e11
+Apple WLAN Crashfix / sichere Diagnose
+
+Ausgangspunkt: 40k37e4.
+- e4-In-Process-JNA-Schreibzugriff auf Apple wireless_lockdown entfernt.
+- Kein lockdownd_set_value/EnableWifiConnections im e5-Laufzeitpfad.
+- WLAN-Erkennung nur über isolierte CLI-Prozesse: idevice_id -n / ideviceinfo -n.
+- Bei leerem WLAN-Ergebnis read-only Diagnose von USB-Kandidaten und wireless_lockdown.
+- E5-Tracekette für Netzwerk-Enumeration und Filterung.
+- USB/WLAN bleiben getrennte Discovery-Treffer; allgemeine GAM-Merge-Pipeline bleibt.
+- d20-d22 Härtung und d21 Identitätsschutz bleiben erhalten.
+- Keine USER/SYSTEM- oder Quellenheuristiken.
+
+Testziel: APPLE_MOBILE-Phase muss ohne nativen JVM-Absturz vollständig durchlaufen.

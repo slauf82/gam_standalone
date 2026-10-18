@@ -1,0 +1,45 @@
+GAM Standalone v2.1.0 – Schritt 40k34p (Plattforminventarisierung)
+Plattforminventarisierung manuell starten / Nachinventarisierung
+
+Hinweis: Diese Ticket-Nummerierung (40k34p) kollidiert im Namen mit einem
+frueheren, inhaltlich anderen Schritt ("Zentraler DeviceClassifier",
+docs/40k34p-zentraler-device-classifier.md) - beide Dokumentationsdateien
+liegen unter unterschiedlichen Dateinamen nebeneinander, keine Ueberschneidung.
+
+Schwerpunkte:
+- Vorab geprueft: Android (System+Apps) und Linux (inspectSingle/Cache)
+  hatten bereits Erst-Inventarisierungslogik, aber KEINE zentrale,
+  plattformuebergreifende Statusverwaltung - nur eine Android-App-
+  spezifische Lauf-Historie existierte. refreshLinuxCache() invalidierte
+  bisher nur den Cache, ohne sofort neu zu inventarisieren. Windows lief
+  ausschliesslich lokal auf dem GAM-Host, kein Fernzugriff moeglich.
+  macOS/iOS: keine Logik vorhanden.
+- Neue, EINE generische Tabelle gam_discovery_platform_inventory_runs
+  (PlatformInventoryRepository) fuer ALLE Plattformen - keine zweite
+  Statusverwaltung, keine Parallelstruktur zur bestehenden Android-App-
+  Historie.
+- Zentraler Dispatch DeviceIdentityService.runPlatformInventory(): Android
+  ruft die bestehenden runAndroidInventory()/runAndroidAppInventory() auf;
+  Linux ruft jetzt zusaetzlich sofort inspectSingle() auf (echte,
+  unmittelbare Nachinventarisierung statt nur Cache-Invalidierung);
+  Windows/macOS/iOS liefern ehrlich NICHT_UNTERSTUETZT statt vorgetaeuschter
+  Ergebnisse.
+- runAllKnownPlatforms() ermittelt anhand bereits gespeicherter Hinweise,
+  welche Plattformen passen, und ueberspringt den Rest.
+- Neue Endpunkte (gleiche Berechtigung/Principal-Muster wie bestehende
+  Android-Endpunkte): POST platform-inventory, POST platform-inventory/all,
+  GET platform-inventory/status.
+- Frontend: neue PlatformInventorySection im bestehenden Geraeteidentitaets-
+  Dialog (fuer JEDES Geraet sichtbar, nicht auf Android beschraenkt) -
+  Status-Tabelle je Plattform + Einzel-/Alle-Buttons.
+- Ehrlich benannte, bewusste Vereinfachungen: kein neues Kontextmenue-
+  Widget (stattdessen eine direkt sichtbare Tabelle - funktional
+  gleichwertig, barrierearmer); keine gezielte Einzelgeraet-Re-Discovery
+  (weiterhin nur ueber die vollstaendige Netzwerksuche).
+- Kein echter Build moeglich - ausdruecklich benannt. Record-Konstruktor-
+  Check (0 Abweichungen), TypeScript-Syntax-Check (0 Diagnosen)
+  durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34p-plattforminventarisierung.md
+
+Basis: 40k34o (letzter zuvor gelieferter Android-Schritt)

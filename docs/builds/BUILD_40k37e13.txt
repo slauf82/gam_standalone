@@ -1,0 +1,12 @@
+GAM Standalone v2.1.0 – Schritt 40k37e14
+
+Apple WLAN: Bonjour-SRV Endpoint-Diagnose
+- baut direkt auf 40k37e12 auf
+- wertet den erfolgreichen _apple-mobdev2._tcp Bonjour-Resolve aus
+- uebernimmt Host und dynamischen Port aus Bonjour/SRV (nicht fest 62078)
+- loest den Bonjour-Hostnamen in konkrete Adressen auf
+- prueft TCP auf dem tatsaechlich publizierten Bonjour-Port
+- extrahiert die WLAN-MAC aus dem Apple-Service-Instanznamen und prueft die Windows-Nachbartabelle damit
+- bestehende e12 Diagnose bleibt als Vergleich erhalten
+- keine Pairing-/Apple-/Windows-Konfiguration wird veraendert
+- doppelte Apple-Discovery bleibt absichtlich bestehen, bis WLAN produktiv funktioniert

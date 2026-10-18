@@ -1,0 +1,23 @@
+GAM Standalone v2.1.0 – Schritt 40k33b7
+Geräteintegritätsprüfung und Wiederauftrennung
+
+Schwerpunkte:
+- Neue Integritaetspruefung fuer bereits zusammengefuehrte Geraete: 🟢 Integritaet
+  hoch / 🟡 Bitte ueberpruefen / 🔴 Integritaetswarnung, mit Begruendungen,
+  Zeitpunkt der letzten Pruefung und tabellarischer Gegenueberstellung bei
+  roten Konflikten (IP, MAC, Seriennummer, Hostname, Betriebssystem, Hardware,
+  Discoveryquellen, Rollen, Zeitpunkt). Wiederverwendet ausschliesslich die
+  bestehende Kandidaten-/Konflikterkennung - keine zweite Bewertungslogik.
+- Zusaetzliches Signal: SSH-Hostkey-Abgleich bei Linux-Geraeten mit
+  konfiguriertem SSH-Zugang.
+- Neuer geführter Dialog "Wiederauftrennung": zeigt Aliase und (ab 40k33b7
+  gesicherte) fruehere Zusammenfuehrungs-Schnappschuesse, legt nach
+  Bestaetigung ein neues, eigenstaendiges Geraet ueber die bestehende
+  register()-Methode an. Das Ursprungsgeraet bleibt vollstaendig erhalten -
+  keine automatische Entscheidung, keine Informationsverluste.
+- Migration: additive Erweiterung des bestehenden Merge-Logs (action,
+  source_snapshot) - keine neue Tabelle, keine zweite Mergeverwaltung.
+
+Ausfuehrliche Dokumentation: docs/40k33b7-geraeteintegritaetspruefung.md
+
+Basis: 40k33b6b

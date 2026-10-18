@@ -1,0 +1,9 @@
+40k37e25-fix2 - CoreDevice WLAN Tunnel -> RSD first real data access
+
+- Keeps fix1 duplicate-attempt suppression.
+- Fixes pymobiledevice3 11.12.5 rsd-info invocation: --udid is not supported.
+- Starts `remote start-tunnel -t wifi --udid <UDID> --script-mode` as a controlled long-lived child process.
+- Parses the RSD HOST/PORT emitted by script-mode while the tunnel remains alive.
+- Calls `remote rsd-info --rsd HOST PORT` against that live tunnel.
+- Stops the diagnostic tunnel after the RSD query.
+- Selects CoreDevice transport on semantic RSD success and stops alternative Apple paths.

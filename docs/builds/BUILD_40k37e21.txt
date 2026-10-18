@@ -1,0 +1,11 @@
+GAM Standalone v2.1.0 – Schritt 40k37e21
+
+Apple iOS/iPadOS USB/WLAN – CoreDevice remote-browse CLI-Fix
+
+- Basis: 40k37e20.
+- GAM-eigene uv/pymobiledevice3-Runtime bleibt unverändert und isoliert.
+- `pymobiledevice3 -h` bleibt als read-only Runtime-Probe erhalten.
+- Korrektur fuer pymobiledevice3 11.12.5: `--no-color` ist eine globale Option und steht jetzt vor dem Unterbefehl.
+- Aufruf jetzt: `pymobiledevice3 --no-color remote browse`.
+- Keine Pairing-, Tunnel- oder Geraeteaenderung; remote browse bleibt read-only.
+- Parallel-Guard bleibt aktiv; die zweite parallele Apple-Variante bleibt temporaer deaktiviert.

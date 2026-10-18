@@ -1,0 +1,10 @@
+40k36t31 – explizites WinRM-Zielvertrauen fuer Workgroup/IP/HTTP
+
+- baut auf 40k36t30 auf
+- neue persistente Tabelle gam_winrm_trusted_targets
+- nur konkrete Hosts/IPs; keine Wildcards oder Listen
+- HTTP-Zugriff ueber IP wird vor WinRM-Test/Inventarisierung explizit freigegeben
+- UI-Aktionen: Diesem WinRM-Ziel vertrauen / Vertrauen entziehen
+- WinRM-Diagnose zeigt trustRequired und trustedTarget
+- MetricsHub 2.1.00 bleibt Standard; t29/winrm4j bleibt Legacy-Fallback
+- keine automatische Windows-Registry-/TrustedHosts-Aenderung durch GAM

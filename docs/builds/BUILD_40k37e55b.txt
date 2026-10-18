@@ -1,0 +1,11 @@
+40k37e55b – Linux Apple-Geräteunterstützung
+
+Basis: 40k37e55a.
+- Linux-Gegenstück für „Apple-Geräteunterstützung einrichten“.
+- Prüft USB-Sichtbarkeit via lsusb (Apple Vendor 05ac), usbmuxd, systemd und idevice_id.
+- Ubuntu/Debian: usbutils kann bei Bedarf über apt/pkexec ergänzt werden.
+- usbmuxd wird bei Bedarf via polkit/systemd initialisiert; GAM selbst bleibt unprivilegiert.
+- udev-Regeln werden neu geladen/getriggert, ohne eigene Regeln oder Gruppen zu verändern.
+- Unterscheidet Kernel/USB sichtbar vs. usbmuxd/Lockdown noch nicht sichtbar.
+- Linux benötigt keinen separaten Apple-Windows-Treiber.
+- mvnw und *.sh müssen im Release-ZIP ausführbar sein.

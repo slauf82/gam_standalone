@@ -1,0 +1,11 @@
+40k37e55 – Apple iOS/iPadOS Linux, erster Plattform-Build
+Basis: 40k37e54-fix25 (eingefrorener Windows-Referenzstand)
+
+- Windows-Verhalten unveraendert.
+- Linux resolveTool() nutzt weiterhin ausschliesslich systemweite Werkzeuge via PATH.
+- Apple-Toolchain-Install-Endpunkt erkennt unter Linux Distribution/Paketmanager.
+- Keine Windows-EXE-/ZIP-Installation unter Linux.
+- Fehlende libimobiledevice/usbmuxd/ideviceinstaller-Komponenten werden als PACKAGE_MANAGER_REQUIRED gemeldet.
+- Installationsvorschlag fuer pacman/apt/dnf/zypper/yum/apk wird erzeugt; keine stille sudo/polkit-Aktion.
+- Vorhandene Linux-Systemtoolchain wird als SYSTEM_PACKAGES_READY erkannt.
+- Dieser erste Build dient bewusst zuerst der Toolchain-/USB-Basisvalidierung; CoreDevice-RSD-Linux folgt nach realem Testergebnis.

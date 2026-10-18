@@ -1,0 +1,8 @@
+40k37e54-fix23
+- Basis: funktional bestaetigtes fix21.
+- Bewaehrte fix21 ACTIVE-Erkennung bleibt RSD-endpoint-basiert; keine ProcessHandle-Pflicht fuer erhoehte Prozesse.
+- Admin-Wrapper schreibt Heartbeat; Frontend fragt Status alle 2 Sekunden ab.
+- Erst ein spaeter (>5 s) veralteter Heartbeat markiert LOST; dadurch keine Regression direkt nach START/ACTIVE.
+- Stop beendet bevorzugt den erhoehten Supervisor-Prozessbaum via UAC/taskkill und bestaetigt ENDPOINT_DEAD vor STOPPED.
+- Bei nicht bestaetigtem Stop bleibt Status ACTIVE statt einen Stop vorzutäuschen.
+- Cache-Transportmarker bei bestaetigter Admin-Inventarisierung auf ADMIN_RSD korrigiert.

@@ -1,0 +1,19 @@
+GAM Standalone 2.1.0 – Schritt 40k37d4
+
+Basis: 40k37d3
+
+Schwerpunkt:
+- Maximale normale lokale iOS/iPadOS-Inventarisierung ohne Jailbreak weiter ausbauen.
+- Neuer rein lesender Extended-/Health-Probelauf über idevicediagnostics / diagnostics_relay.
+- Prüft Diagnostics All, WiFi, GasGauge und NAND.
+- Prüft zusätzlich IORegistry-Einträge ASPStorage, AppleSmartBattery und AppleARMPMUCharger.
+- Alle tatsächlich gelieferten skalaren Werte werden hierarchisch erfasst; fehlende Bereiche werden nicht erfunden.
+- Vollständiger d4-Probelauf wird zusätzlich als logs/apple-mobile-inventory-d4.json abgelegt.
+- Interessante Storage-/Health-/Kapazitäts-/Wear-/Cycle-/Temperatur-/Spannungswerte werden, soweit geliefert, in die Apple-Gerätedetails übernommen.
+- Neue Diagnose-API POST /inventory/discovery/apple-mobile/extended-inventory-probe mit optionaler UDID.
+- App-Inventarisierung bleibt Software -> Quelle -> Softwareliste.
+- Wenn ideviceinstaller fehlt, versucht GAM jetzt automatisch ausschließlich das offizielle libimobiledevice/ideviceinstaller Release 1.2.0 für Windows x64 als getrennte GAM-lokale Ergänzung zu installieren.
+- Die Ergänzung liegt separat unter tools/libimobiledevice/ideviceinstaller, damit DLLs der funktionierenden Basis-Toolchain nicht überschrieben werden.
+- Downloadquelle, Assettyp und optionaler GitHub-SHA256-Digest werden validiert; keine inoffiziellen Binary-Quellen.
+- 40k37e (WLAN) und 40k37f (Jailbreak/erweiterter Zugriff) werden nicht vorweggenommen.
+- BUILD-Dateien bleiben ausschließlich unter docs/builds/.

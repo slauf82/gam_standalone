@@ -1,0 +1,23 @@
+GAM Standalone 2.1.0 – Schritt 40k37d5
+
+Basis: 40k37d4
+
+Schwerpunkt:
+- Apple-PLIST-Parser korrigiert: die von Apple regulaer ausgegebene DOCTYPE-Deklaration wird akzeptiert, externe DTD-/Entity-Aufloesung bleibt aus Sicherheitsgruenden vollstaendig gesperrt.
+- Der sichere PLIST-Parser gilt sowohl fuer diagnostics_relay (All/WiFi/GasGauge/NAND) als auch fuer ideviceinstaller/XML.
+- Vollstaendige erfolgreiche Diagnose-/Health-Rohdaten werden nach logs/apple-mobile-inventory-d5.json geschrieben.
+- Diagnostics/All, Diagnostics/WiFi, Diagnostics/GasGauge und Diagnostics/NAND bleiben rein lesend und werden auf dem echten Geraet erneut vollstaendig ausgewertet.
+- Bekannte IORegistry-Probes bleiben zunaechst erhalten, damit reale Verfuegbarkeit weiter messbar bleibt.
+- Windows-ideviceinstaller: neuer MSYS2-Weg statt des in d4 erfolglosen Upstream-Release-Asset-Versuchs.
+- Gepinnte MSYS2-Pakete fuer ideviceinstaller 1.1.1-2 mit SHA-256-Pruefung.
+- UCRT64 wird zuerst versucht; MINGW64 ist ein gezielter Kompatibilitaetsfallback.
+- Entpackung erfolgt ueber Windows tar.exe direkt aus .pkg.tar.zst; keine globale MSYS2-Installation und keine PATH-Aenderung.
+- ideviceinstaller wird weiterhin isoliert unter tools/libimobiledevice/ideviceinstaller abgelegt.
+- DLLs aus der bewaehrten GAM-Basistoolchain werden nur in den isolierten ideviceinstaller-Ordner kopiert; die c48-Basistoolchain selbst wird nicht veraendert.
+- Nach Installation erfolgt ein Start-/Smoke-Test von ideviceinstaller; bei Fehlschlag wird der konkrete Loader-/Runtimefehler in apple-mobile-debug.log protokolliert.
+- App-Inventarisierung und Softwarequellen-Struktur aus d2/d3 bleiben unveraendert: Software -> Quelle -> Softwareliste; Herkunft wird nur aus tatsaechlich gelieferten Apple-Attributen uebernommen.
+- Noch kein WLAN-Inventarisierungspfad (40k37e) und kein Jailbreakpfad (40k37f).
+
+MSYS2-Pins:
+- UCRT64 ideviceinstaller 1.1.1-2 SHA-256 9316914c76a8cdfb33ac8d1e8bf63dfbe5db9a1badbe035459abc6365e4bb509
+- MINGW64 ideviceinstaller 1.1.1-2 SHA-256 678dab509923c65d12d54d5395bc77e8b0ec2c62ab6a0fa9110fdc4fd2787973

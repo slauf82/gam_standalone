@@ -1,0 +1,12 @@
+GAM Standalone v2.1.0 - Schritt 40k37b1
+
+Basis: 40k37b (Trust/Pairing) auf 40k37a9 (erfolgreiche 1x-iPad-Discovery)
+
+Aenderungen:
+- GAM-lokale Windows-Toolchain unter tools/libimobiledevice wird BEVORZUGT erkannt.
+- Start aus GAM-Root oder backend/ funktioniert durch robuste Elternpfad-Suche.
+- Optional wird tools/libimobiledevice/bin ebenfalls erkannt.
+- PATH/MSYS2/Scoop/Program Files bleiben nur Kompatibilitaets-Fallbacks.
+- Kein UAC und keine PATH-Aenderung fuer die GAM-lokale Toolchain erforderlich.
+- README fuer die portable libimobiledevice-Ablage hinzugefuegt.
+- Trust/Pairing-Logik aus 40k37b bleibt unveraendert.

@@ -1,0 +1,49 @@
+GAM Standalone v2.1.0 – Schritt 40k37d16
+==========================================
+
+Ziel
+----
+40k37d16 ueberfuehrt den in d15 real bestaetigten direkten installation_proxy-Zugriff
+in den regulaeren Produktionspfad fuer iOS/iPadOS-Softwareinventarisierung.
+
+Realer Befund aus 40k37d15
+---------------------------
+- Normales, nicht modifiziertes iPad; kein Jailbreak erforderlich.
+- Frisch eingerichtetes iPad: 0 User-Apps war korrekt.
+- Nach Installation von TestFlight und App Store Connect: 2 Benutzer-Apps erkannt.
+- USER/SYSTEM stammt ausschliesslich aus Apples ApplicationType; keine Heuristik aus
+  Bundle-ID, Pfad, Signatur oder Name.
+- Gesamtdauer im realen Test sank von ca. 160 s (d14) auf ca. 31 s (d15).
+
+Aenderungen in d16
+------------------
+1. installation_proxy bleibt regulaerer Hauptpfad.
+2. Normaler Softwareabruf nutzt zuerst nur noch BROWSE_ANY_EXPLICIT:
+   - ApplicationType=Any
+   - explizite Rueckgabeattribute fuer Bundle-ID, Name, Version, ApplicationType,
+     Pfad und Container
+   - dieser Pfad hat im d15-Test System- und User-Apps korrekt geliefert.
+3. Nur wenn BROWSE_ANY_EXPLICIT keine Apps liefert, startet GAM automatisch die
+   erweiterten read-only-Fallbacks:
+   - BROWSE_USER_EXPLICIT
+   - LOOKUP_ALL
+   - BROWSE_NULL_OPTIONS
+4. ideviceinstaller bleibt nachgeordnetes Diagnose-/Fallbackwerkzeug und ist keine
+   Voraussetzung fuer die normale App-Inventarisierung.
+5. Diagnose-Rohdaten werden weiterhin automatisch als fertige ZIP direkt unter
+   logs abgelegt:
+   - apple-mobile-installation-proxy-native-d16.zip
+   - apple-mobile-installation-proxy-cli-d16.zip nur bei CLI-Fallback
+6. Lesbare Zusammenfassungen:
+   - logs/apple-mobile-inventory-d16.json
+   - logs/apple-mobile-software-d16.json
+   - logs/apple-mobile-installation-proxy-native-d16.json
+7. Bestehende d11-Runtime/Caches werden nicht ersetzt oder geloescht.
+8. Alle nativen installation_proxy-Aufrufe bleiben read-only.
+
+Erwartung
+---------
+Im normalen Erfolgsfall ist fuer die App-Liste nur noch ein nativer
+installation_proxy-Aufruf erforderlich. USER/SYSTEM wird weiterhin nur ueber von
+Apple gelieferte Typinformationen gesetzt. Bei einem ungewoehnlichen leeren Ergebnis
+bleiben die breiteren Diagnosen automatisch verfuegbar.

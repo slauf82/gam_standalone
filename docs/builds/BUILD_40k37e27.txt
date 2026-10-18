@@ -1,0 +1,20 @@
+40k37e27 – CoreDevice-Basisinventarisierung ohne Developer Mode
+
+Basis: 40k37e26.
+
+Aenderungen:
+- Entfernt den in e26 ungeeigneten `developer dvt device-information --userspace`-Pfad aus der normalen Basisinventarisierung.
+- Basisdaten werden aus `peerDeviceInfo.deviceKVSData` des normalen RemotePairing-Handshakes gewonnen.
+- Kein Developer Mode, kein DeveloperDiskImage und keine PersonalizedImage als Voraussetzung.
+- RemotePairing-Basisdaten werden beim USB-Pair-Bootstrap gecacht.
+- Bei bereits bestehendem RemotePairing (DIRECT) wird der read-only Handshake ohne `--pair` nachgelesen, sofern ueber Lockdown verfuegbar.
+- Produktive Felder/Diagnose: DeviceName, DeviceClass, HumanReadableProductVersionString/ProductVersion, BuildVersion, HardwareModel/HWModelStr, CPUArchitecture.
+- Snapshot: logs/apple-mobile-coredevice-e27-basis.json.
+- USERSPACE_RSD bleibt der ausgewaehlte Transport; alternative Apple-Pfade werden nach erfolgreichem Realzugriff weiter gestoppt.
+
+Erwartete Erfolgsmarker:
+COREDEVICE_USERSPACE_RSD_PROBE semanticOk=true
+COREDEVICE_REMOTEPAIRING_BASIS_CAPTURED
+COREDEVICE_BASIS_INVENTORY semanticOk=true ... developerModeRequired=false
+COREDEVICE_BASIS_SNAPSHOT
+COREDEVICE_TRANSPORT_SELECTED ... transport=USERSPACE_RSD, basisInventoryOk=true

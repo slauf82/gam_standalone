@@ -1,0 +1,10 @@
+40k37e56c-fix32 - Routing-/Build-Tracer
+
+Ziel: erste Abweichung zwischen installiertem Quellcode und tatsaechlich laufendem GAM finden.
+- Frontend-Pairingrequest traegt ?gamTrace=fix32.
+- Pair-Controller loggt FIX32 CONTROLLER ACTIVE inklusive CodeSource.
+- AppleMobileDiscoveryService.pair() loggt FIX32 SERVICE PAIR ENTRY inklusive CodeSource.
+- start_frontend.sh prueft den fix32-Frontendmarker und gibt den tatsaechlichen Vite-Root aus.
+- start_backend.sh prueft vor dem Build den Quellmarker und nach clean package die Marker in den kompilierten .class-Dateien.
+- Bei fehlendem Marker wird der Start absichtlich abgebrochen statt mit einem alten Stand weiterzulaufen.
+- Apple-Inventarisierung, USERSPACE_RSD, Apps, Identitaet/Merge und Plattform-Unterbau bleiben unveraendert.

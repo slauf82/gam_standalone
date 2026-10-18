@@ -15,6 +15,10 @@ public class BuiltinDiscoverySettingsRepository {
   @PostConstruct void init(){
     jdbc.execute("CREATE TABLE IF NOT EXISTS gam_discovery_builtin_sources (source_key VARCHAR(80) NOT NULL, enabled BOOLEAN NOT NULL DEFAULT TRUE, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, updated_by VARCHAR(255) NULL, PRIMARY KEY(source_key))");
     for(var entry: defaults().entrySet()) jdbc.update("INSERT IGNORE INTO gam_discovery_builtin_sources(source_key,enabled,updated_by) VALUES(?,?, 'system')",entry.getKey(),entry.getValue());
+    // 40k37e2: iOS/iPadOS sind wie Android Gerätequellen über USB/WLAN, nicht "lokal".
+    // Bestehende Schalterwerte aus älteren Builds werden einmalig auf die neuen Schlüssel übernommen.
+    jdbc.update("INSERT IGNORE INTO gam_discovery_builtin_sources(source_key,enabled,updated_by) SELECT 'IOS_USB_WLAN',enabled,'40k37e2-migration' FROM gam_discovery_builtin_sources WHERE source_key='IOS_LOCAL'");
+    jdbc.update("INSERT IGNORE INTO gam_discovery_builtin_sources(source_key,enabled,updated_by) SELECT 'IPADOS_USB_WLAN',enabled,'40k37e2-migration' FROM gam_discovery_builtin_sources WHERE source_key='IPADOS_LOCAL'");
   }
 
   public Map<String,Boolean> load(){
@@ -34,6 +38,7 @@ public class BuiltinDiscoverySettingsRepository {
   private static Map<String,Boolean> defaults(){
     LinkedHashMap<String,Boolean> m=new LinkedHashMap<>();
     m.put("LOCAL_ADAPTERS",true);
+    m.put("BROWSER_CLIENT",true);
     m.put("NEIGHBOR",true);
     m.put("ACTIVE_SCAN",true);
     m.put("SSDP",true);
@@ -43,6 +48,16 @@ public class BuiltinDiscoverySettingsRepository {
     m.put("WINDOWS_INVENTORY",true);
     m.put("LINUX_INVENTORY",true);
     m.put("LINUX_NETWORK",true);
+    m.put("MACOS_LOCAL",true);
+    m.put("MACOS_SSH",true);
+    m.put("IOS_USB_WLAN",true);
+    m.put("IPADOS_USB_WLAN",true);
+    // 40k37e52: Transportwege fuer Mobilgeraete getrennt und persistent schaltbar.
+    // Beide sind standardmaessig aktiv; die Plattformschalter bleiben als uebergeordnete Quelle bestehen.
+    m.put("APPLE_USB",true);
+    m.put("APPLE_WLAN",true);
+    m.put("ANDROID_USB",true);
+    m.put("ANDROID_WLAN",true);
     m.put("NETBIOS",true);
     m.put("DHCP_LEASES",true);
     m.put("USB_LOCAL",false);

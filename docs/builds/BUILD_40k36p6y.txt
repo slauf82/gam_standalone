@@ -1,0 +1,3 @@
+Build: 40k36p6y
+Basis: 40k36p6x
+Schwerpunkt: Betriebssystemzugänge – Verbindungstestergebnisse direkt am Zugang anzeigen.

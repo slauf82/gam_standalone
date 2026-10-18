@@ -26,6 +26,9 @@ public final class DeviceIdentityConfidenceEngine {
   public Assessment assess(DiscoveredDevice left, DiscoveredDevice right, Settings settings) {
     if (settings == null) settings = DEFAULT_SETTINGS;
     if (left == null || right == null) return new Assessment(0, 0, Decision.DISTINCT, List.of(), List.of());
+    // fix40: nachgewiesene unterschiedliche Mobilplattformen sind NIE dieselbe Identitaet.
+    if (incompatibleMobilePlatforms(left, right))
+      return new Assessment(0, 0, Decision.DISTINCT, List.of(), List.of("Android und iOS/iPadOS sind unterschiedliche Plattformen"));
 
     int score = 0;
     List<String> matches = new ArrayList<>();
@@ -74,8 +77,14 @@ public final class DeviceIdentityConfidenceEngine {
     // erreichbar gemeldeten Geräten sind ein eigenständiger, deutlich sichtbarer
     // Konflikt (z.B. Geräte-Umzug ins falsche Segment) - rein zusätzliche
     // Erkennung, keine Änderung der bestehenden Schwellenwerte/Gewichtung.
-    else if (both(leftIp, rightIp) && isReachable(left.status()) && isReachable(right.status())) {
+    else if (both(leftIp, rightIp) && isReachable(left.status()) && isReachable(right.status())
+             && !isLoopbackIp(leftIp) && !isLoopbackIp(rightIp)) {
       conflicts.add("abweichende IP-Adresse bei gleichzeitig erreichbaren Geräten");
+    } else if (both(leftIp,rightIp) && (isLoopbackIp(leftIp) || isLoopbackIp(rightIp))) {
+      // 40k36r2: Loopback ist kein zweiter Netzwerkweg und kein physischer Gegenbeweis.
+      // Ein Browser-Treffer auf localhost darf einen ansonsten plausiblen Merge mit
+      // dem Backend-Rechner nicht als IP-Konflikt blockieren.
+      matches.add("Backend-Loopback");
     }
 
     String leftManufacturer = normalizeText(left.manufacturer());
@@ -88,6 +97,66 @@ public final class DeviceIdentityConfidenceEngine {
 
     int sourceBonus = sourceAgreementBonus(left.protocol(), right.protocol(), settings);
     if (sourceBonus > 0 && !matches.isEmpty()) { score += sourceBonus; matches.add("mehrere unabhängige Quellen"); }
+
+    // 40k36q11: Multi-Interface-Sonderfall.
+    // Zwei gleichzeitig aktive Netzwerkwege mit unterschiedlicher IP/MAC sind dann kein
+    // pauschal KRITISCHER Konflikt, wenn zusätzliche starke Geräteidentität übereinstimmt.
+    // Der Fall bleibt bewusst bestätigungspflichtig und darf nie automatisch mergen.
+    boolean differentReachableNetworkPaths =
+      both(leftMac,rightMac) && !same(leftMac,rightMac) &&
+      both(leftIp,rightIp) && !same(leftIp,rightIp) &&
+      isReachable(left.status()) && isReachable(right.status());
+    Map<String,String> leftDetails = DiscoveryRegistrationRepository.detailValues(left.protocol());
+    Map<String,String> rightDetails = DiscoveryRegistrationRepository.detailValues(right.protocol());
+    boolean sameHardwareUuid = same(normalizeStrong(leftDetails.get("Hardware-UUID")), normalizeStrong(rightDetails.get("Hardware-UUID")))
+      || same(normalizeStrong(leftDetails.get("System-UUID")), normalizeStrong(rightDetails.get("System-UUID")))
+      || same(normalizeStrong(leftDetails.get("Provisioning-UDID")), normalizeStrong(rightDetails.get("Provisioning-UDID")));
+    boolean noStrongContradiction = conflicts.stream().noneMatch(c -> {
+      String x=c.toLowerCase(Locale.ROOT);
+      return x.contains("seriennummer") || x.contains("build-fingerprint") || x.contains("ssh-hostkey");
+    });
+    boolean strongIdentityProof = same(leftSerial,rightSerial) || sameHardwareUuid;
+    boolean corroboratedSemanticIdentity =
+      same(leftName,rightName) && isDistinctiveSemanticName(leftName)
+      && same(normalizeText(left.manufacturer()),normalizeText(right.manufacturer()))
+      && compatibleType(left.type(),right.type())
+      && independentSources(left.protocol(), right.protocol());
+    boolean multiInterfaceCandidate =
+      differentReachableNetworkPaths && noStrongContradiction && (strongIdentityProof || corroboratedSemanticIdentity);
+    if (multiInterfaceCandidate) {
+      conflicts.remove("abweichende MAC-Adresse");
+      conflicts.remove("abweichende IP-Adresse bei gleichzeitig erreichbaren Geräten");
+      conflicts.add("Mehrere aktive Netzwerkwege desselben Geräts erkannt (Multi-Interface: abweichende IP- und MAC-Adressen)");
+      if (!matches.contains("Multi-Interface-Gerät")) matches.add("Multi-Interface-Gerät");
+      score = Math.max(score, settings.possibleDuplicateThreshold());
+    }
+
+    // 40k37e53: Apple-WLAN/CoreDevice und FRITZ!Box sind zwei unabhaengige Quellen.
+    // Selbst bei identischer WLAN-MAC soll GAM hier bewusst NICHT still automatisch
+    // zusammenfuehren, sondern dem Benutzer einen klaren Zusammenfuehrungsvorschlag
+    // (POSSIBLE_DUPLICATE) anzeigen. Im eng begrenzten Apple-WLAN↔FRITZ!Box-Fall darf
+    // dieselbe gleichzeitig beobachtete LAN-IP allein einen Vorschlag erzeugen, aber niemals
+    // einen automatischen Merge. So bleibt die Entscheidung explizit beim Benutzer.
+    // 40k37e53-fix1: Im realen iPad-Test verwendet das WLAN eine private/randomisierte
+    // Netzwerk-MAC, waehrend Lockdown/CoreDevice die Hardware-WiFiAddress liefert. Deshalb
+    // ist eine abweichende MAC hier KEIN Ausschlusskriterium. Wenn Apple-WLAN/CoreDevice und
+    // FRITZ!Box/ARP gleichzeitig dieselbe echte LAN-IP melden, muss GAM mindestens einen
+    // bestaetigungspflichtigen Zusammenfuehrungsvorschlag anbieten. Automatisch gemergt wird
+    // dieser Sonderfall weiterhin nie.
+    // 40k37e53-fix5: Keine Quellvermischung vor dem Merge. Wenn Apple seine LAN-IP
+    // technisch nicht liefert, darf GAM trotzdem einen bestaetigungspflichtigen Kandidaten
+    // aus den bereits vorhandenen, getrennten Rohdatensaetzen anbieten. Dafuer wird nur die
+    // Apple-Geraeteklasse (iPad/iPhone) mit der Bezeichnung des unabhaengigen FRITZ/ARP-
+    // Datensatzes verglichen. IP und MAC bleiben dabei ausschliesslich am Netzwerkdatensatz.
+    boolean appleFritzSemanticCandidate = isAppleFritzCrossSource(left.protocol(), right.protocol())
+      && appleDeviceClassMatchesNetworkName(left, right);
+    boolean appleFritzCandidate = isAppleFritzCrossSource(left.protocol(), right.protocol())
+      && (same(leftMac,rightMac) || same(leftIp,rightIp) || appleFritzSemanticCandidate);
+    if (appleFritzCandidate) {
+      score = Math.max(score, settings.possibleDuplicateThreshold());
+      score = Math.min(score, settings.autoMergeThreshold()-1);
+      if (!matches.contains("Apple-WLAN ↔ FRITZ!Box")) matches.add("Apple-WLAN ↔ FRITZ!Box");
+    }
 
     // Harte Konflikte begrenzen die Automatik. Eine identische IP allein darf nie mergen.
     if (settings.hardConflictsBlockMerge() && !conflicts.isEmpty() && !same(leftMac, rightMac) && !same(leftSerial, rightSerial)) score = Math.min(score, settings.autoMergeThreshold()-1);
@@ -114,9 +183,43 @@ public final class DeviceIdentityConfidenceEngine {
     }
 
     int confidence = Math.min(100, Math.max(0, (int)Math.round(score / 1.6)));
-    Decision decision = settings.automaticMergeEnabled() && score >= settings.autoMergeThreshold() ? Decision.AUTO_MERGE
+    if (appleFritzCandidate) score = Math.min(score, settings.autoMergeThreshold()-1);
+    Decision decision = !multiInterfaceCandidate && !appleFritzCandidate && settings.automaticMergeEnabled() && score >= settings.autoMergeThreshold() ? Decision.AUTO_MERGE
       : score >= settings.possibleDuplicateThreshold() ? Decision.POSSIBLE_DUPLICATE : Decision.DISTINCT;
     return new Assessment(score, confidence, decision, List.copyOf(matches), List.copyOf(conflicts));
+  }
+
+  /** Nur eindeutige Apple-Mobile-/ADB-Belege; reine ARP/FRITZ-Netzwerktreffer bleiben neutral. */
+  public static boolean incompatibleMobilePlatforms(DiscoveredDevice a, DiscoveredDevice b) {
+    String verifiedA=DeviceIdentityService.verifiedPlatform(a == null ? null : a.protocol());
+    String verifiedB=DeviceIdentityService.verifiedPlatform(b == null ? null : b.protocol());
+    if (verifiedA!=null && verifiedB!=null && !verifiedA.equals(verifiedB)
+        && !(verifiedA.equals("iOS") && verifiedB.equals("iPadOS"))
+        && !(verifiedA.equals("iPadOS") && verifiedB.equals("iOS"))) return true;
+    String x = mobileFamily(a), y = mobileFamily(b);
+    return !x.isEmpty() && !y.isEmpty() && !x.equals(y);
+  }
+
+  static String mobileFamily(DiscoveredDevice d) {
+    if (d == null) return "";
+    String type = safe(d.type()).toLowerCase(Locale.ROOT);
+    String protocol = safe(d.protocol()).toLowerCase(Locale.ROOT);
+    String id = safe(d.id()).toLowerCase(Locale.ROOT);
+    String name = safe(d.name()).toLowerCase(Locale.ROOT);
+    // Die Quelle (ADB/Apple) hat Vorrang vor einem eventuell falsch gespeicherten
+    // Typ 'Tablet / iPadOS'. Bei reinen ARP-/Router-Treffern ist er kein Beweis.
+    if (protocol.contains("adb") || protocol.contains("android usb") || protocol.contains("android wlan") || id.startsWith("adb:")) return "android";
+    if (protocol.contains("apple mobile") || protocol.contains("coredevice") || protocol.contains("libimobiledevice")
+        || protocol.contains("usbmux") || id.startsWith("apple-mobile")) return "apple-mobile";
+    // fix42: konkrete Android-Namenshinweise duerfen einem iPad niemals als
+    // moeglicher Merge angeboten werden, auch bei alter falscher iPadOS-Kategorie.
+    if (name.startsWith("android-") || name.contains("galaxy-") || name.contains("samsung")
+        || name.contains("doogee") || name.contains("fossibot") || name.contains("xgody")) return "android";
+    if (type.contains("android")) return "android";
+    // iOS/iPadOS-Kategorie allein ist auf importierten Netzwerkgeraeten
+    // kein hinreichend sicherer Apple-Beleg.
+    if (name.contains("ipad") || name.contains("iphone")) return "apple-mobile";
+    return "";
   }
 
   private static int serialWeight(DiscoveredDevice left, DiscoveredDevice right, Settings settings) {
@@ -153,11 +256,41 @@ public final class DeviceIdentityConfidenceEngine {
       || left.contains("gerät") || right.contains("gerät");
   }
 
+  private static boolean appleDeviceClassMatchesNetworkName(DiscoveredDevice left, DiscoveredDevice right) {
+    DiscoveredDevice apple = isAppleProtocol(left.protocol()) ? left : (isAppleProtocol(right.protocol()) ? right : null);
+    DiscoveredDevice network = apple == left ? right : left;
+    if (apple == null || network == null) return false;
+    String appleText = (safe(apple.name()) + " " + safe(apple.type())).toLowerCase(Locale.ROOT);
+    String networkText = (safe(network.name()) + " " + safe(network.type())).toLowerCase(Locale.ROOT);
+    if (appleText.contains("ipad")) return networkText.contains("ipad");
+    if (appleText.contains("iphone") || appleText.contains("ios")) return networkText.contains("iphone");
+    return false;
+  }
+
+  private static boolean isAppleProtocol(String protocol) {
+    String p=safe(protocol).toLowerCase(Locale.ROOT);
+    return p.contains("apple mobile") && (p.contains("wlan") || p.contains("coredevice") || p.contains("userspace_rsd"));
+  }
+
+  private static boolean isAppleFritzCrossSource(String a, String b) {
+    String left=safe(a).toLowerCase(Locale.ROOT), right=safe(b).toLowerCase(Locale.ROOT);
+    boolean leftApple=left.contains("apple mobile") && (left.contains("wlan") || left.contains("coredevice") || left.contains("userspace_rsd"));
+    boolean rightApple=right.contains("apple mobile") && (right.contains("wlan") || right.contains("coredevice") || right.contains("userspace_rsd"));
+    boolean leftFritz=left.contains("fritz!box") || left.contains("tr-064");
+    boolean rightFritz=right.contains("fritz!box") || right.contains("tr-064");
+    return (leftApple && rightFritz) || (rightApple && leftFritz);
+  }
+
   private static String normalizeMac(String value) {
     return value == null ? "" : value.replaceAll("[^0-9A-Fa-f]", "").toUpperCase(Locale.ROOT);
   }
 
-  private static String normalizeIp(String value) {
+    private static boolean isLoopbackIp(String value) {
+    try { return value != null && !value.isBlank() && java.net.InetAddress.getByName(value).isLoopbackAddress(); }
+    catch (Exception e) { return false; }
+  }
+
+private static String normalizeIp(String value) {
     if (value == null) return "";
     String v = value.trim().toLowerCase(Locale.ROOT);
     return v.matches("(?:\\d{1,3}\\.){3}\\d{1,3}") ? v : "";

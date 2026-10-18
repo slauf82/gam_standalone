@@ -1,0 +1,22 @@
+GAM Standalone v2.1.0 – Schritt 40k37d21
+
+Ziel
+- Identitäts-/Zuordnungshärtung des produktiven iOS/iPadOS-Inventarpfads auf Basis von 40k37d20.
+- Kein zweites Apple-Gerät als Testvoraussetzung.
+- Normalpfad und d19-Performance bleiben erhalten.
+
+Änderungen
+1. Stabile Apple-Kennungen haben Vorrang: UDID, Seriennummer und WiFi-MAC.
+2. USB/WLAN-Wechsel erzeugt keine neue Identität, wenn eine stabile Kennung passt.
+3. Ein einzelnes erreichbares Gerät wird NICHT mehr blind gewählt, wenn es einer bereits gespeicherten stabilen Identität widerspricht.
+4. In diesem Fall stoppt GAM mit IDENTITAETSKONFLIKT statt Daten einem falschen Gerät zuzuordnen.
+5. Ein-Gerät-Fallback bleibt erlaubt, solange noch keine stabile Apple-Kennung gespeichert ist.
+6. Bei mehreren Kandidaten ohne eindeutige stabile Zuordnung bleibt AUSWAHL_ERFORDERLICH.
+7. Der verwendete Zuordnungsgrund wird im Protokoll und im Performanceprofil sichtbar.
+8. d20 Fehler-/Abbruchhärtung, d19 UDID/PnP-Performancefix und der direkte read-only installation_proxy-Apppfad bleiben unverändert erhalten.
+
+Test mit nur einem iPad
+- Normale Inventarisierung muss weiter erfolgreich sein.
+- Wiederholte Inventarisierung muss über dieselbe UDID/Seriennummer derselben GAM-Identität zugeordnet werden.
+- USB/WLAN-Transport darf die stabile Identitätsentscheidung nicht verändern.
+- Reale Mehrgeräteprüfung ist ausdrücklich kein Abschlusskriterium dieses Builds.

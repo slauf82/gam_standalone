@@ -1,0 +1,3 @@
+GAM Standalone v2.1.0 – Schritt 40k36t2
+Linux-SSH-Bootstrap: funktionierender SSH-Zugang erzeugt Linux-Hinweise selbst; Banner-Vortest blockiert nicht mehr; Status „SSH erreichbar, Linux-Erkennung fehlgeschlagen“ getrennt von „nicht erreichbar“.
+Basis: 40k36t1

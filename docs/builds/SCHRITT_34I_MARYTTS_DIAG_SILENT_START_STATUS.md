@@ -41,7 +41,7 @@ backend/tts/marytts/bin/marytts-server.bat
 
 ```bat
 set GAM_MARYTTS_DIAGNOSTICS=true
-start-backend.bat
+start_backend.bat
 ```
 
 oder:

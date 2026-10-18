@@ -1,0 +1,12 @@
+GAM 2.0 Standalone - Schritt 40k37b
+
+Original-Roadmap 40k37b: Trust/Pairing + lokale Apple-Kommunikation
+Basis: 40k37a9 (auf realem iPad erfolgreich: genau ein physisches iPad)
+
+- Explizite Pairing- und Validate-Endpunkte fuer Apple Mobile
+- Pairing gilt nur nach erfolgreicher Lockdown-Validierung, nie nur wegen PnP-Sichtbarkeit
+- UI-Aktionen "Trust / Pairing starten" und "Pairing pruefen"
+- Klare Zustandswerte: READY, TRUST_REQUIRED, TRUST_CONFIRM_REQUIRED, TOOLS_MISSING, NO_DEVICE, SELECT_DEVICE, PAIRING_FAILED
+- Windows bleibt auf aktuelle Apple-Geräte-App ausgerichtet; kein iTunes-Zwang
+- Erkennung der installierten Apple-Geräte-App im Status
+- 40k37a9 Single-Emission-Discovery unveraendert beibehalten

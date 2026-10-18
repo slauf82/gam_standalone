@@ -1,0 +1,11 @@
+GAM Standalone 40k37a5
+
+Ziel: iPad-Basiserkennung unter Windows darf durch Detailanreicherung niemals verloren gehen.
+- schnelle Apple-PnP-Primärabfrage
+- einfacher a2/a3-artiger PnP-Fallback bei Timeout/Fehler
+- Container-/USB-Basisgruppierung erst nach erfolgreichem Fund
+- iPad/iPhone gewinnt als sichtbarer Basisknoten vor PTP/Multiplexor
+- ProductType/Modellgeneration nur bei belastbarer Windows-Evidenz
+- kein Raten aus VID/PID
+
+Original-Roadmap 40k37a bleibt bis erfolgreichem Realhardwaretest offen.

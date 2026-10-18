@@ -1,0 +1,20 @@
+GAM Standalone v2.1.0 - Schritt 40k37d8
+
+Apple Mobile / iOS normal (USB) - MSYS2 Mirror-Failover + Paketcache
+
+Aenderungen:
+- UCRT64-Repository-Downloads mit Failover ueber mehrere von MSYS2 gelistete Mirrors.
+- repo.msys2.org als direkter Hauptserver-Fallback nach dem Geo-Redirector.
+- weitere offizielle MSYS2-Mirrorlisten-Eintraege als Fallback.
+- persistenter, SHA-256-validierter Paketcache unter tools/libimobiledevice/ideviceinstaller-cache/msys2-ucrt64.
+- bereits korrekt geladene Pakete werden bei Folgelaeufen wiederverwendet.
+- ungueltige Cache-Dateien werden verworfen und neu geladen.
+- Repository-DB wird online aktualisiert; bei komplettem Netzausfall kann eine vorhandene Cache-DB verwendet werden.
+- konsistente D8-Diagnosepraefixe fuer den aktuellen Apple-Inventarisierungs-/Softwarepfad.
+- Snapshot: logs/apple-mobile-inventory-d8.json.
+
+Sicherheitsprinzip:
+- ideviceinstaller bleibt fest auf 1.1.1-2 und den bekannten SHA-256 gepinnt.
+- jedes Runtime-Paket wird weiterhin gegen SHA-256 aus der offiziellen UCRT64-Repository-Datenbank validiert.
+- Mirror-Failover lockert keine Integritaetspruefung.
+- c48/jrjr-Basistoolchain bleibt unveraendert.

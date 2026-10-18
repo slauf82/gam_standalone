@@ -1,0 +1,24 @@
+GAM Standalone v2.1.0 – Schritt 40k37d22
+================================================
+
+Ziel: Abschluss des d-Pfads mit Recovery-/Cache-/Diagnosehärtung.
+
+Änderungen:
+- Basis: 40k37d21 vollständig beibehalten.
+- Diagnose-/Performance-/Inventar-JSONs werden atomar geschrieben (.tmp -> replace).
+  Ein Prozessabbruch kann damit keinen halb geschriebenen gültigen Snapshot hinterlassen.
+- Verwaiste apple-mobile-*.tmp-Dateien werden beim Abschluss eines Apple-Laufs bereinigt.
+- Nach jedem Inventarlauf wird automatisch logs/apple-mobile-diagnostic-d22.zip erzeugt.
+  Das Bundle enthält nur bereits vorhandene Diagnoseartefakte und startet KEINE zusätzlichen
+  Geräteabfragen; der schnelle Normalpfad bleibt dadurch unangetastet.
+- Bundle enthält MANIFEST.txt mit Ergebnisstatus sowie – sofern vorhanden – Performance,
+  Inventar, Software, installation_proxy-Rohdiagnose und Apple-Debuglog.
+- Diagnosebundle selbst wird ebenfalls über temporäre Datei sicher ersetzt.
+- Bestehende Cache-/Runtime-Strukturen werden nicht gelöscht oder ersetzt.
+- d20 Fehler-/Abbruchhärtung und d21 Identitäts-/Zuordnungshärtung bleiben erhalten.
+- Keine Netzwerk-/e-Pfad-Funktionalität vorgezogen.
+
+Erwartung:
+- Normaler USB-Inventarpfad weiterhin in derselben Größenordnung wie d19-d21.
+- Nach Crash/Abbruch keine beschädigten d22-JSON-Snapshots als scheinbar gültige Daten.
+- Ein einzelnes d22-Diagnose-ZIP kann für die Fehleranalyse hochgeladen werden.

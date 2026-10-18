@@ -1,0 +1,3 @@
+GAM 2.1.0 – Schritt 40k36q10
+Basis: 40k36q9c
+Schwerpunkt: global sichtbarer Inventarisierungsfortschritt.

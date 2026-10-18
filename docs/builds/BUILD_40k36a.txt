@@ -1,0 +1,12 @@
+GAM 2.0 – Schritt 40k36a
+
+Vertiefte macOS-Hardwareinventarisierung über SSH:
+- Apple Silicon und Intel mit getrennten Fallbacks
+- Modellname, Modellkennung und Maschinentyp
+- Chip, Prozessor, Kerne, Threads und Frequenz
+- CPU-Caches
+- Arbeitsspeicher
+- Seriennummer, Hardware-UUID und Provisioning-UDID
+- Aktivierungssperre
+- Boot-ROM, System-Firmware, OS-Loader und SMC-Version
+- feinere automatische Einordnung von MacBook, Mac mini und Mac Studio

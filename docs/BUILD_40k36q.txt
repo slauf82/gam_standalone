@@ -1,0 +1,8 @@
+Build: 40k36q
+Basis: 40k36p6y
+Schwerpunkt: SSH 2.0 + halblokale Browsererkennung
+
+Prüfungen:
+- TypeScript/TSX Parser: 0 Syntaxdiagnosen für main.tsx und api/client.ts.
+- Maven-Compile in der Build-Umgebung nicht ausführbar, weil der Maven-Wrapper die Distribution/Artefakte nicht aus dem Netzwerk laden konnte.
+- Apache MINA SSHD 2.19.0 ist die aktuelle stabile Apache-SSHD-Version zum Buildzeitpunkt.

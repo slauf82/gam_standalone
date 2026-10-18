@@ -2,6 +2,7 @@ package de.kopfzentrum.gam.inventory;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,18 +36,28 @@ public class InventoryController {
   private final DeviceIdentityMergeSettingsRepository mergeSettings;
   private final ObjectMapper objectMapper;
   private final WinRmSettingsRepository winRmSettings;
+  private final WinRmTrustedTargetRepository winRmTrustedTargets;
   private final LinuxSshSettingsRepository linuxSshSettings;
   private final WindowsRemoteInventoryService windowsRemote;
+  private final WindowsInventoryDiscoveryService windowsInventoryDiscovery;
+  private final OsAccessProfileRepository osAccessProfiles;
+  private final EmbeddedSshClientService embeddedSsh;
+  private final AndroidAdbService androidAdb;
+  private final DeviceIdentityService deviceIdentityService;
+  private final StartupInventorySettingsRepository startupInventorySettings;
+  private final AppleMobileDiscoveryService appleMobileDiscovery;
 
-  public InventoryController(InventoryRepository repository, DeviceDiscoveryService discoveryService, BuiltinDiscoverySettingsRepository builtinDiscoverySettings, DiscoverySessionService discoverySessions, DeviceIdentityMergeSettingsRepository mergeSettings, ObjectMapper objectMapper, WinRmSettingsRepository winRmSettings, WindowsRemoteInventoryService windowsRemote, LinuxSshSettingsRepository linuxSshSettings) {
+  public InventoryController(InventoryRepository repository, DeviceDiscoveryService discoveryService, BuiltinDiscoverySettingsRepository builtinDiscoverySettings, DiscoverySessionService discoverySessions, DeviceIdentityMergeSettingsRepository mergeSettings, ObjectMapper objectMapper, WinRmSettingsRepository winRmSettings, WinRmTrustedTargetRepository winRmTrustedTargets, WindowsRemoteInventoryService windowsRemote, WindowsInventoryDiscoveryService windowsInventoryDiscovery, LinuxSshSettingsRepository linuxSshSettings, OsAccessProfileRepository osAccessProfiles, EmbeddedSshClientService embeddedSsh, AndroidAdbService androidAdb, DeviceIdentityService deviceIdentityService, StartupInventorySettingsRepository startupInventorySettings, AppleMobileDiscoveryService appleMobileDiscovery) {
     this.repository = repository;
     this.discoveryService = discoveryService;
     this.builtinDiscoverySettings = builtinDiscoverySettings;
     this.discoverySessions = discoverySessions;
     this.mergeSettings = mergeSettings;
     this.objectMapper = objectMapper;
-    this.winRmSettings = winRmSettings; this.linuxSshSettings = linuxSshSettings;
+    this.winRmSettings = winRmSettings; this.winRmTrustedTargets=winRmTrustedTargets; this.linuxSshSettings = linuxSshSettings;
     this.windowsRemote = windowsRemote;
+    this.windowsInventoryDiscovery = windowsInventoryDiscovery;
+    this.osAccessProfiles = osAccessProfiles; this.embeddedSsh = embeddedSsh; this.androidAdb = androidAdb; this.deviceIdentityService=deviceIdentityService; this.startupInventorySettings=startupInventorySettings; this.appleMobileDiscovery=appleMobileDiscovery;
   }
 
   @GetMapping("/devices")
@@ -80,6 +91,18 @@ public class InventoryController {
     return repository.materials(q, limit);
   }
 
+  @GetMapping("/startup-inventory-settings")
+  public StartupInventorySettingsRepository.Settings startupInventorySettings(){
+    return startupInventorySettings.load();
+  }
+
+  @PutMapping("/startup-inventory-settings")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public StartupInventorySettingsRepository.Settings saveStartupInventorySettings(@RequestBody java.util.Map<String,Object> body, java.security.Principal principal){
+    boolean enabled=body==null||!body.containsKey("enabled")||Boolean.TRUE.equals(body.get("enabled"));
+    return startupInventorySettings.save(enabled,principal==null?"system":principal.getName());
+  }
+
   @GetMapping("/discovery/capabilities")
   public java.util.Map<String,Object> discoveryCapabilities() {
     return discoveryService.capabilities();
@@ -104,6 +127,143 @@ public class InventoryController {
     return winRmSettings.save(update, principal == null ? "system" : principal.getName());
   }
 
+
+  @GetMapping("/discovery/winrm/trusted-targets")
+  public java.util.List<WinRmTrustedTargetRepository.TrustedTarget> winRmTrustedTargets(){ return winRmTrustedTargets.list(); }
+
+  @PostMapping("/discovery/winrm/trusted-targets")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public java.util.Map<String,Object> trustWinRmTarget(@RequestBody java.util.Map<String,Object> request, java.security.Principal principal){
+    String host=request==null?"":String.valueOf(request.getOrDefault("host","")).trim();
+    var row=winRmTrustedTargets.trust(host,principal==null?"system":principal.getName());
+    return java.util.Map.of("trusted",true,"host",row.host());
+  }
+
+  @DeleteMapping("/discovery/winrm/trusted-targets")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public java.util.Map<String,Object> revokeWinRmTarget(@RequestParam String host){
+    winRmTrustedTargets.revoke(host);
+    return java.util.Map.of("trusted",false,"host",host);
+  }
+
+
+  @GetMapping("/discovery/apple-mobile/status")
+  public AppleMobileDiscoveryService.Status appleMobileStatus() { return appleMobileDiscovery.status(); }
+
+  @PostMapping("/discovery/apple-mobile/test")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.TestResult testAppleMobile() {
+    log.warn("FIX33 LEGACY TEST ROUTE INTERCEPT | endpoint=/discovery/apple-mobile/test | action=PAIRING_ONLY");
+    // fix33: selbst ein noch vorhandener/alter Frontend-Aufruf auf /test darf nicht mehr
+    // in den historischen Diagnosepfad laufen. Der bekannte /test-Endpunkt wird hier
+    // bewusst auf denselben Pairing-only Servicepfad geroutet.
+    return appleMobileDiscovery.testPairingConnectionFix33();
+  }
+
+  @GetMapping("/discovery/apple-mobile/admin-tunnel")
+  public AppleMobileDiscoveryService.AdminTunnelStatus appleAdminTunnelStatus() { return appleMobileDiscovery.adminTunnelStatus(); }
+
+  @PostMapping("/discovery/apple-mobile/admin-tunnel")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AdminTunnelStatus startAppleAdminTunnel() { return appleMobileDiscovery.startAdminTunnel(); }
+
+  @DeleteMapping("/discovery/apple-mobile/admin-tunnel")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AdminTunnelStatus stopAppleAdminTunnel() { return appleMobileDiscovery.stopAdminTunnel(); }
+
+  @PostMapping("/discovery/apple-mobile/toolchain/install")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.ToolchainInstallResult installAppleMobileToolchain() { return appleMobileDiscovery.installToolchain(); }
+
+  @PostMapping("/discovery/apple-mobile/apple-devices/install")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AppleDevicesInstallResult installAppleDevices() { return appleMobileDiscovery.installAppleDevices(); }
+
+  @GetMapping("/discovery/apple-mobile/apple-devices/depot")
+  public AppleMobileDiscoveryService.AppleOfflineDepotStatus appleOfflineDepotStatus() { return appleMobileDiscovery.appleOfflineDepotStatus(); }
+
+  @PutMapping("/discovery/apple-mobile/apple-devices/depot")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AppleOfflineDepotStatus configureAppleOfflineDepot(@RequestBody java.util.Map<String,Object> request) {
+    return appleMobileDiscovery.configureAppleOfflineDepot(String.valueOf(request.getOrDefault("directory","")));
+  }
+
+  @PostMapping("/discovery/apple-mobile/apple-devices/depot/prepare")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AppleOfflineDepotResult prepareAppleOfflineDepot() { return appleMobileDiscovery.prepareAppleOfflineDepot(); }
+
+  @PostMapping("/discovery/apple-mobile/apple-devices/depot/update-check")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AppleDepotUpdateStatus checkAppleOfflineDepotUpdates() { return appleMobileDiscovery.checkAppleOfflineDepotUpdates(); }
+
+  @PostMapping("/discovery/apple-mobile/apple-devices/depot/update")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AppleOfflineDepotResult updateAppleOfflineDepot() { return appleMobileDiscovery.updateAppleOfflineDepot(); }
+
+  @PostMapping("/discovery/apple-mobile/apple-devices/depot/install")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.AppleOfflineDepotResult installAppleFromOfflineDepot() { return appleMobileDiscovery.installAppleFromOfflineDepot(); }
+
+  @PostMapping("/discovery/apple-mobile/inventory-probe")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.InventoryProbeResult probeAppleMobileInventory(@RequestBody(required=false) java.util.Map<String,Object> request) {
+    String udid=request==null?null:String.valueOf(request.getOrDefault("udid","")).trim();
+    return appleMobileDiscovery.probeInventory(udid);
+  }
+
+  @PostMapping("/discovery/apple-mobile/extended-inventory-probe")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.ExtendedInventoryProbeResult probeAppleMobileExtendedInventory(@RequestBody(required=false) java.util.Map<String,Object> request) {
+    String udid=request==null?null:String.valueOf(request.getOrDefault("udid","")).trim();
+    return appleMobileDiscovery.probeExtendedInventory(udid);
+  }
+
+  @PostMapping("/discovery/apple-mobile/pair")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.PairingResult pairAppleMobile(@RequestBody(required=false) java.util.Map<String,Object> request, @RequestParam(required=false, defaultValue="") String gamTrace) {
+    log.warn("FIX32 CONTROLLER ACTIVE | endpoint=/discovery/apple-mobile/pair | gamTrace={} | codeSource={}", gamTrace, InventoryController.class.getProtectionDomain().getCodeSource().getLocation());
+    String udid=request==null?null:String.valueOf(request.getOrDefault("udid","")).trim();
+    log.warn("FIX32 PAIR ROUTE | sequence=USB_LOCKDOWN_THEN_REMOTEPAIRING | pairingOnly=true");
+    log.warn("[DISCOVERY][40k37e56c-fix31][APPLE_MOBILE][PAIR_ENDPOINT] event=ENTER endpoint=/discovery/apple-mobile/pair requestedUdidPresent={} thread={}", udid!=null && !udid.isBlank(), Thread.currentThread().getName());
+    AppleMobileDiscoveryService.PairingResult result=appleMobileDiscovery.pair(udid);
+    log.warn("[DISCOVERY][40k37e56c-fix31][APPLE_MOBILE][PAIR_ENDPOINT] event=EXIT endpoint=/discovery/apple-mobile/pair success={} state={} durationMs={} transport={}", result.success(), result.state(), result.durationMs(), result.success()?"USB + Netzwerk":"USB");
+    return result;
+  }
+
+  @GetMapping("/discovery/apple-mobile/pair-wifi/status")
+  public AppleMobileDiscoveryService.PairingResult appleMobileWifiPairingStatus() {
+    return appleMobileDiscovery.wifiPairingStatus();
+  }
+
+  @PostMapping("/discovery/apple-mobile/pair-wifi")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.PairingResult pairAppleMobileWifi(@RequestBody(required=false) java.util.Map<String,Object> request) {
+    String udid=request==null?null:String.valueOf(request.getOrDefault("udid","")).trim();
+    log.warn("[DISCOVERY][40k37e56c-fix11][APPLE_MOBILE][PAIR_ENDPOINT] event=ENTER endpoint=/discovery/apple-mobile/pair-wifi requestedUdidPresent={} thread={}", udid!=null && !udid.isBlank(), Thread.currentThread().getName());
+    AppleMobileDiscoveryService.PairingResult result=appleMobileDiscovery.pairWifi(udid);
+    log.warn("[DISCOVERY][40k37e56c-fix11][APPLE_MOBILE][PAIR_ENDPOINT] event=EXIT endpoint=/discovery/apple-mobile/pair-wifi success={} state={} durationMs={}", result.success(), result.state(), result.durationMs());
+    return result;
+  }
+
+  @PostMapping("/discovery/apple-mobile/pair-host")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.PairingResult pairAppleMobileHostWifiIos27() {
+    return appleMobileDiscovery.pairHostWifiIos27();
+  }
+
+  @PostMapping("/discovery/apple-mobile/pairing/validate")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public AppleMobileDiscoveryService.PairingResult validateAppleMobilePairing(@RequestBody(required=false) java.util.Map<String,Object> request) {
+    String udid=request==null?null:String.valueOf(request.getOrDefault("udid","")).trim();
+    return appleMobileDiscovery.validatePairing(udid);
+  }
+
+  @PostMapping("/discovery/windows-local/test")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public WindowsInventoryDiscoveryService.LocalWindowsTestResult testWindowsLocal() {
+    return windowsInventoryDiscovery.testLocalConnection();
+  }
+
   @PostMapping("/discovery/winrm/test")
   @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
   public WindowsRemoteInventoryService.WinRmTestResult testWinRm(@RequestBody java.util.Map<String,Object> request) {
@@ -112,6 +272,58 @@ public class InventoryController {
     return windowsRemote.testConnection(host);
   }
 
+
+  // 40k36q3: Mehrfach-Betriebssystemzugaenge. Die alten Einzelendpunkte bleiben als Fallback kompatibel.
+  @GetMapping("/discovery/os-access-profiles")
+  public java.util.List<OsAccessProfileRepository.Profile> osAccessProfiles(){ return osAccessProfiles.list(); }
+
+  @PutMapping("/discovery/os-access-profiles")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public OsAccessProfileRepository.Profile saveOsAccessProfile(@RequestBody OsAccessProfileRepository.Update update, java.security.Principal principal){
+    return osAccessProfiles.save(update, principal==null?"system":principal.getName());
+  }
+
+  @DeleteMapping("/discovery/os-access-profiles/{id}")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public java.util.Map<String,Object> deleteOsAccessProfile(@PathVariable long id){ osAccessProfiles.delete(id); return java.util.Map.of("deleted",true,"id",id); }
+
+  @PostMapping("/discovery/os-access-profiles/{id}/test")
+  @PreAuthorize("hasAnyRole('SUPERADMIN','ADMIN')")
+  public java.util.Map<String,Object> testOsAccessProfile(@PathVariable long id){
+    var p=osAccessProfiles.find(id);
+    if(p==null) return java.util.Map.of("success",false,"message","Betriebssystemzugang wurde nicht gefunden.");
+    long started=System.currentTimeMillis();
+    if("SSH".equalsIgnoreCase(p.type())){
+      var r=embeddedSsh.testDetailed(p.host(),p.port(),p.username(),p.authMode(),p.password(),p.keyPath());
+      String inventoryMessage=r.commandOk()?deviceIdentityService.autoInventoryVerifiedSshHost(p.host(),p.name()):"";
+      return java.util.Map.of("success",r.commandOk(),"message",r.message()+inventoryMessage,"durationMs",r.durationMs(),"handshakeOk",r.handshakeOk(),"authOk",r.authOk(),"autoInventory",r.commandOk());
+    }
+    if("WINRM".equalsIgnoreCase(p.type())){
+      var r=windowsRemote.testConnection(p.host(),p.enabled(),p.username(),p.password(),p.port(),p.https());
+      var result=new java.util.LinkedHashMap<String,Object>();
+      result.put("success",r.reachable());
+      result.put("message",r.message());
+      result.put("durationMs",System.currentTimeMillis()-started);
+      result.put("tcpReachable",r.tcpReachable());
+      result.put("wsmanAttempted",r.wsmanAttempted());
+      result.put("endpoint",r.endpoint());
+      result.put("usernameFormat",r.usernameFormat());
+      result.put("requestedAuthentication",r.requestedAuthentication());
+      result.put("authenticationUsed",r.authenticationUsed());
+      result.put("legacyFallbackUsed",r.legacyFallbackUsed());
+      result.put("clientStack",r.clientStack());
+      result.put("trustedTarget",r.trustedTarget());
+      result.put("trustRequired",r.trustRequired());
+      result.put("errorType",r.errorType());
+      result.put("errorDetail",r.errorDetail());
+      return result;
+    }
+    if("ADB".equalsIgnoreCase(p.type())){
+      var r=androidAdb.connect(p.host(),p.port());
+      return java.util.Map.of("success",r.success(),"message",r.message(),"durationMs",System.currentTimeMillis()-started);
+    }
+    return java.util.Map.of("success",false,"message","Unbekannter Zugangstyp: "+p.type());
+  }
 
   @GetMapping("/discovery/ssh")
   public LinuxSshSettingsRepository.View linuxSshSettings(){ return linuxSshSettings.view(); }

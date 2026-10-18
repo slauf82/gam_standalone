@@ -8,7 +8,7 @@
   </parent>
   <groupId>de.kopfzentrum</groupId>
   <artifactId>gam-standalone-backend</artifactId>
-  <version>2.1.0-preview2</version>
+  <version>2.1.0</version>
   <name>GAM Standalone Backend</name>
   <properties>
     <java.version>21</java.version>
@@ -57,6 +57,8 @@
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-jdbc</artifactId></dependency>
+    <!-- 40k37e4: direkter Zugriff auf libimobiledevice/libplist-DLLs ohne ideviceinstaller-Zwischenschicht. -->
+    <dependency><groupId>net.java.dev.jna</groupId><artifactId>jna</artifactId><version>5.19.1</version></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-mail</artifactId></dependency>
     <dependency><groupId>org.mariadb.jdbc</groupId><artifactId>mariadb-java-client</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>io.jsonwebtoken</groupId><artifactId>jjwt-api</artifactId><version>${jjwt.version}</version></dependency>
@@ -67,6 +69,50 @@
          Version 0.12.3 ist eine echte, veröffentlichte Maven-Central-Version (vor Aufnahme geprüft),
          keine SNAPSHOT-Version. -->
     <dependency><groupId>io.cloudsoft.windows</groupId><artifactId>winrm4j</artifactId><version>0.12.3</version></dependency>
+    <!-- 40k36t30: moderner WinRM-Standardpfad. MetricsHub winrm-java 2.1.x ersetzt
+         den CXF/JAXB/SAAJ-Unterbau vollständig durch JDK-HTTP/XML und kollidiert daher nicht
+         mit dem bewusst beibehaltenen winrm4j-Legacy-Fallback. -->
+    <dependency>
+      <groupId>org.metricshub</groupId>
+      <artifactId>winrm-java</artifactId>
+      <version>2.1.00</version>
+    </dependency>
+    <!-- 40k36q: eingebetteter SSH-Client. Apache MINA SSHD arbeitet vollständig in Java und
+         entfernt die bisherige Abhängigkeit von ssh.exe/sshpass auf dem GAM-Server. -->
+    <dependency>
+      <groupId>org.apache.sshd</groupId>
+      <artifactId>sshd-core</artifactId>
+      <version>2.19.0</version>
+    </dependency>
+    <!-- 40k36p6l: winrm4j/CXF 3.x verwendet weiterhin die frühere javax-JAXB-API.
+         Seit Java 11 ist JAXB nicht mehr Bestandteil des JDK; unter Java 21 müssen API und Runtime
+         deshalb explizit mitgeliefert werden. Die 2.3.x-Linie behält den von winrm4j erwarteten
+         javax.xml.bind-Namespace bei (Jakarta JAXB 3.x/4.x wäre hierfür nicht kompatibel). -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.8</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- 40k36t29: winrm4j/CXF 3.x benoetigt unter Java 21 zusaetzlich eine SAAJ-Implementierung.
+         Seit Java 11 ist javax.xml.soap nicht mehr Bestandteil des JDK. Bewusst die javax-kompatible
+         1.x-Linie verwenden; Jakarta SAAJ 2.x/3.x nutzt jakarta.xml.soap und passt nicht zu diesem Stack. -->
+    <dependency>
+      <groupId>javax.xml.soap</groupId>
+      <artifactId>javax.xml.soap-api</artifactId>
+      <version>1.4.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.xml.messaging.saaj</groupId>
+      <artifactId>saaj-impl</artifactId>
+      <version>1.5.3</version>
+      <scope>runtime</scope>
+    </dependency>
     <!-- Phase 1C: E-Rechnung/ZUGFeRD/Factur-X Export.
          Mustangproject übernimmt XML-Erzeugung, PDF/A-3 Einbettung und spätere Validierung. -->
     <dependency><groupId>org.mustangproject</groupId><artifactId>library</artifactId><version>${mustangproject.version}</version></dependency>

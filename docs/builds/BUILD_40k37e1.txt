@@ -1,0 +1,13 @@
+GAM Standalone v2.1.0 – Schritt 40k37e1
+Start des e-Pfads: iOS/iPadOS über Netzwerk/WLAN.
+
+- Basis 40k37d22.
+- Netzwerk-Discovery: idevice_id -n -l.
+- Netzwerk-Lockdown-Basisdaten: ideviceinfo -n -u <UDID>.
+- USB/Netzwerk derselben UDID werden dedupliziert; USB hat bei Gleichzeitigkeit Vorrang.
+- Reiner WLAN-Treffer: apple-network:<UDID>.
+- e1 ist read-only und führt noch keine vollständige Netzwerk-Inventarisierung aus.
+- Trace: E1 NETWORK IDEVICE_ID / IDEVICEINFO / DISCOVERY.
+- UI-Hinweis bei Registrierten Geräten und Gerätebestand:
+  linke Shift-Taste + Mausrad = horizontal scrollen.
+- d20-d22 Härtungen bleiben erhalten.

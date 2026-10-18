@@ -21,7 +21,10 @@ import java.util.regex.Pattern;
 
 @Service
 public class DeviceDiscoveryService {
+  /** 40k36r13: Lokale IPv4-Netze für die plattformübergreifende Netz-/Broadcastfilterung. */
+  private volatile List<InterfaceNetwork> activeInterfaceNetworks = List.of();
   private static final Logger log = LoggerFactory.getLogger(DeviceDiscoveryService.class);
+  private static final Logger discoveryDebug = LoggerFactory.getLogger("GAM_DISCOVERY_DIAGNOSTICS");
   private static final AtomicLong SCAN_SEQUENCE = new AtomicLong();
   private static final Pattern IPV4 = Pattern.compile("(?<![0-9])((?:[0-9]{1,3}\\.){3}[0-9]{1,3})(?![0-9])");
   private static final Pattern MAC = Pattern.compile("(?i)([0-9a-f]{2}(?:[:-][0-9a-f]{2}){5})");
@@ -29,6 +32,7 @@ public class DeviceDiscoveryService {
   private final DeviceIdentityConfidenceEngine identityEngine = new DeviceIdentityConfidenceEngine();
   private final DeviceIdentityMergeSettingsRepository mergeSettings;
   private final DeviceIdentityService deviceIdentityService;
+  private final BrowserClientDiscoveryRepository browserClients;
   private final JdbcTemplate jdbc;
   private final FritzBoxDeviceSource fritzBoxDeviceSource;
   private final HomeAssistantDeviceSource homeAssistantDeviceSource;
@@ -39,6 +43,7 @@ public class DeviceDiscoveryService {
   private final WindowsInventoryDiscoveryService windowsInventoryDiscovery;
   private final LinuxInventoryDiscoveryService linuxInventoryDiscovery;
   private final LinuxNetworkDiscoveryService linuxNetworkDiscovery;
+  private final AppleMobileDiscoveryService appleMobileDiscovery;
   private final DiscoveryRegistrationRepository registrations;
   private Map<String,FritzBoxDeviceSource.FritzDevice> fritzByIp = Map.of();
   private Map<String,FritzBoxDeviceSource.FritzDevice> fritzByMac = Map.of();
@@ -47,7 +52,7 @@ public class DeviceDiscoveryService {
   private Map<String,TuyaDeviceSource.TuyaDevice> tuyaByIp = Map.of();
   private Map<String,TuyaDeviceSource.TuyaDevice> tuyaByMac = Map.of();
 
-  public DeviceDiscoveryService(JdbcTemplate jdbc, FritzBoxDeviceSource fritzBoxDeviceSource, HomeAssistantDeviceSource homeAssistantDeviceSource, TuyaDeviceSource tuyaDeviceSource, BuiltinDiscoverySettingsRepository builtinSettings, AdditionalDiscoveryService additionalDiscovery, SnmpDiscoveryService snmpDiscovery, WindowsInventoryDiscoveryService windowsInventoryDiscovery, LinuxInventoryDiscoveryService linuxInventoryDiscovery, LinuxNetworkDiscoveryService linuxNetworkDiscovery, DiscoveryRegistrationRepository registrations, DeviceIdentityMergeSettingsRepository mergeSettings, DeviceIdentityService deviceIdentityService) { this.jdbc = jdbc; this.fritzBoxDeviceSource = fritzBoxDeviceSource; this.homeAssistantDeviceSource = homeAssistantDeviceSource; this.tuyaDeviceSource = tuyaDeviceSource; this.builtinSettings = builtinSettings; this.additionalDiscovery = additionalDiscovery; this.snmpDiscovery = snmpDiscovery; this.windowsInventoryDiscovery = windowsInventoryDiscovery; this.linuxInventoryDiscovery = linuxInventoryDiscovery; this.linuxNetworkDiscovery = linuxNetworkDiscovery; this.registrations = registrations; this.mergeSettings = mergeSettings; this.deviceIdentityService = deviceIdentityService; }
+  public DeviceDiscoveryService(JdbcTemplate jdbc, FritzBoxDeviceSource fritzBoxDeviceSource, HomeAssistantDeviceSource homeAssistantDeviceSource, TuyaDeviceSource tuyaDeviceSource, BuiltinDiscoverySettingsRepository builtinSettings, AdditionalDiscoveryService additionalDiscovery, SnmpDiscoveryService snmpDiscovery, WindowsInventoryDiscoveryService windowsInventoryDiscovery, LinuxInventoryDiscoveryService linuxInventoryDiscovery, LinuxNetworkDiscoveryService linuxNetworkDiscovery, AppleMobileDiscoveryService appleMobileDiscovery, DiscoveryRegistrationRepository registrations, DeviceIdentityMergeSettingsRepository mergeSettings, DeviceIdentityService deviceIdentityService, BrowserClientDiscoveryRepository browserClients) { this.jdbc = jdbc; this.fritzBoxDeviceSource = fritzBoxDeviceSource; this.homeAssistantDeviceSource = homeAssistantDeviceSource; this.tuyaDeviceSource = tuyaDeviceSource; this.builtinSettings = builtinSettings; this.additionalDiscovery = additionalDiscovery; this.snmpDiscovery = snmpDiscovery; this.windowsInventoryDiscovery = windowsInventoryDiscovery; this.linuxInventoryDiscovery = linuxInventoryDiscovery; this.linuxNetworkDiscovery = linuxNetworkDiscovery; this.appleMobileDiscovery = appleMobileDiscovery; this.registrations = registrations; this.mergeSettings = mergeSettings; this.deviceIdentityService = deviceIdentityService; this.browserClients = browserClients; }
 
   private static String discoveryCallerSummary() {
     return StackWalker.getInstance().walk(stream -> stream
@@ -67,6 +72,10 @@ public class DeviceDiscoveryService {
     result.put("linuxInventoryMode", "Lokale Linux-Inventarisierung sowie Netzwerk-Fingerprinting und optionale SSH-Tiefeninventarisierung");
     result.put("linuxNetworkInventory", true);
     result.put("linuxNetworkInventoryMode", "SSH-Banner, typische Linux-Dienste sowie Hostname-/Fingerabdruck-Hinweise anderer Quellen lösen eine gezielte Nachprüfung aus; optional schreibgeschützte SSH-Inventarisierung");
+    var appleMobileStatus = appleMobileDiscovery.capabilityStatus();
+    result.put("appleMobile", appleMobileStatus.nativeToolsAvailable());
+    result.put("appleMobileMode", appleMobileStatus.mechanism());
+    result.put("appleMobileConnected", appleMobileStatus.connectedDeviceCount());
     result.put("arp", commandExists(isWindows() ? "arp.exe" : "arp"));
     result.put("ipNeighbor", isLinux() && commandExists("ip"));
     result.put("activeSubnetScan", true);
@@ -122,13 +131,33 @@ public class DeviceDiscoveryService {
       if (builtinSettings.enabled("LOCAL_ADAPTERS")) {
         diagnostic(diagnosticConsumer, sessionId, "LOCAL_ADAPTERS", "RUNNING", "Lokale Netzwerkadapter werden gelesen", seen.size());
         networks = addLocalInterfaces(seen, now, deviceConsumer);
+        activeInterfaceNetworks = List.copyOf(networks);
         diagnostic(diagnosticConsumer, sessionId, "LOCAL_ADAPTERS", "COMPLETED", networks.size() + " lokale IPv4-Netze erkannt", seen.size());
-      } else { networks = List.of(); diagnostic(diagnosticConsumer, sessionId, "LOCAL_ADAPTERS", "SKIPPED", "Quelle ist deaktiviert", seen.size()); }
+      } else { networks = List.of(); activeInterfaceNetworks = List.of(); diagnostic(diagnosticConsumer, sessionId, "LOCAL_ADAPTERS", "SKIPPED", "Quelle ist deaktiviert", seen.size()); }
+
+      progressConsumer.accept(3, "Halblokale Browser-Clients werden ausgewertet");
+      if (builtinSettings.enabled("BROWSER_CLIENT")) {
+        diagnostic(diagnosticConsumer, sessionId, "BROWSER_CLIENT", "RUNNING", "Aktive GAM-Browser-Clients der letzten 24 Stunden werden ausgewertet", seen.size());
+        int browserCount=0;
+        for (var client : browserClients.recent()) {
+          DiscoveredDevice browserDevice = browserClientDevice(client, now);
+          emitIfNew(seen, browserDevice, deviceConsumer); browserCount++;
+        }
+        diagnostic(diagnosticConsumer, sessionId, "BROWSER_CLIENT", "COMPLETED", browserCount + " halblokale Browser-Clients ausgewertet", seen.size());
+      } else diagnostic(diagnosticConsumer, sessionId, "BROWSER_CLIENT", "SKIPPED", "Quelle ist deaktiviert", seen.size());
 
       progressConsumer.accept(4, "FRITZ!Box-Gerätenamen werden optional geladen");
       diagnostic(diagnosticConsumer, sessionId, "FRITZBOX", "RUNNING", "TR-064-Geräteliste wird geprüft", seen.size());
       var fritzResult = fritzBoxDeviceSource.load();
       installFritzIndex(fritzResult.devices());
+      // 40k37e55k: FRITZ!Box-Treffer wieder als eigenstaendige Discovery-Identitaeten
+      // sichtbar halten. Das ist insbesondere fuer Apple-Mobile wichtig: Die FRITZ!Box
+      // kennt die reale LAN-IP und die im WLAN verwendete (ggf. private) MAC, waehrend
+      // USB/CoreDevice die stabile Apple-Identitaet liefert. Vor einer ausdruecklichen
+      // Benutzer-Zusammenfuehrung duerfen diese Quellen nicht ineinander verschwinden.
+      // Nachfolgende Neighbor-Treffer duerfen den FRITZ-Datensatz anreichern; der
+      // Apple-WLAN<->FRITZ-Sonderfall der Confidence-Engine bleibt bestaetigungspflichtig.
+      emitFritzBoxDevices(fritzResult.devices(), seen, now, deviceConsumer);
       diagnostic(diagnosticConsumer, sessionId, "FRITZBOX", fritzResult.status(), fritzResult.message(), seen.size());
 
       progressConsumer.accept(5, "Home-Assistant-Geräteinformationen werden geladen");
@@ -210,7 +239,14 @@ public class DeviceDiscoveryService {
       windowsInventoryDiscovery.scan(builtinSettings.enabled("WINDOWS_INVENTORY"), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
 
       progressConsumer.accept(95, "Linux-Systeminformationen werden ausgewertet");
-      linuxInventoryDiscovery.scan(builtinSettings.enabled("LINUX_INVENTORY"), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
+      try {
+        linuxInventoryDiscovery.scan(builtinSettings.enabled("LINUX_INVENTORY"), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
+      } catch (Exception linuxInventoryError) {
+        String message = linuxInventoryError.getMessage();
+        if (message == null || message.isBlank()) message = linuxInventoryError.getClass().getSimpleName();
+        log.warn("[DISCOVERY] Lokale Linux-Inventarisierung fehlgeschlagen; Netzwerk-Discovery wird fortgesetzt: {}", message, linuxInventoryError);
+        diagnostic(diagnosticConsumer, sessionId, "LINUX_INVENTORY", "FAILED", "Lokale Linux-Inventarisierung fehlgeschlagen; Discovery wird fortgesetzt: " + message, seen.size());
+      }
 
       progressConsumer.accept(96, "Linux-Systeme im Netzwerk werden inventarisiert");
       // 40k33b4 Discovery-Chaining: Hinweise (Name/Typ/Protokoll), die bereits von ANDEREN
@@ -243,6 +279,20 @@ public class DeviceDiscoveryService {
       linuxNetworkDiscovery.scan(builtinSettings.enabled("LINUX_NETWORK"), linuxTargets, now,
         d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
 
+      progressConsumer.accept(96, "Apple-Mobile-Geräte über USB/WLAN werden ausgewertet");
+      boolean iosAppleEnabled=builtinSettings.enabled("IOS_USB_WLAN");
+      boolean ipadosAppleEnabled=builtinSettings.enabled("IPADOS_USB_WLAN");
+      log.info("[DISCOVERY][40k37e37][APPLE_MOBILE] Phase startet: IOS_USB_WLAN={}, IPADOS_USB_WLAN={}", iosAppleEnabled, ipadosAppleEnabled);
+      diagnostic(diagnosticConsumer, sessionId, "APPLE_MOBILE_PHASE", "RUNNING",
+        "40k37e36 Apple-Mobile Single-Run USB/WLAN: IOS_USB_WLAN="+iosAppleEnabled+", IPADOS_USB_WLAN="+ipadosAppleEnabled, seen.size());
+      boolean appleUsbEnabled=builtinSettings.enabled("APPLE_USB");
+      boolean appleWlanEnabled=builtinSettings.enabled("APPLE_WLAN");
+      log.info("[DISCOVERY][40k37e52][APPLE_MOBILE][ROUTES] USB={}, WLAN={}",appleUsbEnabled,appleWlanEnabled);
+      log.warn("[DISCOVERY][40k37e56c-fix11][APPLE_MOBILE][PIPELINE] event=BEFORE_APPLE_SCAN sessionId={} IOS_USB_WLAN={} IPADOS_USB_WLAN={} APPLE_USB={} APPLE_WLAN={} thread={}",sessionId,iosAppleEnabled,ipadosAppleEnabled,appleUsbEnabled,appleWlanEnabled,Thread.currentThread().getName());
+      appleMobileDiscovery.scan(iosAppleEnabled, ipadosAppleEnabled, appleUsbEnabled, appleWlanEnabled, now,
+        d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
+      log.warn("[DISCOVERY][40k37e56c-fix11][APPLE_MOBILE][PIPELINE] event=AFTER_APPLE_SCAN sessionId={} seenCount={} thread={}",sessionId,seen.size(),Thread.currentThread().getName());
+
       progressConsumer.accept(96, "Weitere Discovery-Quellen werden ausgewertet");
       additionalDiscovery.scan(builtinSettings.load(), now, d -> emitIfNew(seen, d, deviceConsumer), diagnosticConsumer, sessionId, seen.size());
 
@@ -264,7 +314,7 @@ public class DeviceDiscoveryService {
       // mehrere Plattform-Classifier gleichzeitig ein Ergebnis für dasselbe Gerät
       // (widersprüchliche Evidence, z.B. SSH UND SMB erreichbar), wird KEINE
       // automatische Entscheidung getroffen - nur dokumentiert, nicht angewendet.
-      log.debug("[DISCOVERY] Discovery-Sammelphase abgeschlossen, {} Gerät(e) gesehen - Nachklassifizierung und automatische Inventarisierungsprüfung beginnt", seen.size());
+      discoveryDebug.debug("[DISCOVERY] Discovery-Sammelphase abgeschlossen, {} Gerät(e) gesehen - Nachklassifizierung und automatische Inventarisierungsprüfung beginnt", seen.size());
       int reclassified = 0;
       int conflictsSkipped = 0;
       for (DiscoveredDevice d : List.copyOf(seen.values())) {
@@ -276,12 +326,10 @@ public class DeviceDiscoveryService {
         } catch (Exception e) { existing = null; }
         if (existing == null) continue;
         String identityKey = String.valueOf(existing.get("identityKey"));
-        // 40k34r: Direkt nach Discovery automatisch prüfen, ob eine passende
-        // Plattforminventarisierung sinnvoll ist - läuft vollständig asynchron
-        // innerhalb von DeviceIdentityService (eigene Eligibilitätsprüfung:
-        // unterstützte Plattform, keine bereits laufende Inventarisierung,
-        // Cooldown) und blockiert diesen Suchlauf nicht.
-        deviceIdentityService.autoTriggerPlatformInventoryIfEligible(identityKey);
+        // 40k36q9c: Discovery inventarisiert nicht mehr nachträglich ein zweites Mal.
+        // Der Suchlauf liefert seinen bereits ermittelten Stand und ist danach wirklich beendet.
+        // Erneute/vertiefte Inventarisierungen erfolgen nur noch über explizite Aktionen,
+        // gespeicherte Zugangstests oder den Scheduler-Modus INVENTORY/FULL.
         String currentCategory = existing.get("deviceType") == null ? "" : String.valueOf(existing.get("deviceType"));
         String storedProtocol = String.valueOf(existing.getOrDefault("protocol", ""));
         String adbHost = existing.get("adbHost") == null ? null : String.valueOf(existing.get("adbHost"));
@@ -294,7 +342,7 @@ public class DeviceDiscoveryService {
         if (hits == 0) continue;
         if (hits > 1) {
           conflictsSkipped++;
-          log.info("[DISCOVERY] Nachklassifizierung übersprungen (widersprüchliche Plattform-Evidence) für {}: Android={}, Windows={}, Linux={}",
+          discoveryDebug.info("[DISCOVERY] Nachklassifizierung übersprungen (widersprüchliche Plattform-Evidence) für {}: Android={}, Windows={}, Linux={}",
             identityKey, androidResult.isPresent(), windowsResult.isPresent(), linuxResult.isPresent());
           continue;
         }
@@ -304,7 +352,7 @@ public class DeviceDiscoveryService {
           String.join("; ", classification.matched().stream().map(DeviceEvidenceEngine.Evidence::description).toList()));
         if (applied) {
           reclassified++;
-          log.info("[DISCOVERY] Nachklassifizierung ({}): {} -> {} (Konfidenz: {}, Hinweise: {})",
+          discoveryDebug.info("[DISCOVERY] Nachklassifizierung ({}): {} -> {} (Konfidenz: {}, Hinweise: {})",
             classification.platform(), identityKey, classification.category(), classification.confidenceLabel(), classification.matched().size());
         }
       }
@@ -444,6 +492,12 @@ public class DeviceDiscoveryService {
     if (!validHostIp(ip)) return;
     Matcher macMatcher = MAC.matcher(line);
     String mac = macMatcher.find() ? normalizeMac(macMatcher.group(1)) : null;
+    // 40k36s1: macOS `arp -an` behält nach dem aktiven Subnetzscan auch unvollständige
+    // ARP-Kandidaten ("(incomplete)") für abgefragte IPs. Diese sind keine bestätigten
+    // Geräte und dürfen nicht als "Netzwerkgerät <IP>" registriert werden.
+    String lowerLine = line.toLowerCase(Locale.ROOT);
+    if (lowerLine.contains("incomplete") || lowerLine.contains("failed") || lowerLine.contains("unreachable")) return;
+    if (protocol.toLowerCase(Locale.ROOT).contains("arp") && (mac == null || mac.isBlank())) return;
     FritzBoxDeviceSource.FritzDevice fritz = findFritz(ip, mac);
     HomeAssistantDeviceSource.HaDevice ha = findHomeAssistant(ip, mac);
     TuyaDeviceSource.TuyaDevice tuya = findTuya(ip, mac);
@@ -456,6 +510,12 @@ public class DeviceDiscoveryService {
     String manufacturer = tuya != null && !tuya.manufacturer().isBlank() ? tuya.manufacturer() : (ha == null || ha.manufacturer().isBlank() ? null : ha.manufacturer());
     DiscoveredDevice device = new DiscoveredDevice("network:" + ip, name, type, ip, mac,
       sourceProtocol, status, manufacturer, null, now, isRegistered(ip, mac, name));
+    // 40k37e53-fix5: IP/MAC genau dort protokollieren und weiterreichen, wo GAM sie
+    // ohnehin bereits kennt. Keine Rueckkopplung in Apple-Mobile vor bestaetigtem Merge.
+    if (sourceProtocol.toLowerCase(Locale.ROOT).contains("fritz!box") || sourceProtocol.toLowerCase(Locale.ROOT).contains("arp")) {
+      discoveryDebug.info("[DISCOVERY][40k37e53-fix5][NETWORK][SOURCE_IDENTITY_SAVED] id={}, name={}, ip={}, mac={}, source={}",
+        device.id(), device.name(), device.address(), device.hardwareAddress(), device.protocol());
+    }
     emitIfNew(result, device, consumer);
   }
 
@@ -571,6 +631,34 @@ public class DeviceDiscoveryService {
   }
 
 
+  /** 40k37e55k: FRITZ!Box-Rohidentitaeten nicht vorzeitig mit anderen Quellen verschmelzen. */
+  private void emitFritzBoxDevices(List<FritzBoxDeviceSource.FritzDevice> devices,
+                                   Map<String,DiscoveredDevice> seen, String now,
+                                   Consumer<DiscoveredDevice> consumer) {
+    for (var d : devices) {
+      if ((d.ip() == null || d.ip().isBlank()) && (d.mac() == null || d.mac().isBlank())) continue;
+      String mac = d.mac() == null || d.mac().isBlank() ? null : normalizeMac(d.mac());
+      String ip = d.ip() == null ? "" : d.ip().trim();
+      String name = d.name() == null || d.name().isBlank()
+        ? (!ip.isBlank() ? "FRITZ!Box-Gerät " + ip : "FRITZ!Box-Gerät " + mac)
+        : d.name().trim();
+      String type = classifyFritzFallback(d, name);
+      String idPart = mac != null ? mac : (!ip.isBlank() ? ip : name);
+      String id = "fritzbox:" + d.sourceId() + ":" + idPart;
+      String protocol = "FRITZ!Box TR-064 · " + d.sourceName();
+      DiscoveredDevice device = new DiscoveredDevice(id, name, type, ip, mac, protocol,
+        d.active() ? "ONLINE" : "ERKANNT", null, null, now, isRegistered(ip, mac, name));
+
+      // Absichtlich KEIN emitIfNew(): genau dieser Rohdatensatz soll bis zum expliziten
+      // Merge separat bleiben. Gleiche FRITZ-IDs werden innerhalb eines Laufs ersetzt.
+      DiscoveredDevice emitted = applyAutomaticRegistration(device);
+      seen.put(id, emitted);
+      consumer.accept(emitted);
+      discoveryDebug.info("[DISCOVERY][40k37e55k][FRITZBOX][STANDALONE] id={}, name={}, ip={}, mac={}, active={}",
+        id, name, ip, mac, d.active());
+    }
+  }
+
   private void installHomeAssistantIndex(List<HomeAssistantDeviceSource.HaDevice> devices) {
     Map<String,HomeAssistantDeviceSource.HaDevice> byIp=new HashMap<>();
     Map<String,HomeAssistantDeviceSource.HaDevice> byMac=new HashMap<>();
@@ -619,6 +707,28 @@ public class DeviceDiscoveryService {
       if (colon > 0 && line.substring(0, colon).trim().equalsIgnoreCase(key)) return line.substring(colon + 1).trim();
     }
     return null;
+  }
+
+  private DiscoveredDevice browserClientDevice(BrowserClientDiscoveryRepository.Client c, String now) {
+    String platform = c.platform()==null?"":c.platform().trim();
+    String lower = platform.toLowerCase(Locale.ROOT);
+    String type = lower.contains("ipad") ? "Tablet / iPadOS" : lower.contains("ios") || lower.contains("iphone") ? "Smartphone / iOS" : lower.contains("android") ? ("tablet".equalsIgnoreCase(c.deviceClass())?"Tablet / Android":"Smartphone / Android") : lower.contains("mac") ? "Computer / macOS" : lower.contains("windows") ? "Computer / Windows" : lower.contains("linux") ? "Computer / Linux" : "Computer / Browser-Client";
+    String name = (platform.isBlank()?"Browser-Client":platform+"-Browser") + (c.address()==null||c.address().isBlank()?"":" " + c.address());
+    List<String> details = new ArrayList<>();
+    details.add("Halblokale Browsererkennung");
+    if(!platform.isBlank()) details.add("Plattform: "+platform+(c.platformVersion().isBlank()?"":" "+c.platformVersion()));
+    if(!c.browser().isBlank()) details.add("Browser: "+c.browser()+(c.browserVersion().isBlank()?"":" "+c.browserVersion()));
+    if(!c.architecture().isBlank()) details.add("Architektur-Hinweis: "+c.architecture());
+    if(!c.model().isBlank()) details.add("Modell-Hinweis: "+c.model());
+    if(!c.deviceClass().isBlank()) details.add("Geräteklasse: "+c.deviceClass());
+    if(c.hardwareConcurrency()!=null) details.add("Logische Prozessoren laut Browser: "+c.hardwareConcurrency());
+    if(c.deviceMemory()!=null) details.add("RAM-Hinweis laut Browser: "+c.deviceMemory()+" GiB");
+    if(!c.screen().isBlank()) details.add("Bildschirm: "+c.screen());
+    if(!c.language().isBlank()) details.add("Sprache: "+c.language());
+    if(!c.timezone().isBlank()) details.add("Zeitzone: "+c.timezone());
+    details.add("Touch: "+(c.touch()?"ja":"nein"));
+    details.add("Vorläufig: Hardware-ID, Seriennummer und MAC-Adresse müssen über Betriebssystemzugang verifiziert werden");
+    return new DiscoveredDevice("browser:"+c.clientId(),name,type,c.address(),null,String.join(" · ",details),"BROWSER-CLIENT",null,null,now,isRegistered(c.address(),null,name));
   }
 
   private void emitIfNew(Map<String,DiscoveredDevice> result, DiscoveredDevice device, Consumer<DiscoveredDevice> consumer) {
@@ -671,7 +781,7 @@ public class DeviceDiscoveryService {
       }
     }
     if (best != null) {
-      log.debug("[DISCOVERY-MERGE] {} -> {} score={} confidence={} signals={}",
+      discoveryDebug.debug("[DISCOVERY-MERGE] {} -> {} score={} confidence={} signals={}",
         candidate.id(), bestKey, best.score(), best.confidencePercent(), best.matchedSignals());
     }
     return bestKey;
@@ -773,11 +883,27 @@ public class DeviceDiscoveryService {
     } catch (Exception ignored) { return false; }
   }
 
-  private static boolean validHostIp(String ip) {
+  private boolean validHostIp(String ip) {
     try {
       InetAddress a = InetAddress.getByName(ip);
-      return a instanceof Inet4Address && !a.isAnyLocalAddress() && !a.isMulticastAddress() && !ip.endsWith(".255");
+      if (!(a instanceof Inet4Address) || a.isAnyLocalAddress() || a.isMulticastAddress() || a.isLoopbackAddress()) return false;
+      int value = ipv4ToInt(ip);
+      // 40k36r13: Netz- und Broadcastadressen sind keine Geräte. Nicht nur .0/.255 filtern:
+      // bei /25, /26 usw. liegen diese Grenzen mitten im letzten Oktett.
+      for (InterfaceNetwork network : activeInterfaceNetworks) {
+        if (network.contains(value) && (value == network.networkAddress() || value == network.broadcastAddress())) return false;
+      }
+      // Fallback für Quellen, die schon vor der lokalen Interfaceermittlung laufen sollten.
+      return !ip.endsWith(".0") && !ip.endsWith(".255");
     } catch (Exception ignored) { return false; }
+  }
+
+  private static int ipv4ToInt(String ip) {
+    String[] p = ip.split("\\.");
+    if (p.length != 4) throw new IllegalArgumentException("Keine IPv4-Adresse: " + ip);
+    int value = 0;
+    for (String part : p) value = (value << 8) | (Integer.parseInt(part) & 0xff);
+    return value;
   }
 
   private static String reverseName(String ip) {
@@ -820,15 +946,23 @@ public class DeviceDiscoveryService {
   private record CommandSource(String label, List<String> command) { }
 
   private record InterfaceNetwork(String address, short prefix) {
+    int mask() { return prefix == 0 ? 0 : (int)(0xffffffffL << (32 - prefix)); }
+    int networkAddress() { return ipv4ToInt(address) & mask(); }
+    int broadcastAddress() { return networkAddress() | ~mask(); }
+    boolean contains(int value) { return (value & mask()) == networkAddress(); }
+
     Set<String> hostsLimitedTo24() {
       LinkedHashSet<String> hosts = new LinkedHashSet<>();
       String[] parts = address.split("\\.");
       if (parts.length != 4) return hosts;
       // Für Sicherheit und Laufzeit höchstens das lokale /24 scannen, auch wenn das Interface größer konfiguriert ist.
       String base = parts[0] + "." + parts[1] + "." + parts[2] + ".";
+      int network = networkAddress();
+      int broadcast = broadcastAddress();
       for (int i = 1; i <= 254; i++) {
         String candidate = base + i;
-        if (!candidate.equals(address)) hosts.add(candidate);
+        int value = ipv4ToInt(candidate);
+        if (!candidate.equals(address) && contains(value) && value != network && value != broadcast) hosts.add(candidate);
       }
       return hosts;
     }

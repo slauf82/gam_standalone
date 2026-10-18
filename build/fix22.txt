@@ -1,0 +1,7 @@
+40k37e56c-fix22
+Scope: macOS portable database underlay only.
+- Fix Unix socket path length on macOS.
+- Portable MySQL socket moved from long GAM path to ${TMPDIR:-/tmp}/gam-mysql-<uid>.sock.
+- Server configuration and local bootstrap administration use the identical short socket path.
+- Runtime, database data, PID and logs remain in the GAM directory.
+- No Java/backend/frontend/Apple/inventory/merge source changes.

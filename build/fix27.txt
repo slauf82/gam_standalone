@@ -1,0 +1,7 @@
+40k37e56c-fix27
+
+macOS Homebrew provenance for standalone bootstrap:
+- pre-existing Homebrew remains the preferred Node path
+- Homebrew installed by GAM for Intel/Tahoe MariaDB is persistently marked
+- GAM-managed Homebrew does not switch Node away from the portable Node 22 runtime
+- marker survives fresh GAM directories because it lives inside /usr/local/Homebrew

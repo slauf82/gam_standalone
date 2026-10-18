@@ -1,0 +1,37 @@
+GAM Standalone v2.1.0 – Schritt 40k34i
+Evidence-Modell fuer Windows und Linux nachruesten
+
+Schwerpunkte:
+- Vorab geprueft: keine eigenstaendige Windows-/Linux-Classifier-Klasse
+  existierte bisher (Logik eingebettet in WindowsInventoryDiscoveryService/
+  LinuxNetworkDiscoveryService). Zwei neue, schlanke Klassen nach dem
+  Android-Vorbild angelegt: WindowsDeviceClassifier, LinuxDeviceClassifier -
+  beide nutzen ausschliesslich die bestehende DeviceEvidenceEngine (aus
+  40k34h, unveraendert, weiterhin ohne jedes Plattform-Sonderwissen).
+- Windows-Evidence: bereits erfolgreiche WMI-/PowerShell-Inventarisierung
+  (SEHR_HOCH), SMB/NetBIOS/Domaene/Rollen (HOCH), Hostname-Muster (MITTEL).
+  Zielkategorie ausschliesslich "Windows-PC" (einzige vorhandene).
+- Linux-Evidence: bereits bestaetigtes "Linux bestaetigt: ja"/Distribution/
+  Kernel/SNMP-Systembeschreibung "Linux" (SEHR_HOCH), SSH NUR zusammen mit
+  weiterem Linux-Hinweis oder Paketmanager (HOCH), Hostname-Muster (MITTEL),
+  SSH allein (NIEDRIG, reicht nie allein aus). Zielkategorie "Computer /
+  Linux" (bereits bestehend).
+- Generische Korrektur (gilt fuer alle Plattformen inkl. Android):
+  applyEvidenceReclassification() darf eine bereits spezifischere Kategorie
+  nie mehr durch eine weniger spezifische ersetzen (neue Nutzung der
+  bereits bestehenden categorySpecificity()-Rangfolge).
+- Konfliktbehandlung: liefern mehrere Plattform-Classifier gleichzeitig ein
+  Ergebnis fuer dasselbe Geraet, wird KEINE automatische Entscheidung
+  getroffen - nur geloggt, bestehende Kategorie bleibt unveraendert.
+- Derselbe Nachklassifizierungs-Schritt aus 40k34h wurde generalisiert
+  (keine zweite parallele Pipeline), keine neuen Netzwerk-/SSH-/WMI-/
+  ADB-Aufrufe.
+- Keine Frontend-Aenderungen noetig.
+- Kein echter Build moeglich - ausdruecklich benannt. Verbesserter
+  automatisierter Record-Konstruktor-Check (toleriert jetzt korrekt
+  gleichnamige Records in unterschiedlichen Klassen): keine echten
+  Abweichungen gefunden.
+
+Ausfuehrliche Dokumentation: docs/40k34i-windows-linux-evidence.md
+
+Basis: 40k34h

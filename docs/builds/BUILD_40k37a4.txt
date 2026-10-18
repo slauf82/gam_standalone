@@ -1,0 +1,22 @@
+GAM Standalone 2.1.0 – Schritt 40k37a4
+
+Ziel innerhalb der Original-Roadmap 40k37a:
+- Windows + aktuelle Apple-Geräte-App: bereits erkanntes iPad möglichst bis zur konkreten Generation auflösen.
+- Keine Modellvermutung anhand VID/PID.
+- Mehrere PnP-Interfaces eines physischen Apple-Geräts nicht mehrfach emittieren.
+
+Änderungen:
+1. AppleMobileDiscoveryService gruppiert Apple-PnP-Knoten über DEVPKEY_Device_ContainerId.
+2. Parent-/Sibling-Knoten und sämtliche PnP-Properties des Containers werden ausgewertet.
+3. Belastbare ProductType-Muster (z.B. iPad11,6 / iPad11,7) werden aus den Windows-Eigenschaften extrahiert und über die bestehende Apple-Modelltabelle aufgelöst.
+4. Ohne ProductType bleibt die Anzeige transparent bei iPad/iPhone; PID 12AB wird NICHT als Generation interpretiert.
+5. ContainerId wird als physische Fallback-Identität verwendet; MI_00/PTP und MI_01/USB-Multiplexor werden dadurch nicht separat emittiert.
+6. Die generische USB_LOCAL-Quelle überspringt Apple-Mobile-Knoten; AppleMobileDiscoveryService ist dafür allein zuständig.
+7. Discovery-Details zeigen ContainerId, ParentId, ProductType/Modell und einen kompakten Windows-Modellhinweis.
+
+Testziel auf realem iPad 8. Generation:
+- genau ein aktueller Apple-Mobile-Treffer pro physischem iPad,
+- ideal: Name "iPad 8. Generation (Wi-Fi)" oder "iPad 8. Generation (Wi-Fi + Cellular)",
+- falls Windows keinen generationstauglichen ProductType exponiert: weiterhin korrekt "iPad", aber mit neuen Diagnosedaten für den nächsten gezielten Schritt.
+
+Original-Roadmap 40k37a ist erst nach erfolgreichem Realhardwaretest erreicht.

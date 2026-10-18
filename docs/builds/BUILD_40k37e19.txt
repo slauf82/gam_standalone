@@ -1,0 +1,10 @@
+GAM Standalone v2.1.0 - Schritt 40k37e19
+
+CoreDevice Direct-Java-Runner
+- uv.exe und pymobiledevice3.exe werden nach dem einmaligen uv-Bootstrap direkt durch Java ProcessBuilder gestartet.
+- stdout und stderr werden parallel konsumiert; dadurch kein Pipe-Deadlock bei umfangreicher uv-Ausgabe.
+- echte Prozess-Exitcodes und harte Java-Timeouts fuer uv install und remote browse.
+- PowerShell bleibt nur fuer den verifizierten Erstdownload von uv und beendet sich mit -UvOnly vor Paketinstallation.
+- GAM-eigene isolierte Runtime, kein System-Python/PATH-Eingriff.
+- e16/e18 Parallel-Guard bleibt erhalten.
+- Remote browse bleibt read-only; kein Pairing/Tunnel/Device-Mutation.

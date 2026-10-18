@@ -1,0 +1,34 @@
+40k36t18 – Discovery-Schema-Abgleich nach Erstsetup
+
+Ausgangslage
+------------
+Nach einem erfolgreichen Erstsetup mit leerer Datenbank konnte die Geräteverwaltung an
+`gam_discovery_registered_devices` scheitern. Das Repository besitzt zwar seit längerem
+additive Selbstheilung für neuere Spalten, diese läuft jedoch beim Spring-Start VOR dem
+Erstsetup. Das Erstsetup setzt die Anwendungstabellen anschließend zurück und erzeugte die
+Tabelle aus älteren SQL-Schemata erneut – dadurch gingen die bereits ergänzten Spalten wieder
+verloren.
+
+Änderungen
+----------
+* `gam_discovery_registered_devices` ist in den aktuellen preview3-Schemata auf den vom
+  Java-Code erwarteten Stand gebracht worden.
+* Ergänzt sind:
+  - `pending_discovery_protocol` LONGTEXT NULL
+  - `manual_name` BOOLEAN/TINYINT NOT NULL DEFAULT FALSE/0
+  - `adb_host` VARCHAR(255) NULL
+  - `adb_port` INT NULL
+  - `adb_last_connected_at` TIMESTAMP NULL
+* Angepasst wurden:
+  - `database/gam_v2_1_0_preview3_runtime_schema.sql`
+  - `database/gam_v2_1_0_preview3_empty.sql`
+  - `database/gam_demo_v2_1_0_preview3_anonymisiert.sql`
+* Das Runtime-Schema ergänzt dieselben fünf Spalten zusätzlich idempotent per `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, falls die Tabelle bereits existiert.
+* Die Erstsetup-Verifikation prüft diese Runtime-Spalten nun ausdrücklich mit.
+* Die Repository-Selbstheilung bleibt als zusätzlicher Schutz für ältere Installationen bestehen.
+
+Nicht geändert
+--------------
+* Linux-Inventarisierungslogik (lokal/SSH)
+* 40k36t13-Softwarequellen-/Detailtabellen-UI
+* 40k36t17-Demoimport-Transaktionshärtung

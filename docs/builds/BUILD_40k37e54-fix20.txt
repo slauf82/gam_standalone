@@ -1,0 +1,21 @@
+GAM 2.0 – 40k37e54-fix20
+
+Ziel
+- Den in fix19 real funktionierenden Windows-Admin-Lockdown/CoreDevice-Tunnel live als ACTIVE erfassen.
+- Das erhoehte Tunnel-Fenster fuer den Benutzer eindeutig kennzeichnen.
+
+Aenderungen
+- Moderner Tunnelbefehl bleibt unveraendert: pymobiledevice3 --no-color lockdown start-tunnel --udid <UDID> --script-mode.
+- Kein --mobdev2 und keine Pairing-Record-Mutation.
+- Der UAC-Wrapper startet pymobiledevice3 ueber System.Diagnostics.Process mit live umgeleitetem stdout/stderr.
+- Die script-mode-Endpunktzeile <IPv6> <Port> wird sofort erkannt und nach logs/apple-admin-tunnel/endpoint.txt geschrieben.
+- Java liest endpoint.txt primaer live und behaelt stdout.log als Fallback.
+- lifecycle.log erhaelt RSD_ENDPOINT_CAPTURED.
+- Das sichtbare Admin-Fenster traegt den Titel "GAM 2.0 - Apple Admin-Tunnel - NICHT SCHLIESSEN" und weist darauf hin, dass es fuer die Inventarisierung offen bleiben muss.
+- Bestehende Endpoint-Verifikation, ACTIVE-Status, Stop-Logik und explizites No-Fallback-Verhalten bleiben erhalten.
+
+Validierung dieser Paketierung
+- ZIP-CRC wird nach Erstellung geprueft.
+- backend/pom.xml wird als XML geparst.
+- Unix-Ausfuehrungsbits der .sh-Dateien werden beibehalten/geprueft.
+- Maven-Testlauf erfolgt auf dem Windows-Testsystem des Anwenders.

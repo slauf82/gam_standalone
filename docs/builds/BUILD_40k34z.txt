@@ -1,0 +1,13 @@
+GAM Standalone v2.1.0 – Schritt 40k34z
+
+- WinRM als konfigurierbare, in der GAM-Datenbank persistierte Quelle ergänzt
+- Aktivierung, Benutzername, Kennwort, HTTP/HTTPS und Port einstellbar
+- WinRM-Verbindungstest per Hostname oder IP im Gerätemanager
+- WinRM nicht mehr nur als geplante Integration angezeigt
+- Android-ADB-Ausgaben parallel gelesen: Deadlock bei großen Datenmengen behoben
+- Android-Inventarisierung läuft bei Teilfehlern weiter
+- Teilfehler und leere Abfragen werden gesammelt am Ende gemeldet
+- Bereits gelesene Daten bleiben auch bei einem Einzel-Timeout erhalten
+- Große Datenquellen wie getprop, ps, dumpsys und System-App-Liste können nun Daten liefern
+
+Basis: 40k34y / zuletzt bereitgestellte Frontend-, Backend- und Sonstiges-Archive

@@ -1,0 +1,9 @@
+40k37e55a - Linux Apple Paketmanager-Installation (Ubuntu/apt)
+
+Basis: 40k37e55
+- Ubuntu/Debian: bestehender GAM-Button stoesst apt-get ueber pkexec/polkit an.
+- Feste Pakete: libimobiledevice-utils, usbmuxd, ideviceinstaller.
+- Nach Installation validiert GAM die benoetigten idevice-Werkzeuge und usbmuxd erneut.
+- GAM selbst wird nicht als root gestartet.
+- Andere Paketmanager bleiben zunaechst beim diagnostizierten Installationsvorschlag.
+- mvnw und alle *.sh werden im ZIP mit Unix-Execute-Bit ausgeliefert.

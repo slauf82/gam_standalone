@@ -1,0 +1,26 @@
+GAM Standalone v2.1.0 – Schritt 40k33b9
+Linux-Inventarisierung ohne SSH optimieren
+
+Schwerpunkte:
+- Wichtiger Fund: SNMP-sysDescr wurde bisher komplett verworfen (nur "SNMP v1"
+  gespeichert) - jetzt wird die echte Systembeschreibung mitgespeichert und
+  liefert bei vielen Linux-Systemen bereits Hostname/Kernel ohne SSH.
+- SNMP laeuft jetzt bewusst vor der Linux-Netzwerkerkennung (reine
+  Reihenfolgeaenderung bestehender Schritte, keine neue Discovery).
+- Neue credential-freie Port-Sonden: IPP/CUPS, Docker-API, Webmin.
+- Einfache HTTP-Titelerkennung fuer bereits offene Web-Ports: Cockpit, CasaOS,
+  OpenMediaVault, Portainer, Webmin, Nextcloud, Grafana, Prometheus, Proxmox,
+  Home Assistant.
+- Erweiterte Rollenerkennung mit Mehrquellen-Kombinationen (SSH+HTTP+Docker,
+  HTTP+Samba, HTTP+Home Assistant, IPP/CUPS-Druckserver).
+- Neue Felder: Inventarisierungsgrad (%), Verwendete Quellen, Zusaetzlich
+  ueber SSH verfuegbar.
+- Fehlerbehebung: "SSH nicht eingerichtet/nicht erreichbar" wurde bisher
+  faelschlich als Fehlermeldung dargestellt - jetzt ein neutraler Hinweis
+  (SSH ist und bleibt optional).
+- Zusaetzliches Debug-Logging fuer Quellen, Rollen und Inventarisierungsgrad.
+- Keine neue Linux-Architektur, keine zweite SSH-/SNMP-Implementierung.
+
+Ausfuehrliche Dokumentation: docs/40k33b9-linux-ohne-ssh.md
+
+Basis: 40k33b8

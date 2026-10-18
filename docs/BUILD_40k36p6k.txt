@@ -1,0 +1,3 @@
+Build: 40k36p6k
+Basis: 40k36p6j
+Änderung: Zähler an Untergruppen ergänzt und Registrierungsmodus standardmäßig eingeklappt.

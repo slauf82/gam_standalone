@@ -1,0 +1,15 @@
+GAM Standalone v2.1.0 - Schritt 40k37e17
+
+Basis: 40k37e16.
+
+Aenderungen:
+- CoreDevice-Bootstrap gezielt gegen PowerShell NativeCommandError gehaertet.
+- uv und pymobiledevice3 werden ueber Start-Process mit getrenntem stdout/stderr ausgefuehrt.
+- Normale native stderr-/Fortschrittsausgaben beenden den Bootstrap nicht mehr.
+- Ausschliesslich der echte native Exitcode entscheidet ueber Erfolg oder Fehler.
+- Nach uv tool install wird pymobiledevice3.exe explizit geprueft; Ready-Marker erst danach.
+- pymobiledevice3 --version wird ebenfalls ueber den robusten nativen Prozesspfad geprueft.
+- remote browse --no-color wird ueber denselben robusten Pfad ausgefuehrt und stdout/stderr/Exitcode protokolliert.
+- e16-Concurrency-Guard bleibt erhalten; zweite parallele CoreDevice-Runtime wird temporaer uebersprungen.
+- GAM-eigene isolierte Runtime, gepinnte Versionen und bestehende Apple-Diagnosen bleiben erhalten.
+- Kein globales Python/pip/PATH, kein Pairing/Tunnel im Bootstrap, keine Apple-Sicherheitsumgehung.

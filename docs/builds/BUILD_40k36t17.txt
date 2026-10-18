@@ -1,0 +1,24 @@
+40k36t17 – Beispieldatenimport: Transaktions- und Fortschrittshärtung
+
+Basis: 40k36t16
+
+Ziel
+- Der 47-MB-Beispieldatenimport darf beim Erststart nicht minutenlang wie ein Hänger wirken oder eine einzige sehr lange InnoDB-Transaktion offen halten.
+
+Änderungen
+- FirstRunSetupController bereitet die Demo-SQL-Anweisungen vor dem Öffnen der Importtransaktion vollständig auf.
+- START TRANSACTION/COMMIT/USE/LOCK-Steueranweisungen des Dumps werden weiterhin nicht direkt ausgeführt; GAM steuert die Transaktion selbst.
+- Der Demo-Import setzt kontrollierte Zwischen-Commits nach jeweils 25 verarbeiteten SQL-Anweisungen.
+- Schritt 6 protokolliert jetzt Dateigröße und Zahl der SQL-Anweisungen, Fortschritt alle 10 Anweisungen, langsame Einzelanweisungen ab 2 s und den finalen Commit.
+- Bei Fehlern enthält die Meldung neben der Anweisungsnummer eine kurze SQL-Vorschau.
+- Nach Erfolg oder Fehler wird Auto-Commit sauber wiederhergestellt; bei Fehlern wird der aktuelle Transaktionsblock zurückgerollt.
+- Alle 40k36t16-Schema-Selbstheilungen sowie die 40k36t15-Lock-/PRIMARY-KEY-Härtungen bleiben erhalten.
+
+Nicht verändert
+- Linux-Inventarisierung Backend-lokal/SSH
+- Softwarequellen-/Detailtabellen-UI aus 40k36t13
+- Geräteerkennungslogik
+
+Regressionstest
+- Erststart mit Beispieldatenbank auf CachyOS muss in Schritt 6 fortlaufend [Setup 6a/8] bis [Setup 6d/8] melden und anschließend zu Schritt 7/8 und 8/8 weitergehen.
+- SHOW FULL PROCESSLIST / information_schema.innodb_trx darf keine einzelne minutenlange Importtransaktion über den gesamten Demo-Dump mehr zeigen; höchstens der aktuell laufende 25-Anweisungs-Block bleibt offen.

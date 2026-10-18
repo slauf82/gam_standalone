@@ -1,0 +1,23 @@
+GAM Standalone v2.1.0 – Schritt 40k37e3
+================================================
+
+Ziel: Apple USB/WLAN in das allgemeine GAM-Mehrfachfund-/Merge-Modell einordnen.
+
+Änderungen:
+- Basis 40k37e2 vollständig beibehalten.
+- iOS/iPadOS bleiben Erkennungsarten USB/WLAN, analog zu Android.
+- USB- und WLAN-Erkennung desselben Apple-Geräts werden NICHT mehr bereits in
+  AppleMobileDiscoveryService anhand der UDID vorab dedupliziert.
+- Beide Transportwege dürfen als getrennte Discovery-Treffer in die allgemeine
+  GAM-Identitäts-/Merge-Pipeline gelangen.
+- Damit gelten für Apple dieselben Prinzipien wie für andere Plattformen:
+  Erkennen -> einzelne Funde -> Identität vergleichen -> Merge.
+- Stabile Apple-Merkmale (insbesondere UDID/Seriennummer/WiFi-MAC, soweit vorhanden)
+  bleiben Identitätsmerkmale; e3 führt keine neue Apple-Sonderheuristik ein.
+- Bei gleichzeitigem USB/WLAN-Fund kann GAM dadurch die Herkunft beider Funde
+  nachvollziehbar behandeln, statt den WLAN-Treffer schon in der Apple-Quelle zu verstecken.
+- Bestehende allgemeine Merge-/Trenn-Funktionen bleiben zuständig.
+- UI-Hinweis verkürzt auf:
+  "Shift-Taste + Mausrad scrollt die Tabelle horizontal."
+- Netzwerk-Discovery aus e1/e2 bleibt read-only.
+- d20-d22 Härtungen bleiben erhalten.

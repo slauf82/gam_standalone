@@ -1,0 +1,35 @@
+GAM Standalone v2.1.0 - Schritt 40k37d11
+
+Ziel
+----
+40k37d11 setzt direkt auf 40k37d10 auf und prüft die offene Frage der Apple-App-Inventarisierung mit einem kontrollierten A/B-Test. Die funktionierende MSYS2-/ideviceinstaller-1.1.1-Runtime aus d10 bleibt unverändert und wird weiterhin zuerst ausgeführt. Zusätzlich wird unter Windows eine aktuelle, vollständig isolierte libimobiledevice-Suite nur für einen modernen ideviceinstaller-Testpfad bereitgestellt.
+
+Neu in 40k37d11
+----------------
+- Der d10-/ideviceinstaller-1.1.1-Pfad bleibt unverändert als Referenz und Fallback erhalten.
+- Isolierter moderner Testpfad unter tools/libimobiledevice/ideviceinstaller-modern-d11.
+- Quelle: L1ghtmann libimobiledevice suite-exe-12052025, laut Release gegen Upstream 2025-12-04 gebaut.
+- Archiv: libimobile-suite-latest_x86_64-mingw64.tar.xz
+- Erwarteter SHA-256: c906b134dd4b7981eb201af06ebad72d131b846eaf0acbe9edda509436cf8512
+- Vor Nutzung wird nicht nur der Hash geprüft: --help/--version müssen die moderne list-CLI mit --user und --system erkennen lassen.
+- Moderne A/B-Matrix: list --user --xml, Default list --xml, list --all --xml, list --system --xml; bei vollständig leeren XML-Ergebnissen zusätzliche Textvarianten.
+- USER/SYSTEM bei list --all wird weiterhin ausschließlich aus ApplicationType/ApplicationTypeString übernommen; keine Heuristik aus Bundle-ID, Pfad oder Signatur.
+- Wenn der moderne Pfad Apps liefert, wird dieses Ergebnis für die normale Inventarisierung verwendet. Bleibt er leer oder ist nicht verfügbar, bleibt d10/1.1.1 der Fallback.
+- Neue Vergleichsdiagnose: logs/apple-mobile-software-d11.json.
+- Legacy-Einzeldiagnose zusätzlich: logs/apple-mobile-software-d11-legacy.json.
+- Inventar-Snapshot: logs/apple-mobile-inventory-d11.json.
+- Apple-Debugtrace vollständig auf D11 vereinheitlicht.
+- MSYS2-Paketcache aus d10 bleibt unverändert erhalten; die moderne Suite besitzt einen getrennten Cache.
+
+Testziel
+--------
+Der entscheidende Test ist, ob auf demselben gepairten iPad der alte 1.1.1-Pfad leer bleibt bzw. hängt, während der moderne 1.2.x-Pfad echte App-Daten liefert. Das wäre ein starker Nachweis für eine Client-/installation_proxy-Inkompatibilität der alten Version statt einer generellen Apple-Sperre. Wenn beide Pfade leer bleiben, ist die Apple-/iPadOS-Seite deutlich wahrscheinlicher und die Diagnose enthält die Einzelresultate beider Clients.
+
+Für die Auswertung bitte bevorzugt diese drei Dateien bereitstellen:
+1. logs/apple-mobile-debug.log
+2. logs/apple-mobile-inventory-d11.json
+3. logs/apple-mobile-software-d11.json
+
+Hinweis
+-------
+Der moderne Drittanbieter-Build wird ausschließlich als Diagnose-/Vergleichspfad verwendet und ersetzt die bestehende GAM-Toolchain nicht. Sollte er sich als ungeeignet erweisen, ist der nächste saubere Schritt ein eigener reproduzierbarer x86_64-mingw64-Build aus dem offiziellen ideviceinstaller-1.2.0-Quellcode.

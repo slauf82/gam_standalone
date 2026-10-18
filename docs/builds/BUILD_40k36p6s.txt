@@ -1,0 +1,11 @@
+Build: 40k36p6t
+Basis: 40k36p6l
+
+Schwerpunkt: Merge 2.0 / mehrere Netzwerkidentitäten
+- mehrere IP-Adressen je kanonischem Gerät persistent erhalten
+- mehrere MAC-Adressen je kanonischem Gerät persistent erhalten
+- Anzeige direkt im Gerätemanager unter Registriert / Inventarisieren
+- bestehende Merge-Schnappschüsse beim Start rückwirkend übernehmen
+- Discovery erkennt bekannte zusätzliche IP-/MAC-Identitäten wieder
+- Wiederauftrennung im Zeilen-Aktionsmenü verfügbar
+- beim Wiederauftrennen wird die abgespaltene Netzwerkidentität vom Ursprungsgerät entfernt

@@ -1,0 +1,8 @@
+GAM 2.1.0 Schritt 40k37e56c-fix31
+
+- Apple-Gerät prüfen ruft direkt /discovery/apple-mobile/pair auf.
+- Pairing bleibt strikt: USB Lockdown -> RemotePairing über USB; keine automatische Inventarisierung/Suche.
+- Erfolgreiches gemeinsames Pairing wird in der UI als "USB + Netzwerk" angezeigt.
+- Nach Pairing kein automatischer status()-Aufruf, der Inventarisierung/Netzwerksuche starten würde.
+- macOS Apple-Supportstatus wird plattformgerecht aus libimobiledevice + GAM-PMD3-Runtime ermittelt.
+- Vorhandene GAM-Runtimes bleiben bei Drüberinstallation erhalten.

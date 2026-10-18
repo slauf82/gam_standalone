@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
@@ -22,7 +23,7 @@ public class DiscoveryRegistrationRepository {
       CREATE TABLE IF NOT EXISTS gam_discovery_registered_devices (
         identity_key VARCHAR(255) NOT NULL,
         name VARCHAR(255) NULL,
-        device_type VARCHAR(255) NULL,
+        device_type VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
         address VARCHAR(255) NULL,
         hardware_address VARCHAR(100) NULL,
         serial_number VARCHAR(255) NULL,
@@ -42,6 +43,7 @@ public class DiscoveryRegistrationRepository {
     addColumn("device_type", "VARCHAR(255) NULL");
     addColumn("manufacturer", "VARCHAR(255) NULL");
     addColumn("discovery_protocol", "LONGTEXT NULL");
+    addColumn("pending_discovery_protocol", "LONGTEXT NULL");
     upgradeProtocolColumn();
     addColumn("device_status", "VARCHAR(100) NULL");
     addColumn("first_seen_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
@@ -51,6 +53,9 @@ public class DiscoveryRegistrationRepository {
     addColumn("manual_device_type", "BOOLEAN NOT NULL DEFAULT FALSE");
     // 40k33b4: manueller Namensschutz, analog zur bereits bestehenden manual_device_type-Sperre.
     addColumn("manual_name", "BOOLEAN NOT NULL DEFAULT FALSE");
+    // 40k37e56a7fix8: Benutzer kann die für Darstellung/Automatik maßgebliche Plattform
+    // korrigieren, ohne Discovery-Quellen, Merge oder Gerätetyp zu verändern.
+    addColumn("preferred_platform", "VARCHAR(32) NULL");
     // 40k34b: ADB-Wiederverbindungsdaten - rein additiv, keine Pairing-Codes, keine
     // temporären Tokens. Nur Verbindungsadresse/-port und letzter Erfolgszeitpunkt.
     addColumn("adb_host", "VARCHAR(255) NULL");
@@ -60,8 +65,8 @@ public class DiscoveryRegistrationRepository {
       CREATE TABLE IF NOT EXISTS gam_discovery_device_type_history (
         id BIGINT NOT NULL AUTO_INCREMENT,
         identity_key VARCHAR(255) NOT NULL,
-        old_device_type VARCHAR(255) NULL,
-        new_device_type VARCHAR(255) NOT NULL,
+        old_device_type VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+        new_device_type VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
         changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         changed_by VARCHAR(255) NULL,
         PRIMARY KEY(id),
@@ -71,6 +76,11 @@ public class DiscoveryRegistrationRepository {
     // 40k33b4: kleine, migrationssichere Alias-Tabelle. Namen zusammengeführter oder
     // umbenannter Geräte gehen nicht verloren, sondern bleiben als Alias erhalten, damit
     // ein künftiger Treffer mit diesem Namen wieder derselben Identität zugeordnet wird.
+    // 40k36r14: Gerätekategorien dürfen Unicode/Emoji enthalten (z. B. "🖥 Android Display").
+    // Bestehende Datenbanken können device_type noch mit utf8mb3/latin1 angelegt haben.
+    // Deshalb die drei tatsächlich betroffenen Spalten idempotent auf utf8mb4 anheben.
+    upgradeDeviceTypeUnicode();
+
     jdbc.execute("""
       CREATE TABLE IF NOT EXISTS gam_discovery_device_aliases (
         identity_key VARCHAR(255) NOT NULL,
@@ -81,6 +91,42 @@ public class DiscoveryRegistrationRepository {
         INDEX idx_gam_discovery_device_aliases_semantic(alias_semantic)
       )
       """);
+    // 40k36p6t: Netzwerkidentitäten eines physischen Geräts werden unabhängig
+    // von der kanonischen Haupt-IP/MAC gespeichert. Dadurch gehen beim Merge
+    // weder zusätzliche IP-Adressen noch zusätzliche MAC-Adressen verloren.
+    jdbc.execute("""
+      CREATE TABLE IF NOT EXISTS gam_discovery_device_network_identities (
+        identity_key VARCHAR(255) NOT NULL,
+        address VARCHAR(255) NOT NULL DEFAULT '',
+        hardware_address VARCHAR(100) NOT NULL DEFAULT '',
+        source_identity_key VARCHAR(255) NULL,
+        first_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(identity_key, address, hardware_address),
+        INDEX idx_gam_discovery_network_address(address),
+        INDEX idx_gam_discovery_network_mac(hardware_address)
+      )
+      """);
+    // Bestehende Installationen automatisch mit der bisherigen Hauptadresse
+    // initialisieren; rein additiv und ohne Verlust bestehender Daten.
+    jdbc.update("""
+      INSERT IGNORE INTO gam_discovery_device_network_identities(identity_key,address,hardware_address,source_identity_key)
+      SELECT identity_key,COALESCE(address,''),COALESCE(hardware_address,''),identity_key
+      FROM gam_discovery_registered_devices
+      WHERE address IS NOT NULL OR hardware_address IS NOT NULL
+      """);
+  }
+
+  private void upgradeDeviceTypeUnicode(){
+    try{
+      jdbc.execute("ALTER TABLE gam_discovery_registered_devices MODIFY device_type VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
+    }catch(Exception ignored){}
+    try{
+      jdbc.execute("ALTER TABLE gam_discovery_device_type_history MODIFY old_device_type VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
+    }catch(Exception ignored){}
+    try{
+      jdbc.execute("ALTER TABLE gam_discovery_device_type_history MODIFY new_device_type VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL");
+    }catch(Exception ignored){}
   }
 
   private void addColumn(String name, String definition){
@@ -113,10 +159,10 @@ public class DiscoveryRegistrationRepository {
     return jdbc.queryForList("""
       SELECT identity_key AS identityKey, name, device_type AS deviceType, address,
              hardware_address AS hardwareAddress, serial_number AS serialNumber,
-             manufacturer, discovery_protocol AS protocol, device_status AS status,
+             manufacturer, discovery_protocol AS protocol, pending_discovery_protocol AS pendingProtocol, device_status AS status,
              first_seen_at AS firstSeenAt, last_seen_at AS lastSeenAt, registered_at AS registeredAt,
              detection_count AS detectionCount, last_scan_hits AS lastScanHits,
-             manual_device_type AS manualDeviceType, manual_name AS manualName,
+             manual_device_type AS manualDeviceType, manual_name AS manualName, preferred_platform AS preferredPlatform,
              adb_host AS adbHost, adb_port AS adbPort, adb_last_connected_at AS adbLastConnectedAt
       FROM gam_discovery_registered_devices
       ORDER BY registered_at DESC, name ASC
@@ -127,10 +173,10 @@ public class DiscoveryRegistrationRepository {
     List<Map<String,Object>> rows=jdbc.queryForList("""
       SELECT identity_key AS identityKey, name, device_type AS deviceType, address,
              hardware_address AS hardwareAddress, serial_number AS serialNumber,
-             manufacturer, discovery_protocol AS protocol, device_status AS status,
+             manufacturer, discovery_protocol AS protocol, pending_discovery_protocol AS pendingProtocol, device_status AS status,
              first_seen_at AS firstSeenAt, last_seen_at AS lastSeenAt, registered_at AS registeredAt,
              detection_count AS detectionCount, last_scan_hits AS lastScanHits,
-             manual_device_type AS manualDeviceType, manual_name AS manualName,
+             manual_device_type AS manualDeviceType, manual_name AS manualName, preferred_platform AS preferredPlatform,
              adb_host AS adbHost, adb_port AS adbPort, adb_last_connected_at AS adbLastConnectedAt
       FROM gam_discovery_registered_devices WHERE identity_key=?
       """, identityKey);
@@ -138,6 +184,16 @@ public class DiscoveryRegistrationRepository {
     return rows.get(0);
   }
 
+
+  public Map<String,Object> updatePreferredPlatform(String identityKey, String platform){
+    String value=clean(platform);
+    if(value==null) throw new IllegalArgumentException("Plattform fehlt.");
+    java.util.Set<String> allowed=java.util.Set.of("Windows","Linux","Android","macOS","iOS","iPadOS");
+    if(!allowed.contains(value)) throw new IllegalArgumentException("Nicht unterstützte Plattform: "+value);
+    find(identityKey); // Existenz prüfen
+    jdbc.update("UPDATE gam_discovery_registered_devices SET preferred_platform=? WHERE identity_key=?",value,identityKey);
+    return find(identityKey);
+  }
 
   public Map<String,Object> updateDeviceType(String identityKey, String newType, String changedBy){
     String type=canonicalDeviceType(newType);
@@ -222,7 +278,7 @@ public class DiscoveryRegistrationRepository {
 
   public int register(String ip,String mac,String serial,String name,String type,String manufacturer,String protocol,String status){
     String key=primaryKey(ip,mac,serial,name);
-    return jdbc.update("""
+    int updated = jdbc.update("""
       INSERT INTO gam_discovery_registered_devices
         (identity_key,name,device_type,address,hardware_address,serial_number,manufacturer,discovery_protocol,device_status,first_seen_at,last_seen_at)
       VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
@@ -234,6 +290,8 @@ public class DiscoveryRegistrationRepository {
         discovery_protocol=COALESCE(VALUES(discovery_protocol),discovery_protocol), device_status=COALESCE(VALUES(device_status),device_status),
         last_seen_at=CURRENT_TIMESTAMP
       """,key,clean(name),canonicalDeviceType(type),clean(ip),clean(mac),clean(serial),clean(manufacturer),clean(protocol),clean(status));
+    recordNetworkIdentity(key, ip, mac, key);
+    return updated;
   }
 
 
@@ -250,19 +308,49 @@ public class DiscoveryRegistrationRepository {
   public void recordDiscoveryHit(String ip,String mac,String serial,String name,String type,String manufacturer,String protocol,String status){
     String existingKey=findExistingKey(ip,mac,serial,name);
     if(existingKey!=null){
+      List<Map<String,Object>> liveRows=jdbc.queryForList("SELECT identity_key AS identityKey, name, device_type AS deviceType, address, hardware_address AS hardwareAddress, serial_number AS serialNumber, manufacturer, discovery_protocol AS protocol, pending_discovery_protocol AS pendingProtocol, device_status AS status, manual_name AS manualName, manual_device_type AS manualDeviceType FROM gam_discovery_registered_devices WHERE identity_key=?", existingKey);
+      if(liveRows.isEmpty()){
+        // 40k37e54-fix3: letzte defensive Schranke. Eine stale Zuordnung darf den
+        // aktuellen Treffer nicht verlieren; stattdessen wird unten normal frisch
+        // registriert. findExistingKey() bereinigt die bekannten Alias/Netzwerkpfade.
+        existingKey=null;
+      }
+      if(existingKey!=null){
+      Map<String,Object> existingRow=liveRows.get(0);
+      boolean stableMainName=truthy(existingRow.get("manualName"));
+      String existingName=clean((String)existingRow.get("name"));
+      String incomingName=clean(name);
+      if(stableMainName && incomingName!=null && (existingName==null || !existingName.equalsIgnoreCase(incomingName))){
+        addAlias(existingKey,incomingName);
+      }
+      String acceptedProtocol=protocolFor(existingKey);
+      String pendingProtocol=pendingProtocolFor(existingKey);
+      String existingSerial=clean((String)existingRow.get("serialNumber"));
+      String incomingSerial=clean(serial);
+      boolean exactStableSerial=existingSerial!=null && incomingSerial!=null && existingSerial.equalsIgnoreCase(incomingSerial);
+      if(hasNewDiscoverySource(acceptedProtocol, protocol) && !exactStableSerial){
+        pendingProtocol=mergeDiscoveryProtocol(pendingProtocol, protocol);
+      }else{
+        // 40k37e33: Bei exakt gleicher stabiler Seriennummer/UDID ist die neue Quelle
+        // eindeutig derselben Identitaet zugeordnet und darf wie der Auto-Merge sofort
+        // in die Quellenuebersicht uebernommen werden.
+        acceptedProtocol=mergeDiscoveryProtocol(acceptedProtocol, protocol);
+      }
       jdbc.update("""
         UPDATE gam_discovery_registered_devices SET
           name=CASE WHEN manual_name THEN name ELSE COALESCE(?,name) END,
           device_type=CASE WHEN manual_device_type THEN device_type ELSE COALESCE(?,device_type) END, address=COALESCE(?,address),
           hardware_address=COALESCE(?,hardware_address), serial_number=COALESCE(?,serial_number),
           manufacturer=COALESCE(?,manufacturer),
-          discovery_protocol=?,
+          discovery_protocol=?, pending_discovery_protocol=?,
           device_status=COALESCE(?,device_status), last_seen_at=CURRENT_TIMESTAMP,
           detection_count=detection_count+1, last_scan_hits=last_scan_hits+1
         WHERE identity_key=?
         """,clean(name),canonicalDeviceType(type),clean(ip),clean(mac),clean(serial),clean(manufacturer),
-          mergeDiscoveryProtocol(protocolFor(existingKey), protocol),clean(status),existingKey);
+          acceptedProtocol,pendingProtocol,clean(status),existingKey);
+      recordNetworkIdentity(existingKey, ip, mac, existingKey);
       return;
+      }
     }
     String key=primaryKey(ip,mac,serial,name);
     jdbc.update("""
@@ -270,12 +358,116 @@ public class DiscoveryRegistrationRepository {
         (identity_key,name,device_type,address,hardware_address,serial_number,manufacturer,discovery_protocol,device_status,first_seen_at,last_seen_at,detection_count,last_scan_hits)
       VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,1,1)
       """,key,clean(name),canonicalDeviceType(type),clean(ip),clean(mac),clean(serial),clean(manufacturer),clean(protocol),clean(status));
+    recordNetworkIdentity(key, ip, mac, key);
   }
 
   private String protocolFor(String identityKey){
     List<String> rows = jdbc.query("SELECT discovery_protocol FROM gam_discovery_registered_devices WHERE identity_key=?",
       (rs,row)->rs.getString(1), identityKey);
     return rows.isEmpty() ? null : rows.get(0);
+  }
+
+  private String pendingProtocolFor(String identityKey){
+    List<String> rows = jdbc.query("SELECT pending_discovery_protocol FROM gam_discovery_registered_devices WHERE identity_key=?",
+      (rs,row)->rs.getString(1), identityKey);
+    return rows.isEmpty() ? null : rows.get(0);
+  }
+
+  private static boolean hasNewDiscoverySource(String accepted, String incoming){
+    LinkedHashSet<String> acceptedSources=new LinkedHashSet<>();
+    LinkedHashSet<String> incomingSources=new LinkedHashSet<>();
+    collectProtocol(accepted,acceptedSources,new java.util.LinkedHashMap<>());
+    collectProtocol(incoming,incomingSources,new java.util.LinkedHashMap<>());
+    for(String source:incomingSources) if(!acceptedSources.contains(source)) return true;
+    return acceptedSources.isEmpty() && !incomingSources.isEmpty();
+  }
+
+  /** 40k36q4: Technisch verifizierte Inventarquellen (SSH/WinRM/ADB) werden direkt
+   * dauerhaft übernommen. Sie sind keine bloßen Discovery-Hinweise, sondern durch
+   * einen erfolgreichen Betriebssystemzugang bestätigt. */
+  public void recordVerifiedInventoryHit(String ip,String mac,String serial,String name,String type,String manufacturer,String protocol,String status){
+    String existingKey=findExistingKey(ip,mac,serial,name);
+    if(existingKey==null){
+      recordDiscoveryHit(ip,mac,serial,name,type,manufacturer,protocol,status);
+      existingKey=findExistingKey(ip,mac,serial,name);
+      if(existingKey==null)return;
+    }
+    String accepted=mergeDiscoveryProtocol(protocolFor(existingKey),protocol);
+    String pending=pendingProtocolFor(existingKey);
+    // Falls dieselbe Quelle vorher nur vorgemerkt war, aus pending entfernen.
+    if(clean(pending)!=null){
+      LinkedHashSet<String> acceptedSources=new LinkedHashSet<>();
+      LinkedHashMap<String,String> acceptedDetails=new LinkedHashMap<>();
+      collectProtocol(accepted,acceptedSources,acceptedDetails);
+      LinkedHashSet<String> pendingSources=new LinkedHashSet<>();
+      LinkedHashMap<String,String> pendingDetails=new LinkedHashMap<>();
+      collectProtocol(pending,pendingSources,pendingDetails);
+      pendingSources.removeAll(acceptedSources);
+      acceptedDetails.keySet().forEach(pendingDetails::remove);
+      List<String> remain=new ArrayList<>(pendingSources);
+      pendingDetails.forEach((k,v)->remain.add(k+": "+v));
+      pending=remain.isEmpty()?null:String.join(" · ",remain);
+    }
+    // 40k36q21: Die ausdrücklich bestätigte Zusammenführung bestätigt zugleich den
+    // gewählten Hauptnamen. Dieser wird deshalb als stabiler Hauptname markiert
+    // (manual_name=TRUE), damit spätere Discovery-Zwischennamen wie
+    // "macOS Browser 192.168.x.x" ihn nicht wieder überschreiben.
+    jdbc.update("""
+      UPDATE gam_discovery_registered_devices SET
+        name=CASE WHEN manual_name THEN name ELSE COALESCE(?,name) END,
+        device_type=CASE WHEN manual_device_type THEN device_type ELSE COALESCE(?,device_type) END,
+        address=COALESCE(?,address), hardware_address=COALESCE(?,hardware_address),
+        serial_number=CASE WHEN ? IS NOT NULL THEN ? WHEN serial_number LIKE 'SERIAL=%' OR serial_number LIKE '%CHASSIS=%' THEN NULL ELSE serial_number END,
+        manufacturer=COALESCE(?,manufacturer),
+        discovery_protocol=?, pending_discovery_protocol=?, device_status=COALESCE(?,device_status),
+        last_seen_at=CURRENT_TIMESTAMP, detection_count=detection_count+1
+      WHERE identity_key=?
+      """,clean(name),canonicalDeviceType(type),clean(ip),clean(mac),clean(serial),clean(serial),clean(manufacturer),
+      accepted,pending,clean(status),existingKey);
+    recordNetworkIdentity(existingKey,ip,mac,existingKey);
+  }
+
+  /** 40k37e56a7fix7: Entfernt genau eine bestaetigte Discovery-Quelle aus einer
+   * bestehenden (auch zusammengefuehrten) Identitaet, ohne Merge, Netzwerkidentitaeten
+   * oder Inventardetails anzutasten. Damit lassen sich historisch falsch bestaetigte
+   * Provenienzen wie SSH gezielt bereinigen. */
+  public Map<String,Object> removeDiscoverySource(String identityKey,String sourceLabel){
+    String wanted=clean(sourceLabel);
+    if(wanted==null) throw new IllegalArgumentException("Discovery-Quelle fehlt.");
+    find(identityKey); // Existenz pruefen
+    String existing=protocolFor(identityKey);
+    LinkedHashSet<String> sources=new LinkedHashSet<>();
+    LinkedHashMap<String,String> details=new LinkedHashMap<>();
+    collectProtocol(existing,sources,details);
+    boolean removed=sources.removeIf(source -> source.equalsIgnoreCase(wanted));
+    if(!removed) throw new IllegalArgumentException("Discovery-Quelle ist an diesem Geraet nicht vorhanden: "+wanted);
+    List<String> rebuilt=new ArrayList<>(sources);
+    details.forEach((label,value)->rebuilt.add(label+": "+value));
+    String protocol=rebuilt.isEmpty()?null:String.join(" · ",rebuilt);
+
+    String pending=pendingProtocolFor(identityKey);
+    if(clean(pending)!=null){
+      LinkedHashSet<String> pendingSources=new LinkedHashSet<>();
+      LinkedHashMap<String,String> pendingDetails=new LinkedHashMap<>();
+      collectProtocol(pending,pendingSources,pendingDetails);
+      pendingSources.removeIf(source -> source.equalsIgnoreCase(wanted));
+      List<String> pendingRebuilt=new ArrayList<>(pendingSources);
+      pendingDetails.forEach((label,value)->pendingRebuilt.add(label+": "+value));
+      pending=pendingRebuilt.isEmpty()?null:String.join(" · ",pendingRebuilt);
+    }
+    jdbc.update("UPDATE gam_discovery_registered_devices SET discovery_protocol=?, pending_discovery_protocol=?, last_seen_at=CURRENT_TIMESTAMP WHERE identity_key=?",protocol,pending,identityKey);
+    return find(identityKey);
+  }
+
+  /** 40k36p6t: Übernimmt eine bislang nur vorgemerkte zusätzliche Discovery-Quelle dauerhaft. */
+  public Map<String,Object> acceptPendingDiscoverySource(String ip,String mac,String serial,String name){
+    String identityKey=findExistingKey(ip,mac,serial,name);
+    if(identityKey==null) throw new IllegalArgumentException("Registriertes Gerät wurde nicht gefunden.");
+    String pending=pendingProtocolFor(identityKey);
+    if(clean(pending)==null) return find(identityKey);
+    String merged=mergeDiscoveryProtocol(protocolFor(identityKey),pending);
+    jdbc.update("UPDATE gam_discovery_registered_devices SET discovery_protocol=?, pending_discovery_protocol=NULL, last_seen_at=CURRENT_TIMESTAMP WHERE identity_key=?",merged,identityKey);
+    return find(identityKey);
   }
 
   /**
@@ -287,15 +479,43 @@ public class DiscoveryRegistrationRepository {
     LinkedHashSet<String> sources = new LinkedHashSet<>();
     java.util.LinkedHashMap<String,String> details = new java.util.LinkedHashMap<>();
     collectProtocol(existing, sources, details);
+    if(incoming!=null && incoming.contains("Windows-Inventarisierung / modulare PowerShell-Abfragen")){
+      for(String label:java.util.List.of(
+        "Berechtigungsbenutzer","Administratorrechte","SYSTEM-Rechte","Integritätsstufe",
+        "CIM lesbar","BitLocker lesbar","Dienste lesbar","Inventarisierungstiefe",
+        "Berechtigungseinschränkungen","Berechtigungsmodus",
+        "Erfolgreiche Module","Nicht verfügbare Module",
+        "Datenträger","Laufwerke","Lokale Laufwerke","Netzlaufwerke","Optische Laufwerke","Wechseldatenträger",
+        "Physische Datenträger","Storage Pools","Virtuelle Datenträger",
+        "BitLocker","BitLocker-Zusammenfassung","BitLocker-Volumes","Systemlaufwerk verschlüsselt","BitLocker-Diagnose")){
+        details.remove(label);
+      }
+    }
     collectProtocol(incoming, sources, details);
     List<String> merged = new ArrayList<>(sources);
     details.forEach((label,value)->merged.add(label + ": " + value));
     return merged.isEmpty() ? null : String.join(" · ", merged);
   }
 
+  private static String repairMojibake(String value){
+    if(value==null)return null;
+    return value.replace("Ã¤","ä").replace("Ã¶","ö").replace("Ã¼","ü")
+      .replace("Ã„","Ä").replace("Ã–","Ö").replace("Ãœ","Ü")
+      .replace("ÃŸ","ß").replace("Â·","·")
+      .replace("â€“","–").replace("â€”","—")
+      .replace("Â","");
+  }
+
   private static void collectProtocol(String value, LinkedHashSet<String> sources, java.util.LinkedHashMap<String,String> details){
-    String cleaned = clean(value);
+    String cleaned = clean(repairMojibake(value));
     if(cleaned==null)return;
+    // 40k37e54-fix4: Das Trennzeichen trennt sowohl reine Discovery-Quellen
+    // (z.B. "USB · WLAN · Windows ARP · FRITZ!Box TR-064") als auch
+    // nachfolgende "Label: Wert"-Details. Die bisherige Lookahead-Regel trennte
+    // ausschließlich vor Detailfeldern; dadurch wurden mehrere Quellen zu EINEM
+    // Label zusammengezogen und die UI konnte nach einem bestätigten Merge nur
+    // Teilquellen anzeigen. Jede Quelle bleibt nun als eigenes Provenienz-Element
+    // erhalten; Details werden weiterhin anhand des Doppelpunkts erkannt.
     for(String raw : cleaned.split("\\s+·\\s+")){
       String token=clean(raw);
       if(token==null)continue;
@@ -310,7 +530,26 @@ public class DiscoveryRegistrationRepository {
     }
   }
 
+  /** 40k36q9: Auflösung einer bestehenden Geräteidentität für strukturierte Unterinventare. */
+  public String resolveIdentityKey(String ip,String mac,String serial,String name){
+    return findExistingKey(ip,mac,serial,name);
+  }
+
   private String findExistingKey(String ip,String mac,String serial,String name){
+    String cleanMac=clean(mac), cleanIp=clean(ip);
+    // 40k37e54-fix1: Nach "Wieder auftrennen" koennen historische Netzwerkidentitaeten
+    // noch auf eine inzwischen geloeschte Merge-Identitaet zeigen. Solche verwaisten
+    // Zuordnungen duerfen einen erneut erkannten FRITZ!Box-/ARP-Treffer nicht blockieren.
+    // Nur noch existierende registrierte Identitaeten werden als Treffer akzeptiert;
+    // stale Zuordnungen werden dabei opportunistisch bereinigt.
+    if(cleanMac!=null){
+      String live=liveNetworkIdentityKey("hardware_address", cleanMac);
+      if(live!=null) return live;
+    }
+    if(cleanIp!=null){
+      String live=liveNetworkIdentityKey("address", cleanIp);
+      if(live!=null) return live;
+    }
     for(String key:keys(ip,mac,serial,name)){
       List<String> found=jdbc.query("SELECT identity_key FROM gam_discovery_registered_devices WHERE identity_key=?",
         (rs,row)->rs.getString(1),key);
@@ -324,6 +563,23 @@ public class DiscoveryRegistrationRepository {
       String aliasMatch=findIdentityKeyByAliasSemantic(semantic);
       if(aliasMatch!=null) return aliasMatch;
     }
+    return null;
+  }
+
+  /** 40k37e54-fix1: Liefert nur eine noch vorhandene registrierte Identitaet. */
+  private String liveNetworkIdentityKey(String column, String value){
+    List<String> candidates=jdbc.query(
+      "SELECT n.identity_key FROM gam_discovery_device_network_identities n " +
+      "JOIN gam_discovery_registered_devices r ON r.identity_key=n.identity_key " +
+      "WHERE n." + column + "=? ORDER BY n.last_seen_at DESC LIMIT 1",
+      (rs,row)->rs.getString(1), value);
+    if(!candidates.isEmpty()) return candidates.get(0);
+
+    // Keine lebende Zuordnung mehr: verwaiste Eintraege fuer genau diesen Wert entfernen.
+    jdbc.update(
+      "DELETE n FROM gam_discovery_device_network_identities n " +
+      "LEFT JOIN gam_discovery_registered_devices r ON r.identity_key=n.identity_key " +
+      "WHERE n." + column + "=? AND r.identity_key IS NULL", value);
     return null;
   }
 
@@ -362,6 +618,61 @@ public class DiscoveryRegistrationRepository {
     return jdbc.query(
       "SELECT identity_key FROM gam_discovery_registered_devices WHERE adb_host=? AND adb_port=? AND identity_key<>?",
       (rs, n) -> rs.getString(1), adbHost, adbPort, identityKey);
+  }
+
+  /** 40k36p6t: Merkt eine IP-/MAC-Kombination als bekannte Erreichbarkeit einer Geräteidentität. */
+  public void recordNetworkIdentity(String identityKey, String ip, String mac, String sourceIdentityKey){
+    String address=clean(ip), hardware=clean(mac);
+    // 40k37e33: Transport-/PnP-Kennungen sind keine IP-Adressen. Alte Apple-USB-Werte
+    // duerfen die Netzwerkidentitaeten und damit die UI-Spalte IP-Adresse(n) nicht verunreinigen.
+    if(address!=null && (address.startsWith("usb:") || address.startsWith("usb-pnp:") || address.startsWith("apple-network:"))) address=null;
+    if(address==null && hardware==null) return;
+    jdbc.update("""
+      INSERT INTO gam_discovery_device_network_identities(identity_key,address,hardware_address,source_identity_key)
+      VALUES (?,?,?,?)
+      ON DUPLICATE KEY UPDATE last_seen_at=CURRENT_TIMESTAMP, source_identity_key=COALESCE(VALUES(source_identity_key),source_identity_key)
+      """, identityKey, address==null?"":address, hardware==null?"":hardware, clean(sourceIdentityKey));
+  }
+
+  public List<Map<String,Object>> networkIdentitiesFor(String identityKey){
+    return jdbc.queryForList("""
+      SELECT NULLIF(address,'') AS address,NULLIF(hardware_address,'') AS hardwareAddress,
+             source_identity_key AS sourceIdentityKey,first_seen_at AS firstSeenAt,last_seen_at AS lastSeenAt
+      FROM gam_discovery_device_network_identities WHERE identity_key=?
+      ORDER BY (address='' OR address IS NULL),address,(hardware_address='' OR hardware_address IS NULL),hardware_address
+      """, identityKey);
+  }
+
+  public List<String> networkAddressesFor(String identityKey){
+    return jdbc.query("SELECT DISTINCT address FROM gam_discovery_device_network_identities WHERE identity_key=? AND address<>'' AND address NOT LIKE 'usb:%' AND address NOT LIKE 'usb-pnp:%' AND address NOT LIKE 'apple-network:%' ORDER BY address",
+      (rs,row)->rs.getString(1), identityKey);
+  }
+
+  public List<String> networkHardwareAddressesFor(String identityKey){
+    return jdbc.query("SELECT DISTINCT hardware_address FROM gam_discovery_device_network_identities WHERE identity_key=? AND hardware_address<>'' ORDER BY hardware_address",
+      (rs,row)->rs.getString(1), identityKey);
+  }
+
+  public void removeNetworkIdentity(String identityKey, String ip, String mac){
+    String address=clean(ip), hardware=clean(mac);
+    if(address==null && hardware==null) return;
+    jdbc.update("DELETE FROM gam_discovery_device_network_identities WHERE identity_key=? AND address=? AND hardware_address=?",
+      identityKey,address==null?"":address,hardware==null?"":hardware);
+    // Wenn die abgespaltene Identität gerade als Hauptadresse angezeigt wurde,
+    // auf eine noch verbleibende bekannte Identität zurückfallen.
+    Map<String,Object> current=find(identityKey);
+    boolean sameAddress=java.util.Objects.equals(clean((String)current.get("address")),address);
+    boolean sameMac=java.util.Objects.equals(clean((String)current.get("hardwareAddress")),hardware);
+    if(sameAddress || sameMac){
+      List<Map<String,Object>> remaining=networkIdentitiesFor(identityKey);
+      String nextAddress=null,nextMac=null;
+      for(Map<String,Object> row:remaining){
+        if(nextAddress==null) nextAddress=clean((String)row.get("address"));
+        if(nextMac==null) nextMac=clean((String)row.get("hardwareAddress"));
+        if(nextAddress!=null&&nextMac!=null) break;
+      }
+      jdbc.update("UPDATE gam_discovery_registered_devices SET address=?,hardware_address=? WHERE identity_key=?",nextAddress,nextMac,identityKey);
+    }
   }
 
   public void addAlias(String identityKey, String aliasName){
@@ -491,6 +802,7 @@ public class DiscoveryRegistrationRepository {
    */
   public static String conflictSeverity(String conflictText){
     String t = nullToEmpty(conflictText).toLowerCase(Locale.ROOT);
+    if (t.contains("multi-interface") || t.contains("mehrere aktive netzwerkwege")) return "HOCH";
     if (t.contains("ip-adresse") && t.contains("gleichzeitig")) return "KRITISCH";
     if (t.contains("seriennummer")) return "KRITISCH";
     if (t.contains("ssh-hostkey")) return "KRITISCH";
@@ -532,6 +844,8 @@ public class DiscoveryRegistrationRepository {
     if (conflicts == null) return null;
     for (String c : conflicts) {
       String lower = c.toLowerCase(Locale.ROOT);
+      if (lower.contains("multi-interface") || lower.contains("mehrere aktive netzwerkwege"))
+        return "Das Gerät ist sehr wahrscheinlich gleichzeitig über mehrere Netzwerkadapter erreichbar. Unterschiedliche IP- und MAC-Adressen sind in diesem Fall erwartbar. Eine Zusammenführung wird vorgeschlagen, darf aber nur nach ausdrücklicher Bestätigung erfolgen; beide Netzwerkwege bleiben anschließend am gemeinsamen Gerät sichtbar.";
       if (lower.contains("ip-adresse") && lower.contains("gleichzeitig"))
         return "Zwei unterschiedliche IP-Adressen wurden gleichzeitig aktiv erkannt. Dies ist ein starkes Indiz dafür, dass es sich um zwei verschiedene Geräte handeln könnte. Zusammenführung nur nach sorgfältiger manueller Prüfung.";
       if (lower.contains("seriennummer"))
@@ -555,9 +869,25 @@ public class DiscoveryRegistrationRepository {
   }
 
   private String findIdentityKeyByAliasSemantic(String semantic){
-    List<String> found=jdbc.query("SELECT identity_key FROM gam_discovery_device_aliases WHERE alias_semantic=? ORDER BY created_at ASC LIMIT 1",
+    // 40k37e54-fix3: Aliase koennen nach Deregistrierung/Wiederauftrennung noch auf
+    // eine nicht mehr vorhandene registrierte Identitaet zeigen. Ein solcher Alias
+    // darf findExistingKey() niemals eine tote identity_key liefern, da der folgende
+    // recordDiscoveryHit() sonst bei find(existingKey) abbricht und der aktuelle
+    // Discovery-Treffer nicht frisch registriert werden kann.
+    List<String> found=jdbc.query(
+      "SELECT a.identity_key FROM gam_discovery_device_aliases a " +
+      "JOIN gam_discovery_registered_devices r ON r.identity_key=a.identity_key " +
+      "WHERE a.alias_semantic=? ORDER BY a.created_at ASC LIMIT 1",
       (rs,row)->rs.getString(1), semantic);
-    return found.isEmpty()?null:found.get(0);
+    if(!found.isEmpty()) return found.get(0);
+
+    // Verwaiste Alias-Zeilen fuer genau diesen semantischen Namen opportunistisch
+    // bereinigen. Das betrifft nur Registrierungsmetadaten, keine Discovery-Quelle.
+    jdbc.update(
+      "DELETE a FROM gam_discovery_device_aliases a " +
+      "LEFT JOIN gam_discovery_registered_devices r ON r.identity_key=a.identity_key " +
+      "WHERE a.alias_semantic=? AND r.identity_key IS NULL", semantic);
+    return null;
   }
 
   /**
@@ -646,10 +976,17 @@ public class DiscoveryRegistrationRepository {
   }
 
   public int deregisterByKey(String identityKey){
+    // 40k37e54-fix3: Deregistrieren muss ALLE Identitaetszeiger entfernen. Bisher
+    // blieben Alias-Zeilen bestehen und konnten spaeter denselben Namen wieder auf
+    // eine bereits geloeschte identity_key aufloesen.
+    jdbc.update("DELETE FROM gam_discovery_device_network_identities WHERE identity_key=?", identityKey);
+    jdbc.update("DELETE FROM gam_discovery_device_aliases WHERE identity_key=?", identityKey);
     return jdbc.update("DELETE FROM gam_discovery_registered_devices WHERE identity_key=?", identityKey);
   }
 
   public int deregisterAll(){
+    jdbc.update("DELETE FROM gam_discovery_device_network_identities");
+    jdbc.update("DELETE FROM gam_discovery_device_aliases");
     return jdbc.update("DELETE FROM gam_discovery_registered_devices");
   }
 
@@ -698,7 +1035,7 @@ public class DiscoveryRegistrationRepository {
         serial_number=?, manufacturer=?, discovery_protocol=?, device_status=?,
         detection_count=?, last_scan_hits=?, first_seen_at=?, last_seen_at=?
       WHERE identity_key=?
-      """, clean(plan.name()), clean(plan.deviceType()), plan.manualName(), plan.manualDeviceType(),
+      """, clean(plan.name()), clean(plan.deviceType()), true, plan.manualDeviceType(),
       clean(plan.address()), clean(plan.mac()), clean(plan.serialNumber()), clean(plan.manufacturer()),
       clean(plan.protocol()), clean(plan.status()), plan.detectionCount(), plan.lastScanHits(),
       plan.firstSeenAt(), plan.lastSeenAt(), plan.targetKey());
@@ -711,8 +1048,19 @@ public class DiscoveryRegistrationRepository {
       String sourceKey=String.valueOf(row.get("identityKey"));
       for(String existingAlias: aliasesFor(sourceKey)) addAlias(plan.targetKey(), existingAlias);
     }
+    // 40k36p6t: sämtliche Netzwerkidentitäten der Ziel- und Quellgeräte bleiben
+    // am zusammengeführten Gerät erhalten und dienen weiterhin der Wiedererkennung.
+    recordNetworkIdentity(plan.targetKey(), (String)plan.targetRow().get("address"), (String)plan.targetRow().get("hardwareAddress"), plan.targetKey());
+    for(Map<String,Object> row: plan.sourceRows()){
+      String sourceKey=String.valueOf(row.get("identityKey"));
+      recordNetworkIdentity(plan.targetKey(), (String)row.get("address"), (String)row.get("hardwareAddress"), sourceKey);
+      for(Map<String,Object> network: networkIdentitiesFor(sourceKey)){
+        recordNetworkIdentity(plan.targetKey(), (String)network.get("address"), (String)network.get("hardwareAddress"), sourceKey);
+      }
+    }
     for(String key: plan.sourceKeys()){
       jdbc.update("DELETE FROM gam_discovery_device_aliases WHERE identity_key=?", key);
+      jdbc.update("DELETE FROM gam_discovery_device_network_identities WHERE identity_key=?", key);
       jdbc.update("DELETE FROM gam_discovery_registered_devices WHERE identity_key=?", key);
     }
     return find(plan.targetKey());
@@ -813,13 +1161,23 @@ public class DiscoveryRegistrationRepository {
     String normalized=v.replaceAll("[^0-9A-Fa-f]","").toUpperCase(Locale.ROOT);
     if(!normalized.isBlank()) target.add(normalized);
   }
+  // SQL-TIMESTAMP-Werte kommen aus JdbcTemplate als java.sql.Timestamp (Date-Unterklasse).
+  // Typisierte Vergleiche vermeiden rohe Comparable-Casts und damit unchecked-Warnungen.
   private static Object earlier(Object a, Object b){
     if(a==null) return b; if(b==null) return a;
-    return (a instanceof Comparable c) && c.compareTo(b) <= 0 ? a : b;
+    if(a instanceof java.util.Date first && b instanceof java.util.Date second)
+      return first.compareTo(second) <= 0 ? a : b;
+    if(a instanceof java.time.LocalDateTime first && b instanceof java.time.LocalDateTime second)
+      return first.compareTo(second) <= 0 ? a : b;
+    return b;
   }
   private static Object later(Object a, Object b){
     if(a==null) return b; if(b==null) return a;
-    return (a instanceof Comparable c) && c.compareTo(b) >= 0 ? a : b;
+    if(a instanceof java.util.Date first && b instanceof java.util.Date second)
+      return first.compareTo(second) >= 0 ? a : b;
+    if(a instanceof java.time.LocalDateTime first && b instanceof java.time.LocalDateTime second)
+      return first.compareTo(second) >= 0 ? a : b;
+    return b;
   }
 
   /**

@@ -1,0 +1,24 @@
+40k37e54-fix13 – versionsabhängiger Admin-Tunnel
+
+Ziel
+- iOS/iPadOS >= 17.4: moderner privilegierter CoreDeviceProxy/Lockdown-Tunnel.
+- iOS/iPadOS 17.0–17.3.x: klassischer privilegierter RemotePairing-Tunnel bleibt erhalten.
+- Admin-Tunnel bleibt Transport; Inventarisierung wird weiterhin separat über den normalen GAM-Weg gestartet.
+- Kein stiller Userspace-Fallback bei explizit aktivem Admin-RSD.
+
+Änderungen
+- OS-Version wird aus dem bereits von GAM erzeugten CoreDevice-Basis-Snapshot gelesen.
+- Neuer Marker TRANSPORT_VERSION_SELECT protokolliert Version und Route.
+- >=17.4 startet erhöht und WLAN-gebunden:
+  pymobiledevice3 --no-color lockdown start-tunnel --mobdev2 --udid <UDID> --script-mode
+  Der gegenüber fix11 entscheidende Unterschied ist die explizite UDID-Bindung.
+- 17.0–17.3.x behält den fix12-Pfad:
+  remote start-tunnel --connection-type wifi --udid <UDID> --protocol tcp --script-mode
+- Bestehende RemotePairing-Preflight-, UAC-, Lifecycle-, Endpoint-, RSD-Verifikations-, Persistenz- und Stop-Logik bleibt erhalten.
+- Atomic Start-Guard aus fix12 bleibt erhalten.
+
+Erwarteter Test mit iPadOS 26.6
+PRECHECK -> REMOTEPAIRING_READY -> TRANSPORT_VERSION_SELECT(route=LOCKDOWN_COREDEVICEPROXY_WIFI) -> START_REQUEST -> UAC_LAUNCH_RETURNED -> PMD3_STARTED -> ENDPOINT_RECEIVED -> VERIFY(ok=true) -> ACTIVE
+
+Hinweis
+Die aktuelle pymobiledevice3-Dokumentation beschreibt lockdown start-tunnel als den modernen privilegierten Tunnel für iOS 17.4+; der klassische remote start-tunnel ist für ältere 17.x relevant.

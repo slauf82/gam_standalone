@@ -1,0 +1,19 @@
+GAM Standalone 2.1.0 – Schritt 40k37e56c-fix30
+
+Ziel: Drueberinstallationen eindeutig diagnostizierbar machen und den Apple-Pairing-Endpunkt explizit auf den Pairing-only-Pfad routen.
+
+Aenderungen:
+- Backend-Start gibt sofort den Build-Fingerprint 40k37e56c-fix30 aus.
+- start_backend.sh prueft vor dem Build, dass der fix30-Quellcode-Marker im aktiven GAM-Root vorhanden ist.
+- AppleMobileDiscoveryService meldet beim Laden den fix30-Build-Fingerprint.
+- POST /api/inventory/discovery/apple-mobile/test loggt den fix30-REST-Routenmarker und ruft explizit testPairingConnectionFix30() auf.
+- Pairing-only-Pfad loggt FIX30 ACTIVE PAIRING ENDPOINT in Backend- und Apple-Debug-Log.
+- Bestehende Tools/Runtimes bleiben bei einer Drueberinstallation erhalten; kein erzwungener Neuaufbau der Voraussetzungen.
+
+Nicht geaendert:
+- USB-Inventarisierung
+- USERSPACE_RSD/CoreDevice-Discovery
+- App-Ermittlung
+- Identity/Merge
+- Linux-Unterbau
+- Java/Node/MariaDB-Bootstraplogik

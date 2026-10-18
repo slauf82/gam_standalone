@@ -1,0 +1,12 @@
+GAM Standalone v2.1.0 – Schritt 40k37e11
+Apple WLAN IPv6-/Bonjour-Diagnose
+
+- Basis: 40k37e6.
+- Bewahrt die sichere CLI-only WLAN-Erkennung mit idevice_id -n.
+- Keine nativen/JNA-Schreibzugriffe auf wireless_lockdown.
+- Wenn WLAN leer bleibt und ein USB-Apple-Gerät vorhanden ist, wird der read-only wireless_lockdown-Status ausgewertet.
+- Protokolliert EnableWifiConnections, SupportsWifi, SupportsWifiSyncing und BonjourFullServiceName.
+- Extrahiert die im BonjourFullServiceName enthaltene IPv6-Link-Local-Adresse.
+- Windows: protokolliert aktive IPv6-Adapter/Interface-Indizes, Bonjour/mDNS-Dienst/Prozess und UDP/5353-Bindings.
+- Testet die vom iPad gemeldete fe80:: Link-Local-Adresse read-only über jedes aktive Windows-Interface mit Scope-ID.
+- USB und WLAN bleiben getrennte Discovery-Treffer; allgemeine GAM-Identitäts-/Merge-Logik bleibt unverändert.

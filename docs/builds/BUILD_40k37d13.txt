@@ -1,0 +1,48 @@
+GAM Standalone v2.1.0 – Schritt 40k37d13
+
+Basis
+- Direkt auf 40k37d12 aufgebaut.
+- Bestehende Apple-Mobile-, Pairing-, ideviceinfo-, idevicediagnostics-, MSYS2-1.1.1- und isolierte 1.2.0-Runtime bleiben erhalten.
+- Kein Austausch der funktionierenden Runtime und kein selbst kompilierter Build.
+
+Ziel von d13
+- d12 zeigte, dass ideviceinstaller 1.2.0 mit --debug unter dem getesteten Windows/mingw64-Build blockiert und keine verwertbare Rohdiagnose erzeugt.
+- d13 entfernt --debug aus der neuen Diagnose und führt eine kontrollierte, rein lesende CLI-Matrix mit ideviceinstaller 1.2.0 aus.
+- Explizite ReturnAttributes und unterschiedliche Argumentreihenfolgen werden geprüft.
+- Sobald eine Variante Apps liefert, übernimmt GAM diese unmittelbar in die normale Softwareinventarisierung.
+
+Neue d13-Matrix
+1. USER_BASELINE
+   list --user --xml
+2. USER_ID_ONLY
+   list --user --xml -a CFBundleIdentifier
+3. USER_EXPLICIT
+   USER/XML mit CFBundleIdentifier, CFBundleDisplayName, CFBundleShortVersionString,
+   CFBundleVersion, ApplicationType, ApplicationTypeString, Path, Container
+4. USER_ATTRIBUTES_BEFORE_LIST
+   Gegenprobe mit -a-Optionen vor dem list-Subcommand
+5. USER_TEXT_EXPLICIT
+   Textmodus ohne XML, Kopfzeile wird dynamisch ausgewertet
+6. ALL_ID_TYPE
+   list --all --xml mit minimalen ID-/Typ-Attributen
+7. SYSTEM_ID_TYPE
+   list --system --xml mit minimalen ID-/Typ-Attributen
+
+Sicherheits-/Klassifikationsregel
+- Keine USER/SYSTEM-Ableitung aus Bundle-ID, Pfad, Signatur oder Namen.
+- Apple ApplicationType/ApplicationTypeString wird verwendet, wenn vorhanden.
+- Bei explizitem USER-/SYSTEM-Scope wird nur dieser vom Aufruf vorgegebene Scope genutzt.
+- Distributionsquelle wird nicht geraten.
+
+Diagnoseausgaben
+- logs/apple-mobile-debug.log
+- logs/apple-mobile-inventory-d13.json
+- logs/apple-mobile-software-d13.json
+- logs/apple-mobile-software-d13-legacy.json
+- logs/apple-mobile-installation-proxy-d13.json
+- logs/apple-mobile-installation-proxy-d13/*.stdout.txt
+- logs/apple-mobile-installation-proxy-d13/*.stderr.txt
+
+Validierung in der Build-Umgebung
+- Java-Parserlauf akzeptiert den geänderten Quelltext; verbleibende javac-Meldungen betreffen fehlende externe Projektabhängigkeiten (Spring/SLF4J/Jackson usw.).
+- Ein vollständiger Maven-Build ist in dieser Umgebung ohne herunterladbare Maven-/Projektabhängigkeiten nicht möglich.

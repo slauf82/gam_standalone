@@ -1,0 +1,28 @@
+GAM Standalone v2.1.0 – Schritt 40k34o
+Drag & Drop zur Kategorie-Umsortierung
+
+Wunsch: Geraete per Ziehen (Drag & Drop) in eine andere Kategorie
+verschieben koennen, statt nur ueber das Typ-Dropdown - angenehmere
+Bedienung bei mehreren zu korrigierenden Geraeten.
+
+Umgesetzt: native HTML5 Drag-and-Drop-API (keine neue Bibliothek). Jede
+Geraete-Zeile ist draggable, jede Kategorie-Gruppe (<details>) ist Drop-Ziel
+mit visueller Hervorhebung waehrend des Ziehens.
+
+Dropdown bewusst vollstaendig erhalten (nicht ersetzt): (1) Barrierefreiheit
+- Drag & Drop ist ohne Maus/Touch nicht bedienbar, (2) "Neue Kategorie
+anlegen" erfordert Texteingabe, per Drag & Drop nicht abbildbar.
+
+Keine zweite Update-Logik: changeRegisteredDeviceType() in zwei Teile
+aufgeteilt - applyDeviceTypeChange() (neu, gemeinsame Kernlogik:
+Bestaetigung, API-Aufruf, zentraler Update-Pfad aus 40k34k, Meldung) wird
+jetzt sowohl vom Dropdown als auch vom neuen Drag-&-Drop-onDrop-Handler
+aufgerufen - identisches Verhalten, keine Duplikation.
+
+Kein Backend geaendert. Kein echter Build und kein echter Browser-
+Interaktionstest moeglich - ausdruecklich benannt. TypeScript-Syntax-Check
+(0 Diagnosen), Kreuzabgleich der Aufrufer durchgefuehrt.
+
+Ausfuehrliche Dokumentation: docs/40k34o-drag-and-drop-umsortierung.md
+
+Basis: 40k34n

@@ -1,0 +1,2 @@
+GAM Standalone 2.1.0 – Schritt 40k36p6cb
+Erkennungsquellen finalisiert: Konfiguration, Verbindungstest, Diagnose, Status und Bereitschaft zentral gebündelt.

@@ -1,0 +1,11 @@
+40k36t28 – WinRM Negotiate/SPNEGO + Authentifizierungsdiagnose
+
+- Bisherige harte NTLM-Festverdrahtung aus dem WinRM-Client entfernt.
+- Primärer WinRM-Authentifizierungsweg: Negotiate/SPNEGO (Kerberos bevorzugt).
+- NTLM bleibt ausschließlich als sichtbarer Legacy-Fallback erhalten.
+- Verbindungstest prüft TCP-Port vor dem WS-Man-Aufruf und meldet Endpoint/Transport transparent.
+- Diagnose zeigt Benutzerformat, bevorzugte Authentifizierung, tatsächlich verwendeten Weg, Legacy-Fallback und konkrete Fehlerkette.
+- MicrosoftAccount\\E-Mail wird als eigenes Benutzerformat erkannt; Kennwörter werden nicht in Diagnose/Logs ausgegeben.
+- Remote-Inventarisierung verwendet dieselbe Authentifizierungsreihenfolge wie der Verbindungstest.
+- Bei erfolgreichem NTLM-Fallback wird die Verbindung gelb statt grün als Legacy-Fallback gekennzeichnet.
+- 40k36t27 Merge-Dialog-/Scrollfixes sowie alle vorherigen Linux/CachyOS-/Setup-Fixes bleiben enthalten.

@@ -1,0 +1,14 @@
+40k37e56c-fix28 – macOS Apple RemotePairing / Pairing-only
+
+- „Apple-Gerät prüfen“ führt jetzt ausschließlich den gemeinsamen Pairing-Ablauf aus:
+  USB-Erkennung -> Lockdown Trust/Pairing -> RemotePairing über USB.
+- Bei fehlendem Trust wird idevicepair pair aktiv ausgelöst; die UI erhält den Zustand
+  TRUST_CONFIRM_REQUIRED mit der Aufforderung, „Diesem Computer vertrauen?“ am Gerät zu bestätigen.
+- Nach gültigem Lockdown-Pairing wird die bereits vorhandene GAM-pymobiledevice3-Runtime für
+  `lockdown remotepairing --pair` benutzt. USERSPACE_RSD selbst bleibt unverändert und wird erst
+  bei separater Suche/Inventarisierung verwendet.
+- Die Pairing-Prüfung startet keine Inventarisierung, App-Abfrage oder allgemeine WLAN-Suche mehr.
+- macOS gilt bei vorhandenen libimobiledevice-Werkzeugen plus GAM-pymobiledevice3-Runtime als
+  eingerichtete Apple-Geräteunterstützung; der Einrichtungsbutton verschwindet dann auch nach Neustart.
+- Keine Änderung an Geräteidentität/Merge, Apple-Inventarisierungscollector, App-Logik, USERSPACE_RSD,
+  Linux-Pfad oder allgemeinem macOS Java/Node/MariaDB-Unterbau.

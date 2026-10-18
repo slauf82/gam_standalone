@@ -1,0 +1,3 @@
+40k37e56c-fix20
+Scope: macOS database underlay only.
+Homebrew unchanged; MacPorts retained only with full Xcode; otherwise GAM-local MySQL 8.4 LTS, x86_64+arm64.

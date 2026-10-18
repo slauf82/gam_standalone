@@ -1,0 +1,29 @@
+GAM Standalone v2.1.0 - Schritt 40k37d10
+
+Apple Mobile / iOS normal (USB) - installation_proxy Diagnosematrix fuer ideviceinstaller 1.1.1
+
+Ausgangspunkt:
+- d9 hat die Legacy-CLI 1.1.1 korrekt erkannt.
+- list_user+xml war syntaktisch erfolgreich, lieferte auf dem Test-iPad aber <array/>.
+- list_system+xml wurde akzeptiert, hing jedoch bis zum Timeout.
+
+Aenderungen:
+- Legacy-1.1.1-Diagnosematrix mit ausschliesslich lesenden, dokumentierten Listenvarianten:
+  * USER_XML: -l -o list_user -o xml
+  * DEFAULT_XML: -l -o xml (User ist laut 1.1.1-Dokumentation der Default)
+  * ALL_XML: -l -o list_all -o xml
+  * SYSTEM_XML: -l -o list_system -o xml
+- Wenn keine XML-Variante Apps liefert, zusaetzliche Text-Probes USER_TEXT, DEFAULT_TEXT und ALL_TEXT zur Diagnose.
+- Jeder Probe protokolliert Erfolg, Exitcode, Laufzeit, Leerstatus und eine begrenzte Ausgabevorschau.
+- Timeout des problematischen SYSTEM-Probes auf 15 s begrenzt; ALL_XML 20 s, Benutzer/Default 15 s.
+- list_all-Ergebnisse werden nur dann als USER oder SYSTEM klassifiziert, wenn installation_proxy explizit ApplicationType/ApplicationTypeString liefert. Sonst UNKNOWN; keine Ableitung aus Bundle-ID, Signatur oder Pfad.
+- Neuer Runtime-Snapshot logs/apple-mobile-software-d10.json mit Probe-Matrix und erkannten Apps.
+- Inventar-Snapshot auf logs/apple-mobile-inventory-d10.json aktualisiert.
+- Apple-Trace des aktuellen Pfades auf D10 vereinheitlicht; alter d1-inventory-probe-Kontext zu d10-inventory-probe bereinigt.
+- Bestehende MSYS2-UCRT64-Runtime, SHA-Pruefung, Mirror-Failover und Cache bleiben unveraendert.
+
+Fuer die Auswertung benoetigt:
+1. logs/apple-mobile-debug.log
+2. logs/apple-mobile-inventory-d10.json
+3. logs/apple-mobile-software-d10.json
+Optional: Screenshot/Text der Software-Ansicht, falls Apps erkannt werden, aber die Gruppierung noch auffaellig ist.

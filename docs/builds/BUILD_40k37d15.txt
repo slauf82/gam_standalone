@@ -1,0 +1,72 @@
+GAM Standalone v2.1.0 – Schritt 40k37d15
+==========================================
+
+Ziel
+----
+40k37d15 macht den in d14 erfolgreich nachgewiesenen direkten read-only-Zugriff
+auf libimobiledevice / com.apple.mobile.installation_proxy zum bevorzugten
+Software-Inventarisierungspfad. ideviceinstaller.exe bleibt nur Diagnose- und
+Fallbackpfad.
+
+Aenderungen
+-----------
+1. Direkter installation_proxy-Hauptpfad
+   - probeSoftware() startet zuerst den nativen libimobiledevice-Pfad.
+   - Sobald native App-Daten vorhanden sind, wird ideviceinstaller nicht mehr
+     fuer die normale Inventarisierung aufgerufen.
+   - Dadurch entfallen im Normalfall die bisherigen CLI-ALL/SYSTEM-Timeouts.
+   - Fallback auf die bisherigen Legacy-/1.2.0-/CLI-Matrizen bleibt erhalten,
+     wenn der native Pfad keine App-Daten liefert.
+
+2. Zusaetzlicher ApplicationType=Any-Test
+   - BROWSE_ANY_EXPLICIT wurde in den nativen Diagnosepfad aufgenommen.
+   - ReturnAttributes bleiben explizit:
+     CFBundleIdentifier, CFBundleDisplayName, CFBundleShortVersionString,
+     CFBundleVersion, ApplicationType, ApplicationTypeString, Path, Container.
+   - USER/SYSTEM wird weiterhin ausschliesslich aus Apples explizitem
+     ApplicationType/ApplicationTypeString bzw. einem explizit angeforderten
+     Scope abgeleitet. Keine Heuristik aus Bundle-ID, Pfad, Signatur oder Name.
+   - Nicht eindeutig von Apple typisierte Eintraege bleiben UNKNOWN.
+
+3. Diagnose-ZIPs direkt im logs-Verzeichnis
+   - Native Rohdaten werden nach Abschluss automatisch gepackt:
+       logs/apple-mobile-installation-proxy-native-d15.zip
+   - Der Rohdaten-Unterordner wird nach erfolgreichem Packen entfernt.
+   - Falls der CLI-Fallback ausgefuehrt wird, gilt dasselbe fuer:
+       logs/apple-mobile-installation-proxy-cli-d15.zip
+   - Die JSON-Zusammenfassungen bleiben separat lesbar:
+       logs/apple-mobile-installation-proxy-native-d15.json
+       logs/apple-mobile-installation-proxy-cli-d15.json (nur bei CLI-Fallback)
+       logs/apple-mobile-software-d15.json
+       logs/apple-mobile-inventory-d15.json
+     Bestehende aeltere Inventardiagnosen bleiben unberuehrt.
+
+4. D14-Ergebnis als Grundlage
+   - Direkter LOOKUP_ALL lieferte auf dem realen iPad ca. 2,76 MB Plist-Daten.
+   - BROWSE_NULL_OPTIONS lieferte ebenfalls ca. 2,75 MB App-Daten.
+   - Die d14-Rohdaten enthielten 253 App-Eintraege mit Apples Typangaben
+     232 x System und 21 x Hidden; keine User-Typangabe wurde geraten.
+   - d15 prueft deshalb ApplicationType=Any zusaetzlich direkt.
+
+5. UI/Diagnose
+   - Sichtbare Apple-Unterstuetzungskennung auf 40k37d15 aktualisiert.
+   - apple-mobile-debug.log kennzeichnet den Lauf als 40k37d15.
+
+Sicherheit
+----------
+- Ausschliesslich lesende installation_proxy-Aufrufe.
+- Keine install/uninstall/upgrade/archive/restore-Operationen im nativen Pfad.
+- Bestehende MSYS2-/d11-Modern-Runtimes und Caches werden nicht ersetzt.
+- Normaler, nicht-jailbroken, gepairter iOS/iPadOS-Betrieb bleibt das Ziel.
+
+Validierung in dieser Build-Umgebung
+------------------------------------
+- Java-Quelltext: Klammerbalance geprueft.
+- javac -proc:none: keine neuen Parser-/Syntaxfehler; isolierter Lauf endet wie
+  erwartet an nicht aufgeloesten externen Projekt-/Spring-/Jackson-/JNA-Klassen.
+- Vollstaendiger Maven-Build ist in der Build-Umgebung weiterhin nicht moeglich,
+  wenn Maven/Dependency-Aufloesung nicht verfuegbar ist.
+- Frontend-Build wird ohne vorhandene node_modules nicht ausgefuehrt.
+- ZIP-Struktur, CRC-Test und Shell-Ausfuehrungsbits werden beim Paketbau geprueft.
+
+Compile-Fix: recreateDiagnosticDirectoryD15 propagiert Exception passend zu deleteRecursively(Path).

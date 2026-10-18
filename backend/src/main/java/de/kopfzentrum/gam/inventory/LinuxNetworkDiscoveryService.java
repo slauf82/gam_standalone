@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 @Service
 public class LinuxNetworkDiscoveryService {
   private static final Logger log = LoggerFactory.getLogger(LinuxNetworkDiscoveryService.class);
+  private static final Logger discoveryDebug = LoggerFactory.getLogger("GAM_DISCOVERY_DIAGNOSTICS");
   private static final int CONNECT_TIMEOUT_MS = 450;
   private static final int MAX_TARGETS = 1024;
   // HP-Geschäftsnotebooks (EliteBook/ProBook) folgen dem Namensschema NNNN[b|p|s|w],
@@ -51,8 +52,28 @@ public class LinuxNetworkDiscoveryService {
   private static final Pattern HP_BUSINESS_LAPTOP_MODEL = Pattern.compile("\\d{3,4}[bpsw]");
   private final Environment env;
   private final LinuxSshSettingsRepository sshSettings;
+  private final EmbeddedSshClientService embeddedSsh;
+  private final OsAccessProfileRepository accessProfiles;
+  // 40k36t3: Große Softwarelisten werden separat vom Discovery-Protokoll weitergereicht.
+  private final ConcurrentHashMap<String,String> latestSoftwareDetails = new ConcurrentHashMap<>();
 
-  public LinuxNetworkDiscoveryService(Environment env, LinuxSshSettingsRepository sshSettings) { this.env = env; this.sshSettings = sshSettings; }
+  public LinuxNetworkDiscoveryService(Environment env, LinuxSshSettingsRepository sshSettings, EmbeddedSshClientService embeddedSsh, OsAccessProfileRepository accessProfiles) {
+    this.env = env; this.sshSettings = sshSettings; this.embeddedSsh = embeddedSsh; this.accessProfiles=accessProfiles;
+  }
+
+  private LinuxSshSettingsRepository.Settings sshFor(String host){
+    var p=accessProfiles.resolve("SSH",host);
+    if(p!=null) return new LinuxSshSettingsRepository.Settings(p.enabled(),p.username(),p.authMode(),p.password(),p.keyPath(),p.port());
+    return sshSettings.load();
+  }
+
+  /** 40k36t8: Zentrale Abfrage für den Plattformdispatcher, ob für das konkrete
+   * Ziel wirklich ein aktivierter SSH-Zugang vorhanden ist. */
+  public boolean hasConfiguredSshAccess(String host){
+    if(host==null||host.isBlank()) return false;
+    var s=sshFor(host);
+    return s.enabled() && s.username()!=null && !s.username().isBlank();
+  }
 
   /**
    * Ein zu prüfendes Ziel samt der bereits von anderen Quellen bekannten Hinweise.
@@ -90,13 +111,13 @@ public class LinuxNetworkDiscoveryService {
 
     LinuxSshSettingsRepository.Settings ssh = sshSettings.load();
     String sshUser = ssh.username(); String sshKey = ssh.keyPath(); int sshPort = ssh.port();
-    boolean deepInventory = ssh.enabled() && !sshUser.isBlank() && commandExists("ssh") && (!"PASSWORD".equals(ssh.authMode()) || commandExists("sshpass"));
+    boolean deepInventory = ssh.enabled() && !sshUser.isBlank();
     diagnostic(diagnostics, sessionId, "LINUX_NETWORK", "RUNNING",
       "Linux-Netzwerkerkennung prüft " + targets.size() + " IPv4-Ziele" + (deepInventory ? " einschließlich SSH-Inventarisierung" : " per Dienst-Fingerprinting"), currentCount);
 
     ExecutorService pool = Executors.newFixedThreadPool(Math.min(16, Math.max(4, Runtime.getRuntime().availableProcessors())));
     List<Future<Optional<DiscoveredDevice>>> futures = new ArrayList<>();
-    for (LinuxScanTarget target : targets) futures.add(pool.submit(() -> inspect(target, sshPort, sshUser, sshKey, deepInventory, now)));
+    for (LinuxScanTarget target : targets) futures.add(pool.submit(() -> inspect(target, sshPort, sshUser, sshKey, deepInventory, now, null)));
     pool.shutdown();
 
     int detected = 0, deep = 0, clientCorrected = 0, manualUnchanged = 0;
@@ -129,27 +150,50 @@ public class LinuxNetworkDiscoveryService {
    */
   public Optional<DiscoveredDevice> inspectSingle(String ip, String hostnameHint, String fingerprintHint, boolean manualCategory) {
     if (!isIpv4(ip)) return Optional.empty();
-    LinuxSshSettingsRepository.Settings ssh = sshSettings.load();
+    LinuxSshSettingsRepository.Settings ssh = sshFor(ip);
     String sshUser = ssh.username(); String sshKey = ssh.keyPath(); int sshPort = ssh.port();
-    boolean deepInventory = ssh.enabled() && !sshUser.isBlank() && commandExists("ssh") && (!"PASSWORD".equals(ssh.authMode()) || commandExists("sshpass"));
+    boolean deepInventory = ssh.enabled() && !sshUser.isBlank();
     log.debug("Manuelle Linux-Inventarisierung für {} angestoßen (SSH konfiguriert: {})", ip, deepInventory);
     LinuxScanTarget target = new LinuxScanTarget(ip.trim(), nullToEmpty(hostnameHint), nullToEmpty(fingerprintHint), manualCategory);
-    return inspect(target, sshPort, sshUser, sshKey, deepInventory, OffsetDateTime.now().toString());
+    return inspect(target, sshPort, sshUser, sshKey, deepInventory, OffsetDateTime.now().toString(), null);
   }
 
-  /** 40k33b8: Ergebnis eines reinen SSH-Verbindungstests, ohne vollständige Inventarisierung. */
-  public record SshTestResult(boolean sshConfigured, boolean reachable, String message, String checkedAt) {}
+
+  /** 40k36n: Einmaliger, nicht gespeicherter Linux-Lauf mit sudo-Kennwort. */
+  public Optional<DiscoveredDevice> inspectSingleWithSudo(String ip, String hostnameHint, String fingerprintHint, boolean manualCategory, String sudoPassword) {
+    if (!isIpv4(ip)) return Optional.empty();
+    if (sudoPassword == null || sudoPassword.isBlank()) return Optional.empty();
+    LinuxSshSettingsRepository.Settings ssh = sshFor(ip);
+    String sshUser = ssh.username(); String sshKey = ssh.keyPath(); int sshPort = ssh.port();
+    boolean deepInventory = ssh.enabled() && !sshUser.isBlank();
+    if (!deepInventory) return Optional.empty();
+    LinuxScanTarget target = new LinuxScanTarget(ip.trim(), nullToEmpty(hostnameHint), nullToEmpty(fingerprintHint), manualCategory);
+    return inspect(target, sshPort, sshUser, sshKey, true, OffsetDateTime.now().toString(), sudoPassword);
+  }
+
+  /** 40k36q2: Gestuftes Ergebnis eines reinen SSH-Verbindungstests. */
+  public record SshTestResult(boolean sshConfigured, boolean reachable, boolean tcpReachable, boolean handshakeOk, boolean authOk, String message, String checkedAt) {}
 
   public SshTestResult testSshConnection(String ip) {
-    LinuxSshSettingsRepository.Settings ssh=sshSettings.load(); String now=OffsetDateTime.now().toString();
-    if(!ssh.enabled()||ssh.username().isBlank()) return new SshTestResult(false,false,"SSH-Zugang ist noch nicht konfiguriert.",now);
-    if(!commandExists("ssh")) return new SshTestResult(true,false,"Auf dem GAM-Server wurde kein SSH-Client gefunden.",now);
-    String banner=readBanner(ip,ssh.port());
-    if(banner==null) return new SshTestResult(true,false,"Host erreichbar, aber SSH-Port "+ssh.port()+" ist geschlossen oder der SSH-Dienst ist deaktiviert.",now);
-    if("PASSWORD".equals(ssh.authMode())&&!commandExists("sshpass")) return new SshTestResult(true,false,"SSH-Port ist erreichbar, aber Passwortanmeldung benötigt auf dem GAM-Server das Werkzeug sshpass. Bitte Schlüsselanmeldung verwenden oder sshpass installieren.",now);
-    String output=runRemoteCommand(ip,ssh.port(),ssh.username(),ssh.keyPath(),ssh.password(),ssh.authMode(),"printf GAM_SSH_OK",8);
-    boolean ok=output!=null&&output.contains("GAM_SSH_OK");
-    return new SshTestResult(true,ok,ok?"SSH-Verbindung und Authentifizierung erfolgreich.":"SSH-Port erreichbar, aber Authentifizierung fehlgeschlagen. Bitte Benutzername und Schlüssel/Passwort prüfen.",now);
+    LinuxSshSettingsRepository.Settings ssh=sshFor(ip); String now=OffsetDateTime.now().toString();
+    if(!ssh.enabled()||ssh.username().isBlank()) return new SshTestResult(false,false,false,false,false,"SSH-Zugang ist noch nicht konfiguriert.",now);
+
+    // 40k36q2: Der separate Java-Socket-Test ist nur noch Diagnose und blockiert SSH nicht mehr.
+    // Apache MINA führt den maßgeblichen SSH-Verbindungsaufbau selbst durch. Damit kann ein
+    // abweichendes Verhalten des einfachen Socket-Vortests keinen funktionierenden SSH-Zugang
+    // mehr fälschlich als geschlossen klassifizieren.
+    EmbeddedSshClientService.TestResult result=embeddedSsh.testDetailed(ip,ssh.port(),ssh.username(),ssh.authMode(),ssh.password(),ssh.keyPath());
+
+    // Ein erfolgreicher SSH-Handshake beweist zugleich, dass TCP zum Zielport funktioniert.
+    // Nur wenn bereits der Handshake scheitert, führen wir zusätzlich einen großzügigen
+    // 10-Sekunden-TCP-Diagnosetest aus. Sein Ergebnis ist rein informativ.
+    boolean tcp = result.handshakeOk() || tcpPortOpen(ip, ssh.port(), 10000);
+    boolean ok=result.commandOk();
+    String tcpInfo = tcp
+        ? "TCP-Port "+ssh.port()+" erreichbar. "
+        : "Separater TCP-Diagnosetest konnte Port "+ssh.port()+" innerhalb von 10 Sekunden nicht bestätigen; der SSH-Client wurde trotzdem direkt ausgeführt. ";
+    String message = tcpInfo + result.message();
+    return new SshTestResult(true,ok,tcp,result.handshakeOk(),result.authOk(),message,now);
   }
 
   /** 40k33b8: Verwirft den On-Demand-Zwischenspeicher (40k33b6b) für ein einzelnes Gerät ("Cache aktualisieren"). */
@@ -158,8 +202,12 @@ public class LinuxNetworkDiscoveryService {
     log.debug("On-Demand-Zwischenspeicher für {} wurde geleert", ip);
   }
 
-  private Optional<DiscoveredDevice> inspect(LinuxScanTarget target, int sshPort, String sshUser, String sshKey, boolean deepInventory, String now) {
+  private Optional<DiscoveredDevice> inspect(LinuxScanTarget target, int sshPort, String sshUser, String sshKey, boolean deepInventory, String now, String sudoPassword) {
+    long fullScanStartedAt=System.currentTimeMillis();
     String ip = target.ip();
+    // 40k36q3: Ein passender Mehrfachzugang fuer genau diesen Host hat Vorrang vor dem globalen Fallback.
+    LinuxSshSettingsRepository.Settings hostSsh=sshFor(ip);
+    if(hostSsh.enabled()&&!hostSsh.username().isBlank()){sshPort=hostSsh.port();sshUser=hostSsh.username();sshKey=hostSsh.keyPath();deepInventory=true;}
     String sshBanner = readBanner(ip, sshPort);
     LinkedHashSet<String> services = new LinkedHashSet<>();
     if (sshBanner != null) services.add("SSH " + clean(sshBanner));
@@ -215,31 +263,54 @@ public class LinuxNetworkDiscoveryService {
       triggers.add("Linux-typischer Netzwerkdienst erkannt");
     if (snmpSysDescr != null && parseSnmpLinuxHostKernel(snmpSysDescr) != null)
       triggers.add("Von SNMP bereits gemeldete Linux-Systembeschreibung");
+    // 40k36t2: Ein erfolgreich konfigurierter SSH-Zugang darf selbst der Bootstrap
+    // fuer die Linux-Erkennung sein. Vorher entstand ein Henne-Ei-Problem: Ohne
+    // Linux-Hinweis wurde inspect() beendet, obwohl GAM Handshake, Authentifizierung
+    // und Testbefehl bereits erfolgreich ausfuehren konnte.
+    if (deepInventory && triggers.isEmpty())
+      triggers.add("SSH-Zugang konfiguriert – Betriebssystem wird direkt über SSH bestimmt");
     if (triggers.isEmpty()) return Optional.empty();
-    log.debug("Linux-Nachprüfung für {} ausgelöst durch: {}", ip, String.join(" · ", triggers));
+    discoveryDebug.debug("Linux-Nachprüfung für {} ausgelöst durch: {}", ip, String.join(" · ", triggers));
 
+    long precheckMs=System.currentTimeMillis()-fullScanStartedAt;
+    discoveryDebug.info("[LINUX-TIMING] {} Vorprüfung/Netzwerkdienste: {} ms",ip,precheckMs);
     long inventoryStartedAt = System.currentTimeMillis();
     Map<String,String> inventory = Map.of();
     String inventoryStatus;
     if (!deepInventory) {
       inventoryStatus = "SSH-Zugang nicht konfiguriert (gam.discovery.linux.ssh-user/-key)";
-      log.debug("Linux-Inventarisierung für {} übersprungen: kein SSH-Zugang konfiguriert (normaler Zustand, SSH ist optional)", ip);
-    } else if (sshBanner == null) {
-      inventoryStatus = "SSH-Port nicht erreichbar";
-      log.debug("Linux-Inventarisierung für {} übersprungen: SSH-Port {} nicht erreichbar", ip, sshPort);
+      discoveryDebug.debug("Linux-Inventarisierung für {} übersprungen: kein SSH-Zugang konfiguriert (normaler Zustand, SSH ist optional)", ip);
     } else {
-      log.debug("SSH-Verbindung zu {} wird für die Inventarisierung aufgebaut (Port {})", ip, sshPort);
-      inventory = sshInventory(ip, sshPort, sshUser, sshKey);
+      // 40k36t2: Der kurze rohe Banner-Vortest ist nur noch Diagnose. Er darf einen
+      // funktionierenden Apache-MINA-SSH-Zugang nicht blockieren. Gerade langsame
+      // sshd-Banner koennen innerhalb des 700-ms-Vortests fehlen, obwohl Handshake
+      // und Authentifizierung danach problemlos funktionieren.
+      discoveryDebug.debug("SSH-Verbindung zu {} wird direkt für die Inventarisierung aufgebaut (Port {}, Banner-Vortest: {})",
+        ip, sshPort, sshBanner == null ? "ohne Antwort" : "Antwort erhalten");
+      inventory = sshInventory(ip, sshPort, sshUser, sshKey, sudoPassword);
       if (inventory.isEmpty()) {
-        inventoryStatus = "SSH erreichbar, aber Anmeldung fehlgeschlagen oder keine Daten empfangen";
-        log.debug("Linux-Inventarisierung für {} lieferte keine Daten (SSH-Anmeldung fehlgeschlagen oder leere Antwort)", ip);
+        // 40k37e56a7fix5: Ein fehlgeschlagener/leerer SSH-Lauf ist KEIN Linux-Beleg.
+        // Vorher lief die Methode weiter und erzeugte aus Fallbacks trotzdem
+        // "Linux bestätigt: ja" / "Linux / Unix". Dadurch konnten fremde Geräte
+        // (z. B. ein iPad) Linux-Metadaten erhalten und der Plattformlauf wurde
+        // fälschlich als erfolgreich gewertet. Ohne echte SSH-Inventardaten wird
+        // daher nichts als Linux persistiert.
+        inventoryStatus = "SSH-Verbindung konfiguriert, aber Inventarbefehl lieferte keine Daten";
+        discoveryDebug.debug("Linux-Inventarisierung für {} lieferte trotz direktem SSH-Versuch keine Daten; kein Linux-Beleg, keine Linux-Persistierung", ip);
+        return Optional.empty();
+      } else if (!isConfirmedLinuxInventory(inventory)) {
+        inventoryStatus = "SSH erreichbar, Ziel antwortete jedoch nicht als Linux-System";
+        discoveryDebug.debug("SSH-Inventar von {} ist nicht als Linux bestätigt: OS={}, Kernel={}, Distro={}",
+          ip, inventory.get("OS"), inventory.get("KERNEL"), inventory.get("DISTRO"));
+        return Optional.empty();
       } else {
         inventoryStatus = "erfolgreich";
-        log.debug("Linux-Inventarisierung für {} erfolgreich: {} Merkmale erfasst ({})", ip, inventory.size(),
+        discoveryDebug.debug("Linux-Inventarisierung für {} erfolgreich: {} Merkmale erfasst ({})", ip, inventory.size(),
           String.join(", ", inventory.keySet()));
       }
     }
     long inventoryDurationMs = System.currentTimeMillis() - inventoryStartedAt;
+    discoveryDebug.info("[LINUX-TIMING] {} SSH-Inventarbefehl inkl. Übertragung/Parsing: {} ms",ip,inventoryDurationMs);
     // 40k33b9: echte (nicht geschätzte) SNMP-Angaben als Fallback nutzen, wenn SSH keine
     // eigenen Werte geliefert hat - ausschließlich, wenn das Muster "Linux <Host> <Kernel>"
     // tatsächlich in der von der Zielmaschine selbst gemeldeten sysDescr steckt.
@@ -250,6 +321,9 @@ public class LinuxNetworkDiscoveryService {
     String serial = firstNonBlank(inventory.get("UUID"), inventory.get("SERIAL"));
     String manufacturer = firstNonBlank(inventory.get("VENDOR"), inferManufacturer(services));
 
+    String softwareDetails = inventory.get("SOFTWARE_DETAILS");
+    if (softwareDetails != null && !softwareDetails.isBlank()) latestSoftwareDetails.put(ip, softwareDetails);
+    else latestSoftwareDetails.remove(ip);
     String chassisRole = chassisRole(inventory.get("CHASSIS"));
     String clientEvidence = detectClientEvidence(hostnameLower, fingerprintLower, chassisRole);
     ClassificationResult classification = classify(services, inventory, hostnameLower, fingerprintLower, clientEvidence, chassisRole);
@@ -288,10 +362,11 @@ public class LinuxNetworkDiscoveryService {
     );
     long completenessHits = completenessChecklist.stream().filter(Boolean::booleanValue).count();
     int completenessPercent = (int) Math.round(100.0 * completenessHits / completenessChecklist.size());
-    log.debug("Linux-Inventarisierungsgrad für {}: {}% ({} von {} Merkmalen), Quellen: {}, Rollen: {}",
+    discoveryDebug.debug("Linux-Inventarisierungsgrad für {}: {}% ({} von {} Merkmalen), Quellen: {}, Rollen: {}",
       ip, completenessPercent, completenessHits, completenessChecklist.size(), usedSources, roles);
 
     StringBuilder protocol = new StringBuilder("Linux-Netzwerkerkennung");
+    if (!inventory.isEmpty()) protocol.append(" · SSH · Linux");
     detail(protocol, "Nachprüfung ausgelöst durch", String.join(" · ", triggers));
     detail(protocol, "Linux bestätigt", "ja");
     detail(protocol, "Kategorieentscheidung", classification.reason());
@@ -306,6 +381,10 @@ public class LinuxNetworkDiscoveryService {
     detail(protocol, "CPU", inventory.get("CPU"));
     detail(protocol, "CPU-Threads", inventory.get("THREADS"));
     detail(protocol, "Arbeitsspeicher", inventory.get("MEMORY"));
+    detail(protocol, "Hardwarehersteller", inventory.get("VENDOR"));
+    detail(protocol, "System-UUID", inventory.get("UUID"));
+    detail(protocol, "Hardware-Seriennummer", inventory.get("SERIAL"));
+    detail(protocol, "Chassis-Typ", inventory.get("CHASSIS"));
     detail(protocol, "Datenträger", inventory.get("DISKS"));
     detail(protocol, "Dateisysteme", inventory.get("FILESYSTEMS"));
     detail(protocol, "Blockgeräte", inventory.get("BLOCK_DEVICES"));
@@ -322,6 +401,16 @@ public class LinuxNetworkDiscoveryService {
     detail(protocol, "ZFS", inventory.get("ZFS"));
     detail(protocol, "TPM / systemd-cryptenroll", inventory.get("TPM_CRYPT"));
     detail(protocol, "Storage-Werkzeuge", inventory.get("STORAGE_TOOLS"));
+    detail(protocol, "Berechtigungsbenutzer", inventory.get("PERMISSION_USER"));
+    detail(protocol, "Benutzer-ID", inventory.get("PERMISSION_UID"));
+    detail(protocol, "Gruppen", inventory.get("PERMISSION_GROUPS"));
+    detail(protocol, "Administratorgruppe", inventory.get("ADMIN_GROUP"));
+    detail(protocol, "sudo verfügbar", inventory.get("SUDO_AVAILABLE"));
+    detail(protocol, "sudo ohne Kennwort", inventory.get("SUDO_NOPASS"));
+    detail(protocol, "Root-Rechte", inventory.get("ROOT_ACCESS"));
+    detail(protocol, "Erhöhter Lauf", inventory.get("PRIVILEGED_RUN"));
+    detail(protocol, "Inventarisierungstiefe", inventory.get("INVENTORY_LEVEL"));
+    detail(protocol, "Berechtigungseinschränkungen", inventory.get("PERMISSION_LIMITATIONS"));
     detail(protocol, "Netzwerkadapter", inventory.get("NETWORK"));
     detail(protocol, "Standardgateway", inventory.get("GATEWAY"));
     detail(protocol, "DNS-Server", inventory.get("DNS"));
@@ -330,6 +419,7 @@ public class LinuxNetworkDiscoveryService {
     detail(protocol, "Laufende Dienste", inventory.get("SERVICES"));
     detail(protocol, "Paketmanager", inventory.get("PKG_MANAGER"));
     detail(protocol, "Installierte Pakete", inventory.get("PACKAGES"));
+    detail(protocol, "Softwareinventar", inventory.get("PACKAGES") == null ? null : inventory.get("PACKAGES") + " Pakete strukturiert gespeichert");
     detail(protocol, "Ausstehende Updates", inventory.get("UPDATES"));
     detail(protocol, "Aktualisierbare Pakete", inventory.get("UPGRADABLE_NAMES"));
     detail(protocol, "Erkannte Rollen", roles);
@@ -347,10 +437,13 @@ public class LinuxNetworkDiscoveryService {
       detail(protocol, "Inventarisierungsdauer", (inventoryDurationMs / 1000.0) + " s");
       detail(protocol, "Erfasste Merkmale", String.valueOf(inventory.size()));
     }
-    log.debug("Linux-Ergebnis für {} wird an die Geräteidentität übergeben: Kategorie={}, Protokolllänge={} Zeichen",
+    discoveryDebug.debug("Linux-Ergebnis für {} wird an die Geräteidentität übergeben: Kategorie={}, Protokolllänge={} Zeichen",
       ip, type, protocol.length());
     if (!inventory.isEmpty()) protocol.append(" · SSH-Inventar (schreibgeschützt)");
 
+    long totalMs=System.currentTimeMillis()-fullScanStartedAt;
+    discoveryDebug.info("[LINUX-TIMING] {} Gesamter Linux-Erfassungspfad: {} ms (Vorprüfung {} ms, SSH-Inventar {} ms, Nachverarbeitung {} ms)",
+      ip,totalMs,precheckMs,inventoryDurationMs,Math.max(0,totalMs-precheckMs-inventoryDurationMs));
     return Optional.of(new DiscoveredDevice("linux-network:" + ip, hostLabel, type, ip, null,
       protocol.toString(), "ONLINE", manufacturer, serial, now, false));
   }
@@ -465,9 +558,11 @@ public class LinuxNetworkDiscoveryService {
       "Kein eindeutiger Client- oder Serverbeleg; bisheriger konservativer Standard beibehalten (Samba/NFS allein zählt nicht als Serverbeleg)");
   }
 
-  private Map<String,String> sshInventory(String ip, int port, String user, String key) {
-    LinuxSshSettingsRepository.Settings cfg=sshSettings.load();
-    String output = runRemoteCommand(ip, port, user, key, cfg.password(), cfg.authMode(), remoteScript(), 10);
+  private Map<String,String> sshInventory(String ip, int port, String user, String key, String sudoPassword) {
+    LinuxSshSettingsRepository.Settings cfg=sshFor(ip);
+    String output = (sudoPassword != null && !sudoPassword.isBlank())
+      ? runRemoteScriptWithSudo(ip, port, user, key, cfg.password(), cfg.authMode(), sudoPassword, remoteScript(), 20)
+      : runRemoteCommand(ip, port, user, key, cfg.password(), cfg.authMode(), remoteScript(), 10);
     if (output == null) return Map.of();
     LinkedHashMap<String,String> result = new LinkedHashMap<>();
     for (String line : output.split("\n")) {
@@ -483,33 +578,29 @@ public class LinuxNetworkDiscoveryService {
    * On-Demand-Abruf (fetchSection) genutzt - keine zweite Verbindungslogik.
    * Liefert den rohen stdout-Text oder null bei Fehler/Timeout.
    */
-  private static String runRemoteCommand(String ip, int port, String user, String key, String password, String authMode, String remoteCommand, int timeoutSeconds) {
-    List<String> cmd = new ArrayList<>();
-    if ("PASSWORD".equals(authMode)) { cmd.add("sshpass"); cmd.add("-p"); cmd.add(password == null ? "" : password); }
-    cmd.addAll(List.of("ssh", "-o", "BatchMode=" + ("PASSWORD".equals(authMode) ? "no" : "yes"), "-o", "ConnectTimeout=4",
-      "-o", "ConnectionAttempts=1", "-o", "StrictHostKeyChecking=accept-new", "-p", Integer.toString(port)));
-    if (key != null && !key.isBlank()) { cmd.add("-i"); cmd.add(key); }
-    cmd.add(user + "@" + ip);
-    cmd.add("sh -c '" + remoteCommand.replace("'", "'\\''") + "'");
-    try {
-      Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
-      if (!p.waitFor(timeoutSeconds, TimeUnit.SECONDS)) { p.destroyForcibly(); log.debug("SSH-Befehl an {} lief in ein Timeout", ip); return null; }
-      String output;
-      try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
-        StringBuilder sb = new StringBuilder();
-        for (String line; (line = r.readLine()) != null;) sb.append(line).append('\n');
-        output = sb.toString();
-      }
-      // 40k33b8: Ein von Null verschiedener Exit-Code spiegelt bei einer verketteten
-      // Befehlsfolge oft nur den LETZTEN Teilbefehl wider (z.B. eine abschließende
-      // for-Schleife, deren letzter Test fehlschlägt), obwohl zuvor bereits
-      // erfolgreich Daten ausgegeben wurden. Ein einzelner fehlgeschlagener
-      // Teilbefehl darf die gesamte Inventarisierung nicht verwerfen - nur ein
-      // gleichzeitig LEERES Ergebnis gilt als echter Verbindungs-/Auth-Fehler.
-      if (p.exitValue() != 0 && output.isBlank()) { log.debug("SSH-Befehl an {} lieferte weder Ausgabe noch Erfolgscode", ip); return null; }
-      if (p.exitValue() != 0) log.debug("SSH-Befehl an {} endete mit Exit-Code {}, lieferte aber Ausgabe - wird übernommen", ip, p.exitValue());
-      return output;
-    } catch (Exception e) { log.debug("SSH-Befehl an {} fehlgeschlagen: {}", ip, e.toString()); return null; }
+  private String runRemoteCommand(String ip, int port, String user, String key, String password, String authMode, String remoteCommand, int timeoutSeconds) {
+    EmbeddedSshClientService.Result result = embeddedSsh.execute(ip, port, user, authMode, password, key,
+      "sh -c '" + remoteCommand.replace("'", "'\\''") + "'", null, timeoutSeconds);
+    if (!result.success()) {
+      log.debug("SSH-Befehl an {} fehlgeschlagen: {}", ip, result.message());
+      return null;
+    }
+    String output = result.stdout();
+    return output == null || output.isBlank() ? null : output;
+  }
+
+
+  /** Führt das Inventarskript über sudo -S aus; das Kennwort wird nur über stdin übertragen. */
+  private String runRemoteScriptWithSudo(String ip, int port, String user, String key, String sshPassword, String authMode, String sudoPassword, String script, int timeoutSeconds) {
+    String input = (sudoPassword == null ? "" : sudoPassword) + "\n" + script + "\n";
+    EmbeddedSshClientService.Result result = embeddedSsh.execute(ip, port, user, authMode, sshPassword, key,
+      "sudo -S -p '' sh -s", input, timeoutSeconds);
+    if (!result.success()) {
+      log.debug("Erhöhter SSH-Befehl an {} fehlgeschlagen: {}", ip, result.message());
+      return null;
+    }
+    String output = result.stdout();
+    return output == null || output.isBlank() ? null : output;
   }
 
   /** 40k33b6b: Ergebnis eines On-Demand-Abrufs für einen einzelnen, einklappbaren Bereich. */
@@ -537,9 +628,9 @@ public class LinuxNetworkDiscoveryService {
     if (cached != null && java.time.Duration.between(cached.fetchedAt(), OffsetDateTime.now()).toMinutes() < ON_DEMAND_CACHE_MINUTES) {
       return new OnDemandSection(section, label, cached.content(), cached.available(), cached.fetchedAt().toString(), true);
     }
-    LinuxSshSettingsRepository.Settings cfg=sshSettings.load();
+    LinuxSshSettingsRepository.Settings cfg=sshFor(ip);
     String sshUser=cfg.username(), sshKey=cfg.keyPath(); int sshPort=cfg.port();
-    if (!cfg.enabled() || sshUser.isBlank() || !commandExists("ssh")) {
+    if (!cfg.enabled() || sshUser.isBlank()) {
       OffsetDateTime now = OffsetDateTime.now();
       String message = "Für die erweiterte Linux-Analyse ist kein gemeinsamer SSH-Zugang konfiguriert.";
       onDemandCache.put(cacheKey, new CacheEntry(message, false, now));
@@ -559,10 +650,17 @@ public class LinuxNetworkDiscoveryService {
    * die Integritätsprüfung soll bewusst den aktuellen Stand sehen). Liefert null,
    * wenn kein SSH-Zugang konfiguriert ist oder das Gerät nicht erreichbar ist.
    */
+  /** 40k36t3: Übergibt die zuletzt per SSH ermittelte Softwareliste genau einmal
+   * an das strukturierte Softwareinventar. Sie bleibt bewusst außerhalb des Discovery-Protokolls. */
+  public String consumeLatestSoftwareDetails(String ip) {
+    if (ip == null) return null;
+    return latestSoftwareDetails.remove(ip);
+  }
+
   public String currentHostKeyFingerprint(String ip) {
-    LinuxSshSettingsRepository.Settings cfg=sshSettings.load();
+    LinuxSshSettingsRepository.Settings cfg=sshFor(ip);
     String sshUser=cfg.username(), sshKey=cfg.keyPath(); int sshPort=cfg.port();
-    if (!cfg.enabled() || sshUser.isBlank() || !commandExists("ssh")) return null;
+    if (!cfg.enabled() || sshUser.isBlank()) return null;
     String command = "for f in /etc/ssh/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_ecdsa_key.pub /etc/ssh/ssh_host_rsa_key.pub; do "
       + "[ -r \"$f\" ] && ssh-keygen -lf \"$f\" 2>/dev/null | awk '{print $2}' && break; done";
     String output = runRemoteCommand(ip, sshPort, sshUser, sshKey, cfg.password(), cfg.authMode(), command, 8);
@@ -604,9 +702,9 @@ public class LinuxNetworkDiscoveryService {
       "kv HOSTNAME hostname; " +
       "printf 'OS='; (awk -F= '/^PRETTY_NAME=/{gsub(/^\"|\"$/,\"\",$2);print $2;exit}' /etc/os-release 2>/dev/null || uname -s); " +
       "kv KERNEL uname -sr; kv ARCH uname -m; " +
-      "printf 'VENDOR='; cat /sys/class/dmi/id/sys_vendor 2>/dev/null; " +
-      "printf 'UUID='; cat /sys/class/dmi/id/product_uuid 2>/dev/null; " +
-      "printf 'SERIAL='; (cat /sys/class/dmi/id/product_serial 2>/dev/null || cat /sys/class/dmi/id/board_serial 2>/dev/null); " +
+      "printf 'VENDOR='; cat /sys/class/dmi/id/sys_vendor 2>/dev/null; printf '\\n'; " +
+      "printf 'UUID='; cat /sys/class/dmi/id/product_uuid 2>/dev/null; printf '\\n'; " +
+      "printf 'SERIAL='; (cat /sys/class/dmi/id/product_serial 2>/dev/null || cat /sys/class/dmi/id/board_serial 2>/dev/null); printf '\\n'; " +
       "printf 'CHASSIS='; cat /sys/class/dmi/id/chassis_type 2>/dev/null; printf '\\n'; " +
       "printf 'CPU='; (lscpu 2>/dev/null | sed -n 's/^Model name:[[:space:]]*//p' | head -n1 || awk -F: '/model name/{gsub(/^[ \\t]+/,\"\",$2);print $2;exit}' /proc/cpuinfo); " +
       "printf 'THREADS='; (nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null); " +
@@ -618,6 +716,23 @@ public class LinuxNetworkDiscoveryService {
       "printf 'CONTAINERS='; (docker ps --format '{{.Names}}' 2>/dev/null | paste -sd, - || podman ps --format '{{.Names}}' 2>/dev/null | paste -sd, - || true); printf '\\n'; " +
       "printf 'SERVICES='; systemctl list-units --type=service --state=running --no-legend --plain 2>/dev/null | awk 'NR<=30{printf \"%s; \",$1}'; printf '\\n'; " +
       "printf 'PACKAGES='; (dpkg-query -W -f='${binary:Package}\\n' 2>/dev/null || rpm -qa 2>/dev/null || pacman -Qq 2>/dev/null) | wc -l; " +
+      // 40k36t: Strukturierte Softwarequellen fuer dieselbe plattformneutrale Tabelle wie macOS.
+      // Zeilenformat: Quelle|Name|Version|Paket-ID/Pfad, getrennt durch " ; ".
+      "printf 'SOFTWARE_DETAILS='; { " +
+      "if command -v dpkg-query >/dev/null 2>&1; then dpkg-query -W -f='APT / dpkg|${binary:Package}|${Version}|${binary:Package}||\\n' 2>/dev/null; " +
+      "elif command -v pacman >/dev/null 2>&1; then pacman -Q 2>/dev/null | awk '{printf \\\"pacman|%s|%s|%s||\\\\n\\\",$1,$2,$1}'; " +
+      "elif command -v rpm >/dev/null 2>&1; then rpm -qa --qf 'RPM / DNF / YUM|%{NAME}|%{VERSION}-%{RELEASE}|%{NAME}||\\n' 2>/dev/null; " +
+      "elif command -v apk >/dev/null 2>&1; then apk info -v 2>/dev/null | awk '{printf \\\"APK|%s||%s||\\\\n\\\",$0,$0}'; fi; " +
+      "command -v snap >/dev/null 2>&1 && snap list 2>/dev/null | awk 'NR>1{printf \\\"Snap|%s|%s|%s||\\\\n\\\",$1,$2,$1}'; " +
+      "command -v flatpak >/dev/null 2>&1 && flatpak list --app --columns=application,name,version 2>/dev/null | awk -F '\\\\t' '{printf \\\"Flatpak|%s|%s|%s||\\\\n\\\",$2,$3,$1}'; " +
+      "if command -v brew >/dev/null 2>&1; then brew list --formula --versions 2>/dev/null | awk '{n=$1;$1=\\\"\\\";sub(/^ /,\\\"\\\");printf \\\"Homebrew Formulae|%s|%s|%s||\\\\n\\\",n,$0,n}'; fi; " +
+      // 40k36t1: Bereitliegende Installationsartefakte bewusst getrennt vom installierten Paketbestand erfassen.
+      // Suche bleibt auf typische Ablageorte und geringe Tiefe begrenzt, damit SSH-Inventarisierungen nicht das gesamte Dateisystem durchlaufen.
+      "for f in $(find /home /root /tmp /var/tmp -maxdepth 4 -type f -name '*.deb' -print 2>/dev/null | head -n 200); do " +
+      "n=$(dpkg-deb -f \\\"$f\\\" Package 2>/dev/null); v=$(dpkg-deb -f \\\"$f\\\" Version 2>/dev/null); a=$(dpkg-deb -f \\\"$f\\\" Architecture 2>/dev/null); [ -z \\\"$n\\\" ] && n=$(basename \\\"$f\\\"); printf 'DEB-Pakete|%s|%s|%s (%s)|%s\\n' \\\"$n\\\" \\\"$v\\\" \\\"$n\\\" \\\"$a\\\" \\\"$f\\\"; done; " +
+      "for f in $(find /home /root /tmp /var/tmp -maxdepth 4 -type f -name '*.rpm' -print 2>/dev/null | head -n 200); do " +
+      "n=$(rpm -qp --qf '%{NAME}' \\\"$f\\\" 2>/dev/null); v=$(rpm -qp --qf '%{VERSION}-%{RELEASE}' \\\"$f\\\" 2>/dev/null); a=$(rpm -qp --qf '%{ARCH}' \\\"$f\\\" 2>/dev/null); [ -z \\\"$n\\\" ] && n=$(basename \\\"$f\\\"); printf 'RPM-Pakete|%s|%s|%s (%s)|%s\\n' \\\"$n\\\" \\\"$v\\\" \\\"$n\\\" \\\"$a\\\" \\\"$f\\\"; done; " +
+      "} | tr '\\n' '\\036'; printf '\\n'; " +
       "printf 'UPDATES='; (apt list --upgradable 2>/dev/null | sed '1d' | wc -l || dnf check-update -q 2>/dev/null | wc -l || true); " +
       // 40k33b6a: zusätzliche Felder für die vollständigere Systeminventarisierung.
       "printf 'DISTRO='; awk -F= '/^ID=/{gsub(/\"/,\"\",$2);print $2;exit}' /etc/os-release 2>/dev/null; printf '\\n'; " +
@@ -643,11 +758,32 @@ public class LinuxNetworkDiscoveryService {
       "printf 'TPM_CRYPT='; if { [ -c /dev/tpmrm0 ] || [ -c /dev/tpm0 ]; }; then printf 'TPM vorhanden'; else printf 'kein TPM-Gerät erkannt'; fi; command -v systemd-cryptenroll >/dev/null 2>&1 && printf ', systemd-cryptenroll vorhanden'; printf '\\n'; " +
       "printf 'STORAGE_TOOLS='; for c in lsblk findmnt blkid cryptsetup dmsetup pvs vgs lvs mdadm btrfs zpool systemd-cryptenroll; do command -v $c >/dev/null 2>&1 && printf '%s:ja;' $c || printf '%s:nein;' $c; done; printf '\\n'; " +
       "printf 'ENCRYPTION_SUMMARY='; luks=$(lsblk -rno FSTYPE 2>/dev/null | awk '$1==\"crypto_LUKS\"{n++}END{print n+0}'); open=$(dmsetup ls --target crypt 2>/dev/null | wc -l); root=$(findmnt -n -o SOURCE / 2>/dev/null); case \"$root\" in /dev/mapper/*|/dev/dm-*) re=ja;; *) re=nein;; esac; printf 'LUKS:%s;geöffnet:%s;Root verschlüsselt:%s' \"$luks\" \"$open\" \"$re\"; printf '\\n'; " +
+      // 40k36n: Linux-Berechtigungen und Inventarisierungstiefe.
+      "printf 'PERMISSION_USER='; id -un 2>/dev/null; printf '\\n'; " +
+      "printf 'PERMISSION_UID='; id -u 2>/dev/null; printf '\\n'; " +
+      "printf 'PERMISSION_GROUPS='; id -Gn 2>/dev/null | tr ' ' ','; printf '\\n'; " +
+      "printf 'ADMIN_GROUP='; id -Gn 2>/dev/null | grep -Eq '(^| )(sudo|wheel|admin)( |$)' && echo ja || echo nein; " +
+      "printf 'SUDO_AVAILABLE='; command -v sudo >/dev/null 2>&1 && echo ja || echo nein; " +
+      "printf 'SUDO_NOPASS='; sudo -n true >/dev/null 2>&1 && echo ja || echo nein; " +
+      "printf 'ROOT_ACCESS='; uid=$(id -u 2>/dev/null); [ \"$uid\" = 0 ] && echo ja || echo nein; " +
+      "printf 'PRIVILEGED_RUN='; uid=$(id -u 2>/dev/null); [ \"$uid\" = 0 ] && echo ja || echo nein; " +
+      "printf 'PERMISSION_LIMITATIONS='; uid=$(id -u 2>/dev/null); lim=''; [ \"$uid\" != 0 ] && lim='kein Root-Kontext'; command -v sudo >/dev/null 2>&1 || lim=\"${lim}${lim:+; }sudo nicht installiert\"; sudo -n true >/dev/null 2>&1 || lim=\"${lim}${lim:+; }sudo benötigt Kennwort oder ist nicht erlaubt\"; [ -r /etc/shadow ] || lim=\"${lim}${lim:+; }geschützte Kontodaten nicht lesbar\"; [ -r /root ] || lim=\"${lim}${lim:+; }Root-Bereich nicht lesbar\"; printf '%s\\n' \"${lim:-keine}\"; " +
+      "printf 'INVENTORY_LEVEL='; uid=$(id -u 2>/dev/null); if [ \"$uid\" = 0 ]; then echo Vollzugriff; elif sudo -n true >/dev/null 2>&1; then echo Administrator; elif id -Gn 2>/dev/null | grep -Eq '(^| )(sudo|wheel|admin)( |$)'; then echo Erweitert; else echo Standard; fi; " +
       // 40k33b7: SSH-Hostkey-Fingerabdruck fuer die Integritaetspruefung - aendert sich
       // ein spaeter erneut abgerufener Fingerabdruck, deutet das stark auf ein anderes
       // physisches Geraet an derselben Identitaet hin (siehe DeviceIdentityService).
       "printf 'SSHHOSTKEY='; (for f in /etc/ssh/ssh_host_ed25519_key.pub /etc/ssh/ssh_host_ecdsa_key.pub /etc/ssh/ssh_host_rsa_key.pub; do " +
       "[ -r \"$f\" ] && ssh-keygen -lf \"$f\" 2>/dev/null | awk '{print $2}' && break; done)";
+  }
+
+  /** 40k36t2: Linux wird erst nach echten SSH-Inventardaten bestaetigt. */
+  private static boolean isConfirmedLinuxInventory(Map<String,String> inventory) {
+    if (inventory == null || inventory.isEmpty()) return false;
+    String kernel = nullToEmpty(inventory.get("KERNEL")).toLowerCase(Locale.ROOT);
+    String distro = nullToEmpty(inventory.get("DISTRO")).toLowerCase(Locale.ROOT);
+    String os = nullToEmpty(inventory.get("OS")).toLowerCase(Locale.ROOT);
+    return kernel.startsWith("linux") || !distro.isBlank() ||
+      containsAny(os, "linux", "ubuntu", "debian", "fedora", "centos", "rhel", "rocky", "alma", "opensuse", "suse", "arch", "cachyos", "manjaro", "alpine");
   }
 
   private static void probe(String ip, int port, String label, Set<String> services) { if (open(ip, port)) services.add(label + " (TCP " + port + ")"); }
@@ -710,6 +846,7 @@ public class LinuxNetworkDiscoveryService {
     return new String[]{m.group(1), m.group(2)};
   }
   private static boolean open(String ip, int port) { try (Socket s = new Socket()) { s.connect(new InetSocketAddress(ip, port), CONNECT_TIMEOUT_MS); return true; } catch (Exception e) { return false; } }
+  private static boolean tcpPortOpen(String ip, int port, int timeoutMs) { try (Socket s = new Socket()) { s.connect(new InetSocketAddress(ip, port), timeoutMs); return true; } catch (Exception e) { return false; } }
   private static String readBanner(String ip, int port) {
     try (Socket s = new Socket()) {
       s.connect(new InetSocketAddress(ip, port), CONNECT_TIMEOUT_MS); s.setSoTimeout(700);

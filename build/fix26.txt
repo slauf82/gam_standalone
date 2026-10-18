@@ -1,0 +1,8 @@
+GAM 2.0 – 40k37e56c-fix26
+
+macOS Intel/Tahoe Node-Unterbau:
+- Node.js bleibt auf x86_64 bewusst GAM-lokal als portables Node 22.
+- Ein durch den MariaDB-Unterbau vorhandenes Homebrew wird fuer Node ignoriert.
+- Dadurch kein `brew install node` und kein unbeabsichtigter Source-Build grosser Abhaengigkeiten.
+- ARM64-Verhalten bleibt unveraendert.
+- Backend/MariaDB-Unterbau aus fix25 bleibt unveraendert.

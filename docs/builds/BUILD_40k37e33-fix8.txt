@@ -1,0 +1,14 @@
+40k37e33-fix8
+================
+
+Compile-Fix auf Basis von fix7.
+
+Korrektur:
+- sieben versehentlich durch die fix6-Erweiterung ersetzte bestehende Regex-Deklarationen in AppleMobileDiscoveryService.java exakt auf den Stand von fix5 zurückgesetzt.
+- listData wird nur noch im beabsichtigten PMD3_USBMUX_LIST-Block verwendet.
+- die sechs String-Zusammenführungen aus fix7 bleiben mit gueltigem Java-"\\n" erhalten.
+- funktional bleibt die direkte pymobiledevice3-IP-Diagnose aus fix6/fix7 unveraendert.
+
+Pruefziel unter Windows:
+- Maven-Kompilierung muss die bisherigen listData-Symbolfehler nicht mehr zeigen.
+- danach PMD3_LOCKDOWN_* und PMD3_USBMUX_* Laufzeitmarker auswerten.

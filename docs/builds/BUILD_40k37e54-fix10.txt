@@ -1,0 +1,10 @@
+40k37e54-fix10 – Admin-Tunnel Lifecycle-Diagnose
+
+- Windows-UAC startet weiterhin ausschliesslich den Apple Admin-RSD-Tunnel; GAM selbst bleibt nicht erhoeht.
+- Erhoehter PowerShell-Supervisor protokolliert eigene PID, pymobiledevice3-PID, Start, Exitcode und Launch-Fehler.
+- Neue Dateien unter logs/apple-admin-tunnel/: lifecycle.log, supervisor-pid.txt, pid.txt, stdout.log, stderr.log, exit.txt, endpoint.txt.
+- Backend-Marker START_REQUEST, UAC_LAUNCH_RETURNED, NO_ENDPOINT, ENDPOINT_RECEIVED, VERIFY und ACTIVE.
+- Bei fehlendem Endpoint werden Exitcode, stderr und Lifecycle ins GAM-Log uebernommen.
+- Bei VERIFY_FAILED wird der Tunnel nicht automatisch beendet, damit Diagnoseartefakte erhalten bleiben.
+- Explizit aktiver Admin-RSD-Pfad bleibt fuer die Inventarisierung gepinnt; kein stiller Userspace-Fallback.
+- Bestehender USB-/Userspace-RSD-Pfad bleibt unveraendert.

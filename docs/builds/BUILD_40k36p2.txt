@@ -1,0 +1,2 @@
+GAM 2.1.0 – Schritt 40k36p2
+Erkennungsquellen 2.0: einheitliche Plattformkarten mit Aktivieren, Konfigurieren, Verbindung testen, Diagnose, Status und Inventarisierungstiefe.

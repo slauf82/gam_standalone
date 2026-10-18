@@ -1,0 +1,16 @@
+GAM Standalone 2.1.0 – Schritt 40k37d3
+
+Basis: 40k37d2
+
+Schwerpunkt:
+- Apple-Softwareinventar konsequent in die vorhandene GAM-Struktur Software -> Quelle -> Softwareliste einordnen.
+- System-Apps werden als Quelle "Apple System / Firmware" geführt.
+- Benutzer-Apps ohne von iPadOS/installation_proxy explizit gelieferte Distributionsherkunft werden ehrlich als "Apple · Quelle nicht ermittelbar" gruppiert.
+- Liefert installation_proxy ein explizites Marketplace-/Distributor-/Distribution-/InstallSource-/Origin-Attribut, wird dessen realer Schlüssel/Wert als Softwarequelle übernommen und damit automatisch als eigene Quelle gruppiert.
+- Keine Herleitung der Store-/Marketplace-Quelle aus Bundle-ID, Signatur oder Installationspfad; unbekannt bleibt unbekannt.
+- D3 protokolliert erkannte explizite Herkunftsattribute als "D3 SOFTWARE SOURCE" in logs/apple-mobile-debug.log.
+- Bestehende plattformübergreifende Softwareansicht gruppiert die Apple-Einträge dynamisch nach Quelle; keine leeren vorsorglichen Apple-Kategorien.
+- 40k37d1 Lockdown-Probe und 40k37d2 installation_proxy-App-Erfassung bleiben erhalten.
+- Noch kein WLAN/Netzwerkpfad; dieser bleibt 40k37e.
+- Noch kein Jailbreakpfad; dieser bleibt 40k37f.
+- BUILD-Dateien liegen dauerhaft unter docs/builds/; Root bleibt frei von BUILD-TXT-Dateien.

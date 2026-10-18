@@ -1,0 +1,70 @@
+GAM Standalone v2.1.0 Preview 3 – Schritt 40k33b3
+
+Schwerpunkte:
+- Gezielte Linux-Nachprüfung: Wenn ein bereits durch eine andere Quelle erkanntes
+  Gerät Hinweise auf Linux enthält (Hostname beginnt mit "linux-" oder enthält
+  "linux", bereits erkannter Linux-Fingerabdruck einer anderen Quelle, SSH-Port 22
+  erreichbar, Cockpit-Port 9090 erreichbar, Linux-typischer mDNS-/Service-Hinweis),
+  löst dies automatisch eine gezielte Linux-Nachprüfung aus. Diese nutzt
+  ausschließlich die bereits vorhandene Linux-Netzwerkerkennung (SSH-Banner,
+  Linux-Service-Fingerprints, mDNS/DNS-Hostname, Samba/NFS/Cockpit, optionale
+  SSH-Tiefenerkennung nur mit vorhandenen Zugangsdaten) - es wurde keine zweite,
+  parallele Linux-Erkennung geschaffen.
+- Ein Hostname-/Fremdquellen-Hinweis auf "Linux" allein löst NUR die Nachprüfung
+  aus und begründet für sich genommen noch KEINE Kategorieänderung.
+- Kategorie-Korrektur: Erst ein zusätzliches, eindeutiges Client-Indiz (Notebook/
+  Desktop/Workstation/PC-Schlüsselwort im bekannten Namen, ein bekanntes
+  Notebook-Modellmuster wie bei HP EliteBook/ProBook, oder ein Client-Chassis-Typ
+  laut optionalem SSH-Inventar) führt dazu, dass eine bestätigte Linux-Maschine als
+  "Computer / Linux" eingestuft wird. Beispiel: linux-HP-6460b wird über das im
+  Hostnamen enthaltene Notebook-Modellmuster ("6460b") als Client erkannt.
+- Eindeutige Serverrollen (Proxmox, Hypervisor/KVM/Hyper-V/VMware/ESXi,
+  Container-Host/Portainer/Kubernetes, Server-/Rack-Chassis laut SSH-Inventar,
+  ausdrücklicher "Server"-Hinweis im Namen) haben in jedem Fall Vorrang vor einem
+  Client-Indiz.
+- Samba oder NFS allein gelten ausdrücklich NICHT mehr als eindeutige
+  Serversignatur.
+- Ohne eindeutigen Client- oder Serverbeleg bleibt der bisherige konservative
+  Standard ("Server / Linux-System") unverändert bestehen - bestehende
+  automatische Kategorien werden also weiterhin nur bei klarer neuer technischer
+  Erkenntnis korrigiert, nicht pauschal umgestellt.
+- Die bereits vorhandene Kategoriesynchronisierung (Prioritaet: manuell gesetzte
+  Kategorie > vorhandener GAM-1/GAM-2-Gerätebestand > bereits vorhandene
+  automatische Kategorie) wurde nicht verändert und wird durch die neue
+  Linux-Nachprüfung lediglich mit einem passenderen Kategorienamen versorgt, damit
+  z.B. eine vorhandene Kategorie "Computer" wiederverwendet statt eine neue
+  Kategorie wie "Linux-PC" angelegt wird.
+- Manuell gesetzte Kategorien werden weiterhin durch die unveränderte
+  Schreibsperre in der Registrierungstabelle geschützt; die Linux-Nachprüfung
+  protokolliert zusätzlich ausdrücklich, wenn eine manuelle Kategorie deshalb
+  unangetastet bleibt.
+- Protokollierung je Gerät (im Discovery-Protokolltext sichtbar): auslösendes
+  Indiz der Nachprüfung, Bestätigung, Kategorieentscheidung mit Begründung, und
+  ggf. Hinweis auf unangetastete manuelle Kategorie. Optionale Prüfungen
+  (z.B. fehlende SSH-Zugangsdaten) führen zu keiner Fehlerausgabe.
+- Alle .txt-Dateien aus der Projektwurzel wurden nach docs/ verschoben
+  (keine Code-, Build- oder Installer-Referenz musste angepasst werden - es gab
+  keine).
+
+Geänderte Dateien:
+- backend/src/main/java/de/kopfzentrum/gam/inventory/LinuxNetworkDiscoveryService.java
+- backend/src/main/java/de/kopfzentrum/gam/inventory/DeviceDiscoveryService.java
+- backend/src/main/java/de/kopfzentrum/gam/inventory/DiscoveryRegistrationRepository.java
+- docs/BUILD_40k33a2.txt, docs/BUILD_40k33a3.txt, docs/BUILD_40k33a4.txt,
+  docs/BUILD_40k33a5.txt, docs/BUILD_40k33a9.txt, docs/BUILD_40k33b.txt,
+  docs/BUILD_40k33b1.txt, docs/BUILD_40k33b2.txt, docs/BUILD_VALIDATION_40k33a.txt,
+  docs/RELEASE-STAND.txt, docs/SCHRITT_31K_RESTTEXT_SCAN.txt,
+  docs/SCHRITT_31T_SCAN.txt, docs/SCHRITT_32_SCAN.txt (aus der Projektwurzel
+  verschoben, Inhalt unverändert)
+- docs/BUILD_40k33b3.txt (neu, diese Datei)
+
+Nicht automatisch testbar / manuell zu prüfen:
+- Realer Netzwerktest gegen ein echtes Linux-Notebook mit geschlossenen SSH-/
+  Cockpit-Ports, dessen Hostname ein Notebook-Modellmuster enthält (Kernszenario
+  dieses Schritts).
+- SSH-Tiefeninventarisierung inkl. neuem CHASSIS-Feld gegen einen echten Host mit
+  konfigurierten Zugangsdaten.
+- Zusammenspiel mit real vorhandenem GAM-1/GAM-2-Gerätebestand
+  (geräte/geräte_neu) zur Wiederverwendung einer vorhandenen "Computer"-Kategorie.
+
+Basis: 40k33b2

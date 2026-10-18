@@ -1,0 +1,19 @@
+40k37e33-fix2 – echte CoreDevice-WLAN-IP + Transportkennungen aus Netzwerkzielen entfernen
+
+Basis: 40k37e33-fix1.
+
+Aenderungen:
+- Nach erfolgreichem USB RemotePairing-Bootstrap wird `pymobiledevice3 --no-color remote browse` erneut ausgefuehrt.
+- Die IPv4-Adresse wird nur uebernommen, wenn `identifier` exakt der ausgewaehlten Apple-UDID entspricht.
+- Neuer Marker: COREDEVICE_REMOTE_BROWSE_AFTER_PAIR; bestehender Marker IP_CONFIRMED zeigt die uebernommene IP.
+- USB-/PnP-/apple-network-Transportkennungen werden im Frontend nicht mehr als IP-Adresse dargestellt.
+- macOS/Linux-SSH-Karten verwenden usb:/usb-pnp:/apple-network: nicht mehr als Hostziel.
+- Persistente Netzwerkidentitaeten filtern solche Transportkennungen weiterhin backendseitig.
+- Apple-Inventarisierungs-Meldung auf 40k37e33-fix2 aktualisiert.
+
+Erwartung beim Test:
+COREDEVICE_REMOTE_BROWSE_AFTER_PAIR ... "address": "192.168.2.x", "identifier": "<UDID>"
+IP_CONFIRMED ... ip=192.168.2.x
+COREDEVICE_TRANSPORT_SELECTED ... transport=USERSPACE_RSD
+WLAN RESULT: devices=1
+Gerätedetails: Plattform iPadOS, Quellen USB + WLAN, IP-Adresse 192.168.2.x; keine usb:-Kennung als IP/SSH-Ziel.

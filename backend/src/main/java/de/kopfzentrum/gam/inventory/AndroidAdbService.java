@@ -283,6 +283,7 @@ public class AndroidAdbService {
     }
     long duration = System.currentTimeMillis() - started;
     Map<String,String> parsed = AndroidInventoryParser.parse(raw);
+    parsed.putAll(inspectPermissions(avail.path(), serial, false));
     String status;
     if (parsed.isEmpty()) status = partialErrors.isEmpty() ? "Keine Daten erhalten" : "Keine Daten erhalten. Teilfehler: " + String.join("; ", partialErrors);
     else if (partialErrors.isEmpty()) status = "erfolgreich";
@@ -290,6 +291,58 @@ public class AndroidAdbService {
     log.info("[ADB] Inventarisierung für {} abgeschlossen: {} Merkmalsgruppen in {} ms erfasst{}",
       shortSerial(serial), parsed.size(), duration, partialErrors.isEmpty() ? "" : ", " + partialErrors.size() + " Teilfehler");
     return new InventoryResult(!parsed.isEmpty(), parsed, status, duration);
+  }
+
+
+  /** 40k36o: Android-Berechtigungsprüfung und optionaler vertiefter Lauf.
+   *  GAM erzeugt keine Root-Rechte. Bei requestRoot=true wird ausschließlich ein
+   *  bereits vorhandenes, festes `su -c id` geprüft; eine Freigabe erfolgt ggf.
+   *  sichtbar am Gerät über dessen Root-Manager.
+   */
+  public InventoryResult inventorizeElevated(String serial) {
+    InventoryResult base = inventorize(serial);
+    if (!base.success()) return base;
+    var avail = findAdb();
+    Map<String,String> fields = new LinkedHashMap<>(base.fields());
+    fields.putAll(inspectPermissions(avail.path(), serial, true));
+    return new InventoryResult(true, fields, base.status(), base.durationMs());
+  }
+
+  private Map<String,String> inspectPermissions(String adbPath, String serial, boolean requestRoot) {
+    Map<String,String> out = new LinkedHashMap<>();
+    String id = runShellCommand(List.of(adbPath, "-s", serial, "shell", "id"), 5, 4000);
+    boolean shellRoot = id != null && id.contains("uid=0(");
+    String suPath = runShellCommand(List.of(adbPath, "-s", serial, "shell", "which", "su"), 5, 4000);
+    boolean suPresent = suPath != null && !suPath.isBlank() && !suPath.toLowerCase(Locale.ROOT).contains("not found");
+    boolean rootGranted = shellRoot;
+    if (requestRoot && !rootGranted && suPresent) {
+      String rootId = runShellCommand(List.of(adbPath, "-s", serial, "shell", "su", "-c", "id"), 12, 4000);
+      rootGranted = rootId != null && rootId.contains("uid=0(");
+    }
+    String magisk = runShellCommand(List.of(adbPath, "-s", serial, "shell", "pm", "path", "com.topjohnwu.magisk"), 5, 4000);
+    String kernelsu = runShellCommand(List.of(adbPath, "-s", serial, "shell", "pm", "path", "me.weishu.kernelsu"), 5, 4000);
+    String supersu = runShellCommand(List.of(adbPath, "-s", serial, "shell", "pm", "path", "eu.chainfire.supersu"), 5, 4000);
+    String rootManager = magisk != null && magisk.contains("package:") ? "Magisk" : kernelsu != null && kernelsu.contains("package:") ? "KernelSU" : supersu != null && supersu.contains("package:") ? "SuperSU" : null;
+    String verifiedBoot = runShellCommand(List.of(adbPath, "-s", serial, "shell", "getprop", "ro.boot.verifiedbootstate"), 5, 2000);
+    String bootState = runShellCommand(List.of(adbPath, "-s", serial, "shell", "getprop", "ro.boot.vbmeta.device_state"), 5, 2000);
+    String flashLocked = runShellCommand(List.of(adbPath, "-s", serial, "shell", "getprop", "ro.boot.flash.locked"), 5, 2000);
+    String selinux = runShellCommand(List.of(adbPath, "-s", serial, "shell", "getenforce"), 5, 2000);
+    out.put("ADB-Berechtigung", shellRoot ? "Root-Shell" : "ADB-Shell");
+    out.put("Root-Binary vorhanden", suPresent ? "ja" : "nein");
+    out.put("Root-Zugriff verfügbar", rootGranted ? "ja" : "nein");
+    if (rootManager != null) out.put("Root-Verwaltung", rootManager);
+    if (verifiedBoot != null && !verifiedBoot.isBlank()) out.put("Verified Boot", verifiedBoot.trim());
+    if (bootState != null && !bootState.isBlank()) out.put("Bootloader-Status", bootState.trim());
+    else if (flashLocked != null && !flashLocked.isBlank()) out.put("Bootloader gesperrt", "1".equals(flashLocked.trim()) ? "ja" : "nein");
+    if (selinux != null && !selinux.isBlank()) out.put("SELinux-Status", selinux.trim());
+    String level = rootGranted ? "Vollzugriff" : suPresent ? "Erweitert (Root vorhanden, nicht freigegeben)" : "Standard";
+    out.put("Inventarisierungstiefe", level);
+    List<String> limitations = new ArrayList<>();
+    if (!rootGranted) limitations.add(suPresent ? "Root-Freigabe wurde nicht erteilt" : "kein Root-Zugriff vorhanden");
+    limitations.add("Android schützt einzelne System- und App-Daten unabhängig von ADB");
+    out.put("Berechtigungseinschränkungen", String.join("; ", limitations));
+    out.put("Erhöhter Lauf", requestRoot ? "ja" : "nein");
+    return out;
   }
 
   public record AndroidUser(int id, String name) {}

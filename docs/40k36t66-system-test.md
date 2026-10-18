@@ -1,0 +1,2 @@
+# 40k36t66 – SYSTEM-Test
+Dasselbe vollständige Windows-Payload wird über eine einmalige geplante Aufgabe unter SID S-1-5-18 (NT AUTHORITY\SYSTEM) ausgeführt. UAC wird nur zum Erzeugen/Starten und Entfernen der Aufgabe verwendet. Der Wrapper verifiziert die SYSTEM-SID und protokolliert Benutzer, SID und Administratorstatus. Temporäre Dateien werden auch bei Ergebnisfehlern bereinigt. Erwartet: Administratorrechte Ja, SYSTEM-Rechte Ja, Integrität System, Inventarisierungstiefe Vollzugriff. Erfolgreiches BitLocker wird positiv als vollständig erfasst gemeldet.
